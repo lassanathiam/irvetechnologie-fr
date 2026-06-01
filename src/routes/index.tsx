@@ -7,10 +7,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IRVE Technologie — Installation bornes de recharge VE" },
-      { name: "description", content: "Installation de bornes de recharge IRVE : étude, mise en conformité, génie civil et maintenance. Particuliers, pros et concessions." },
-      { property: "og:title", content: "IRVE Technologie — Bornes de recharge VE" },
-      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW." },
+      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Grand Ouest" },
+      { name: "description", content: "Borne de l'Ouest : installation de bornes de recharge IRVE en Bretagne et Pays de la Loire. Étude, génie civil, électricité et maintenance — 44, 49, 56, 35, 85, 72, 53." },
+      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE dans le Grand Ouest" },
+      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW en Bretagne & Pays de la Loire." },
     ],
   }),
   component: Index,
@@ -41,17 +41,23 @@ function Index() {
           <div>
             <div className="flex items-center gap-3 text-mono text-primary mb-8">
               <span className="h-px w-10 bg-primary" />
-              IRVE · Électricité · Génie civil · Maintenance
+              <span className="relative flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                IRVE · Bretagne & Pays de la Loire
+              </span>
             </div>
             <h1 className="font-display text-5xl md:text-7xl font-medium tracking-tight leading-[1.02]">
-              L'énergie de demain,{" "}
-              <span className="text-muted-foreground/60">installée</span>{" "}
-              <em className="not-italic text-primary font-light italic">aujourd'hui.</em>
+              <span className="block">Borne de</span>
+              <span className="block">
+                <em className="not-italic text-primary font-light italic">l'Ouest</em>{" "}
+                <span className="text-muted-foreground/60">— rechargez</span>
+              </span>
+              <span className="block">près de chez vous.</span>
             </h1>
             <p className="mt-8 max-w-lg text-muted-foreground leading-relaxed">
-              IRVE Technologie installe vos bornes de recharge pour véhicules électriques —
-              étude technique, mise en conformité, génie civil et maintenance. Une chaîne
-              d'expertise complète pour particuliers, professionnels et concessions.
+              Installation de bornes de recharge pour véhicules électriques dans tout le
+              Grand Ouest. Étude technique, génie civil, raccordement et maintenance —
+              une équipe locale, un seul interlocuteur, du devis à la mise en service.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:opacity-90 transition">
@@ -64,9 +70,9 @@ function Index() {
 
             <div className="mt-16 grid grid-cols-3 gap-6 max-w-md border-t border-border pt-8">
               {[
-                { v: "7", l: "Départements 24/7" },
-                { v: "FR", l: "Couverture nationale" },
-                { v: "48h", l: "Intervention max" },
+                { v: "7", l: "Départements couverts" },
+                { v: "48h", l: "Étude technique" },
+                { v: "10★", l: "Avis clients" },
               ].map((s) => (
                 <div key={s.l}>
                   <div className="text-3xl font-medium tracking-tight">{s.v}</div>
@@ -163,13 +169,17 @@ function Index() {
               <span className="h-px w-10 bg-primary" /> Zones d'intervention
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              7 départements,{" "}
-              <span className="text-muted-foreground/60">une équipe locale.</span>
+              Le Grand Ouest,{" "}
+              <span className="text-muted-foreground/60">notre terrain de jeu.</span>
             </h2>
+            <p className="mt-6 text-muted-foreground max-w-md">
+              Bretagne et Pays de la Loire. Nos équipes interviennent au plus près de chez vous,
+              avec une vraie connaissance du terrain et du réseau électrique local.
+            </p>
           </div>
           <ul className="grid grid-cols-2 gap-3 self-end">
-            {["75 · Paris", "92 · Hauts-de-Seine", "93 · Seine-Saint-Denis", "94 · Val-de-Marne", "77 · Seine-et-Marne", "78 · Yvelines", "91 · Essonne"].map((z) => (
-              <li key={z} className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50">
+            {["44 · Loire-Atlantique", "49 · Maine-et-Loire", "85 · Vendée", "72 · Sarthe", "53 · Mayenne", "35 · Ille-et-Vilaine", "56 · Morbihan"].map((z) => (
+              <li key={z} className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card transition">
                 <Check className="h-3 w-3 text-primary" strokeWidth={3} /> {z}
               </li>
             ))}

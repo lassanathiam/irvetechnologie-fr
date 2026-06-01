@@ -1,61 +1,56 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, type ChangeEvent } from "react";
-import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop } from "lucide-react";
+import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/demande")({
   head: () => ({
     meta: [
-      { title: "Demande de raccordement — IRVE Technologie" },
-      { name: "description", content: "Décrivez votre projet et joignez les photos du tableau électrique, du cheminement de câble et de l'emplacement souhaité pour votre borne." },
+      { title: "Demande de raccordement — Borne de l'Ouest" },
+      { name: "description", content: "Décrivez votre projet et joignez les photos du tableau électrique, du cheminement de câble et de l'emplacement de la borne." },
     ],
   }),
   component: Demande,
 });
 
-type PhotoKey = "tableau" | "cheminement" | "borne";
-
-const photoFields: { key: PhotoKey; label: string; hint: string; icon: typeof PanelTop }[] = [
-  {
-    key: "tableau",
-    label: "Tableau électrique",
-    hint: "Photo nette du tableau ouvert avec les disjoncteurs visibles.",
-    icon: PanelTop,
-  },
-  {
-    key: "cheminement",
-    label: "Cheminement du câble",
-    hint: "Vue du trajet entre tableau et borne (mur, plafond, sol, extérieur).",
-    icon: CableCar,
-  },
-  {
-    key: "borne",
-    label: "Emplacement de la borne",
-    hint: "Mur ou poteau où la borne sera installée, avec recul si possible.",
-    icon: Zap,
-  },
-];
+const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const [photos, setPhotos] = useState<Record<PhotoKey, string | null>>({
-    tableau: null,
-    cheminement: null,
-    borne: null,
-  });
+  const [tableau, setTableau] = useState<string | null>(null);
+  const [borne, setBorne] = useState<string | null>(null);
+  const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
 
-  function handleFile(key: PhotoKey, e: ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const url = URL.createObjectURL(file);
-    setPhotos((p) => ({ ...p, [key]: url }));
+  function setSingle(setter: (v: string | null) => void, current: string | null) {
+    return (e: ChangeEvent<HTMLInputElement>) => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      if (current) URL.revokeObjectURL(current);
+      setter(URL.createObjectURL(file));
+    };
   }
 
-  function clearPhoto(key: PhotoKey) {
-    setPhotos((p) => {
-      if (p[key]) URL.revokeObjectURL(p[key]!);
-      return { ...p, [key]: null };
+  function clearSingle(setter: (v: string | null) => void, current: string | null) {
+    return () => {
+      if (current) URL.revokeObjectURL(current);
+      setter(null);
+    };
+  }
+
+  function addCheminement(e: ChangeEvent<HTMLInputElement>) {
+    const files = Array.from(e.target.files ?? []);
+    if (!files.length) return;
+    const remaining = MAX_CHEMINEMENT - cheminement.length;
+    const next = files.slice(0, remaining).map((f) => URL.createObjectURL(f));
+    setCheminement((c) => [...c, ...next]);
+    e.target.value = "";
+  }
+
+  function removeCheminement(i: number) {
+    setCheminement((c) => {
+      URL.revokeObjectURL(c[i]);
+      return c.filter((_, idx) => idx !== i);
     });
   }
 
@@ -74,12 +69,9 @@ function Demande() {
             <div className="inline-flex items-center justify-center h-16 w-16 rounded-full hero-grad text-primary-foreground mb-8">
               <Check className="h-7 w-7" strokeWidth={2.5} />
             </div>
-            <h1 className="text-4xl md:text-5xl font-medium tracking-tight">
-              Demande reçue.
-            </h1>
+            <h1 className="text-4xl md:text-5xl font-medium tracking-tight">Demande reçue.</h1>
             <p className="mt-6 text-muted-foreground">
-              Notre équipe étudie votre dossier et revient vers vous sous 48h ouvrées.
-              Vous serez recontacté par téléphone pour valider l'étude technique.
+              L'équipe Borne de l'Ouest étudie votre dossier et revient vers vous sous 48h ouvrées.
             </p>
           </div>
         </section>
@@ -102,7 +94,7 @@ function Demande() {
             <span className="text-muted-foreground/60">raccordement</span>
           </h1>
           <p className="mt-6 max-w-2xl text-muted-foreground">
-            Quelques infos et 3 photos suffisent pour démarrer l'étude. Plus elles sont
+            Quelques infos et vos photos suffisent pour démarrer l'étude. Plus elles sont
             précises, plus notre devis sera juste — et rapide.
           </p>
         </div>
@@ -111,7 +103,6 @@ function Demande() {
       <form onSubmit={onSubmit} className="py-16">
         <div className="mx-auto max-w-5xl px-6 space-y-16">
 
-          {/* Coordonnées */}
           <div>
             <SectionHeading n="01" title="Vos coordonnées" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
@@ -122,7 +113,6 @@ function Demande() {
             </div>
           </div>
 
-          {/* Projet */}
           <div>
             <SectionHeading n="02" title="Votre projet" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
@@ -134,31 +124,46 @@ function Demande() {
             <Textarea label="Précisions" name="notes" placeholder="Modèle de véhicule, contraintes particulières, délais souhaités…" />
           </div>
 
-          {/* PHOTOS */}
           <div>
             <SectionHeading n="03" title="Photos du chantier" />
             <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-              Ces 3 photos nous permettent d'évaluer la faisabilité sans déplacement.
-              Format JPG/PNG, idéalement en lumière naturelle.
+              Ces photos nous permettent d'évaluer la faisabilité sans déplacement.
+              Le cheminement du câble peut comporter plusieurs vues — ajoutez-en autant
+              que nécessaire (jusqu'à {MAX_CHEMINEMENT}).
             </p>
 
-            <div className="grid md:grid-cols-3 gap-4 mt-8">
-              {photoFields.map((f) => (
-                <PhotoUpload
-                  key={f.key}
-                  field={f}
-                  value={photos[f.key]}
-                  onChange={(e) => handleFile(f.key, e)}
-                  onClear={() => clearPhoto(f.key)}
-                />
-              ))}
+            <div className="grid md:grid-cols-2 gap-4 mt-8">
+              <SinglePhoto
+                label="Tableau électrique"
+                hint="Photo nette du tableau ouvert avec les disjoncteurs visibles."
+                icon={PanelTop}
+                value={tableau}
+                onChange={setSingle(setTableau, tableau)}
+                onClear={clearSingle(setTableau, tableau)}
+              />
+              <SinglePhoto
+                label="Emplacement de la borne"
+                hint="Mur ou poteau où la borne sera installée, avec recul si possible."
+                icon={Zap}
+                value={borne}
+                onChange={setSingle(setBorne, borne)}
+                onClear={clearSingle(setBorne, borne)}
+              />
+            </div>
+
+            <div className="mt-4">
+              <CheminementGallery
+                photos={cheminement}
+                onAdd={addCheminement}
+                onRemove={removeCheminement}
+                max={MAX_CHEMINEMENT}
+              />
             </div>
           </div>
 
-          {/* Submit */}
           <div className="pt-8 border-t border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
             <p className="text-mono text-muted-foreground max-w-md">
-              En envoyant ce formulaire, vous acceptez d'être recontacté par IRVE Technologie.
+              En envoyant ce formulaire, vous acceptez d'être recontacté par Borne de l'Ouest.
             </p>
             <button type="submit" className="hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90">
               Envoyer la demande <ArrowRight className="h-4 w-4" />
@@ -185,12 +190,7 @@ function Field({ label, name, type = "text", required }: { label: string; name: 
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}{required && <span className="text-primary"> *</span>}</span>
-      <input
-        name={name}
-        type={type}
-        required={required}
-        className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
-      />
+      <input name={name} type={type} required={required} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
     </label>
   );
 }
@@ -199,10 +199,7 @@ function Select({ label, name, options }: { label: string; name: string; options
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}</span>
-      <select
-        name={name}
-        className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
-      >
+      <select name={name} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
     </label>
@@ -213,42 +210,29 @@ function Textarea({ label, name, placeholder }: { label: string; name: string; p
   return (
     <label className="block mt-4">
       <span className="text-mono text-muted-foreground">{label}</span>
-      <textarea
-        name={name}
-        rows={4}
-        placeholder={placeholder}
-        className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition resize-none"
-      />
+      <textarea name={name} rows={4} placeholder={placeholder} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition resize-none" />
     </label>
   );
 }
 
-function PhotoUpload({
-  field,
-  value,
-  onChange,
-  onClear,
+function SinglePhoto({
+  label, hint, icon: Icon, value, onChange, onClear,
 }: {
-  field: { key: PhotoKey; label: string; hint: string; icon: typeof PanelTop };
+  label: string;
+  hint: string;
+  icon: typeof PanelTop;
   value: string | null;
   onChange: (e: ChangeEvent<HTMLInputElement>) => void;
   onClear: () => void;
 }) {
   const ref = useRef<HTMLInputElement>(null);
-  const Icon = field.icon;
-
   return (
-    <div className="relative border border-border rounded-sm bg-card overflow-hidden group">
+    <div className="relative border border-border rounded-sm bg-card overflow-hidden">
       <div className="aspect-[4/3] relative bg-secondary/40">
         {value ? (
           <>
-            <img src={value} alt={field.label} className="absolute inset-0 w-full h-full object-cover" />
-            <button
-              type="button"
-              onClick={onClear}
-              className="absolute top-2 right-2 bg-background/80 border border-border p-1.5 rounded-sm hover:bg-destructive hover:text-destructive-foreground transition"
-              aria-label="Retirer la photo"
-            >
+            <img src={value} alt={label} className="absolute inset-0 w-full h-full object-cover" />
+            <button type="button" onClick={onClear} className="absolute top-2 right-2 bg-background/80 border border-border p-1.5 rounded-sm hover:bg-destructive hover:text-destructive-foreground transition" aria-label="Retirer la photo">
               <X className="h-4 w-4" />
             </button>
             <div className="absolute bottom-2 left-2 text-mono text-primary bg-background/80 px-2 py-1 rounded-sm flex items-center gap-1.5">
@@ -256,11 +240,7 @@ function PhotoUpload({
             </div>
           </>
         ) : (
-          <button
-            type="button"
-            onClick={() => ref.current?.click()}
-            className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:bg-primary/5 transition"
-          >
+          <button type="button" onClick={() => ref.current?.click()} className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:bg-primary/5 transition">
             <Icon className="h-8 w-8" strokeWidth={1.25} />
             <span className="text-mono">Ajouter</span>
             <span className="flex items-center gap-2 text-mono opacity-60">
@@ -268,25 +248,114 @@ function PhotoUpload({
             </span>
           </button>
         )}
-        <input
-          ref={ref}
-          type="file"
-          accept="image/*"
-          capture="environment"
-          onChange={onChange}
-          className="hidden"
-        />
+        <input ref={ref} type="file" accept="image/*" capture="environment" onChange={onChange} className="hidden" />
       </div>
       <div className="p-4 border-t border-border">
         <div className="flex items-center justify-between">
-          <div className="font-medium">{field.label}</div>
+          <div className="font-medium">{label}</div>
           {!value && (
-            <button type="button" onClick={() => ref.current?.click()} className="text-mono text-primary hover:underline">
-              Parcourir
-            </button>
+            <button type="button" onClick={() => ref.current?.click()} className="text-mono text-primary hover:underline">Parcourir</button>
           )}
         </div>
-        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{field.hint}</p>
+        <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{hint}</p>
+      </div>
+    </div>
+  );
+}
+
+function CheminementGallery({
+  photos, onAdd, onRemove, max,
+}: {
+  photos: string[];
+  onAdd: (e: ChangeEvent<HTMLInputElement>) => void;
+  onRemove: (i: number) => void;
+  max: number;
+}) {
+  const ref = useRef<HTMLInputElement>(null);
+  const [active, setActive] = useState(0);
+  const safeActive = photos.length ? Math.min(active, photos.length - 1) : 0;
+  const canAdd = photos.length < max;
+
+  return (
+    <div className="border border-border rounded-sm bg-card overflow-hidden">
+      <div className="aspect-[16/10] relative bg-secondary/40">
+        {photos.length === 0 ? (
+          <button type="button" onClick={() => ref.current?.click()} className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-muted-foreground hover:text-primary hover:bg-primary/5 transition">
+            <CableCar className="h-10 w-10" strokeWidth={1.25} />
+            <span className="text-mono">Ajouter les photos du cheminement</span>
+            <span className="flex items-center gap-2 text-mono opacity-60">
+              <Camera className="h-3 w-3" /> ou <Upload className="h-3 w-3" /> · 2 à {max} photos
+            </span>
+          </button>
+        ) : (
+          <>
+            <img src={photos[safeActive]} alt={`Cheminement ${safeActive + 1}`} className="absolute inset-0 w-full h-full object-cover" />
+
+            {photos.length > 1 && (
+              <>
+                <button type="button" onClick={() => setActive((i) => (i - 1 + photos.length) % photos.length)} className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/80 border border-border p-2 rounded-sm hover:border-primary hover:text-primary transition" aria-label="Précédente">
+                  <ChevronLeft className="h-4 w-4" />
+                </button>
+                <button type="button" onClick={() => setActive((i) => (i + 1) % photos.length)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/80 border border-border p-2 rounded-sm hover:border-primary hover:text-primary transition" aria-label="Suivante">
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+              </>
+            )}
+
+            <button type="button" onClick={() => onRemove(safeActive)} className="absolute top-3 right-3 bg-background/80 border border-border p-1.5 rounded-sm hover:bg-destructive hover:text-destructive-foreground transition" aria-label="Retirer cette photo">
+              <X className="h-4 w-4" />
+            </button>
+
+            <div className="absolute bottom-3 left-3 text-mono text-primary bg-background/80 px-2 py-1 rounded-sm">
+              {safeActive + 1} / {photos.length}
+            </div>
+          </>
+        )}
+        <input ref={ref} type="file" accept="image/*" capture="environment" multiple onChange={onAdd} className="hidden" />
+      </div>
+
+      <div className="p-4 border-t border-border">
+        <div className="flex items-center justify-between gap-4">
+          <div>
+            <div className="font-medium">Cheminement du câble</div>
+            <p className="mt-1 text-xs text-muted-foreground leading-relaxed">
+              De 2 à {max} photos : trajet tableau → borne (mur, plafond, sol, traversées, extérieur).
+            </p>
+          </div>
+          <button
+            type="button"
+            disabled={!canAdd}
+            onClick={() => ref.current?.click()}
+            className="hero-grad text-primary-foreground text-mono px-3 py-2 rounded-sm inline-flex items-center gap-1.5 disabled:opacity-40 disabled:cursor-not-allowed hover:opacity-90 transition"
+          >
+            <Plus className="h-3.5 w-3.5" /> Ajouter
+          </button>
+        </div>
+
+        {photos.length > 0 && (
+          <div className="mt-4 flex gap-2 overflow-x-auto pb-1">
+            {photos.map((src, i) => (
+              <button
+                key={src}
+                type="button"
+                onClick={() => setActive(i)}
+                className={`relative shrink-0 h-16 w-20 rounded-sm overflow-hidden border-2 transition ${i === safeActive ? "border-primary" : "border-border hover:border-muted-foreground"}`}
+              >
+                <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />
+              </button>
+            ))}
+            {canAdd && (
+              <button
+                type="button"
+                onClick={() => ref.current?.click()}
+                className="shrink-0 h-16 w-20 rounded-sm border-2 border-dashed border-border hover:border-primary hover:text-primary text-muted-foreground flex items-center justify-center transition"
+                aria-label="Ajouter une photo"
+              >
+                <Plus className="h-5 w-5" />
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );
