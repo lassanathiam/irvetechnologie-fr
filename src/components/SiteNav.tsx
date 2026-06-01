@@ -13,9 +13,9 @@ export function SiteNav() {
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-mono text-muted-foreground">
           <a href="/#services" className="hover:text-foreground transition">Services</a>
-          <a href="/#parcours" className="hover:text-foreground transition">Parcours</a>
+          <a href="/#realisations" className="hover:text-foreground transition">Réalisations</a>
+          <a href="/#maintenance" className="hover:text-foreground transition">Maintenance</a>
           <a href="/#zones" className="hover:text-foreground transition">Zones</a>
-          <a href="/#faq" className="hover:text-foreground transition">FAQ</a>
         </nav>
         <Link
           to="/demande"
