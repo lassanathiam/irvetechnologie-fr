@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star } from "lucide-react";
+import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
 import borneHero from "@/assets/borne-hero.jpg";
 import chantier1 from "@/assets/chantier-1.jpg";
 import chantier2 from "@/assets/chantier-2.jpg";
