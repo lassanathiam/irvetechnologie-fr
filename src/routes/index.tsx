@@ -124,6 +124,8 @@ function Index() {
   const parcours_r = useReveal<HTMLDivElement>();
   const real_r = useReveal<HTMLDivElement>();
   const zones_r = useReveal<HTMLDivElement>();
+  const [audience, setAudience] = useState<"client" | "external">("client");
+  const isClient = audience === "client";
 
   return (
     <div className="min-h-screen overflow-x-hidden">
