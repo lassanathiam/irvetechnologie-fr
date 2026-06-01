@@ -70,9 +70,9 @@ function Index() {
 
             <div className="mt-16 grid grid-cols-3 gap-6 max-w-md border-t border-border pt-8">
               {[
-                { v: "7", l: "Départements 24/7" },
-                { v: "FR", l: "Couverture nationale" },
-                { v: "48h", l: "Intervention max" },
+                { v: "7", l: "Départements couverts" },
+                { v: "48h", l: "Étude technique" },
+                { v: "10★", l: "Avis clients" },
               ].map((s) => (
                 <div key={s.l}>
                   <div className="text-3xl font-medium tracking-tight">{s.v}</div>
