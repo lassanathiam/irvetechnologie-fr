@@ -9,7 +9,7 @@ export function SiteNav() {
           <span className="hero-grad text-primary-foreground p-1.5 rounded-sm">
             <Zap className="h-4 w-4" strokeWidth={2.5} />
           </span>
-          <span className="font-semibold tracking-tight">IRVE<span className="text-muted-foreground">.Technologie</span></span>
+          <span className="font-semibold tracking-tight">Borne<span className="text-muted-foreground"> de l'Ouest</span></span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-mono text-muted-foreground">
           <a href="/#services" className="hover:text-foreground transition">Services</a>
