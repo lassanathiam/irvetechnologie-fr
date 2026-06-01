@@ -50,6 +50,60 @@ const realisations = [
   { src: chantier3, title: "Mise en conformité tableau", place: "Angers (49)", spec: "Refonte complète du tableau avant installation borne 22 kW. Contrôle Consuel et attestation IRVE." },
 ];
 
+const maintenancePlans = [
+  {
+    name: "Essentiel",
+    code: "M/01",
+    price: "9",
+    period: "/mois",
+    yearly: "facturé 108 €/an",
+    icon: ShieldCheck,
+    featured: false,
+    desc: "Pour les particuliers tranquilles.",
+    features: [
+      "1 contrôle annuel sur site",
+      "Vérification des serrages et isolement",
+      "Mise à jour firmware borne",
+      "Hotline technique en heures ouvrées",
+      "Rapport de contrôle PDF",
+    ],
+  },
+  {
+    name: "Confort",
+    code: "M/02",
+    price: "19",
+    period: "/mois",
+    yearly: "facturé 228 €/an",
+    icon: Sparkles,
+    featured: true,
+    desc: "Le meilleur rapport sérénité / prix.",
+    features: [
+      "Tout l'Essentiel +",
+      "2 contrôles annuels",
+      "Intervention dépannage prioritaire 48-72h",
+      "Pièces d'usure incluses (jusqu'à 80 €/an)",
+      "Assistance téléphonique 6j/7",
+    ],
+  },
+  {
+    name: "Pro / Flotte",
+    code: "M/03",
+    price: "Sur devis",
+    period: "",
+    yearly: "à partir de 39 €/borne/mois",
+    icon: Wrench,
+    featured: false,
+    desc: "Entreprises, copros, concessions.",
+    features: [
+      "Contrats multi-bornes",
+      "Intervention 24-48h en semaine",
+      "Supervision à distance & alertes",
+      "Reporting trimestriel",
+      "Engagement SLA contractuel",
+    ],
+  },
+];
+
 const partenaires = ["Hager", "Schneider Electric", "Legrand", "Wallbox", "Tesla", "EVBox", "Hager Witty", "Schneider EVlink", "Legrand Green'up"];
 
 function Index() {
