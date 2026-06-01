@@ -7,10 +7,10 @@ import { SiteFooter } from "@/components/SiteFooter";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "IRVE Technologie — Installation bornes de recharge VE" },
-      { name: "description", content: "Installation de bornes de recharge IRVE : étude, mise en conformité, génie civil et maintenance. Particuliers, pros et concessions." },
-      { property: "og:title", content: "IRVE Technologie — Bornes de recharge VE" },
-      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW." },
+      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Grand Ouest" },
+      { name: "description", content: "Borne de l'Ouest : installation de bornes de recharge IRVE en Bretagne et Pays de la Loire. Étude, génie civil, électricité et maintenance — 44, 49, 56, 35, 85, 72, 53." },
+      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE dans le Grand Ouest" },
+      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW en Bretagne & Pays de la Loire." },
     ],
   }),
   component: Index,
