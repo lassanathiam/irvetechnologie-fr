@@ -41,17 +41,23 @@ function Index() {
           <div>
             <div className="flex items-center gap-3 text-mono text-primary mb-8">
               <span className="h-px w-10 bg-primary" />
-              IRVE · Électricité · Génie civil · Maintenance
+              <span className="relative flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                IRVE · Bretagne & Pays de la Loire
+              </span>
             </div>
             <h1 className="font-display text-5xl md:text-7xl font-medium tracking-tight leading-[1.02]">
-              L'énergie de demain,{" "}
-              <span className="text-muted-foreground/60">installée</span>{" "}
-              <em className="not-italic text-primary font-light italic">aujourd'hui.</em>
+              <span className="block">Borne de</span>
+              <span className="block">
+                <em className="not-italic text-primary font-light italic">l'Ouest</em>{" "}
+                <span className="text-muted-foreground/60">— rechargez</span>
+              </span>
+              <span className="block">près de chez vous.</span>
             </h1>
             <p className="mt-8 max-w-lg text-muted-foreground leading-relaxed">
-              IRVE Technologie installe vos bornes de recharge pour véhicules électriques —
-              étude technique, mise en conformité, génie civil et maintenance. Une chaîne
-              d'expertise complète pour particuliers, professionnels et concessions.
+              Installation de bornes de recharge pour véhicules électriques dans tout le
+              Grand Ouest. Étude technique, génie civil, raccordement et maintenance —
+              une équipe locale, un seul interlocuteur, du devis à la mise en service.
             </p>
             <div className="mt-10 flex flex-wrap gap-3">
               <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:opacity-90 transition">
