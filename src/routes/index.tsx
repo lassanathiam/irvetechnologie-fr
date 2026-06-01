@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { useState } from "react";
 import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
 import borneHero from "@/assets/borne-hero.jpg";
 import chantier1 from "@/assets/chantier-1.jpg";
@@ -50,20 +51,32 @@ const realisations = [
   { src: chantier3, title: "Mise en conformité tableau", place: "Angers (49)", spec: "Refonte complète du tableau avant installation borne 22 kW. Contrôle Consuel et attestation IRVE." },
 ];
 
-const maintenancePlans = [
+type Plan = {
+  name: string;
+  code: string;
+  client: string;
+  external: string;
+  period: string;
+  icon: typeof ShieldCheck;
+  featured: boolean;
+  desc: string;
+  features: string[];
+};
+
+const maintenancePlans: Plan[] = [
   {
     name: "Essentiel",
     code: "M/01",
-    price: "9",
+    client: "9",
+    external: "14",
     period: "/mois",
-    yearly: "facturé 108 €/an",
     icon: ShieldCheck,
     featured: false,
     desc: "Pour les particuliers tranquilles.",
     features: [
       "1 contrôle annuel sur site",
-      "Vérification des serrages et isolement",
-      "Mise à jour firmware borne",
+      "Vérification serrages & isolement",
+      "Mise à jour firmware",
       "Hotline technique en heures ouvrées",
       "Rapport de contrôle PDF",
     ],
@@ -71,26 +84,26 @@ const maintenancePlans = [
   {
     name: "Confort",
     code: "M/02",
-    price: "19",
+    client: "19",
+    external: "29",
     period: "/mois",
-    yearly: "facturé 228 €/an",
     icon: Sparkles,
     featured: true,
     desc: "Le meilleur rapport sérénité / prix.",
     features: [
       "Tout l'Essentiel +",
       "2 contrôles annuels",
-      "Intervention dépannage prioritaire 48-72h",
-      "Pièces d'usure incluses (jusqu'à 80 €/an)",
+      "Dépannage prioritaire 48-72h",
+      "Pièces d'usure incluses (≤ 80 €/an)",
       "Assistance téléphonique 6j/7",
     ],
   },
   {
     name: "Pro / Flotte",
     code: "M/03",
-    price: "Sur devis",
+    client: "Sur devis",
+    external: "Sur devis",
     period: "",
-    yearly: "à partir de 39 €/borne/mois",
     icon: Wrench,
     featured: false,
     desc: "Entreprises, copros, concessions.",
@@ -111,6 +124,8 @@ function Index() {
   const parcours_r = useReveal<HTMLDivElement>();
   const real_r = useReveal<HTMLDivElement>();
   const zones_r = useReveal<HTMLDivElement>();
+  const [audience, setAudience] = useState<"client" | "external">("client");
+  const isClient = audience === "client";
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -350,81 +365,125 @@ function Index() {
       </section>
 
       {/* MAINTENANCE / ABONNEMENTS */}
-      <section id="maintenance" className="py-24 border-t border-border bg-card/20">
+      <section id="maintenance" className="py-24 border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-7xl px-6">
-          <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
-            <div>
+          <div className="grid lg:grid-cols-3 gap-10 mb-14 items-end">
+            <div className="lg:col-span-2">
               <div className="flex items-center gap-3 text-mono text-primary mb-6">
-                <span className="h-px w-10 bg-primary" /> Maintenance annuelle
+                <span className="h-px w-10 bg-primary" /> Garantie & maintenance
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
-                Une borne suivie,{" "}
-                <span className="text-muted-foreground/60">c'est une borne qui dure.</span>
+                1 an de garantie offerte,{" "}
+                <span className="text-muted-foreground/60">puis vous gardez la main.</span>
               </h2>
               <p className="mt-6 max-w-2xl text-muted-foreground">
-                Contrôle annuel obligatoire, mises à jour, dépannage prioritaire. Choisissez
-                l'abonnement adapté — sans engagement au-delà des 12 premiers mois.
+                Chaque installation Borne de l'Ouest est garantie <strong className="text-foreground">12 mois</strong> —
+                pièces, main d'œuvre et déplacement inclus. Au-delà, nos abonnements
+                prennent le relais. Nous intervenons aussi sur les bornes que nous n'avons pas
+                posées, à un tarif légèrement supérieur.
               </p>
             </div>
-            <p className="text-mono text-muted-foreground">3 formules · sans engagement long</p>
+
+            <div className="border border-primary/30 bg-card rounded-sm p-6 flex items-start gap-4">
+              <span className="hero-grad text-primary-foreground p-2.5 rounded-sm shrink-0">
+                <ShieldCheck className="h-5 w-5" />
+              </span>
+              <div>
+                <div className="text-mono text-primary mb-1">Inclus</div>
+                <div className="font-medium leading-snug">Garantie 12 mois sur toute installation</div>
+                <p className="text-sm text-muted-foreground mt-1">Pièces + main d'œuvre + déplacement.</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Toggle audience */}
+          <div className="flex justify-center mb-10">
+            <div className="inline-flex border border-border rounded-sm bg-card p-1">
+              <button
+                type="button"
+                onClick={() => setAudience("client")}
+                className={`text-mono px-5 py-2.5 rounded-sm transition ${
+                  isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Nos clients · après 1 an
+              </button>
+              <button
+                type="button"
+                onClick={() => setAudience("external")}
+                className={`text-mono px-5 py-2.5 rounded-sm transition ${
+                  !isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                Borne installée ailleurs
+              </button>
+            </div>
           </div>
 
           <div className="grid md:grid-cols-3 gap-6">
-            {maintenancePlans.map((p, idx) => (
-              <div
-                key={p.code}
-                className={`relative p-8 rounded-sm border transition-all duration-300 hover:-translate-y-1 ${
-                  p.featured
-                    ? "border-primary bg-card animate-glow"
-                    : "border-border bg-card/60 hover:border-primary"
-                }`}
-                style={{ transitionDelay: `${idx * 60}ms` }}
-              >
-                {p.featured && (
-                  <div className="absolute -top-3 left-8 hero-grad text-primary-foreground text-mono px-3 py-1 rounded-sm">
-                    Le plus choisi
-                  </div>
-                )}
-                <div className="flex items-start justify-between mb-8">
-                  <span className="text-mono text-muted-foreground">{p.code}</span>
-                  <p.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                </div>
-                <h3 className="text-2xl font-medium tracking-tight">{p.name}</h3>
-                <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
-
-                <div className="mt-6 flex items-baseline gap-1">
-                  <span className="text-4xl font-medium tracking-tight">
-                    {p.price === "Sur devis" ? p.price : `${p.price}€`}
-                  </span>
-                  {p.period && <span className="text-mono text-muted-foreground">{p.period}</span>}
-                </div>
-                <div className="text-mono text-muted-foreground mt-1">{p.yearly}</div>
-
-                <ul className="mt-8 space-y-3 border-t border-border pt-6">
-                  {p.features.map((f) => (
-                    <li key={f} className="flex items-start gap-3 text-sm">
-                      <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" strokeWidth={2.5} />
-                      <span>{f}</span>
-                    </li>
-                  ))}
-                </ul>
-
-                <Link
-                  to="/demande"
-                  className={`mt-8 w-full text-mono px-4 py-3 rounded-sm inline-flex items-center justify-center gap-2 transition ${
+            {maintenancePlans.map((p, idx) => {
+              const raw = isClient ? p.client : p.external;
+              const isQuote = raw === "Sur devis";
+              return (
+                <div
+                  key={p.code}
+                  className={`relative p-8 rounded-sm border transition-all duration-300 hover:-translate-y-1 ${
                     p.featured
-                      ? "hero-grad text-primary-foreground hover:opacity-90"
-                      : "border border-border hover:border-primary hover:text-primary"
+                      ? "border-primary bg-card shadow-lg shadow-primary/10"
+                      : "border-border bg-card hover:border-primary"
                   }`}
+                  style={{ transitionDelay: `${idx * 60}ms` }}
                 >
-                  Souscrire <ArrowRight className="h-4 w-4" />
-                </Link>
-              </div>
-            ))}
+                  {p.featured && (
+                    <div className="absolute -top-3 left-8 hero-grad text-primary-foreground text-mono px-3 py-1 rounded-sm">
+                      Le plus choisi
+                    </div>
+                  )}
+                  <div className="flex items-start justify-between mb-8">
+                    <span className="text-mono text-muted-foreground">{p.code}</span>
+                    <p.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
+                  </div>
+                  <h3 className="text-2xl font-medium tracking-tight">{p.name}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
+
+                  <div className="mt-6 flex items-baseline gap-1">
+                    <span className="text-4xl font-medium tracking-tight">
+                      {isQuote ? raw : `${raw}€`}
+                    </span>
+                    {p.period && !isQuote && (
+                      <span className="text-mono text-muted-foreground">{p.period}</span>
+                    )}
+                  </div>
+                  <div className="text-mono text-muted-foreground mt-1">
+                    {isClient ? "Tarif client Borne de l'Ouest" : "Tarif hors installation maison"}
+                  </div>
+
+                  <ul className="mt-8 space-y-3 border-t border-border pt-6">
+                    {p.features.map((f) => (
+                      <li key={f} className="flex items-start gap-3 text-sm">
+                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" strokeWidth={2.5} />
+                        <span>{f}</span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  <Link
+                    to="/demande"
+                    className={`mt-8 w-full text-mono px-4 py-3 rounded-sm inline-flex items-center justify-center gap-2 transition ${
+                      p.featured
+                        ? "hero-grad text-primary-foreground hover:opacity-90"
+                        : "border border-border hover:border-primary hover:text-primary"
+                    }`}
+                  >
+                    Souscrire <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              );
+            })}
           </div>
 
           <p className="mt-8 text-xs text-muted-foreground text-center">
-            Tarifs indicatifs TTC pour une borne standard 7-22 kW. Devis personnalisé sur demande.
+            Tarifs indicatifs TTC pour une borne standard 7-22 kW. Sans engagement après 12 mois. Devis personnalisé sur demande.
           </p>
         </div>
       </section>
