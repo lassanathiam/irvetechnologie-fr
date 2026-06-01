@@ -169,13 +169,17 @@ function Index() {
               <span className="h-px w-10 bg-primary" /> Zones d'intervention
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              7 départements,{" "}
-              <span className="text-muted-foreground/60">une équipe locale.</span>
+              Le Grand Ouest,{" "}
+              <span className="text-muted-foreground/60">notre terrain de jeu.</span>
             </h2>
+            <p className="mt-6 text-muted-foreground max-w-md">
+              Bretagne et Pays de la Loire. Nos équipes interviennent au plus près de chez vous,
+              avec une vraie connaissance du terrain et du réseau électrique local.
+            </p>
           </div>
           <ul className="grid grid-cols-2 gap-3 self-end">
-            {["75 · Paris", "92 · Hauts-de-Seine", "93 · Seine-Saint-Denis", "94 · Val-de-Marne", "77 · Seine-et-Marne", "78 · Yvelines", "91 · Essonne"].map((z) => (
-              <li key={z} className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50">
+            {["44 · Loire-Atlantique", "49 · Maine-et-Loire", "85 · Vendée", "72 · Sarthe", "53 · Mayenne", "35 · Ille-et-Vilaine", "56 · Morbihan"].map((z) => (
+              <li key={z} className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card transition">
                 <Check className="h-3 w-3 text-primary" strokeWidth={3} /> {z}
               </li>
             ))}
