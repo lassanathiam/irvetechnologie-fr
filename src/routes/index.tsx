@@ -365,39 +365,38 @@ function Index() {
       </section>
 
       {/* MAINTENANCE / ABONNEMENTS */}
-      <section id="maintenance" className="py-24 border-t border-border bg-secondary/40">
-        <div className="mx-auto max-w-7xl px-6">
-          <div className="grid lg:grid-cols-3 gap-10 mb-14 items-end">
-            <div className="lg:col-span-2">
-              <div className="flex items-center gap-3 text-mono text-primary mb-6">
-                <span className="h-px w-10 bg-primary" /> Garantie & maintenance
-              </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
-                1 an de garantie offerte,{" "}
-                <span className="text-muted-foreground/60">puis vous gardez la main.</span>
-              </h2>
-              <p className="mt-6 max-w-2xl text-muted-foreground">
-                Chaque installation Borne de l'Ouest est garantie <strong className="text-foreground">12 mois</strong> —
-                pièces, main d'œuvre et déplacement inclus. Au-delà, nos abonnements
-                prennent le relais. Nous intervenons aussi sur les bornes que nous n'avons pas
-                posées, à un tarif légèrement supérieur.
-              </p>
+      <section id="maintenance" className="py-28 md:py-32 border-t border-border bg-secondary/40">
+        <div className="mx-auto max-w-6xl px-6">
+          {/* Header centré */}
+          <div className="text-center max-w-3xl mx-auto mb-12">
+            <div className="inline-flex items-center gap-3 text-mono text-primary mb-6">
+              <span className="h-px w-10 bg-primary" /> Garantie & maintenance <span className="h-px w-10 bg-primary" />
             </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              1 an de garantie offerte,{" "}
+              <span className="text-muted-foreground/60">puis vous gardez la main.</span>
+            </h2>
+            <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
+              Chaque installation est garantie <strong className="text-foreground">12 mois</strong> —
+              pièces, main d'œuvre et déplacement inclus. Au-delà, choisissez l'abonnement qui vous convient.
+            </p>
+          </div>
 
-            <div className="border border-primary/30 bg-card rounded-sm p-6 flex items-start gap-4">
-              <span className="hero-grad text-primary-foreground p-2.5 rounded-sm shrink-0">
-                <ShieldCheck className="h-5 w-5" />
-              </span>
-              <div>
-                <div className="text-mono text-primary mb-1">Inclus</div>
-                <div className="font-medium leading-snug">Garantie 12 mois sur toute installation</div>
-                <p className="text-sm text-muted-foreground mt-1">Pièces + main d'œuvre + déplacement.</p>
-              </div>
+          {/* Bandeau garantie */}
+          <div className="mx-auto max-w-3xl mb-16 border border-primary/25 bg-card rounded-sm px-6 py-4 flex items-center gap-4">
+            <span className="hero-grad text-primary-foreground p-2.5 rounded-sm shrink-0">
+              <ShieldCheck className="h-5 w-5" />
+            </span>
+            <div className="flex-1">
+              <div className="font-medium leading-snug">Garantie 12 mois sur toute installation</div>
+              <p className="text-sm text-muted-foreground">Pièces + main d'œuvre + déplacement. Aucun frais caché.</p>
             </div>
+            <span className="hidden sm:inline text-mono text-primary">Inclus</span>
           </div>
 
           {/* Toggle audience */}
-          <div className="flex justify-center mb-10">
+          <div className="flex flex-col items-center gap-3 mb-14">
+            <span className="text-mono text-muted-foreground">Choisissez votre profil</span>
             <div className="inline-flex border border-border rounded-sm bg-card p-1">
               <button
                 type="button"
@@ -406,7 +405,7 @@ function Index() {
                   isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                Nos clients · après 1 an
+                Client Borne de l'Ouest
               </button>
               <button
                 type="button"
@@ -420,69 +419,88 @@ function Index() {
             </div>
           </div>
 
-          <div className="grid md:grid-cols-3 gap-6">
+          {/* Cartes formules */}
+          <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
             {maintenancePlans.map((p, idx) => {
               const raw = isClient ? p.client : p.external;
               const isQuote = raw === "Sur devis";
               return (
                 <div
                   key={p.code}
-                  className={`relative p-8 rounded-sm border transition-all duration-300 hover:-translate-y-1 ${
+                  className={`relative flex flex-col p-8 lg:p-10 rounded-sm border bg-card transition-all duration-300 hover:-translate-y-1 ${
                     p.featured
-                      ? "border-primary bg-card shadow-lg shadow-primary/10"
-                      : "border-border bg-card hover:border-primary"
+                      ? "border-primary shadow-xl shadow-primary/10 md:scale-[1.03]"
+                      : "border-border hover:border-primary/60"
                   }`}
                   style={{ transitionDelay: `${idx * 60}ms` }}
                 >
                   {p.featured && (
-                    <div className="absolute -top-3 left-8 hero-grad text-primary-foreground text-mono px-3 py-1 rounded-sm">
+                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 hero-grad text-primary-foreground text-mono px-4 py-1 rounded-sm whitespace-nowrap">
                       Le plus choisi
                     </div>
                   )}
-                  <div className="flex items-start justify-between mb-8">
+
+                  {/* En-tête : code + icône */}
+                  <div className="flex items-center justify-between">
                     <span className="text-mono text-muted-foreground">{p.code}</span>
-                    <p.icon className="h-5 w-5 text-primary" strokeWidth={1.5} />
-                  </div>
-                  <h3 className="text-2xl font-medium tracking-tight">{p.name}</h3>
-                  <p className="mt-2 text-sm text-muted-foreground">{p.desc}</p>
-
-                  <div className="mt-6 flex items-baseline gap-1">
-                    <span className="text-4xl font-medium tracking-tight">
-                      {isQuote ? raw : `${raw}€`}
+                    <span className={`p-2 rounded-sm ${p.featured ? "hero-grad text-primary-foreground" : "bg-secondary text-primary"}`}>
+                      <p.icon className="h-5 w-5" strokeWidth={1.75} />
                     </span>
-                    {p.period && !isQuote && (
-                      <span className="text-mono text-muted-foreground">{p.period}</span>
-                    )}
-                  </div>
-                  <div className="text-mono text-muted-foreground mt-1">
-                    {isClient ? "Tarif client Borne de l'Ouest" : "Tarif hors installation maison"}
                   </div>
 
-                  <ul className="mt-8 space-y-3 border-t border-border pt-6">
+                  {/* Nom + tagline */}
+                  <h3 className="mt-8 text-2xl font-medium tracking-tight">{p.name}</h3>
+                  <p className="mt-2 text-sm text-muted-foreground min-h-[2.5rem]">{p.desc}</p>
+
+                  {/* Prix — bloc dédié */}
+                  <div className="mt-8 pb-8 border-b border-border">
+                    <div className="flex items-baseline gap-1.5">
+                      <span className="text-5xl font-medium tracking-tight">
+                        {isQuote ? "Sur" : raw}
+                      </span>
+                      {isQuote ? (
+                        <span className="text-5xl font-medium tracking-tight text-muted-foreground/70">devis</span>
+                      ) : (
+                        <>
+                          <span className="text-2xl text-muted-foreground">€</span>
+                          <span className="text-mono text-muted-foreground ml-1">{p.period}</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="text-mono text-muted-foreground mt-3">
+                      {isClient ? "Tarif client · après garantie" : "Tarif hors installation maison"}
+                    </div>
+                  </div>
+
+                  {/* Features */}
+                  <ul className="mt-8 space-y-4 flex-1">
                     {p.features.map((f) => (
-                      <li key={f} className="flex items-start gap-3 text-sm">
-                        <Check className="h-4 w-4 text-primary shrink-0 mt-0.5" strokeWidth={2.5} />
+                      <li key={f} className="flex items-start gap-3 text-sm leading-relaxed">
+                        <span className={`mt-0.5 p-0.5 rounded-full shrink-0 ${p.featured ? "bg-primary/15" : "bg-secondary"}`}>
+                          <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} />
+                        </span>
                         <span>{f}</span>
                       </li>
                     ))}
                   </ul>
 
+                  {/* CTA */}
                   <Link
                     to="/demande"
-                    className={`mt-8 w-full text-mono px-4 py-3 rounded-sm inline-flex items-center justify-center gap-2 transition ${
+                    className={`mt-10 w-full text-mono px-4 py-3.5 rounded-sm inline-flex items-center justify-center gap-2 transition ${
                       p.featured
                         ? "hero-grad text-primary-foreground hover:opacity-90"
                         : "border border-border hover:border-primary hover:text-primary"
                     }`}
                   >
-                    Souscrire <ArrowRight className="h-4 w-4" />
+                    {isQuote ? "Demander un devis" : "Souscrire"} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               );
             })}
           </div>
 
-          <p className="mt-8 text-xs text-muted-foreground text-center">
+          <p className="mt-12 text-xs text-muted-foreground text-center max-w-2xl mx-auto">
             Tarifs indicatifs TTC pour une borne standard 7-22 kW. Sans engagement après 12 mois. Devis personnalisé sur demande.
           </p>
         </div>
