@@ -4,7 +4,19 @@ import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, Ch
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
+type Formule = "essentiel" | "confort" | "pro";
+const FORMULES: Record<Formule, { label: string; price: string }> = {
+  essentiel: { label: "Essentiel", price: "9€ / mois" },
+  confort: { label: "Confort", price: "19€ / mois" },
+  pro: { label: "Pro / Flotte", price: "Sur devis" },
+};
+
 export const Route = createFileRoute("/demande")({
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
+    const f = search.formule;
+    if (f === "essentiel" || f === "confort" || f === "pro") return { formule: f };
+    return {};
+  },
   head: () => ({
     meta: [
       { title: "Demande de raccordement — Borne de l'Ouest" },
@@ -17,6 +29,8 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
+  const { formule } = Route.useSearch();
+  const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
@@ -87,21 +101,29 @@ function Demande() {
       <section className="pt-32 pb-12 border-b border-border">
         <div className="mx-auto max-w-5xl px-6">
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
-            <span className="h-px w-10 bg-primary" /> Formulaire · 5 min
+            <span className="h-px w-10 bg-primary" /> {formuleInfo ? "Souscription · Maintenance" : "Formulaire · 5 min"}
           </div>
           <h1 className="text-4xl md:text-6xl font-medium tracking-tight">
-            Demande de{" "}
-            <span className="text-muted-foreground/60">raccordement</span>
+            {formuleInfo ? "Souscrire la formule" : "Demande de"}{" "}
+            <span className="text-muted-foreground/60">{formuleInfo ? formuleInfo.label : "raccordement"}</span>
           </h1>
           <p className="mt-6 max-w-2xl text-muted-foreground">
-            Quelques infos et vos photos suffisent pour démarrer l'étude. Plus elles sont
-            précises, plus notre devis sera juste — et rapide.
+            {formuleInfo
+              ? `Renseignez vos coordonnées et l'adresse de la borne. Nous vous recontactons sous 48h pour activer votre abonnement ${formuleInfo.label} (${formuleInfo.price}).`
+              : "Quelques infos et vos photos suffisent pour démarrer l'étude. Plus elles sont précises, plus notre devis sera juste — et rapide."}
           </p>
+          {formuleInfo && (
+            <div className="mt-8 inline-flex items-center gap-3 border border-primary/30 bg-card rounded-sm px-4 py-3">
+              <span className="hero-grad text-primary-foreground text-mono px-2 py-1 rounded-sm">{formuleInfo.label}</span>
+              <span className="text-sm text-muted-foreground">{formuleInfo.price}</span>
+            </div>
+          )}
         </div>
       </section>
 
       <form onSubmit={onSubmit} className="py-16">
         <div className="mx-auto max-w-5xl px-6 space-y-16">
+          {formule && <input type="hidden" name="formule" value={formule} />}
 
           <div>
             <SectionHeading n="01" title="Vos coordonnées" />

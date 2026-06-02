@@ -53,6 +53,7 @@ const realisations = [
 
 type Plan = {
   name: string;
+  slug: "essentiel" | "confort" | "pro";
   code: string;
   client: string;
   external: string;
@@ -66,6 +67,7 @@ type Plan = {
 const maintenancePlans: Plan[] = [
   {
     name: "Essentiel",
+    slug: "essentiel",
     code: "M/01",
     client: "9",
     external: "14",
@@ -83,6 +85,7 @@ const maintenancePlans: Plan[] = [
   },
   {
     name: "Confort",
+    slug: "confort",
     code: "M/02",
     client: "19",
     external: "29",
@@ -100,6 +103,7 @@ const maintenancePlans: Plan[] = [
   },
   {
     name: "Pro / Flotte",
+    slug: "pro",
     code: "M/03",
     client: "Sur devis",
     external: "Sur devis",
@@ -487,13 +491,14 @@ function Index() {
                   {/* CTA */}
                   <Link
                     to="/demande"
+                    search={{ formule: p.slug }}
                     className={`mt-10 w-full text-mono px-4 py-3.5 rounded-sm inline-flex items-center justify-center gap-2 transition ${
                       p.featured
                         ? "hero-grad text-primary-foreground hover:opacity-90"
                         : "border border-border hover:border-primary hover:text-primary"
                     }`}
                   >
-                    {isQuote ? "Demander un devis" : "Souscrire"} <ArrowRight className="h-4 w-4" />
+                    {isQuote ? "Demander un devis" : "Souscrire la formule"} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               );
