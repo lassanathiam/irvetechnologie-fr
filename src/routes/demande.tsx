@@ -123,6 +123,7 @@ function Demande() {
 
       <form onSubmit={onSubmit} className="py-16">
         <div className="mx-auto max-w-5xl px-6 space-y-16">
+          {formule && <input type="hidden" name="formule" value={formule} />}
 
           <div>
             <SectionHeading n="01" title="Vos coordonnées" />
