@@ -85,6 +85,7 @@ const maintenancePlans: Plan[] = [
   },
   {
     name: "Confort",
+    slug: "confort",
     code: "M/02",
     client: "19",
     external: "29",
