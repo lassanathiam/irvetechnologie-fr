@@ -103,6 +103,7 @@ const maintenancePlans: Plan[] = [
   },
   {
     name: "Pro / Flotte",
+    slug: "pro",
     code: "M/03",
     client: "Sur devis",
     external: "Sur devis",
