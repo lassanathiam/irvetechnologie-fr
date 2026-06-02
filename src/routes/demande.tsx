@@ -4,7 +4,19 @@ import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, Ch
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 
+type Formule = "essentiel" | "confort" | "pro";
+const FORMULES: Record<Formule, { label: string; price: string }> = {
+  essentiel: { label: "Essentiel", price: "9€ / mois" },
+  confort: { label: "Confort", price: "19€ / mois" },
+  pro: { label: "Pro / Flotte", price: "Sur devis" },
+};
+
 export const Route = createFileRoute("/demande")({
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
+    const f = search.formule;
+    if (f === "essentiel" || f === "confort" || f === "pro") return { formule: f };
+    return {};
+  },
   head: () => ({
     meta: [
       { title: "Demande de raccordement — Borne de l'Ouest" },
