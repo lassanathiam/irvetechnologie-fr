@@ -67,6 +67,7 @@ type Plan = {
 const maintenancePlans: Plan[] = [
   {
     name: "Essentiel",
+    slug: "essentiel",
     code: "M/01",
     client: "9",
     external: "14",
