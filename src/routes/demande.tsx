@@ -30,7 +30,7 @@ const MAX_CHEMINEMENT = 5;
 
 function Demande() {
   const { formule } = Route.useSearch();
-  const formuleInfo = formule ? FORMULES[formule] : null;
+  const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
