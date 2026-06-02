@@ -491,13 +491,14 @@ function Index() {
                   {/* CTA */}
                   <Link
                     to="/demande"
+                    search={{ formule: p.slug }}
                     className={`mt-10 w-full text-mono px-4 py-3.5 rounded-sm inline-flex items-center justify-center gap-2 transition ${
                       p.featured
                         ? "hero-grad text-primary-foreground hover:opacity-90"
                         : "border border-border hover:border-primary hover:text-primary"
                     }`}
                   >
-                    {isQuote ? "Demander un devis" : "Souscrire"} <ArrowRight className="h-4 w-4" />
+                    {isQuote ? "Demander un devis" : "Souscrire la formule"} <ArrowRight className="h-4 w-4" />
                   </Link>
                 </div>
               );
