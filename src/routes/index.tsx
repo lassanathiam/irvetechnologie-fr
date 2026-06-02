@@ -53,6 +53,7 @@ const realisations = [
 
 type Plan = {
   name: string;
+  slug: "essentiel" | "confort" | "pro";
   code: string;
   client: string;
   external: string;
