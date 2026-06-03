@@ -37,6 +37,9 @@ function Demande() {
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submitDemandeFn = useServerFn(submitDemande);
 
   function setSingle(setter: (v: string | null) => void, current: string | null) {
     return (e: ChangeEvent<HTMLInputElement>) => {
