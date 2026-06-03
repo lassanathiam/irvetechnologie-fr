@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, type ChangeEvent } from "react";
-import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { submitDemande } from "@/lib/demande.functions";
 
 type Formule = "essentiel" | "confort" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -35,6 +37,9 @@ function Demande() {
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submitDemandeFn = useServerFn(submitDemande);
 
   function setSingle(setter: (v: string | null) => void, current: string | null) {
     return (e: ChangeEvent<HTMLInputElement>) => {
@@ -68,10 +73,38 @@ function Demande() {
     });
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const get = (k: string) => (fd.get(k)?.toString() ?? "").trim();
+      const distanceRaw = get("distance");
+      const distance = distanceRaw ? Number(distanceRaw) : null;
+      await submitDemandeFn({
+        data: {
+          nom: get("nom"),
+          email: get("email"),
+          telephone: get("tel"),
+          code_postal: get("cp"),
+          type_bien: get("bien") || null,
+          puissance: get("puissance") || null,
+          type_installation: get("type") || null,
+          distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
+          notes: get("notes") || null,
+          formule: formule ?? null,
+        },
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
@@ -184,11 +217,16 @@ function Demande() {
           </div>
 
           <div className="pt-8 border-t border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <p className="text-mono text-muted-foreground max-w-md">
-              En envoyant ce formulaire, vous acceptez d'être recontacté par Borne de l'Ouest.
-            </p>
-            <button type="submit" className="hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90">
-              Envoyer la demande <ArrowRight className="h-4 w-4" />
+            <div className="max-w-md space-y-2">
+              <p className="text-mono text-muted-foreground">
+                En envoyant ce formulaire, vous acceptez d'être recontacté par Borne de l'Ouest.
+              </p>
+              {error && (
+                <p className="text-mono text-destructive" role="alert">{error}</p>
+              )}
+            </div>
+            <button type="submit" disabled={submitting} className="hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
+              {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Envoi…</>) : (<>Envoyer la demande <ArrowRight className="h-4 w-4" /></>)}
             </button>
           </div>
         </div>
