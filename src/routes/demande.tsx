@@ -73,10 +73,38 @@ function Demande() {
     });
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setSubmitted(true);
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    if (submitting) return;
+    setError(null);
+    setSubmitting(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const get = (k: string) => (fd.get(k)?.toString() ?? "").trim();
+      const distanceRaw = get("distance");
+      const distance = distanceRaw ? Number(distanceRaw) : null;
+      await submitDemandeFn({
+        data: {
+          nom: get("nom"),
+          email: get("email"),
+          telephone: get("tel"),
+          code_postal: get("cp"),
+          type_bien: get("bien") || null,
+          puissance: get("puissance") || null,
+          type_installation: get("type") || null,
+          distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
+          notes: get("notes") || null,
+          formule: formule ?? null,
+        },
+      });
+      setSubmitted(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (err) {
+      console.error(err);
+      setError(err instanceof Error ? err.message : "Une erreur est survenue. Réessayez.");
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (submitted) {
