@@ -217,11 +217,16 @@ function Demande() {
           </div>
 
           <div className="pt-8 border-t border-border flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
-            <p className="text-mono text-muted-foreground max-w-md">
-              En envoyant ce formulaire, vous acceptez d'être recontacté par Borne de l'Ouest.
-            </p>
-            <button type="submit" className="hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90">
-              Envoyer la demande <ArrowRight className="h-4 w-4" />
+            <div className="max-w-md space-y-2">
+              <p className="text-mono text-muted-foreground">
+                En envoyant ce formulaire, vous acceptez d'être recontacté par Borne de l'Ouest.
+              </p>
+              {error && (
+                <p className="text-mono text-destructive" role="alert">{error}</p>
+              )}
+            </div>
+            <button type="submit" disabled={submitting} className="hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed">
+              {submitting ? (<><Loader2 className="h-4 w-4 animate-spin" /> Envoi…</>) : (<>Envoyer la demande <ArrowRight className="h-4 w-4" /></>)}
             </button>
           </div>
         </div>
