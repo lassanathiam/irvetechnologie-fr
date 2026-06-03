@@ -1,8 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, type ChangeEvent } from "react";
-import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
+import { submitDemande } from "@/lib/demande.functions";
 
 type Formule = "essentiel" | "confort" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
