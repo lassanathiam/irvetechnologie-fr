@@ -1,0 +1,1 @@
+DROP POLICY IF EXISTS "service role only" ON public.demande_rate_limits;
