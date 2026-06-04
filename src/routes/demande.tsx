@@ -161,6 +161,15 @@ function Demande() {
         <div className="mx-auto max-w-5xl px-6 space-y-16">
           {formule && <input type="hidden" name="formule" value={formule} />}
 
+          {/* Honeypot — hidden from humans, bots tend to fill it */}
+          <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+            <label>
+              Ne pas remplir
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
+            </label>
+          </div>
+
+
           <div>
             <SectionHeading n="01" title="Vos coordonnées" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
