@@ -40,6 +40,7 @@ function Demande() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submitDemandeFn = useServerFn(submitDemande);
+  const mountedAt = useRef<number>(Date.now());
 
   function setSingle(setter: (v: string | null) => void, current: string | null) {
     return (e: ChangeEvent<HTMLInputElement>) => {
@@ -95,6 +96,8 @@ function Demande() {
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
           notes: get("notes") || null,
           formule: formule ?? null,
+          website: get("website") || null,
+          elapsed_ms: Date.now() - mountedAt.current,
         },
       });
       setSubmitted(true);
@@ -157,6 +160,15 @@ function Demande() {
       <form onSubmit={onSubmit} className="py-16">
         <div className="mx-auto max-w-5xl px-6 space-y-16">
           {formule && <input type="hidden" name="formule" value={formule} />}
+
+          {/* Honeypot — hidden from humans, bots tend to fill it */}
+          <div aria-hidden="true" className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden">
+            <label>
+              Ne pas remplir
+              <input type="text" name="website" tabIndex={-1} autoComplete="off" defaultValue="" />
+            </label>
+          </div>
+
 
           <div>
             <SectionHeading n="01" title="Vos coordonnées" />
