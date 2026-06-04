@@ -96,6 +96,8 @@ function Demande() {
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
           notes: get("notes") || null,
           formule: formule ?? null,
+          website: get("website") || null,
+          elapsed_ms: Date.now() - mountedAt.current,
         },
       });
       setSubmitted(true);
