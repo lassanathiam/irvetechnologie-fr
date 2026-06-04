@@ -40,6 +40,7 @@ function Demande() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submitDemandeFn = useServerFn(submitDemande);
+  const mountedAt = useRef<number>(Date.now());
 
   function setSingle(setter: (v: string | null) => void, current: string | null) {
     return (e: ChangeEvent<HTMLInputElement>) => {
