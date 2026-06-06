@@ -24,6 +24,29 @@ export const Route = createFileRoute("/demande")({
       { title: "Demande de raccordement — Borne de l'Ouest" },
       { name: "description", content: "Décrivez votre projet et joignez les photos du tableau électrique, du cheminement de câble et de l'emplacement de la borne." },
     ],
+    scripts: [
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: "Accueil",
+              item: "https://kindred-share-beam.lovable.app/",
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: "Demande de raccordement",
+              item: "https://kindred-share-beam.lovable.app/demande",
+            },
+          ],
+        }),
+      },
+    ],
   }),
   component: Demande,
 });
