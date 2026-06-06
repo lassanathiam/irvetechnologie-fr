@@ -118,6 +118,21 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           areaServed: ["Bretagne", "Pays de la Loire", "Grand Ouest"],
         }),
       },
+      {
+        type: "application/ld+json",
+        children: JSON.stringify({
+          "@context": "https://schema.org",
+          "@type": "WebSite",
+          name: "Borne de l'Ouest",
+          alternateName: "IRVE Technologie",
+          url: "https://kindred-share-beam.lovable.app",
+          inLanguage: "fr-FR",
+          publisher: {
+            "@type": "Organization",
+            name: "IRVE Technologie",
+          },
+        }),
+      },
     ],
   }),
   shellComponent: RootShell,
