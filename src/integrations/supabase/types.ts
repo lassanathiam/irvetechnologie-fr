@@ -83,6 +83,155 @@ export type Database = {
         }
         Relationships: []
       }
+      devis: {
+        Row: {
+          client_adresse: string | null
+          client_cp_ville: string | null
+          client_email: string | null
+          client_nom: string
+          client_telephone: string | null
+          created_at: string
+          created_by: string | null
+          date_emission: string
+          date_expiration: string
+          id: string
+          notes: string | null
+          numero: string
+          objet: string | null
+          remise_pct: number
+          sent_at: string | null
+          statut: string
+          total_ht: number
+          total_ttc: number
+          total_tva: number
+          updated_at: string
+        }
+        Insert: {
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom: string
+          client_telephone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_emission?: string
+          date_expiration?: string
+          id?: string
+          notes?: string | null
+          numero: string
+          objet?: string | null
+          remise_pct?: number
+          sent_at?: string | null
+          statut?: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+        }
+        Update: {
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom?: string
+          client_telephone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_emission?: string
+          date_expiration?: string
+          id?: string
+          notes?: string | null
+          numero?: string
+          objet?: string | null
+          remise_pct?: number
+          sent_at?: string | null
+          statut?: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      devis_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          devis_id: string
+          id: string
+          libelle: string
+          ordre: number
+          prix_unitaire: number
+          quantite: number
+          tva: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          devis_id: string
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+          tva?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          devis_id?: string
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+          tva?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_items_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: false
+            referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      prestations: {
+        Row: {
+          actif: boolean
+          created_at: string
+          description: string | null
+          id: string
+          libelle: string
+          ordre: number
+          prix_unitaire: number
+          tva: number
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_unitaire?: number
+          tva?: number
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_unitaire?: number
+          tva?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
