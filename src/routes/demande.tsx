@@ -189,6 +189,18 @@ function Demande() {
             <p className="mt-6 text-muted-foreground">
               L'équipe Borne de l'Ouest étudie votre dossier et revient vers vous sous 48h ouvrées.
             </p>
+            <p className="mt-4 text-sm text-muted-foreground inline-flex items-center gap-2">
+              {uploading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" /> Transfert de vos photos en cours — ne fermez
+                  pas cette page.
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4 text-primary" /> Vos photos ont bien été transmises à notre bureau d'études.
+                </>
+              )}
+            </p>
           </div>
         </section>
         <SiteFooter />
