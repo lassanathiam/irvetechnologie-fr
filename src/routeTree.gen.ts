@@ -15,6 +15,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
+import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -45,12 +46,18 @@ const AuthenticatedDevisIndexRoute = AuthenticatedDevisIndexRouteImport.update({
   path: '/devis/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
+  id: '/devis/$id',
+  path: '/devis/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/devis/': typeof AuthenticatedDevisIndexRoute
 }
 export interface FileRoutesByTo {
@@ -58,6 +65,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/devis': typeof AuthenticatedDevisIndexRoute
 }
 export interface FileRoutesById {
@@ -67,13 +75,20 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/auth' | '/demande' | '/sitemap.xml' | '/devis/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/demande'
+    | '/sitemap.xml'
+    | '/devis/$id'
+    | '/devis/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/demande' | '/sitemap.xml' | '/devis'
+  to: '/' | '/auth' | '/demande' | '/sitemap.xml' | '/devis/$id' | '/devis'
   id:
     | '__root__'
     | '/'
@@ -81,6 +96,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/sitemap.xml'
+    | '/_authenticated/devis/$id'
     | '/_authenticated/devis/'
   fileRoutesById: FileRoutesById
 }
@@ -136,14 +152,23 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevisIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/devis/$id': {
+      id: '/_authenticated/devis/$id'
+      path: '/devis/$id'
+      fullPath: '/devis/$id'
+      preLoaderRoute: typeof AuthenticatedDevisIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
 }
 
