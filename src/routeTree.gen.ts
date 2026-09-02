@@ -16,6 +16,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
+import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -53,6 +54,11 @@ const AuthenticatedDevisIndexRoute = AuthenticatedDevisIndexRouteImport.update({
   path: '/devis/',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
+  id: '/rapports/$id',
+  path: '/rapports/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
   id: '/devis/$id',
   path: '/devis/$id',
@@ -65,6 +71,7 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/devis/': typeof AuthenticatedDevisIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
 }
@@ -74,6 +81,7 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/devis': typeof AuthenticatedDevisIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
 }
@@ -85,6 +93,7 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
 }
@@ -96,6 +105,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/devis/$id'
+    | '/rapports/$id'
     | '/devis/'
     | '/rapports/'
   fileRoutesByTo: FileRoutesByTo
@@ -105,6 +115,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/devis/$id'
+    | '/rapports/$id'
     | '/devis'
     | '/rapports'
   id:
@@ -115,6 +126,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/_authenticated/devis/$id'
+    | '/_authenticated/rapports/$id'
     | '/_authenticated/devis/'
     | '/_authenticated/rapports/'
   fileRoutesById: FileRoutesById
@@ -178,6 +190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevisIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rapports/$id': {
+      id: '/_authenticated/rapports/$id'
+      path: '/rapports/$id'
+      fullPath: '/rapports/$id'
+      preLoaderRoute: typeof AuthenticatedRapportsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/devis/$id': {
       id: '/_authenticated/devis/$id'
       path: '/devis/$id'
@@ -190,12 +209,14 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
+  AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
+  AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
 }
