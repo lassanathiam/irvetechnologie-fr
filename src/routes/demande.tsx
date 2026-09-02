@@ -61,40 +61,78 @@ function Demande() {
   const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const submitDemandeFn = useServerFn(submitDemande);
+  const uploadPhotoFn = useServerFn(uploadDemandePhoto);
   const mountedAt = useRef<number>(Date.now());
+  const files = useRef<{ tableau: File | null; borne: File | null; cheminement: File[] }>({
+    tableau: null,
+    borne: null,
+    cheminement: [],
+  });
 
-  function setSingle(setter: (v: string | null) => void, current: string | null) {
+  function setSingle(
+    setter: (v: string | null) => void,
+    current: string | null,
+    slot: "tableau" | "borne",
+  ) {
     return (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
       if (!file) return;
       if (current) URL.revokeObjectURL(current);
+      files.current[slot] = file;
       setter(URL.createObjectURL(file));
     };
   }
 
-  function clearSingle(setter: (v: string | null) => void, current: string | null) {
+  function clearSingle(
+    setter: (v: string | null) => void,
+    current: string | null,
+    slot: "tableau" | "borne",
+  ) {
     return () => {
       if (current) URL.revokeObjectURL(current);
+      files.current[slot] = null;
       setter(null);
     };
   }
 
   function addCheminement(e: ChangeEvent<HTMLInputElement>) {
-    const files = Array.from(e.target.files ?? []);
-    if (!files.length) return;
+    const picked = Array.from(e.target.files ?? []);
+    if (!picked.length) return;
     const remaining = MAX_CHEMINEMENT - cheminement.length;
-    const next = files.slice(0, remaining).map((f) => URL.createObjectURL(f));
-    setCheminement((c) => [...c, ...next]);
+    const kept = picked.slice(0, remaining);
+    files.current.cheminement = [...files.current.cheminement, ...kept];
+    setCheminement((c) => [...c, ...kept.map((f) => URL.createObjectURL(f))]);
     e.target.value = "";
   }
 
   function removeCheminement(i: number) {
+    files.current.cheminement = files.current.cheminement.filter((_, idx) => idx !== i);
     setCheminement((c) => {
       URL.revokeObjectURL(c[i]);
       return c.filter((_, idx) => idx !== i);
     });
+  }
+
+  /** Compresse puis envoie chaque photo vers le stockage privé de l'entreprise. */
+  async function uploadPhotos(demandeId: string) {
+    const jobs: { kind: "tableau" | "cheminement" | "borne"; file: File }[] = [];
+    if (files.current.tableau) jobs.push({ kind: "tableau", file: files.current.tableau });
+    if (files.current.borne) jobs.push({ kind: "borne", file: files.current.borne });
+    for (const f of files.current.cheminement) jobs.push({ kind: "cheminement", file: f });
+    if (!jobs.length) return;
+    setUploading(true);
+    for (const job of jobs) {
+      try {
+        const data_url = await compressImage(job.file);
+        await uploadPhotoFn({ data: { demande_id: demandeId, kind: job.kind, data_url } });
+      } catch (err) {
+        console.error("upload photo", job.kind, err);
+      }
+    }
+    setUploading(false);
   }
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -107,7 +145,7 @@ function Demande() {
       const get = (k: string) => (fd.get(k)?.toString() ?? "").trim();
       const distanceRaw = get("distance");
       const distance = distanceRaw ? Number(distanceRaw) : null;
-      await submitDemandeFn({
+      const res = await submitDemandeFn({
         data: {
           nom: get("nom"),
           email: get("email"),
@@ -125,6 +163,9 @@ function Demande() {
       });
       setSubmitted(true);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (res?.id && res.id !== "honeypot" && res.id !== "timetrap") {
+        void uploadPhotos(res.id);
+      }
     } catch (err) {
       console.error(err);
       setError(err instanceof Error ? err.message : "Une erreur est survenue. Réessayez.");
