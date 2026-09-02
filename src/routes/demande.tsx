@@ -5,6 +5,8 @@ import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, Ch
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { submitDemande } from "@/lib/demande.functions";
+import { uploadDemandePhoto } from "@/lib/photos.functions";
+import { compressImage } from "@/lib/image-compress";
 
 type Formule = "essentiel" | "confort" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -269,16 +271,16 @@ function Demande() {
                 hint="Photo nette du tableau ouvert avec les disjoncteurs visibles."
                 icon={PanelTop}
                 value={tableau}
-                onChange={setSingle(setTableau, tableau)}
-                onClear={clearSingle(setTableau, tableau)}
+                onChange={setSingle(setTableau, tableau, "tableau")}
+                onClear={clearSingle(setTableau, tableau, "tableau")}
               />
               <SinglePhoto
                 label="Emplacement de la borne"
                 hint="Mur ou poteau où la borne sera installée, avec recul si possible."
                 icon={Zap}
                 value={borne}
-                onChange={setSingle(setBorne, borne)}
-                onClear={clearSingle(setBorne, borne)}
+                onChange={setSingle(setBorne, borne, "borne")}
+                onClear={clearSingle(setBorne, borne, "borne")}
               />
             </div>
 
