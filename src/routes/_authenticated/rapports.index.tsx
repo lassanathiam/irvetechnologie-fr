@@ -4,7 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ClipboardCheck, FileText, Loader2, Trash2 } from "lucide-react";
 import { CHECKLIST, CHECK_LABEL, type CheckState, MESURES, RAPPORT_TYPES, type RapportType } from "@/lib/rapport-checklist";
-import { createRapport, deleteRapport, listRapports } from "@/lib/rapports.functions";
+import { createRapport, deleteRapport, listRapports, type RapportInput } from "@/lib/rapports.functions";
 import { SignaturePad } from "@/components/SignaturePad";
 import { dateFr } from "@/lib/company";
 
@@ -42,7 +42,7 @@ function RapportsPage() {
   const [error, setError] = useState<string | null>(null);
 
   const create = useMutation({
-    mutationFn: (payload: Parameters<typeof createFn>[0]["data"]) => createFn({ data: payload }),
+    mutationFn: (payload: RapportInput) => createFn({ data: payload }),
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["rapports"] });
       navigate({ to: "/rapports/$id", params: { id: res.id } });
