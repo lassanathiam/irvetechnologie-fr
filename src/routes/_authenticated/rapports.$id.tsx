@@ -3,8 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Printer, Zap } from "lucide-react";
 import { COMPANY, LOGO_URL, dateFr } from "@/lib/company";
-import { getRapport } from "@/lib/rapports.functions";
-import { useQuery as useQuery2 } from "@tanstack/react-query";
+import { getRapport, getRapportPhotoUrls } from "@/lib/rapports.functions";
 import {
   type CheckState,
   PHOTOS_REQUISES,
@@ -13,7 +12,6 @@ import {
   checklistFor,
   mesuresFor,
 } from "@/lib/rapport-checklist";
-import { getRapportPhotoUrls } from "@/lib/rapports.functions";
 
 export const Route = createFileRoute("/_authenticated/rapports/$id")({
   head: () => ({
@@ -204,9 +202,18 @@ function RapportDetail() {
             </div>
           </section>
 
+          {photos.length > 0 && (
+            <section className="px-6 pb-6 break-inside-avoid">
+              <div className="text-mono text-muted-foreground text-xs mb-3">Photos justificatives</div>
+              <RapportPhotos photos={photos} />
+            </section>
+          )}
+
           <section className="px-6 pb-6">
             <p className="text-xs text-muted-foreground leading-relaxed border border-border rounded-sm p-4">
-              {r.type === "conformite"
+              {type === "assurance"
+                ? `Je soussigné(e) ${r.technicien || COMPANY.raisonSociale}, intervenant pour le compte de ${COMPANY.raisonSociale} (SIRET ${COMPANY.siret}), déclare avoir réalisé l'installation de la borne de recharge décrite ci-dessus conformément aux règles de l'art et aux normes applicables (NF C 15-100 § infrastructure de recharge, IEC 61851 — charge en mode 3), avoir procédé aux essais et mesures consignés dans le présent rapport, et remettre l'installation en état de fonctionnement au client à la date d'intervention indiquée. Les valeurs mesurées ci-dessus ont été relevées sur site le jour de l'intervention.`
+                : r.type === "conformite"
                 ? "L'installation décrite ci-dessus a été réalisée et vérifiée conformément aux prescriptions de la norme NF C 15-100 (section infrastructure de recharge) et de la norme IEC 61851 (charge en mode 3). Le client déclare avoir pris connaissance du fonctionnement de la borne et des consignes de sécurité. Garantie de 12 mois pièces, main-d'œuvre et déplacement à compter de la date d'intervention."
                 : "Le présent rapport constate l'état de l'installation à la date du contrôle. Les points relevés non conformes doivent être reprises avant mise ou remise en service de la borne."}
             </p>
@@ -265,6 +272,34 @@ function SignatureBlock({ title, image }: { title: string; image?: string | null
         {image ? <img src={image} alt="Signature" className="max-h-24 w-auto" /> : null}
       </div>
       <div className="text-[11px] text-muted-foreground mt-2">Date et signature</div>
+    </div>
+  );
+}
+
+function RapportPhotos({ photos }: { photos: { kind: string; path: string }[] }) {
+  const fetchUrls = useServerFn(getRapportPhotoUrls);
+  const { data } = useQuery({
+    queryKey: ["rapport-photos", photos.map((p) => p.path).join(",")],
+    queryFn: () => fetchUrls({ data: { paths: photos.map((p) => p.path) } }),
+  });
+  const label = (kind: string) =>
+    PHOTOS_REQUISES.find((p) => p.key === kind)?.label ?? kind;
+
+  return (
+    <div className="grid grid-cols-2 gap-4">
+      {photos.map((p) => {
+        const url = data?.find((u) => u.path === p.path)?.url;
+        return (
+          <figure key={p.path} className="border border-border rounded-sm overflow-hidden">
+            {url ? (
+              <img src={url} alt={label(p.kind)} className="w-full h-44 object-cover" />
+            ) : (
+              <div className="w-full h-44 bg-muted" />
+            )}
+            <figcaption className="text-[11px] text-muted-foreground px-3 py-2">{label(p.kind)}</figcaption>
+          </figure>
+        );
+      })}
     </div>
   );
 }
