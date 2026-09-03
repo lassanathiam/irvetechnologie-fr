@@ -9,25 +9,23 @@ import process from "node:process";
 import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 import { loadEnv } from "vite";
 
-export default defineConfig(({ mode }) => {
-  // Loads all env vars (including non-VITE server-only ones) into process.env for server code.
-  const serverEnv = loadEnv(mode ?? "development", process.cwd(), "");
-  Object.assign(process.env, serverEnv);
+// Loads all env vars (including non-VITE server-only ones) into process.env for server code.
+Object.assign(process.env, loadEnv(process.env['NODE_ENV'] ?? "development", process.cwd(), ""));
 
-  return {
-    tanstackStart: {
-      // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-      // nitro/vite builds from this
-      server: { entry: "server" },
-    },
-    vite: {
-      resolve: {
-        alias: {
-          "entities/lib/decode.js": path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
-          "entities/lib/encode.js": path.resolve(process.cwd(), "node_modules/entities/lib/encode.js"),
-          entities: path.resolve(process.cwd(), "node_modules/entities"),
-        },
+export default defineConfig({
+  tanstackStart: {
+    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
+    // nitro/vite builds from this
+    server: { entry: "server" },
+  },
+  vite: {
+    resolve: {
+      alias: {
+        "entities/lib/decode.js": path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
+        "entities/lib/encode.js": path.resolve(process.cwd(), "node_modules/entities/lib/encode.js"),
+        entities: path.resolve(process.cwd(), "node_modules/entities"),
       },
     },
-  };
+  },
 });
+
