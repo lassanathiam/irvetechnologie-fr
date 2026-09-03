@@ -147,3 +147,26 @@
   opacity: 1;
   transform: translateY(0);
 }
+
+/* Feuilles imprimées (devis, rapports d'intervention) — fond blanc, encre noire */
+@media print {
+  @page {
+    margin: 12mm;
+  }
+  html,
+  body {
+    background: #ffffff !important;
+  }
+  .print-sheet,
+  .print-sheet * {
+    color: #111111 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+  }
+  .print-sheet {
+    background: #ffffff !important;
+  }
+  .print-sheet [class*="border"] {
+    border-color: #9ca3af !important;
+  }
+}

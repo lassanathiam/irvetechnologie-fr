@@ -14,6 +14,38 @@ export type Database = {
   }
   public: {
     Tables: {
+      demande_photos: {
+        Row: {
+          created_at: string
+          demande_id: string
+          id: string
+          kind: string
+          path: string
+        }
+        Insert: {
+          created_at?: string
+          demande_id: string
+          id?: string
+          kind: string
+          path: string
+        }
+        Update: {
+          created_at?: string
+          demande_id?: string
+          id?: string
+          kind?: string
+          path?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "demande_photos_demande_id_fkey"
+            columns: ["demande_id"]
+            isOneToOne: false
+            referencedRelation: "demande_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demande_rate_limits: {
         Row: {
           created_at: string
@@ -229,6 +261,87 @@ export type Database = {
           prix_unitaire?: number
           tva?: number
           updated_at?: string
+        }
+        Relationships: []
+      }
+      rapports: {
+        Row: {
+          borne_marque: string | null
+          borne_modele: string | null
+          borne_puissance: string | null
+          borne_serie: string | null
+          chantier_adresse: string | null
+          chantier_cp_ville: string | null
+          checklist: Json
+          client_email: string | null
+          client_nom: string
+          client_telephone: string | null
+          created_at: string
+          date_intervention: string
+          id: string
+          mesures: Json
+          numero: string
+          observations: string | null
+          reserves: string | null
+          signataire_client: string | null
+          signature_client: string | null
+          signature_technicien: string | null
+          technicien: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          borne_marque?: string | null
+          borne_modele?: string | null
+          borne_puissance?: string | null
+          borne_serie?: string | null
+          chantier_adresse?: string | null
+          chantier_cp_ville?: string | null
+          checklist?: Json
+          client_email?: string | null
+          client_nom: string
+          client_telephone?: string | null
+          created_at?: string
+          date_intervention?: string
+          id?: string
+          mesures?: Json
+          numero: string
+          observations?: string | null
+          reserves?: string | null
+          signataire_client?: string | null
+          signature_client?: string | null
+          signature_technicien?: string | null
+          technicien?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          borne_marque?: string | null
+          borne_modele?: string | null
+          borne_puissance?: string | null
+          borne_serie?: string | null
+          chantier_adresse?: string | null
+          chantier_cp_ville?: string | null
+          checklist?: Json
+          client_email?: string | null
+          client_nom?: string
+          client_telephone?: string | null
+          created_at?: string
+          date_intervention?: string
+          id?: string
+          mesures?: Json
+          numero?: string
+          observations?: string | null
+          reserves?: string | null
+          signataire_client?: string | null
+          signature_client?: string | null
+          signature_technicien?: string | null
+          technicien?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
