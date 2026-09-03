@@ -210,9 +210,14 @@ function RapportsPage() {
 
           {/* Mesures */}
           <section className="bg-card border border-border rounded-sm p-6">
-            <div className="text-mono text-muted-foreground mb-4">Mesures relevées</div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MESURES.map((m) => (
+            <div className="text-mono text-muted-foreground mb-1">Mesures relevées</div>
+            {type === "assurance" && (
+              <p className="text-xs text-muted-foreground mb-4">
+                Renseignez les valeurs chiffrées : un assureur n'accepte pas la seule mention « conforme ».
+              </p>
+            )}
+            <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mesureFields.map((m) => (
                 <label key={m.key} className="block">
                   <span className="text-xs text-muted-foreground">
                     {m.label} {m.unit ? `(${m.unit})` : ""}
@@ -227,6 +232,53 @@ function RapportsPage() {
               ))}
             </div>
           </section>
+
+          {/* Photos justificatives */}
+          <section className="bg-card border border-border rounded-sm p-6">
+            <div className="text-mono text-muted-foreground">Photos justificatives</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              4 photos attendues par l'assureur — elles sont joignables au rapport imprimé.
+            </p>
+            <div className="mt-4 grid sm:grid-cols-2 gap-4">
+              {PHOTOS_REQUISES.map((p) => {
+                const value = photos[p.key];
+                return (
+                  <div key={p.key} className="border border-border rounded-sm p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs">{p.label}</span>
+                      {value && (
+                        <button
+                          type="button"
+                          onClick={() => setPhotos((v) => ({ ...v, [p.key]: undefined }))}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Retirer la photo"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {value ? (
+                      <img src={value} alt={p.label} className="mt-2 w-full h-32 object-cover rounded-sm" />
+                    ) : (
+                      <label className="mt-2 h-32 grid place-items-center border border-dashed border-border rounded-sm cursor-pointer hover:border-primary text-muted-foreground">
+                        <span className="inline-flex items-center gap-2 text-mono text-[11px]">
+                          <Camera className="h-4 w-4" /> Ajouter
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => onPickPhoto(p.key, e.target.files?.[0])}
+                        />
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
 
           {/* Checklist */}
           <section className="space-y-5">
