@@ -2,11 +2,28 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ClipboardCheck, FileText, Loader2, Trash2 } from "lucide-react";
-import { CHECKLIST, CHECK_LABEL, type CheckState, MESURES, RAPPORT_TYPES, type RapportType } from "@/lib/rapport-checklist";
-import { createRapport, deleteRapport, listRapports, type RapportInput } from "@/lib/rapports.functions";
+import { Camera, ClipboardCheck, FileText, Loader2, Trash2, X } from "lucide-react";
+import {
+  CHECK_LABEL,
+  type CheckState,
+  PHOTOS_REQUISES,
+  type PhotoKind,
+  RAPPORT_TYPES,
+  type RapportType,
+  checklistFor,
+  mesuresFor,
+} from "@/lib/rapport-checklist";
+import {
+  createRapport,
+  deleteRapport,
+  listRapports,
+  uploadRapportPhoto,
+  type RapportInput,
+} from "@/lib/rapports.functions";
 import { SignaturePad } from "@/components/SignaturePad";
+import { compressImage } from "@/lib/image-compress";
 import { dateFr } from "@/lib/company";
+
 
 export const Route = createFileRoute("/_authenticated/rapports/")({
   head: () => ({
