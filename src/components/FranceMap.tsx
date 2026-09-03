@@ -84,14 +84,14 @@ export function FranceMap({
             <circle
               cx={x}
               cy={y}
-              r={active ? 9 : 6}
+              r={active ? 11 : 8}
               fill={COLOR[p.statut ?? "planifie"] ?? "hsl(var(--primary))"}
-              opacity={active ? 0.28 : 0.18}
+              opacity={active ? 0.35 : 0.22}
             />
             <circle
               cx={x}
               cy={y}
-              r={active ? 4.5 : 3}
+              r={active ? 5.5 : 4}
               fill={COLOR[p.statut ?? "planifie"] ?? "hsl(var(--primary))"}
             />
             {active && (
