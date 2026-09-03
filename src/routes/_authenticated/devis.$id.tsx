@@ -1,244 +1,211 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Printer, Zap } from "lucide-react";
-import { COMPANY, LOGO_URL, dateFr, euro } from "@/lib/company";
-import { getDevis } from "@/lib/devis.functions";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { ArrowLeft, CheckCircle2, Loader2, Mail, Printer, Receipt } from "lucide-react";
+import { ProShell } from "@/components/ProShell";
+import { DocumentPrint } from "@/components/DocumentPrint";
+import {
+  convertirEnFacture,
+  envoyerDevis,
+  getDevis,
+  updateStatutDevis,
+} from "@/lib/devis.functions";
 
 export const Route = createFileRoute("/_authenticated/devis/$id")({
   head: () => ({
     meta: [
-      { title: "Devis — IRVE Technologie" },
-      { name: "description", content: "Aperçu du devis IRVE Technologie prêt à imprimer ou envoyer." },
+      { title: "Devis — Espace pro Borne de l'Ouest" },
+      { name: "description", content: "Aperçu, envoi et conversion en facture du devis." },
       { name: "robots", content: "noindex" },
     ],
   }),
   component: DevisDetail,
 });
 
+const STATUTS = [
+  { value: "brouillon", label: "Brouillon" },
+  { value: "envoye", label: "Envoyé" },
+  { value: "accepte", label: "Accepté" },
+  { value: "refuse", label: "Refusé" },
+  { value: "expire", label: "Expiré" },
+] as const;
+
 function DevisDetail() {
   const { id } = Route.useParams();
+  const qc = useQueryClient();
+  const navigate = useNavigate();
   const fetchDevis = useServerFn(getDevis);
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["devis", id],
-    queryFn: () => fetchDevis({ data: { id } }),
+  const sendFn = useServerFn(envoyerDevis);
+  const statutFn = useServerFn(updateStatutDevis);
+  const convertFn = useServerFn(convertirEnFacture);
+
+  const [message, setMessage] = useState("");
+  const [feedback, setFeedback] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const query = useQuery({ queryKey: ["devis", id], queryFn: () => fetchDevis({ data: { id } }) });
+
+  const send = useMutation({
+    mutationFn: () => sendFn({ data: { id, message: message || null } }),
+    onSuccess: (res) => {
+      setError(null);
+      setFeedback(
+        res.sent
+          ? "Devis envoyé au client par email."
+          : "Adresse email bloquée (désinscription) — envoi non effectué.",
+      );
+      qc.invalidateQueries({ queryKey: ["devis"] });
+    },
+    onError: (err) => setError(err instanceof Error ? err.message : "Envoi impossible."),
   });
 
-  if (isLoading) {
+  const convert = useMutation({
+    mutationFn: () => convertFn({ data: { id } }),
+    onSuccess: (res) => {
+      qc.invalidateQueries({ queryKey: ["devis"] });
+      navigate({ to: "/factures/$id", params: { id: res.id } });
+    },
+    onError: (err) => setError(err instanceof Error ? err.message : "Conversion impossible."),
+  });
+
+  const statut = useMutation({
+    mutationFn: (value: string) => statutFn({ data: { id, statut: value } }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["devis", id] });
+      qc.invalidateQueries({ queryKey: ["devis"] });
+    },
+  });
+
+  if (query.isLoading) {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
-      </div>
+      <ProShell>
+        <Loader2 className="h-5 w-5 animate-spin text-primary" />
+      </ProShell>
+    );
+  }
+  if (query.error || !query.data) {
+    return (
+      <ProShell>
+        <p className="text-sm text-destructive">Devis introuvable.</p>
+      </ProShell>
     );
   }
 
-  if (error || !data) {
-    return (
-      <div className="min-h-screen grid place-items-center px-6 text-center">
-        <div>
-          <p className="text-muted-foreground">Ce devis est introuvable.</p>
-          <Link to="/devis" className="mt-4 inline-block text-mono text-primary hover:underline">
-            Retour aux devis
-          </Link>
-        </div>
-      </div>
-    );
-  }
-
-  const { devis, items } = data;
-  const totalBrut = items.reduce((s, i) => s + Number(i.quantite) * Number(i.prix_unitaire), 0);
-  const remise = Math.round(((totalBrut * Number(devis.remise_pct)) / 100) * 100) / 100;
+  const { devis, items } = query.data;
 
   return (
-    <div className="min-h-screen bg-background">
-      <div className="print:hidden border-b border-border bg-card">
-        <div className="mx-auto max-w-4xl px-6 h-16 flex items-center justify-between gap-4">
-          <Link to="/devis" className="text-mono text-muted-foreground hover:text-primary inline-flex items-center gap-2">
-            <ArrowLeft className="h-4 w-4" /> Devis
+    <ProShell>
+      <div className="print:hidden space-y-6">
+        <div className="flex flex-wrap items-center gap-3">
+          <Link
+            to="/devis"
+            className="text-mono text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
+          >
+            <ArrowLeft className="h-3.5 w-3.5" /> Devis
           </Link>
-          <div className="flex items-center gap-3">
+          <span className="text-mono text-xs text-primary">{devis.numero}</span>
+          <select
+            value={devis.statut}
+            onChange={(e) => statut.mutate(e.target.value)}
+            className="ml-auto bg-input border border-border rounded-sm px-3 py-2 text-mono text-xs"
+          >
+            {STATUTS.map((s) => (
+              <option key={s.value} value={s.value}>
+                {s.label}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            onClick={() => window.print()}
+            className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-2"
+          >
+            <Printer className="h-3.5 w-3.5" /> Imprimer / PDF
+          </button>
+          {devis.facture_id ? (
+            <Link
+              to="/factures/$id"
+              params={{ id: devis.facture_id }}
+              className="border border-border rounded-sm px-4 py-2 text-mono text-xs text-primary inline-flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" /> Voir la facture
+            </Link>
+          ) : (
             <button
               type="button"
-              onClick={() => window.print()}
-              className="border border-border rounded-sm px-4 py-2.5 text-mono hover:border-primary hover:text-primary inline-flex items-center gap-2"
+              onClick={() => convert.mutate()}
+              disabled={convert.isPending}
+              className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-2 disabled:opacity-50"
             >
-              <Printer className="h-4 w-4" /> Imprimer / PDF
+              {convert.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Receipt className="h-3.5 w-3.5" />}
+              Convertir en facture
             </button>
+          )}
+        </div>
+
+        <div className="border border-border rounded-sm bg-card p-6 space-y-3">
+          <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+            Envoyer au client
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            {devis.client_email
+              ? `Destinataire : ${devis.client_email}`
+              : "Aucune adresse email sur ce devis — ajoutez-la pour pouvoir l'envoyer."}
+          </p>
+          <textarea
+            rows={3}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Message personnalisé (optionnel)"
+            className="w-full bg-input border border-border rounded-sm px-4 py-3 text-sm resize-none"
+          />
+          <div className="flex flex-wrap items-center gap-4">
+            <button
+              type="button"
+              disabled={!devis.client_email || send.isPending}
+              onClick={() => {
+                setFeedback(null);
+                setError(null);
+                send.mutate();
+              }}
+              className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+              Envoyer le devis
+            </button>
+            {devis.sent_at && (
+              <span className="text-mono text-xs text-muted-foreground">
+                Dernier envoi : {new Date(devis.sent_at).toLocaleString("fr-FR")}
+              </span>
+            )}
           </div>
+          {feedback && <p className="text-mono text-xs text-primary">{feedback}</p>}
+          {error && <p className="text-mono text-xs text-destructive">{error}</p>}
         </div>
       </div>
 
-      <div className="mx-auto max-w-4xl px-6 py-12 print:py-0 print:px-0">
-        <article className="bg-card border border-border rounded-sm overflow-hidden print:border-0">
-          {/* En-tête */}
-          <header className="p-10 border-b border-border">
-            <div className="flex items-start justify-between gap-8 flex-wrap">
-              <div className="flex items-center gap-3">
-                {LOGO_URL ? (
-                  <img src={LOGO_URL} alt="IRVE Technologie" className="h-14 w-auto" />
-                ) : (
-                  <span className="hero-grad text-primary-foreground p-2.5 rounded-sm">
-                    <Zap className="h-6 w-6" strokeWidth={2.5} />
-                  </span>
-                )}
-                <div>
-                  <div className="text-xl font-semibold tracking-tight leading-none">
-                    {COMPANY.raisonSociale}
-                  </div>
-                  <div className="text-xs text-muted-foreground mt-1">{COMPANY.baseline}</div>
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-mono text-primary">Devis</div>
-                <div className="text-2xl font-medium tracking-tight">{devis.numero}</div>
-                <div className="text-xs text-muted-foreground mt-2">
-                  Émis le {dateFr(devis.date_emission)}
-                  <br />
-                  Valable jusqu'au {dateFr(devis.date_expiration)}
-                </div>
-              </div>
-            </div>
-          </header>
-
-          {/* Parties */}
-          <section className="grid sm:grid-cols-2 divide-y sm:divide-y-0 sm:divide-x divide-border border-b border-border">
-            <div className="p-8">
-              <div className="text-mono text-muted-foreground">Émetteur</div>
-              <div className="mt-3 text-sm leading-relaxed">
-                <div className="font-medium">
-                  {COMPANY.raisonSociale}, {COMPANY.forme}
-                </div>
-                <div className="text-muted-foreground">
-                  {COMPANY.adresse}
-                  <br />
-                  {COMPANY.cpVille}
-                  <br />
-                  {COMPANY.email}
-                  <br />
-                  {COMPANY.telephone}
-                  <br />
-                  SIRET {COMPANY.siret}
-                  <br />
-                  TVA {COMPANY.tva}
-                </div>
-              </div>
-            </div>
-            <div className="p-8">
-              <div className="text-mono text-muted-foreground">Client</div>
-              <div className="mt-3 text-sm leading-relaxed">
-                <div className="font-medium">{devis.client_nom}</div>
-                <div className="text-muted-foreground">
-                  {devis.client_adresse && (
-                    <>
-                      {devis.client_adresse}
-                      <br />
-                    </>
-                  )}
-                  {devis.client_cp_ville && (
-                    <>
-                      {devis.client_cp_ville}
-                      <br />
-                    </>
-                  )}
-                  {devis.client_email && (
-                    <>
-                      {devis.client_email}
-                      <br />
-                    </>
-                  )}
-                  {devis.client_telephone}
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {devis.objet && (
-            <div className="px-8 py-5 border-b border-border">
-              <span className="text-mono text-primary">Objet</span>{" "}
-              <span className="font-medium">{devis.objet}</span>
-            </div>
-          )}
-
-          {/* Lignes */}
-          <section className="p-8">
-            <div className="hidden sm:grid grid-cols-[1fr_60px_110px_70px_110px] gap-4 pb-3 border-b border-border text-mono text-muted-foreground">
-              <span>Description</span>
-              <span className="text-right">Qté</span>
-              <span className="text-right">PU HT</span>
-              <span className="text-right">TVA</span>
-              <span className="text-right">Total HT</span>
-            </div>
-            <div className="divide-y divide-border">
-              {items.map((item) => (
-                <div
-                  key={item.id}
-                  className="grid sm:grid-cols-[1fr_60px_110px_70px_110px] gap-x-4 gap-y-1 py-4"
-                >
-                  <div>
-                    <div className="font-medium">{item.libelle}</div>
-                    {item.description && (
-                      <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-                        {item.description}
-                      </p>
-                    )}
-                  </div>
-                  <div className="sm:text-right text-mono text-muted-foreground">
-                    {Number(item.quantite)}
-                  </div>
-                  <div className="sm:text-right text-mono">{euro(Number(item.prix_unitaire))}</div>
-                  <div className="sm:text-right text-mono text-muted-foreground">
-                    {Number(item.tva)} %
-                  </div>
-                  <div className="sm:text-right text-mono">
-                    {euro(Number(item.quantite) * Number(item.prix_unitaire))}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Totaux */}
-            <div className="mt-8 flex justify-end">
-              <div className="w-full sm:w-80 space-y-2">
-                <Line label="Total HT" value={euro(totalBrut)} />
-                {Number(devis.remise_pct) > 0 && (
-                  <Line label={`Remise (${Number(devis.remise_pct)} %)`} value={`-${euro(remise)}`} />
-                )}
-                <Line label="Total HT net" value={euro(Number(devis.total_ht))} />
-                <Line label="Montant de la TVA" value={euro(Number(devis.total_tva))} />
-                <div className="mt-3 pt-3 border-t border-border flex items-baseline justify-between">
-                  <span className="font-medium">Total TTC</span>
-                  <span className="text-2xl font-medium">{euro(Number(devis.total_ttc))}</span>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {devis.notes && (
-            <section className="px-8 pb-8">
-              <div className="border border-border rounded-sm p-5 bg-secondary/40">
-                <div className="text-mono text-muted-foreground">Notes</div>
-                <p className="mt-2 text-sm leading-relaxed whitespace-pre-line">{devis.notes}</p>
-              </div>
-            </section>
-          )}
-
-          <footer className="px-8 py-6 border-t border-border text-xs text-muted-foreground flex flex-wrap gap-x-6 gap-y-1 justify-between">
-            <span>
-              {COMPANY.raisonSociale}, {COMPANY.forme} · {COMPANY.site}
-            </span>
-            <span>{devis.numero} · 1/1</span>
-          </footer>
-        </article>
+      <div className="mt-8 print:mt-0">
+        <DocumentPrint
+          type="devis"
+          doc={{
+            numero: devis.numero,
+            date_emission: devis.date_emission,
+            date_limite: devis.date_expiration,
+            client_nom: devis.client_nom,
+            client_email: devis.client_email,
+            client_telephone: devis.client_telephone,
+            client_adresse: devis.client_adresse,
+            client_cp_ville: devis.client_cp_ville,
+            objet: devis.objet,
+            remise_pct: devis.remise_pct,
+            acompte_pct: devis.acompte_pct,
+            conditions_paiement: devis.conditions_paiement,
+            notes: devis.notes,
+          }}
+          items={items}
+        />
       </div>
-    </div>
-  );
-}
-
-function Line({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="flex items-baseline justify-between text-sm">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-mono">{value}</span>
-    </div>
+    </ProShell>
   );
 }

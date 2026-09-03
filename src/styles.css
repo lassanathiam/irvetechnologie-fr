@@ -158,15 +158,22 @@
     background: #ffffff !important;
   }
   .print-sheet,
-  .print-sheet * {
+  .print-sheet *,
+  .print-doc,
+  .print-doc * {
     color: #111111 !important;
     background: transparent !important;
     box-shadow: none !important;
   }
-  .print-sheet {
+  .print-sheet,
+  .print-doc {
     background: #ffffff !important;
+    border: 0 !important;
+    padding: 0 !important;
   }
-  .print-sheet [class*="border"] {
+  .print-sheet [class*="border"],
+  .print-doc [class*="border"] {
     border-color: #9ca3af !important;
   }
 }
+
