@@ -345,6 +345,86 @@ export type Database = {
         }
         Relationships: []
       }
+      rendezvous: {
+        Row: {
+          adresse: string
+          client_email: string | null
+          client_nom: string
+          client_telephone: string | null
+          cp_ville: string | null
+          created_at: string
+          date_debut: string
+          demande_id: string | null
+          distance_km: number | null
+          duree_min: number
+          duree_trajet_min: number | null
+          id: string
+          lat: number | null
+          lng: number | null
+          notes: string | null
+          statut: string
+          technicien: string | null
+          titre: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          adresse: string
+          client_email?: string | null
+          client_nom: string
+          client_telephone?: string | null
+          cp_ville?: string | null
+          created_at?: string
+          date_debut: string
+          demande_id?: string | null
+          distance_km?: number | null
+          duree_min?: number
+          duree_trajet_min?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          statut?: string
+          technicien?: string | null
+          titre: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          adresse?: string
+          client_email?: string | null
+          client_nom?: string
+          client_telephone?: string | null
+          cp_ville?: string | null
+          created_at?: string
+          date_debut?: string
+          demande_id?: string | null
+          distance_km?: number | null
+          duree_min?: number
+          duree_trajet_min?: number | null
+          id?: string
+          lat?: number | null
+          lng?: number | null
+          notes?: string | null
+          statut?: string
+          technicien?: string | null
+          titre?: string
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendezvous_demande_id_fkey"
+            columns: ["demande_id"]
+            isOneToOne: false
+            referencedRelation: "demande_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
