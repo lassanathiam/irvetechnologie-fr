@@ -4,7 +4,7 @@ export const COMPANY = {
   baseline: "Penser pour demain, installer aujourd'hui.",
   adresse: "60 rue François 1er",
   cpVille: "75008 Paris, FR",
-  email: "contact@irvetechnologie.fr",
+  email: "contacts@irvetechnologie.fr",
   telephone: "+33 7 68 08 43 67",
   site: "www.irvetechnologie.fr",
   siret: "98953372400013",
