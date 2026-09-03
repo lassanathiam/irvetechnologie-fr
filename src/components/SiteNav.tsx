@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Zap } from "lucide-react";
+import { Lock, Zap } from "lucide-react";
 
 export function SiteNav() {
   return (
@@ -17,12 +17,20 @@ export function SiteNav() {
           <a href="/#maintenance" className="hover:text-foreground transition">Maintenance</a>
           <a href="/#zones" className="hover:text-foreground transition">Zones</a>
         </nav>
-        <Link
-          to="/demande"
+        <div className="flex items-center gap-3">
+          <Link
+            to="/espace"
+            className="hidden sm:inline-flex items-center gap-1.5 text-mono text-xs text-muted-foreground hover:text-primary"
+          >
+            <Lock className="h-3.5 w-3.5" /> Espace pro
+          </Link>
+          <Link
+            to="/demande"
           className="hero-grad text-primary-foreground text-mono px-4 py-2.5 rounded-sm hover:opacity-90 transition"
-        >
-          Demande
-        </Link>
+          >
+            Demande
+          </Link>
+        </div>
       </div>
     </header>
   );
