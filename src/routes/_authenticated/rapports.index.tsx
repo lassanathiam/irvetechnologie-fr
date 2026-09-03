@@ -51,15 +51,31 @@ function RapportsPage() {
 
   const rapports = useQuery({ queryKey: ["rapports"], queryFn: () => fetchRapports() });
 
-  const [type, setType] = useState<RapportType>("conformite");
+  const [type, setType] = useState<RapportType>("assurance");
   const [checks, setChecks] = useState<Record<string, CheckState>>({});
   const [mesures, setMesures] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<Partial<Record<PhotoKind, string>>>({});
   const [sigTech, setSigTech] = useState<string | null>(null);
   const [sigClient, setSigClient] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const sections = checklistFor(type);
+  const mesureFields = mesuresFor(type);
+  const uploadPhoto = useServerFn(uploadRapportPhoto);
+
   const create = useMutation({
-    mutationFn: (payload: RapportInput) => createFn({ data: payload }),
+    mutationFn: async (payload: RapportInput) => {
+      const res = await createFn({ data: payload });
+      for (const [kind, data_url] of Object.entries(photos)) {
+        if (!data_url) continue;
+        try {
+          await uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url } });
+        } catch {
+          /* la photo peut être ajoutée plus tard, le rapport reste valide */
+        }
+      }
+      return res;
+    },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["rapports"] });
       navigate({ to: "/rapports/$id", params: { id: res.id } });
@@ -73,7 +89,7 @@ function RapportsPage() {
   });
 
   function setAllSection(sectionKey: string, state: CheckState) {
-    const section = CHECKLIST.find((s) => s.key === sectionKey);
+    const section = sections.find((s) => s.key === sectionKey);
     if (!section) return;
     setChecks((c) => {
       const next = { ...c };
@@ -84,8 +100,18 @@ function RapportsPage() {
 
   function setAll(state: CheckState) {
     const next: Record<string, CheckState> = {};
-    for (const s of CHECKLIST) for (const i of s.items) next[`${s.key}.${i.key}`] = state;
+    for (const s of sections) for (const i of s.items) next[`${s.key}.${i.key}`] = state;
     setChecks(next);
+  }
+
+  async function onPickPhoto(kind: PhotoKind, file: File | undefined) {
+    if (!file) return;
+    try {
+      const dataUrl = await compressImage(file);
+      setPhotos((p) => ({ ...p, [kind]: dataUrl }));
+    } catch {
+      setError("Photo illisible, merci de réessayer.");
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -116,8 +142,9 @@ function RapportsPage() {
     });
   }
 
-  const total = CHECKLIST.reduce((s, sec) => s + sec.items.length, 0);
+  const total = sections.reduce((s, sec) => s + sec.items.length, 0);
   const filled = Object.keys(checks).length;
+
 
   return (
     <div className="min-h-screen bg-background">
