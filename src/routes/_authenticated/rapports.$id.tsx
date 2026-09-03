@@ -4,7 +4,16 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Loader2, Printer, Zap } from "lucide-react";
 import { COMPANY, LOGO_URL, dateFr } from "@/lib/company";
 import { getRapport } from "@/lib/rapports.functions";
-import { CHECKLIST, type CheckState, MESURES, RAPPORT_TYPES, type RapportType } from "@/lib/rapport-checklist";
+import { useQuery as useQuery2 } from "@tanstack/react-query";
+import {
+  type CheckState,
+  PHOTOS_REQUISES,
+  RAPPORT_TYPES,
+  type RapportType,
+  checklistFor,
+  mesuresFor,
+} from "@/lib/rapport-checklist";
+import { getRapportPhotoUrls } from "@/lib/rapports.functions";
 
 export const Route = createFileRoute("/_authenticated/rapports/$id")({
   head: () => ({
@@ -53,7 +62,9 @@ function RapportDetail() {
 
   const checklist = (r.checklist ?? {}) as Record<string, CheckState>;
   const mesures = (r.mesures ?? {}) as Record<string, string>;
-  const meta = RAPPORT_TYPES[r.type as RapportType] ?? RAPPORT_TYPES.conformite;
+  const type = (RAPPORT_TYPES[r.type as RapportType] ? r.type : "conformite") as RapportType;
+  const meta = RAPPORT_TYPES[type];
+  const photos = (Array.isArray(r.photos) ? r.photos : []) as { kind: string; path: string }[];
   const nc = Object.entries(checklist).filter(([, v]) => v === "nc").length;
 
   return (
@@ -137,7 +148,7 @@ function RapportDetail() {
           <section className="p-6 border-b border-border">
             <div className="text-mono text-muted-foreground mb-3">Mesures relevées</div>
             <div className="grid sm:grid-cols-4 gap-4 text-sm">
-              {MESURES.map((m) => (
+              {mesuresFor(type).map((m) => (
                 <Info
                   key={m.key}
                   label={m.label}
@@ -155,7 +166,7 @@ function RapportDetail() {
               </div>
             </div>
 
-            {CHECKLIST.map((section) => (
+            {checklistFor(type).map((section) => (
               <div key={section.key} className="break-inside-avoid">
                 <div className="font-medium text-sm border-b border-border pb-1.5 mb-1">{section.title}</div>
                 <ul>

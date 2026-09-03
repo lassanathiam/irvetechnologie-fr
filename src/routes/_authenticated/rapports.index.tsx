@@ -299,7 +299,7 @@ function RapportsPage() {
               </div>
             </div>
 
-            {CHECKLIST.map((section) => (
+            {sections.map((section) => (
               <div key={section.key} className="bg-card border border-border rounded-sm">
                 <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-border">
                   <div className="font-medium text-sm">{section.title}</div>
