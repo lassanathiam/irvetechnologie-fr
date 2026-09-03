@@ -117,15 +117,18 @@ export type Database = {
       }
       devis: {
         Row: {
+          acompte_pct: number
           client_adresse: string | null
           client_cp_ville: string | null
           client_email: string | null
           client_nom: string
           client_telephone: string | null
+          conditions_paiement: string | null
           created_at: string
           created_by: string | null
           date_emission: string
           date_expiration: string
+          facture_id: string | null
           id: string
           notes: string | null
           numero: string
@@ -134,20 +137,25 @@ export type Database = {
           sent_at: string | null
           statut: string
           total_ht: number
+          total_ht_brut: number
+          total_remise: number
           total_ttc: number
           total_tva: number
           updated_at: string
         }
         Insert: {
+          acompte_pct?: number
           client_adresse?: string | null
           client_cp_ville?: string | null
           client_email?: string | null
           client_nom: string
           client_telephone?: string | null
+          conditions_paiement?: string | null
           created_at?: string
           created_by?: string | null
           date_emission?: string
           date_expiration?: string
+          facture_id?: string | null
           id?: string
           notes?: string | null
           numero: string
@@ -156,20 +164,25 @@ export type Database = {
           sent_at?: string | null
           statut?: string
           total_ht?: number
+          total_ht_brut?: number
+          total_remise?: number
           total_ttc?: number
           total_tva?: number
           updated_at?: string
         }
         Update: {
+          acompte_pct?: number
           client_adresse?: string | null
           client_cp_ville?: string | null
           client_email?: string | null
           client_nom?: string
           client_telephone?: string | null
+          conditions_paiement?: string | null
           created_at?: string
           created_by?: string | null
           date_emission?: string
           date_expiration?: string
+          facture_id?: string | null
           id?: string
           notes?: string | null
           numero?: string
@@ -178,6 +191,8 @@ export type Database = {
           sent_at?: string | null
           statut?: string
           total_ht?: number
+          total_ht_brut?: number
+          total_remise?: number
           total_ttc?: number
           total_tva?: number
           updated_at?: string
@@ -221,6 +236,145 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "devis_items_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: false
+            referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      facture_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          facture_id: string
+          id: string
+          libelle: string
+          ordre: number
+          prix_unitaire: number
+          quantite: number
+          tva: number
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          facture_id: string
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+          tva?: number
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          facture_id?: string
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+          tva?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "facture_items_facture_id_fkey"
+            columns: ["facture_id"]
+            isOneToOne: false
+            referencedRelation: "factures"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      factures: {
+        Row: {
+          acompte_pct: number
+          client_adresse: string | null
+          client_cp_ville: string | null
+          client_email: string | null
+          client_nom: string
+          client_telephone: string | null
+          conditions_paiement: string | null
+          created_at: string
+          created_by: string | null
+          date_echeance: string
+          date_emission: string
+          devis_id: string | null
+          id: string
+          notes: string | null
+          numero: string
+          objet: string | null
+          paid_at: string | null
+          remise_pct: number
+          sent_at: string | null
+          statut: string
+          total_ht: number
+          total_ht_brut: number
+          total_remise: number
+          total_ttc: number
+          total_tva: number
+          updated_at: string
+        }
+        Insert: {
+          acompte_pct?: number
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom: string
+          client_telephone?: string | null
+          conditions_paiement?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_echeance?: string
+          date_emission?: string
+          devis_id?: string | null
+          id?: string
+          notes?: string | null
+          numero: string
+          objet?: string | null
+          paid_at?: string | null
+          remise_pct?: number
+          sent_at?: string | null
+          statut?: string
+          total_ht?: number
+          total_ht_brut?: number
+          total_remise?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+        }
+        Update: {
+          acompte_pct?: number
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom?: string
+          client_telephone?: string | null
+          conditions_paiement?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_echeance?: string
+          date_emission?: string
+          devis_id?: string | null
+          id?: string
+          notes?: string | null
+          numero?: string
+          objet?: string | null
+          paid_at?: string | null
+          remise_pct?: number
+          sent_at?: string | null
+          statut?: string
+          total_ht?: number
+          total_ht_brut?: number
+          total_remise?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "factures_devis_id_fkey"
             columns: ["devis_id"]
             isOneToOne: false
             referencedRelation: "devis"
