@@ -166,7 +166,7 @@ function RapportsPage() {
           {/* Type */}
           <section className="bg-card border border-border rounded-sm p-6">
             <div className="text-mono text-muted-foreground mb-3">Type de rapport</div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-3 gap-3">
               {(Object.keys(RAPPORT_TYPES) as RapportType[]).map((k) => (
                 <button
                   key={k}
