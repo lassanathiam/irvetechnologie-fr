@@ -432,10 +432,12 @@ export type Database = {
           client_telephone: string | null
           created_at: string
           date_intervention: string
+          declaration_acceptee: boolean
           id: string
           mesures: Json
           numero: string
           observations: string | null
+          photos: Json
           reserves: string | null
           signataire_client: string | null
           signature_client: string | null
@@ -458,10 +460,12 @@ export type Database = {
           client_telephone?: string | null
           created_at?: string
           date_intervention?: string
+          declaration_acceptee?: boolean
           id?: string
           mesures?: Json
           numero: string
           observations?: string | null
+          photos?: Json
           reserves?: string | null
           signataire_client?: string | null
           signature_client?: string | null
@@ -484,10 +488,12 @@ export type Database = {
           client_telephone?: string | null
           created_at?: string
           date_intervention?: string
+          declaration_acceptee?: boolean
           id?: string
           mesures?: Json
           numero?: string
           observations?: string | null
+          photos?: Json
           reserves?: string | null
           signataire_client?: string | null
           signature_client?: string | null
