@@ -1,0 +1,146 @@
+import { createServerFn } from "@tanstack/react-start";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { z } from "zod";
+import { trajetDepuisBase } from "@/lib/geo";
+
+const rdvSchema = z.object({
+  titre: z.string().trim().min(1).max(160),
+  type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
+  statut: z.enum(["planifie", "confirme", "realise", "annule"]).default("planifie"),
+  client_nom: z.string().trim().min(1).max(160),
+  client_telephone: z.string().trim().max(40).optional().nullable(),
+  client_email: z.string().trim().max(255).optional().nullable(),
+  adresse: z.string().trim().min(3).max(300),
+  cp_ville: z.string().trim().max(160).optional().nullable(),
+  date_debut: z.string().min(10).max(40),
+  duree_min: z.coerce.number().int().min(15).max(1440).default(120),
+  technicien: z.string().trim().max(160).optional().nullable(),
+  notes: z.string().trim().max(4000).optional().nullable(),
+  demande_id: z.string().uuid().optional().nullable(),
+});
+
+export type RendezVousInput = z.input<typeof rdvSchema>;
+
+/** Géocodage via l'API Adresse (data.gouv.fr) — gratuite et sans clé. */
+async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
+  try {
+    const url = `https://api-adresse.data.gouv.fr/search/?limit=1&q=${encodeURIComponent(query)}`;
+    const res = await fetch(url, { headers: { accept: "application/json" } });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      features?: Array<{ geometry?: { coordinates?: [number, number] } }>;
+    };
+    const c = json.features?.[0]?.geometry?.coordinates;
+    if (!c) return null;
+    return { lng: c[0], lat: c[1] };
+  } catch {
+    return null;
+  }
+}
+
+export const listRendezVous = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("rendezvous")
+      .select("*")
+      .order("date_debut", { ascending: true })
+      .limit(500);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
+
+export const createRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: RendezVousInput) => rdvSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
+    const trajet = geo ? trajetDepuisBase(geo.lat, geo.lng) : null;
+
+    const { data: row, error } = await context.supabase
+      .from("rendezvous")
+      .insert({
+        ...data,
+        user_id: context.userId,
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
+        distance_km: trajet?.distance_km ?? null,
+        duree_trajet_min: trajet?.duree_trajet_min ?? null,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    return { id: row.id, geocode: Boolean(geo) };
+  });
+
+export const updateStatutRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; statut: string }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        statut: z.enum(["planifie", "confirme", "realise", "annule"]),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({ statut: data.statut })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const deleteRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase.from("rendezvous").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+export const getDashboard = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const s = context.supabase;
+    const [demandes, devis, rapports, rdv] = await Promise.all([
+      s
+        .from("demande_requests")
+        .select("id, nom, code_postal, formule, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(6),
+      s.from("devis").select("id, numero, client_nom, total_ttc, statut, created_at")
+        .order("created_at", { ascending: false })
+        .limit(6),
+      s.from("rapports").select("id, numero, type, client_nom, date_intervention")
+        .order("created_at", { ascending: false })
+        .limit(5),
+      s.from("rendezvous").select("*").order("date_debut", { ascending: true }).limit(200),
+    ]);
+
+    const now = Date.now();
+    const rows = rdv.data ?? [];
+    const aVenir = rows.filter(
+      (r) => new Date(r.date_debut).getTime() >= now && r.statut !== "annule",
+    );
+    const devisRows = devis.data ?? [];
+
+    return {
+      demandes: demandes.data ?? [],
+      devis: devisRows,
+      rapports: rapports.data ?? [],
+      rendezvous: rows,
+      stats: {
+        rdvAVenir: aVenir.length,
+        rdvSemaine: aVenir.filter(
+          (r) => new Date(r.date_debut).getTime() <= now + 7 * 864e5,
+        ).length,
+        installations: rows.filter((r) => r.statut === "realise").length,
+        kmPlanifies: aVenir.reduce((t, r) => t + Number(r.distance_km ?? 0), 0),
+        caDevis: devisRows.reduce((t, d) => t + Number(d.total_ttc ?? 0), 0),
+        demandesNouvelles: (demandes.data ?? []).filter((d) => d.status === "nouveau").length,
+      },
+    };
+  });

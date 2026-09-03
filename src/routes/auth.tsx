@@ -29,7 +29,7 @@ function AuthPage() {
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) navigate({ to: "/devis" });
+      if (data.session) navigate({ to: "/espace" });
     });
   }, [navigate]);
 
@@ -42,7 +42,7 @@ function AuthPage() {
       if (mode === "signin") {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        navigate({ to: "/devis" });
+        navigate({ to: "/espace" });
       } else {
         const { error } = await supabase.auth.signUp({
           email,
@@ -72,7 +72,7 @@ function AuthPage() {
             {mode === "signin" ? "Connexion" : "Créer un accès"}
           </h1>
           <p className="mt-3 text-sm text-muted-foreground">
-            Réservé à l'équipe IRVE Technologie — création et envoi des devis.
+            Réservé à l'équipe IRVE Technologie (marque Borne de l'Ouest) — planning, demandes, devis et rapports.
           </p>
 
           <form onSubmit={onSubmit} className="mt-8 space-y-4">
