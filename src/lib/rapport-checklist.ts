@@ -110,6 +110,63 @@ export const CHECKLIST: ChecklistSection[] = [
   },
 ];
 
+/** Version courte, orientée assureur : fin d'installation IRVE. */
+export const CHECKLIST_ASSURANCE: ChecklistSection[] = [
+  {
+    key: "identification",
+    title: "1. Identification",
+    items: [
+      { key: "adresse", label: "Adresse du chantier renseignée" },
+      { key: "client", label: "Nom du client renseigné" },
+      { key: "date", label: "Date d'installation renseignée" },
+      { key: "installateur", label: "Installateur / entreprise identifié" },
+      { key: "marque_modele", label: "Marque et modèle de la borne relevés" },
+      { key: "serie", label: "Numéro de série de la borne relevé" },
+      { key: "puissance", label: "Puissance de la borne relevée (7,4 / 11 / 22 kW)" },
+    ],
+  },
+  {
+    key: "electrique",
+    title: "2. Installation électrique",
+    items: [
+      { key: "regles", label: "Installation réalisée conformément aux règles applicables" },
+      { key: "circuit_dedie", label: "Circuit dédié à la borne" },
+      { key: "section", label: "Section des conducteurs conforme" },
+      { key: "disjoncteur", label: "Protection par disjoncteur adaptée" },
+      { key: "differentiel", label: "Protection différentielle adaptée" },
+      { key: "terre", label: "Mise à la terre vérifiée" },
+      { key: "continuite", label: "Continuité du conducteur de protection vérifiée" },
+      { key: "serrage", label: "Serrage / raccordement des connexions vérifié" },
+      { key: "tableau", label: "Tableau électrique correctement identifié" },
+    ],
+  },
+  {
+    key: "borne",
+    title: "3. Borne et protections",
+    items: [
+      { key: "fixation", label: "Borne correctement fixée" },
+      { key: "cablage", label: "Câblage correctement raccordé" },
+      { key: "surintensites", label: "Protection contre les surintensités" },
+      { key: "ddr", label: "Protection différentielle en place" },
+      { key: "surtensions", label: "Protection contre les surtensions si prévue / requise" },
+      { key: "ip", label: "Indice de protection / pose extérieure conforme si applicable" },
+      { key: "coupure", label: "Arrêt ou coupure de l'alimentation accessible" },
+    ],
+  },
+  {
+    key: "essais",
+    title: "4. Essais et mise en service",
+    items: [
+      { key: "sous_tension", label: "Mise sous tension effectuée" },
+      { key: "test_charge", label: "Test de charge effectué" },
+      { key: "communication", label: "Communication avec le véhicule vérifiée" },
+      { key: "declenchement", label: "Déclenchement des protections testé" },
+      { key: "anomalie", label: "Absence d'anomalie constatée" },
+      { key: "operationnelle", label: "Borne opérationnelle à la remise au client" },
+    ],
+  },
+];
+
 export type MesureField = { key: string; label: string; unit?: string; placeholder?: string };
 
 export const MESURES: MesureField[] = [
@@ -125,6 +182,16 @@ export const MESURES: MesureField[] = [
   { key: "courant_charge", label: "Courant en charge", unit: "A", placeholder: "31" },
 ];
 
+/** Mesures exigées par l'assureur (valeurs chiffrées, pas de simple « conforme »). */
+export const MESURES_ASSURANCE: MesureField[] = [
+  { key: "tension", label: "Tension mesurée", unit: "V", placeholder: "232" },
+  { key: "terre", label: "Résistance de terre", unit: "Ω", placeholder: "42" },
+  { key: "ddr_courant", label: "Test différentiel — courant", unit: "mA", placeholder: "22" },
+  { key: "ddr_temps", label: "Test différentiel — temps", unit: "ms", placeholder: "28" },
+  { key: "courant_max", label: "Intensité maximale", unit: "A", placeholder: "32" },
+  { key: "puissance_testee", label: "Puissance de charge testée", unit: "kW", placeholder: "7,4" },
+];
+
 export const RAPPORT_TYPES = {
   controle: {
     label: "Rapport de contrôle",
@@ -134,8 +201,31 @@ export const RAPPORT_TYPES = {
     label: "Rapport de conformité d'installation",
     subtitle: "Fin de travaux — attestation de bonne exécution",
   },
+  assurance: {
+    label: "Rapport de fin d'installation (assureur)",
+    subtitle: "Version courte, mesures chiffrées et 4 photos justificatives",
+  },
 } as const;
 
 export type RapportType = keyof typeof RAPPORT_TYPES;
 
+export function checklistFor(type: RapportType): ChecklistSection[] {
+  return type === "assurance" ? CHECKLIST_ASSURANCE : CHECKLIST;
+}
+
+export function mesuresFor(type: RapportType): MesureField[] {
+  return type === "assurance" ? MESURES_ASSURANCE : MESURES;
+}
+
+/** Photos obligatoires du dossier assureur. */
+export const PHOTOS_REQUISES = [
+  { key: "borne", label: "Borne installée" },
+  { key: "raccordement", label: "Raccordement / arrivée électrique" },
+  { key: "tableau", label: "Tableau électrique avec les protections" },
+  { key: "etiquette", label: "Étiquette borne (marque, modèle, n° de série)" },
+] as const;
+
+export type PhotoKind = (typeof PHOTOS_REQUISES)[number]["key"];
+
 export const CHECK_LABEL: Record<CheckState, string> = { ok: "Conforme", nc: "Non conforme", na: "Sans objet" };
+

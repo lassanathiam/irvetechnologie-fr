@@ -2,11 +2,28 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ClipboardCheck, FileText, Loader2, Trash2 } from "lucide-react";
-import { CHECKLIST, CHECK_LABEL, type CheckState, MESURES, RAPPORT_TYPES, type RapportType } from "@/lib/rapport-checklist";
-import { createRapport, deleteRapport, listRapports, type RapportInput } from "@/lib/rapports.functions";
+import { Camera, ClipboardCheck, FileText, Loader2, Trash2, X } from "lucide-react";
+import {
+  CHECK_LABEL,
+  type CheckState,
+  PHOTOS_REQUISES,
+  type PhotoKind,
+  RAPPORT_TYPES,
+  type RapportType,
+  checklistFor,
+  mesuresFor,
+} from "@/lib/rapport-checklist";
+import {
+  createRapport,
+  deleteRapport,
+  listRapports,
+  uploadRapportPhoto,
+  type RapportInput,
+} from "@/lib/rapports.functions";
 import { SignaturePad } from "@/components/SignaturePad";
+import { compressImage } from "@/lib/image-compress";
 import { dateFr } from "@/lib/company";
+
 
 export const Route = createFileRoute("/_authenticated/rapports/")({
   head: () => ({
@@ -34,15 +51,31 @@ function RapportsPage() {
 
   const rapports = useQuery({ queryKey: ["rapports"], queryFn: () => fetchRapports() });
 
-  const [type, setType] = useState<RapportType>("conformite");
+  const [type, setType] = useState<RapportType>("assurance");
   const [checks, setChecks] = useState<Record<string, CheckState>>({});
   const [mesures, setMesures] = useState<Record<string, string>>({});
+  const [photos, setPhotos] = useState<Partial<Record<PhotoKind, string>>>({});
   const [sigTech, setSigTech] = useState<string | null>(null);
   const [sigClient, setSigClient] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const sections = checklistFor(type);
+  const mesureFields = mesuresFor(type);
+  const uploadPhoto = useServerFn(uploadRapportPhoto);
+
   const create = useMutation({
-    mutationFn: (payload: RapportInput) => createFn({ data: payload }),
+    mutationFn: async (payload: RapportInput) => {
+      const res = await createFn({ data: payload });
+      for (const [kind, data_url] of Object.entries(photos)) {
+        if (!data_url) continue;
+        try {
+          await uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url } });
+        } catch {
+          /* la photo peut être ajoutée plus tard, le rapport reste valide */
+        }
+      }
+      return res;
+    },
     onSuccess: (res) => {
       qc.invalidateQueries({ queryKey: ["rapports"] });
       navigate({ to: "/rapports/$id", params: { id: res.id } });
@@ -56,7 +89,7 @@ function RapportsPage() {
   });
 
   function setAllSection(sectionKey: string, state: CheckState) {
-    const section = CHECKLIST.find((s) => s.key === sectionKey);
+    const section = sections.find((s) => s.key === sectionKey);
     if (!section) return;
     setChecks((c) => {
       const next = { ...c };
@@ -67,8 +100,18 @@ function RapportsPage() {
 
   function setAll(state: CheckState) {
     const next: Record<string, CheckState> = {};
-    for (const s of CHECKLIST) for (const i of s.items) next[`${s.key}.${i.key}`] = state;
+    for (const s of sections) for (const i of s.items) next[`${s.key}.${i.key}`] = state;
     setChecks(next);
+  }
+
+  async function onPickPhoto(kind: PhotoKind, file: File | undefined) {
+    if (!file) return;
+    try {
+      const dataUrl = await compressImage(file);
+      setPhotos((p) => ({ ...p, [kind]: dataUrl }));
+    } catch {
+      setError("Photo illisible, merci de réessayer.");
+    }
   }
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -99,8 +142,9 @@ function RapportsPage() {
     });
   }
 
-  const total = CHECKLIST.reduce((s, sec) => s + sec.items.length, 0);
+  const total = sections.reduce((s, sec) => s + sec.items.length, 0);
   const filled = Object.keys(checks).length;
+
 
   return (
     <div className="min-h-screen bg-background">
@@ -122,7 +166,7 @@ function RapportsPage() {
           {/* Type */}
           <section className="bg-card border border-border rounded-sm p-6">
             <div className="text-mono text-muted-foreground mb-3">Type de rapport</div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-3 gap-3">
               {(Object.keys(RAPPORT_TYPES) as RapportType[]).map((k) => (
                 <button
                   key={k}
@@ -166,9 +210,14 @@ function RapportsPage() {
 
           {/* Mesures */}
           <section className="bg-card border border-border rounded-sm p-6">
-            <div className="text-mono text-muted-foreground mb-4">Mesures relevées</div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {MESURES.map((m) => (
+            <div className="text-mono text-muted-foreground mb-1">Mesures relevées</div>
+            {type === "assurance" && (
+              <p className="text-xs text-muted-foreground mb-4">
+                Renseignez les valeurs chiffrées : un assureur n'accepte pas la seule mention « conforme ».
+              </p>
+            )}
+            <div className="mt-3 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {mesureFields.map((m) => (
                 <label key={m.key} className="block">
                   <span className="text-xs text-muted-foreground">
                     {m.label} {m.unit ? `(${m.unit})` : ""}
@@ -183,6 +232,53 @@ function RapportsPage() {
               ))}
             </div>
           </section>
+
+          {/* Photos justificatives */}
+          <section className="bg-card border border-border rounded-sm p-6">
+            <div className="text-mono text-muted-foreground">Photos justificatives</div>
+            <p className="text-xs text-muted-foreground mt-1">
+              4 photos attendues par l'assureur — elles sont joignables au rapport imprimé.
+            </p>
+            <div className="mt-4 grid sm:grid-cols-2 gap-4">
+              {PHOTOS_REQUISES.map((p) => {
+                const value = photos[p.key];
+                return (
+                  <div key={p.key} className="border border-border rounded-sm p-3">
+                    <div className="flex items-start justify-between gap-2">
+                      <span className="text-xs">{p.label}</span>
+                      {value && (
+                        <button
+                          type="button"
+                          onClick={() => setPhotos((v) => ({ ...v, [p.key]: undefined }))}
+                          className="text-muted-foreground hover:text-destructive"
+                          aria-label="Retirer la photo"
+                        >
+                          <X className="h-3.5 w-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    {value ? (
+                      <img src={value} alt={p.label} className="mt-2 w-full h-32 object-cover rounded-sm" />
+                    ) : (
+                      <label className="mt-2 h-32 grid place-items-center border border-dashed border-border rounded-sm cursor-pointer hover:border-primary text-muted-foreground">
+                        <span className="inline-flex items-center gap-2 text-mono text-[11px]">
+                          <Camera className="h-4 w-4" /> Ajouter
+                        </span>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          capture="environment"
+                          className="hidden"
+                          onChange={(e) => onPickPhoto(p.key, e.target.files?.[0])}
+                        />
+                      </label>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </section>
+
 
           {/* Checklist */}
           <section className="space-y-5">
@@ -203,7 +299,7 @@ function RapportsPage() {
               </div>
             </div>
 
-            {CHECKLIST.map((section) => (
+            {sections.map((section) => (
               <div key={section.key} className="bg-card border border-border rounded-sm">
                 <div className="flex items-center justify-between gap-4 px-5 py-3 border-b border-border">
                   <div className="font-medium text-sm">{section.title}</div>
