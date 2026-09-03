@@ -21,6 +21,7 @@ import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
 import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
+import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
@@ -88,6 +89,11 @@ const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
   path: '/rapports/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFacturesIdRoute = AuthenticatedFacturesIdRouteImport.update({
+  id: '/factures/$id',
+  path: '/factures/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
   id: '/devis/$id',
   path: '/devis/$id',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/devis/': typeof AuthenticatedDevisIndexRoute
@@ -121,6 +128,7 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/demandes': typeof AuthenticatedDemandesIndexRoute
   '/devis': typeof AuthenticatedDevisIndexRoute
@@ -138,6 +146,7 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/_authenticated/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
@@ -155,6 +164,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/devis/$id'
+    | '/factures/$id'
     | '/rapports/$id'
     | '/demandes/'
     | '/devis/'
@@ -170,6 +180,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/devis/$id'
+    | '/factures/$id'
     | '/rapports/$id'
     | '/demandes'
     | '/devis'
@@ -186,6 +197,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/sitemap.xml'
     | '/_authenticated/devis/$id'
+    | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
     | '/_authenticated/demandes/'
     | '/_authenticated/devis/'
@@ -291,6 +303,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRapportsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/factures/$id': {
+      id: '/_authenticated/factures/$id'
+      path: '/factures/$id'
+      fullPath: '/factures/$id'
+      preLoaderRoute: typeof AuthenticatedFacturesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/devis/$id': {
       id: '/_authenticated/devis/$id'
       path: '/devis/$id'
@@ -310,6 +329,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
+  AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
   AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
   AuthenticatedDemandesIndexRoute: typeof AuthenticatedDemandesIndexRoute
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
@@ -321,6 +341,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
+  AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,
   AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
   AuthenticatedDemandesIndexRoute: AuthenticatedDemandesIndexRoute,
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
