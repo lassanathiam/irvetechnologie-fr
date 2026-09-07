@@ -203,32 +203,48 @@ function PlanningPage() {
     [rows, depart.id],
   );
 
-  const tournee = useMemo(
+  const asStop = (r: (typeof rows)[number]) => ({
+    id: r.id,
+    lat: Number(r.lat),
+    lng: Number(r.lng),
+    label: r.client_nom,
+    sub: r.cp_ville,
+  });
+
+  /** Chantiers regroupés par journée : une tournée ne peut concerner qu'un seul jour. */
+  const joursDispo = useMemo(() => {
+    const m = new Map<string, { key: string; label: string; stops: ReturnType<typeof asStop>[] }>();
+    for (const r of aVenir) {
+      const d = new Date(r.date_debut);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const entry = m.get(key) ?? { key, label: dayKey(r.date_debut), stops: [] };
+      entry.stops.push(asStop(r));
+      m.set(key, entry);
+    }
+    return [...m.values()].sort((a, b) => a.key.localeCompare(b.key));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aVenir]);
+
+  const [jourSel, setJourSel] = useState<string | null>(null);
+  const jourActif =
+    (jourSel && joursDispo.find((j) => j.key === jourSel)) ?? joursDispo[0] ?? null;
+  const stopsJour = jourActif?.stops ?? [];
+
+  const tournee = useMemo(() => optimiserTournee(stopsJour, depart), [stopsJour, depart]);
+
+  /** Campagne sur plusieurs jours (chantiers éloignés : une nuitée sur place). */
+  const [horizon, setHorizon] = useState(7);
+  const [campagneOn, setCampagneOn] = useState(false);
+  const campagne = useMemo(
     () =>
-      optimiserTournee(
-        aVenir.map((r) => ({
-          id: r.id,
-          lat: Number(r.lat),
-          lng: Number(r.lng),
-          label: r.client_nom,
-          sub: r.cp_ville,
-        })),
-        depart,
-      ),
-    [aVenir, depart],
+      campagneOn ? planifierCampagne(aVenir.map(asStop), depart, { jours: horizon }) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [campagneOn, horizon, aVenir, depart],
   );
 
   const grappes = useMemo(
-    () =>
-      groupesProximite(
-        aVenir.map((r) => ({
-          id: r.id,
-          lat: Number(r.lat),
-          lng: Number(r.lng),
-          label: r.client_nom,
-          sub: r.cp_ville,
-        })),
-      ).filter((g) => g.length > 1),
+    () => groupesProximite(aVenir.map(asStop)).filter((g) => g.length > 1),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [aVenir],
   );
 
@@ -251,19 +267,9 @@ function PlanningPage() {
       }),
   });
 
-  /** Tournée complète sur le réseau routier réel. */
+  /** Tournée de la journée sélectionnée, sur le réseau routier réel. */
   const tourneeFn = useServerFn(tourneeReelle);
-  const tourneeStops = useMemo(
-    () =>
-      aVenir.slice(0, 10).map((r) => ({
-        id: r.id,
-        lat: Number(r.lat),
-        lng: Number(r.lng),
-        label: r.client_nom,
-        sub: r.cp_ville,
-      })),
-    [aVenir],
-  );
+  const tourneeStops = useMemo(() => stopsJour.slice(0, 10), [stopsJour]);
   const tourneeReel = useQuery({
     queryKey: ["tournee-reelle", depart.id, tourneeStops.map((s) => s.id).join(",")],
     enabled: tourneeStops.length > 0,
@@ -282,6 +288,7 @@ function PlanningPage() {
           kmDirect: tourneeReel.data.kmSepares,
         }
       : { ...tournee, kmDirect: tournee.kmDirect };
+
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
