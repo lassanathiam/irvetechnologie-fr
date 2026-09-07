@@ -74,9 +74,9 @@ export function DocumentPrint({
               <div>{COMPANY.adresse}</div>
               <div>{COMPANY.cpVille}</div>
               <div className="font-semibold text-foreground">{COMPANY.email}</div>
-              <div>{COMPANY.telephone}</div>
+              <div>{COMPANY.telephone} · {COMPANY.telephone2}</div>
               <div className="text-mono text-[10px] pt-1">
-                SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+                SIRET {COMPANY.siret} · TVA {COMPANY.tva} · {COMPANY.site}
               </div>
             </div>
           </div>
