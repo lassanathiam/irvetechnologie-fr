@@ -56,7 +56,7 @@ export function DocumentPrint({
 
   return (
     <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
-      {/* En-tête : logo + émetteur à gauche, document à droite */}
+      {/* En-tête : émetteur à gauche, client en face à droite */}
       <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2 border-primary/70">
         <div className="flex items-start gap-4">
           <BrandLogo className="h-16 w-16" />
@@ -82,31 +82,10 @@ export function DocumentPrint({
           </div>
         </div>
 
-        <div className="text-right">
-          <div className="text-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
-            {isFacture ? "Facture" : "Devis"} n°
-          </div>
-          <div className="text-2xl font-extrabold tracking-tight">{doc.numero}</div>
-          <div className="mt-3 text-[12px] space-y-0.5">
-            <div>
-              <span className="text-muted-foreground">Date : </span>
-              <span className="font-bold">{dateFr(doc.date_emission)}</span>
-            </div>
-            <div>
-              <span className="text-muted-foreground">
-                {isFacture ? "Échéance : " : "Valable jusqu'au : "}
-              </span>
-              <span className="font-bold">{dateFr(doc.date_limite)}</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Client + objet */}
-      <div className="mt-5 grid sm:grid-cols-2 gap-4 items-start">
-        <div className="bg-muted/40 border border-border rounded-sm p-4">
+        {/* Client en face, à droite */}
+        <div className="bg-muted/40 border border-border rounded-sm p-4 min-w-[240px]">
           <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-            {isFacture ? "Facturé à" : "Devis à client"}
+            {isFacture ? "Facturé à" : "Client"}
           </div>
           <div className="mt-2 text-base font-extrabold tracking-tight">{doc.client_nom}</div>
           <div className="text-[12px] text-muted-foreground mt-1 space-y-0.5">
@@ -116,14 +95,31 @@ export function DocumentPrint({
             {doc.client_telephone && <div>{doc.client_telephone}</div>}
           </div>
         </div>
-        <div className="border border-border rounded-sm p-4">
-          <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
-            Objet
-          </div>
-          <div className="mt-2 font-semibold">
-            {doc.objet || "Installation de borne de recharge"}
-          </div>
+      </div>
+
+      {/* Infos du document, juste sous l'en-tête */}
+      <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-[12px]">
+        <div>
+          <span className="text-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+            {isFacture ? "Facture n° " : "Devis n° "}
+          </span>
+          <span className="text-base font-extrabold tracking-tight">{doc.numero}</span>
         </div>
+        <div>
+          <span className="text-muted-foreground">Date : </span>
+          <span className="font-bold">{dateFr(doc.date_emission)}</span>
+        </div>
+        <div>
+          <span className="text-muted-foreground">
+            {isFacture ? "Échéance : " : "Valable jusqu'au : "}
+          </span>
+          <span className="font-bold">{dateFr(doc.date_limite)}</span>
+        </div>
+      </div>
+
+      {/* Objet en gras, juste au-dessus des prestations */}
+      <div className="mt-4 text-[13px] font-extrabold tracking-tight">
+        Objet : {doc.objet || "Installation de borne de recharge"}
       </div>
 
       {/* Lignes */}
