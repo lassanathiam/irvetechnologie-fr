@@ -1,0 +1,17 @@
+{
+  "name": "Borne de l'Ouest — Espace Pro",
+  "short_name": "Borne Ouest",
+  "description": "Espace professionnel IRVE Technologie : demandes, devis, factures, planning et rapports.",
+  "start_url": "/espace",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#2f3f3a",
+  "theme_color": "#2f3f3a",
+  "lang": "fr-FR",
+  "icons": [
+    { "src": "/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

@@ -89,6 +89,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:description", content: "Sparkling Insights is a dynamic web application for showcasing electrical installation projects and services." },
       { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/t2fqodpLLXe5OkA9nyNI7psg5Hl2/social-images/social-1780524315634-logo.webp" },
       { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/t2fqodpLLXe5OkA9nyNI7psg5Hl2/social-images/social-1780524315634-logo.webp" },
+      { name: "theme-color", content: "#2f3f3a" },
+      { name: "apple-mobile-web-app-capable", content: "yes" },
+      { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
+      { name: "apple-mobile-web-app-title", content: "Borne Ouest" },
+      { name: "mobile-web-app-capable", content: "yes" },
     ],
     links: [
       {
@@ -96,6 +101,8 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         href: appCss,
       },
       { rel: "icon", type: "image/png", href: "/favicon.png" },
+      { rel: "manifest", href: "/manifest.webmanifest" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "stylesheet", href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" },
     ],
     scripts: [
