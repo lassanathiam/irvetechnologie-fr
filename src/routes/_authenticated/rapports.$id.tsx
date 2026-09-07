@@ -95,6 +95,9 @@ function RapportDetail() {
               )}
               <div>
                 <div className="text-lg font-semibold tracking-tight leading-none">{COMPANY.raisonSociale}</div>
+                <div className="mt-1.5 inline-block border border-primary/60 rounded-sm px-2 py-1 text-mono text-[10px] font-bold text-primary">
+                  {COMPANY.qualifications}
+                </div>
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   {COMPANY.adresse} · {COMPANY.cpVille}
                   <br />
@@ -230,9 +233,12 @@ function RapportDetail() {
             />
           </section>
 
-          <footer className="px-6 py-4 border-t border-border text-xs text-muted-foreground flex justify-between flex-wrap gap-2">
-            <span>{COMPANY.raisonSociale} · {COMPANY.site}</span>
-            <span>{r.numero} · {meta.label}</span>
+          <footer className="px-6 py-4 border-t border-border text-xs text-muted-foreground space-y-1">
+            <div className="flex justify-between flex-wrap gap-2">
+              <span>{COMPANY.raisonSociale} · {COMPANY.site}</span>
+              <span>{r.numero} · {meta.label}</span>
+            </div>
+            <div>{COMPANY.qualificationsDetail}</div>
           </footer>
         </article>
       </div>

@@ -169,6 +169,8 @@ export function DevisClientEmail(data: DevisEmailData) {
               <br />
               {COMPANY.email} · {COMPANY.telephone} · SIRET {COMPANY.siret} · TVA {COMPANY.tva}
               <br />
+              {COMPANY.qualifications}
+              <br />
               Émis le {dateFr(data.date_emission)}.
             </Text>
           </Section>
