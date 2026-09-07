@@ -1,5 +1,6 @@
 import { COMPANY, dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, MENTIONS_DEVIS, MENTIONS_FACTURE } from "@/lib/billing";
+import { BrandLogo } from "@/components/BrandLogo";
 
 export type DocLine = {
   libelle: string;
@@ -47,46 +48,57 @@ export function DocumentPrint({
 
   return (
     <div className="print-doc bg-card border border-border rounded-sm p-8 sm:p-12 text-[13px] leading-relaxed">
-      <div className="flex flex-wrap items-start justify-between gap-8">
-        <div>
-          <div className="text-2xl font-semibold tracking-tight">
-            Borne<span className="text-muted-foreground"> de l&apos;Ouest</span>
-          </div>
-          <div className="mt-3 text-muted-foreground space-y-0.5">
-            <div>
-              {COMPANY.raisonSociale} · {COMPANY.forme}
+      {/* En-tête : logo + émetteur à gauche, document à droite */}
+      <div className="flex flex-wrap items-start justify-between gap-8 pb-6 border-b-2 border-primary/70">
+        <div className="flex items-start gap-4">
+          <BrandLogo className="h-16 w-16" />
+          <div>
+            <div className="text-xl font-extrabold tracking-tight uppercase">
+              {COMPANY.raisonSociale}
             </div>
-            <div>{COMPANY.adresse}</div>
-            <div>{COMPANY.cpVille}</div>
-            <div>{COMPANY.email}</div>
-            <div>{COMPANY.telephone}</div>
-            <div className="text-mono text-[11px] pt-1">
-              SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+            <div className="text-mono text-[11px] font-bold text-primary uppercase tracking-[0.18em]">
+              Borne de l&apos;Ouest
+            </div>
+            <div className="mt-2 text-[12px] text-muted-foreground space-y-0.5">
+              <div>{COMPANY.adresse}</div>
+              <div>{COMPANY.cpVille}</div>
+              <div className="font-semibold text-foreground">{COMPANY.email}</div>
+              <div>{COMPANY.telephone}</div>
+              <div className="text-mono text-[10px] pt-1">
+                SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+              </div>
             </div>
           </div>
         </div>
 
         <div className="text-right">
-          <div className="text-mono text-primary uppercase tracking-[0.2em] text-[11px]">
-            {isFacture ? "Facture" : "Devis"}
+          <div className="text-mono text-[11px] font-bold uppercase tracking-[0.22em] text-muted-foreground">
+            {isFacture ? "Facture" : "Devis"} n°
           </div>
-          <div className="text-3xl font-medium tracking-tight mt-1">{doc.numero}</div>
-          <div className="mt-3 text-muted-foreground space-y-0.5 text-[12px]">
-            <div>Émis le {dateFr(doc.date_emission)}</div>
+          <div className="text-2xl font-extrabold tracking-tight">{doc.numero}</div>
+          <div className="mt-3 text-[12px] space-y-0.5">
             <div>
-              {isFacture ? "Échéance" : "Valable jusqu'au"} {dateFr(doc.date_limite)}
+              <span className="text-muted-foreground">Date : </span>
+              <span className="font-bold">{dateFr(doc.date_emission)}</span>
+            </div>
+            <div>
+              <span className="text-muted-foreground">
+                {isFacture ? "Échéance : " : "Valable jusqu'au : "}
+              </span>
+              <span className="font-bold">{dateFr(doc.date_limite)}</span>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="mt-10 grid sm:grid-cols-2 gap-6">
-        <div className="border border-border rounded-sm p-4">
-          <div className="text-mono text-[11px] text-muted-foreground uppercase tracking-[0.15em]">
-            Client
+      {/* Client + objet */}
+      <div className="mt-8 grid sm:grid-cols-2 gap-6">
+        <div className="bg-muted/40 border border-border rounded-sm p-4">
+          <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
+            {isFacture ? "Facturé à" : "Devis à client"}
           </div>
-          <div className="mt-2 font-medium">{doc.client_nom}</div>
-          <div className="text-muted-foreground">
+          <div className="mt-2 text-base font-extrabold tracking-tight">{doc.client_nom}</div>
+          <div className="text-[12px] text-muted-foreground mt-1 space-y-0.5">
             {doc.client_adresse && <div>{doc.client_adresse}</div>}
             {doc.client_cp_ville && <div>{doc.client_cp_ville}</div>}
             {doc.client_email && <div>{doc.client_email}</div>}
@@ -94,36 +106,41 @@ export function DocumentPrint({
           </div>
         </div>
         <div className="border border-border rounded-sm p-4">
-          <div className="text-mono text-[11px] text-muted-foreground uppercase tracking-[0.15em]">
+          <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
             Objet
           </div>
-          <div className="mt-2">{doc.objet || "Installation de borne de recharge"}</div>
+          <div className="mt-2 font-semibold">
+            {doc.objet || "Installation de borne de recharge"}
+          </div>
         </div>
       </div>
 
-      <table className="mt-10 w-full border-collapse">
+      {/* Lignes */}
+      <table className="mt-8 w-full border-collapse">
         <thead>
-          <tr className="border-b border-border text-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
-            <th className="text-left py-2">Prestation</th>
-            <th className="text-right py-2 w-16">Qté</th>
-            <th className="text-right py-2 w-24">PU HT</th>
-            <th className="text-right py-2 w-16">TVA</th>
-            <th className="text-right py-2 w-28">Total HT</th>
+          <tr className="bg-muted text-mono text-[10px] font-bold uppercase tracking-[0.14em]">
+            <th className="text-left py-2.5 px-3 w-8">#</th>
+            <th className="text-left py-2.5 px-3">Prestation</th>
+            <th className="text-right py-2.5 px-3 w-16">Qté</th>
+            <th className="text-right py-2.5 px-3 w-28">Prix unitaire HT</th>
+            <th className="text-right py-2.5 px-3 w-20">Taux TVA</th>
+            <th className="text-right py-2.5 px-3 w-28">Total HT</th>
           </tr>
         </thead>
         <tbody>
           {lines.map((line, i) => (
-            <tr key={i} className="border-b border-border/60 align-top">
-              <td className="py-3 pr-4">
-                <div className="font-medium">{line.libelle}</div>
+            <tr key={i} className="border-b border-border align-top">
+              <td className="py-3 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
+              <td className="py-3 px-3">
+                <div className="font-bold">{line.libelle}</div>
                 {line.description && (
-                  <div className="text-muted-foreground text-[12px] mt-1">{line.description}</div>
+                  <div className="text-muted-foreground text-[12px] mt-0.5">{line.description}</div>
                 )}
               </td>
-              <td className="py-3 text-right text-mono">{line.quantite}</td>
-              <td className="py-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
-              <td className="py-3 text-right text-mono">{line.tva} %</td>
-              <td className="py-3 text-right text-mono">
+              <td className="py-3 px-3 text-right text-mono font-semibold">{line.quantite}</td>
+              <td className="py-3 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
+              <td className="py-3 px-3 text-right text-mono">{line.tva} %</td>
+              <td className="py-3 px-3 text-right text-mono font-bold">
                 {euro(line.quantite * line.prix_unitaire)}
               </td>
             </tr>
@@ -131,32 +148,9 @@ export function DocumentPrint({
         </tbody>
       </table>
 
-      <div className="mt-8 flex flex-wrap gap-8 justify-between">
-        <div className="max-w-sm space-y-4">
-          {doc.conditions_paiement && (
-            <div>
-              <div className="text-mono text-[11px] text-muted-foreground uppercase tracking-[0.15em]">
-                Conditions de paiement
-              </div>
-              <p className="mt-1 text-[12px] text-muted-foreground">{doc.conditions_paiement}</p>
-            </div>
-          )}
-          {doc.notes && (
-            <div>
-              <div className="text-mono text-[11px] text-muted-foreground uppercase tracking-[0.15em]">
-                Notes
-              </div>
-              <p className="mt-1 text-[12px] text-muted-foreground whitespace-pre-line">{doc.notes}</p>
-            </div>
-          )}
-          <ul className="text-[11px] text-muted-foreground space-y-1 list-disc pl-4">
-            {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
-              <li key={m}>{m}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="ml-auto w-full sm:w-72 space-y-2">
+      {/* Totaux */}
+      <div className="mt-6 flex justify-end">
+        <div className="w-full sm:w-80 space-y-1.5">
           <TotalRow label="Total HT" value={euro(totals.total_ht_brut)} />
           {totals.total_remise > 0 && (
             <TotalRow
@@ -164,46 +158,92 @@ export function DocumentPrint({
               value={`- ${euro(totals.total_remise)}`}
             />
           )}
-          <TotalRow label="Total HT net" value={euro(totals.total_ht)} />
+          {totals.total_remise > 0 && (
+            <TotalRow label="Total HT net" value={euro(totals.total_ht)} strong />
+          )}
           {totals.tva_par_taux.map((t) => (
-            <TotalRow key={t.taux} label={`TVA ${t.taux} %`} value={euro(t.montant)} />
+            <TotalRow key={t.taux} label={`TVA (${t.taux} %)`} value={euro(t.montant)} />
           ))}
-          <div className="pt-3 border-t border-border flex items-baseline justify-between">
-            <span className="font-medium">Total TTC</span>
-            <span className="text-2xl font-medium text-primary">{euro(totals.total_ttc)}</span>
+          <div className="mt-2 bg-muted border border-border rounded-sm px-3 py-2.5 flex items-baseline justify-between">
+            <span className="font-extrabold uppercase text-mono text-[11px] tracking-[0.14em]">
+              Total TTC
+            </span>
+            <span className="text-xl font-extrabold text-primary">{euro(totals.total_ttc)}</span>
           </div>
           {!isFacture && acompte > 0 && (
-            <div className="pt-2 text-[12px] text-muted-foreground flex justify-between">
-              <span>Acompte {Number(doc.acompte_pct)} %</span>
-              <span className="text-mono">{euro(acompte)}</span>
+            <div className="pt-1 text-[12px] flex justify-between">
+              <span className="text-muted-foreground">Acompte {Number(doc.acompte_pct)} %</span>
+              <span className="text-mono font-bold">{euro(acompte)}</span>
             </div>
           )}
         </div>
       </div>
 
-      {!isFacture && (
-        <div className="mt-12 grid sm:grid-cols-2 gap-8">
-          <div className="border border-dashed border-border rounded-sm p-4 h-28">
-            <div className="text-mono text-[11px] text-muted-foreground">
-              Bon pour accord — date et signature du client
-            </div>
+      {/* CGV / conditions */}
+      <div className="mt-8 grid sm:grid-cols-[1fr_240px] gap-8 items-start">
+        <div className="space-y-3">
+          <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]">
+            Conditions générales de vente (CGV)
           </div>
-          <div className="border border-dashed border-border rounded-sm p-4 h-28">
-            <div className="text-mono text-[11px] text-muted-foreground">
-              {COMPANY.raisonSociale} — signature
-            </div>
-          </div>
+          {doc.conditions_paiement && (
+            <p className="text-[12px]">
+              <span className="font-bold">Modalités de paiement : </span>
+              {doc.conditions_paiement}
+            </p>
+          )}
+          {doc.notes && (
+            <p className="text-[12px] whitespace-pre-line">
+              <span className="font-bold">Notes : </span>
+              {doc.notes}
+            </p>
+          )}
+          <ul className="text-[11px] text-muted-foreground space-y-1">
+            {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
+              <li key={m}>
+                <span className="text-primary font-bold">·</span> {m}
+              </li>
+            ))}
+          </ul>
         </div>
-      )}
+
+        {!isFacture && (
+          <div className="space-y-3">
+            <div className="border-2 border-primary/70 rounded-sm p-3 text-center">
+              <div className="text-mono text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                Signer le devis
+              </div>
+              <div className="text-[10px] text-muted-foreground mt-1">Bon pour accord</div>
+            </div>
+            <div className="border border-dashed border-border rounded-sm p-3 h-24">
+              <div className="text-mono text-[10px] font-semibold text-muted-foreground">
+                Date & signature du client
+              </div>
+            </div>
+            <div className="border border-dashed border-border rounded-sm p-3 h-20">
+              <div className="text-mono text-[10px] font-semibold text-muted-foreground">
+                {COMPANY.raisonSociale}
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
 
-function TotalRow({ label, value }: { label: string; value: string }) {
+function TotalRow({
+  label,
+  value,
+  strong,
+}: {
+  label: string;
+  value: string;
+  strong?: boolean;
+}) {
   return (
     <div className="flex items-baseline justify-between text-[12px]">
-      <span className="text-muted-foreground">{label}</span>
-      <span className="text-mono">{value}</span>
+      <span className={strong ? "font-bold" : "text-muted-foreground"}>{label}</span>
+      <span className={`text-mono ${strong ? "font-bold" : ""}`}>{value}</span>
     </div>
   );
 }

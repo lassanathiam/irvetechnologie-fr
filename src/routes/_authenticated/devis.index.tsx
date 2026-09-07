@@ -412,7 +412,7 @@ function DevisPage() {
       </div>
 
       <section className="mt-16">
-        <h2 className="text-2xl font-medium tracking-tight">Devis</h2>
+        <h2 className="text-2xl font-extrabold tracking-tight">Devis</h2>
         <div className="mt-5 border border-border rounded-sm bg-card divide-y divide-border overflow-hidden">
           {list.length === 0 && (
             <p className="p-6 text-sm text-muted-foreground">Aucun devis pour le moment.</p>

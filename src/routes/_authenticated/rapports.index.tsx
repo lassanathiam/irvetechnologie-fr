@@ -165,7 +165,7 @@ function RapportsPage() {
         <form onSubmit={onSubmit} className="space-y-8">
           {/* Type */}
           <section className="bg-card border border-border rounded-sm p-6">
-            <div className="text-mono text-muted-foreground mb-3">Type de rapport</div>
+            <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Type de rapport</div>
             <div className="grid sm:grid-cols-3 gap-3">
               {(Object.keys(RAPPORT_TYPES) as RapportType[]).map((k) => (
                 <button
@@ -210,7 +210,7 @@ function RapportsPage() {
 
           {/* Mesures */}
           <section className="bg-card border border-border rounded-sm p-6">
-            <div className="text-mono text-muted-foreground mb-1">Mesures relevées</div>
+            <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-1">Mesures relevées</div>
             {type === "assurance" && (
               <p className="text-xs text-muted-foreground mb-4">
                 Renseignez les valeurs chiffrées : un assureur n'accepte pas la seule mention « conforme ».
@@ -391,7 +391,7 @@ function RapportsPage() {
 
         {/* Historique */}
         <aside className="bg-card border border-border rounded-sm p-5">
-          <div className="text-mono text-muted-foreground mb-3">Derniers rapports</div>
+          <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Derniers rapports</div>
           {rapports.isLoading ? (
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
           ) : !rapports.data?.length ? (

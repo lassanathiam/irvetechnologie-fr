@@ -106,7 +106,7 @@ function RapportDetail() {
             </div>
             <div className="text-right">
               <div className="text-mono text-primary">{meta.label}</div>
-              <div className="text-2xl font-medium tracking-tight">{r.numero}</div>
+              <div className="text-2xl font-extrabold tracking-tight">{r.numero}</div>
               <div className="text-xs text-muted-foreground mt-1">
                 Intervention du {dateFr(r.date_intervention)}
               </div>
@@ -134,7 +134,7 @@ function RapportDetail() {
           </section>
 
           <section className="p-6 border-b border-border">
-            <div className="text-mono text-muted-foreground mb-3">Matériel installé</div>
+            <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Matériel installé</div>
             <div className="grid sm:grid-cols-4 gap-4 text-sm">
               <Info label="Marque" value={r.borne_marque} />
               <Info label="Modèle" value={r.borne_modele} />
@@ -144,7 +144,7 @@ function RapportDetail() {
           </section>
 
           <section className="p-6 border-b border-border">
-            <div className="text-mono text-muted-foreground mb-3">Mesures relevées</div>
+            <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Mesures relevées</div>
             <div className="grid sm:grid-cols-4 gap-4 text-sm">
               {mesuresFor(type).map((m) => (
                 <Info

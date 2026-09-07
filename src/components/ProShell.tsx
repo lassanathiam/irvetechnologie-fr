@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt, Zap } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { BrandLogo } from "@/components/BrandLogo";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
@@ -18,15 +19,13 @@ export function ProShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
         <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
-          <Link to="/" className="flex items-center gap-2 shrink-0">
-            <span className="hero-grad text-primary-foreground p-1.5 rounded-sm">
-              <Zap className="h-4 w-4" strokeWidth={2.5} />
-            </span>
+          <Link to="/" className="flex items-center gap-2.5 shrink-0">
+            <BrandLogo className="h-9 w-9" />
             <span className="hidden sm:block leading-tight">
-              <span className="block font-semibold tracking-tight text-sm">
+              <span className="block font-extrabold tracking-tight text-sm">
                 Borne<span className="text-muted-foreground"> de l'Ouest</span>
               </span>
-              <span className="block text-[10px] text-mono text-muted-foreground">
+              <span className="block text-[10px] text-mono font-semibold text-primary uppercase tracking-[0.14em]">
                 IRVE Technologie · Espace pro
               </span>
             </span>
@@ -37,8 +36,8 @@ export function ProShell({ children }: { children: React.ReactNode }) {
               <Link
                 key={to}
                 to={to}
-                className="text-mono text-xs px-3 py-2 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted/60 inline-flex items-center gap-1.5 whitespace-nowrap"
-                activeProps={{ className: "text-primary bg-muted" }}
+                className="text-mono text-xs font-semibold px-3 py-2 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted/60 inline-flex items-center gap-1.5 whitespace-nowrap"
+                activeProps={{ className: "text-primary bg-muted font-bold" }}
               >
                 <Icon className="h-3.5 w-3.5" /> {label}
               </Link>

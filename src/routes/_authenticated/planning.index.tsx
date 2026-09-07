@@ -31,7 +31,8 @@ import {
   type VoirieInput,
 } from "@/lib/voirie.functions";
 import { ProShell } from "@/components/ProShell";
-import { FranceMap, type MapPoint } from "@/components/FranceMap";
+import { InterventionsMap, type MapMarker } from "@/components/InterventionsMap";
+import { AgendaMois } from "@/components/AgendaMois";
 import { dureeFr } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
 
@@ -103,6 +104,7 @@ function PlanningPage() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" } | null>(null);
+  const [prefillDate, setPrefillDate] = useState<string>("");
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -170,15 +172,16 @@ function PlanningPage() {
     return [...map.entries()];
   }, [rows]);
 
-  const points: MapPoint[] = rows
+  const points: MapMarker[] = rows
     .filter((r) => r.lat != null && r.lng != null)
     .map((r) => ({
       id: r.id,
       lat: Number(r.lat),
       lng: Number(r.lng),
       label: r.client_nom,
-      sub: r.cp_ville,
+      sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
       statut: r.statut,
+      date: dateTimeFr(r.date_debut),
     }));
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
@@ -283,7 +286,7 @@ function PlanningPage() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
-          <h1 className="text-2xl font-medium tracking-tight mt-1">
+          <h1 className="text-2xl font-extrabold tracking-tight mt-1">
             Chantiers, tournées & autorisations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -324,7 +327,14 @@ function PlanningPage() {
               ))}
             </select>
           </label>
-          <Field label="Date & heure" name="date_debut" type="datetime-local" required />
+          <Field
+            key={prefillDate}
+            label="Date & heure"
+            name="date_debut"
+            type="datetime-local"
+            required
+            defaultValue={prefillDate ? `${prefillDate}T09:00` : undefined}
+          />
           <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue="120" />
           <Field label="Technicien" name="technicien" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
@@ -633,16 +643,38 @@ function PlanningPage() {
           )}
         </section>
 
-        <aside className="space-y-6 lg:sticky lg:top-24 h-fit">
+        <aside className="space-y-6">
+          <AgendaMois
+            events={rows.map((r) => ({
+              id: r.id,
+              date_debut: r.date_debut,
+              duree_min: r.duree_min,
+              client_nom: r.client_nom,
+              titre: r.titre,
+              cp_ville: r.cp_ville,
+              statut: r.statut,
+              distance_km: r.distance_km,
+            }))}
+            activeId={active}
+            onSelectEvent={setActive}
+            onPickDay={(iso) => {
+              setPrefillDate(iso);
+              setOpen(true);
+            }}
+          />
+
           <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" /> Carte des chantiers
             </h2>
-            <FranceMap points={points} activeId={active} onSelect={setActive} />
+            <InterventionsMap markers={points} activeId={active} onSelect={setActive} height={380} />
+            <p className="text-[11px] text-muted-foreground mt-2">
+              Cliquez un point pour voir le chantier ; le trait pointillé relie la base de Nantes.
+            </p>
           </div>
 
           <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
             </h2>
             {tournee.etapes.length === 0 ? (
@@ -697,7 +729,7 @@ function PlanningPage() {
 
           {grappes.length > 0 && (
             <div className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-3">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
               <ul className="space-y-3">
