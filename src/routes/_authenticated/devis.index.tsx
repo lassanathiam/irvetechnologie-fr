@@ -256,41 +256,52 @@ function DevisPage() {
           </Card>
 
           <Card step="03" title="Prestations">
-            <label className="relative block">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Rechercher dans le catalogue…"
-                className="w-full bg-input border border-border rounded-sm pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary"
-              />
-            </label>
-
-            <div className="flex flex-wrap gap-2">
-              {catalogue.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => addPrestation(p)}
-                  className="text-left border border-border rounded-sm px-3 py-2 hover:border-primary hover:text-primary transition text-sm inline-flex items-center gap-2"
-                >
-                  <Plus className="h-3.5 w-3.5" /> {p.libelle}
-                  <span className="text-mono text-xs text-muted-foreground">
-                    {euro(Number(p.prix_unitaire))}
-                  </span>
-                </button>
-              ))}
-              {prestations.isLoading && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+            <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
+              <label className="block">
+                <span className="text-mono text-xs text-muted-foreground">
+                  Choisir une prestation du catalogue
+                </span>
+                <div className="mt-2 flex gap-2">
+                  <select
+                    value=""
+                    onChange={(e) => {
+                      const p = catalogue.find((x) => x.id === e.target.value);
+                      if (p) addPrestation(p);
+                    }}
+                    className="w-full bg-input border border-border rounded-sm px-4 py-2.5 text-sm focus:outline-none focus:border-primary"
+                  >
+                    <option value="">
+                      {prestations.isLoading ? "Chargement du catalogue…" : "— Sélectionner une prestation —"}
+                    </option>
+                    {catalogue.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.libelle} — {euro(Number(p.prix_unitaire))}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </label>
               <button
                 type="button"
                 onClick={() =>
                   addPrestation({ libelle: "Ligne libre", description: null, prix_unitaire: 0, tva: 20 })
                 }
-                className="border border-dashed border-border rounded-sm px-3 py-2 text-sm text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-2"
+                className="border border-dashed border-border rounded-sm px-3 py-2.5 text-sm text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center justify-center gap-2"
               >
                 <Plus className="h-3.5 w-3.5" /> Ligne libre
               </button>
             </div>
+
+            <label className="relative block">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Filtrer le catalogue…"
+                className="w-full bg-input border border-border rounded-sm pl-9 pr-4 py-2.5 text-sm focus:outline-none focus:border-primary"
+              />
+            </label>
+
 
             {lines.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune ligne. Ajoutez une prestation.</p>
