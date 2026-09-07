@@ -234,24 +234,62 @@ function RapportsPage() {
     setMesures((m) => mesuresFromTypologie(next, m));
   }
 
+  const [envoi, setEnvoi] = useState<string | null>(null);
+
+  /** Réessaie une action réseau : indispensable en 4G instable sur chantier. */
+  async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+    let last: unknown;
+    for (let i = 0; i < tries; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        last = e;
+        await new Promise((r) => setTimeout(r, 700 * (i + 1)));
+      }
+    }
+    throw last instanceof Error ? last : new Error("Connexion interrompue.");
+  }
+
   const create = useMutation({
     mutationFn: async (payload: RapportInput) => {
-      const res = await createFn({ data: payload });
-      for (const [kind, data_url] of Object.entries(photos)) {
-        if (!data_url) continue;
+      setEnvoi("Enregistrement du rapport…");
+      const res = await withRetry(() => createFn({ data: payload }));
+      const aEnvoyer = Object.entries(photos).filter(([, v]) => Boolean(v));
+      let i = 0;
+      let echecs = 0;
+      for (const [kind, data_url] of aEnvoyer) {
+        i++;
+        setEnvoi(`Envoi des photos ${i}/${aEnvoyer.length}…`);
         try {
-          await uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url } });
+          await withRetry(() =>
+            uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url: data_url! } }),
+          );
         } catch {
-          /* la photo peut être ajoutée plus tard, le rapport reste valide */
+          echecs++;
         }
       }
-      return res;
+      return { ...res, echecs };
     },
     onSuccess: (res) => {
+      setEnvoi(null);
+      clearDraft();
       qc.invalidateQueries({ queryKey: ["rapports"] });
+      if (res.echecs) {
+        setError(
+          `Rapport enregistré, mais ${res.echecs} photo(s) n'ont pas pu être envoyées. Vous pourrez les rajouter avec une meilleure connexion.`,
+        );
+      }
       navigate({ to: "/rapports/$id", params: { id: res.id } });
     },
-    onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
+    onError: (e) => {
+      setEnvoi(null);
+      const msg = e instanceof Error ? e.message : "";
+      setError(
+        /fetch|network|réseau|Failed/i.test(msg)
+          ? "Connexion perdue. Votre saisie est conservée sur le téléphone : réessayez dès que le réseau revient."
+          : msg || "Enregistrement impossible. Votre saisie est conservée, réessayez.",
+      );
+    },
   });
 
   const remove = useMutation({
