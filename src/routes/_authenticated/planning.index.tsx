@@ -259,6 +259,17 @@ function PlanningPage() {
     queryFn: () => tourneeFn({ data: { stops: tourneeStops } }),
   });
 
+  /** Données affichées : routier réel si disponible, sinon estimation locale. */
+  const tourneeAff =
+    tourneeReel.data && tourneeReel.data.etapes.length
+      ? {
+          etapes: tourneeReel.data.etapes,
+          kmTotal: tourneeReel.data.kmTotal,
+          minutes: tourneeReel.data.minutes,
+          kmDirect: tourneeReel.data.kmSepares,
+        }
+      : { ...tournee, kmDirect: tournee.kmDirect };
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
