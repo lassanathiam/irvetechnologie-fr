@@ -107,9 +107,16 @@ export const envoyerFacture = createServerFn({ method: "POST" })
       .eq("facture_id", data.id)
       .order("ordre", { ascending: true });
 
+    const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(
+      /\/$/,
+      "",
+    );
+    const lien = `${base}/facture-client/${facture.public_token}`;
+
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const result = await sendTemplateEmail("devis-client", facture.client_email, {
-      idempotencyKey: `facture-${facture.id}-${facture.updated_at}`,
+      idempotencyKey: `facture-${facture.id}-${new Date().toISOString()}`,
+      replyTo: "contacts@irvetechnologie.fr",
       templateData: {
         type: "facture",
         numero: facture.numero,
@@ -118,6 +125,7 @@ export const envoyerFacture = createServerFn({ method: "POST" })
         date_emission: facture.date_emission,
         date_limite: facture.date_echeance,
         message: data.message || null,
+        lien,
         remise_pct: Number(facture.remise_pct),
         total_ht_brut: Number(facture.total_ht_brut),
         total_remise: Number(facture.total_remise),
