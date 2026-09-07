@@ -184,6 +184,8 @@ function DevisClientPage() {
 
         <p className="print:hidden text-mono text-[11px] text-muted-foreground text-center">
           {COMPANY.raisonSociale} · {COMPANY.email} · {COMPANY.telephone}
+          <br />
+          {COMPANY.qualifications}
         </p>
       </div>
     </main>
