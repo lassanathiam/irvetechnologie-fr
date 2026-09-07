@@ -228,6 +228,37 @@ function PlanningPage() {
 
   const economie = economieCarburant(Math.max(tournee.kmDirect - tournee.kmTotal, 0));
 
+  /** Itinéraire routier réel base → chantier sélectionné. */
+  const routeFn = useServerFn(itineraireDepuisBase);
+  const activeRow = rows.find((r) => r.id === active && r.lat != null && r.lng != null);
+  const itineraire = useQuery({
+    queryKey: ["itineraire", activeRow?.id],
+    enabled: !!activeRow,
+    staleTime: 30 * 60_000,
+    queryFn: () =>
+      routeFn({ data: { lat: Number(activeRow!.lat), lng: Number(activeRow!.lng) } }),
+  });
+
+  /** Tournée complète sur le réseau routier réel. */
+  const tourneeFn = useServerFn(tourneeReelle);
+  const tourneeStops = useMemo(
+    () =>
+      aVenir.slice(0, 10).map((r) => ({
+        id: r.id,
+        lat: Number(r.lat),
+        lng: Number(r.lng),
+        label: r.client_nom,
+        sub: r.cp_ville,
+      })),
+    [aVenir],
+  );
+  const tourneeReel = useQuery({
+    queryKey: ["tournee-reelle", tourneeStops.map((s) => s.id).join(",")],
+    enabled: tourneeStops.length > 0,
+    staleTime: 30 * 60_000,
+    queryFn: () => tourneeFn({ data: { stops: tourneeStops } }),
+  });
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
