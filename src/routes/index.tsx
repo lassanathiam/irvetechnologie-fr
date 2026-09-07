@@ -56,7 +56,7 @@ const steps = [
   { n: "01", t: "Demande", d: "Vous décrivez votre besoin et joignez vos photos (tableau, cheminement, emplacement)." },
   { n: "02", t: "Étude technique", d: "Analyse de puissance, faisabilité, choix de la borne et chiffrage clair." },
   { n: "03", t: "Installation", d: "Génie civil, raccordement, pose et mise en service par nos équipes habilitées." },
-  { n: "04", t: "Maintenance", d: "Suivi annuel, dépannage rapide et garantie sur l'installation." },
+  { n: "04", t: "Maintenance", d: "Suivi annuel et formule Sérénité pour garder votre borne en état." },
 ];
 
 const heroSlides = [
@@ -75,7 +75,7 @@ const realisationsFallback = [
 
 type Plan = {
   name: string;
-  slug: "essentiel" | "confort" | "pro";
+  slug: "serenite" | "premium" | "pro";
   code: string;
   client: string;
   external: string;
@@ -88,39 +88,39 @@ type Plan = {
 
 const maintenancePlans: Plan[] = [
   {
-    name: "Essentiel",
-    slug: "essentiel",
+    name: "Sérénité Entretien",
+    slug: "serenite",
     code: "M/01",
-    client: "9",
-    external: "14",
-    period: "/mois",
+    client: "Sur devis",
+    external: "Sur devis",
+    period: "",
     icon: ShieldCheck,
     featured: false,
-    desc: "Pour les particuliers tranquilles.",
+    desc: "La visite annuelle de votre borne.",
     features: [
-      "1 contrôle annuel sur site",
-      "Vérification serrages & isolement",
-      "Mise à jour firmware",
-      "Hotline technique en heures ouvrées",
-      "Rapport de contrôle PDF",
+      "1 visite de contrôle par an sur site",
+      "Vérification des serrages et des protections",
+      "Contrôle des mesures électriques",
+      "Nettoyage et mise à jour des paramètres",
+      "Rapport de visite remis après intervention",
     ],
   },
   {
-    name: "Confort",
-    slug: "confort",
+    name: "Sérénité Premium",
+    slug: "premium",
     code: "M/02",
-    client: "19",
-    external: "29",
-    period: "/mois",
+    client: "Sur devis",
+    external: "Sur devis",
+    period: "",
     icon: Sparkles,
     featured: true,
-    desc: "Le meilleur rapport sérénité / prix.",
+    desc: "L'entretien renforcé, avec un dépannage inclus.",
     features: [
-      "Tout l'Essentiel +",
-      "2 contrôles annuels",
-      "Dépannage prioritaire 48-72h",
-      "Pièces d'usure incluses (≤ 80 €/an)",
-      "Assistance téléphonique 6j/7",
+      "Tout Sérénité Entretien +",
+      "1 intervention de dépannage par an (main-d'œuvre incluse)",
+      "Pièces de remplacement facturées en sus",
+      "Diagnostic à distance avant déplacement",
+      "Réservé aux bornes installées ou contrôlées par nos soins",
     ],
   },
   {
@@ -132,13 +132,13 @@ const maintenancePlans: Plan[] = [
     period: "",
     icon: Wrench,
     featured: false,
-    desc: "Entreprises, copros, concessions.",
+    desc: "Entreprises, copropriétés, concessions.",
     features: [
       "Contrats multi-bornes",
-      "Intervention 24-48h en semaine",
-      "Supervision à distance & alertes",
-      "Reporting trimestriel",
-      "Engagement SLA contractuel",
+      "Visites planifiées selon le parc",
+      "Suivi technique et historique des interventions",
+      "Reporting sur demande",
+      "Conditions définies au contrat",
     ],
   },
 ];
@@ -405,29 +405,19 @@ function Index() {
           {/* Header centré */}
           <div className="text-center max-w-3xl mx-auto mb-12">
             <div className="inline-flex items-center gap-3 text-mono text-primary mb-6">
-              <span className="h-px w-10 bg-primary" /> Garantie & maintenance <span className="h-px w-10 bg-primary" />
+              <span className="h-px w-10 bg-primary" /> Garanties & entretien <span className="h-px w-10 bg-primary" />
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              1 an de garantie offerte,{" "}
-              <span className="text-muted-foreground/60">puis vous gardez la main.</span>
+              Vos garanties légales,{" "}
+              <span className="text-muted-foreground/60">et la formule Sérénité pour la suite.</span>
             </h2>
             <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
-              Chaque installation est garantie <strong className="text-foreground">12 mois</strong> —
-              pièces, main d'œuvre et déplacement inclus. Au-delà, choisissez l'abonnement qui vous convient.
+              Toute installation bénéficie des <strong className="text-foreground">garanties prévues par la loi</strong> et
+              de celles du fabricant. Pour l'entretien dans le temps, choisissez la formule Sérénité qui vous convient.
             </p>
           </div>
 
-          {/* Bandeau garantie */}
-          <div className="mx-auto max-w-3xl mb-16 border border-primary/25 bg-card rounded-sm px-6 py-4 flex items-center gap-4">
-            <span className="hero-grad text-primary-foreground p-2.5 rounded-sm shrink-0">
-              <ShieldCheck className="h-5 w-5" />
-            </span>
-            <div className="flex-1">
-              <div className="font-medium leading-snug">Garantie 12 mois sur toute installation</div>
-              <p className="text-sm text-muted-foreground">Pièces + main d'œuvre + déplacement. Aucun frais caché.</p>
-            </div>
-            <span className="hidden sm:inline text-mono text-primary">Inclus</span>
-          </div>
+
 
           {/* Cadre légal des garanties */}
           <div className="mb-16">
