@@ -11,7 +11,9 @@ type Props = {
 export function SignaturePad({ label, value, onChange }: Props) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const drawing = useRef(false);
+  const hasStroke = useRef(Boolean(value));
   const [empty, setEmpty] = useState(!value);
+
 
   useEffect(() => {
     const canvas = canvasRef.current;
