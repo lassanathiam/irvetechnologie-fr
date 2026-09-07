@@ -62,11 +62,12 @@ const heroSlides = [
   { src: chantier3, label: "Tableau électrique", meta: "Mise en conformité · Nantes (44)" },
 ];
 
-const realisations = [
+const realisationsFallback = [
   { src: chantier2, title: "Maison individuelle · Tesla 11 kW", place: "Nantes (44)", spec: "Pose extérieure sur façade, raccordement triphasé, cheminement en goulotte aluminium 8 m. Mise en service le jour même." },
   { src: chantier1, title: "Borne murale 11 kW", place: "Vannes (56)", spec: "Installation en garage attenant, ajout d'un différentiel 30 mA type A, prise T2S verrouillable. Éligible Advenir." },
   { src: chantier3, title: "Mise en conformité tableau", place: "Angers (49)", spec: "Refonte complète du tableau avant installation borne 22 kW. Contrôle Consuel et attestation IRVE." },
 ];
+
 
 type Plan = {
   name: string;
