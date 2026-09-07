@@ -76,6 +76,115 @@ function RapportsPage() {
     devis_id: null,
     rendezvous_id: null,
   });
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [restaure, setRestaure] = useState(false);
+
+  /* -------- Brouillon local : rien n'est perdu si l'app se recharge -------- */
+  const DRAFT_KEY = "rapport-brouillon-v1";
+  const TEXT_FIELDS = [
+    "client_nom",
+    "date",
+    "client_telephone",
+    "client_email",
+    "chantier_adresse",
+    "chantier_cp_ville",
+    "technicien",
+    "borne_marque",
+    "borne_modele",
+    "borne_puissance",
+    "borne_serie",
+    "observations",
+    "reserves",
+    "signataire_client",
+  ];
+
+  function readFields(): Record<string, string> {
+    const form = formRef.current;
+    if (!form) return {};
+    const fd = new FormData(form);
+    const out: Record<string, string> = {};
+    for (const k of TEXT_FIELDS) {
+      const v = fd.get(k);
+      if (typeof v === "string" && v) out[k] = v;
+    }
+    return out;
+  }
+
+  function saveDraft() {
+    if (typeof window === "undefined" || !restaure) return;
+    try {
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          type,
+          mode,
+          typologie,
+          checks,
+          mesures,
+          photos,
+          sigTech,
+          sigClient,
+          linked,
+          fields: readFields(),
+        }),
+      );
+    } catch {
+      /* mémoire du téléphone pleine : on continue sans brouillon */
+    }
+  }
+
+  function clearDraft() {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Restauration au chargement (mobile : l'app peut être fermée à tout moment).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        if (d && typeof d === "object") {
+          if (typeof d.type === "string") setType(d.type as RapportType);
+          if (typeof d.mode === "string") setMode(d.mode as ChecklistMode);
+          if (d.typologie) setTypologie(d.typologie as Typologie);
+          if (d.checks) setChecks(d.checks as Record<string, CheckState>);
+          if (d.mesures) setMesures(d.mesures as Record<string, string>);
+          if (d.photos) setPhotos(d.photos as Partial<Record<PhotoKind, string>>);
+          if (typeof d.sigTech === "string") setSigTech(d.sigTech);
+          if (typeof d.sigClient === "string") setSigClient(d.sigClient);
+          if (d.linked) setLinked(d.linked as { devis_id: string | null; rendezvous_id: string | null });
+          const fields = (d.fields ?? {}) as Record<string, string>;
+          if (Object.keys(fields).length) {
+            setPrefill(fields);
+            setPrefillKey((k) => k + 1);
+            requestAnimationFrame(() => {
+              const form = formRef.current;
+              if (!form) return;
+              for (const [k, v] of Object.entries(fields)) {
+                const el = form.elements.namedItem(k) as HTMLInputElement | HTMLTextAreaElement | null;
+                if (el && "value" in el) el.value = v;
+              }
+            });
+          }
+        }
+      }
+    } catch {
+      /* brouillon illisible : on repart d'un rapport vierge */
+    }
+    setRestaure(true);
+  }, []);
+
+  // Enregistrement automatique du brouillon dès qu'un choix change.
+  useEffect(() => {
+    if (!restaure) return;
+    const t = setTimeout(saveDraft, 400);
+    return () => clearTimeout(t);
+  }, [restaure, type, mode, typologie, checks, mesures, photos, sigTech, sigClient, linked]);
 
   const sections = useMemo(() => checklistForMode(type, mode), [type, mode]);
   const mesureFields = mesuresFor(type);
