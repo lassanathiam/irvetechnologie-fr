@@ -402,8 +402,58 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
+        {/* CARTE — en haut à gauche */}
+        <section className="order-1 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
+            </h2>
+            <div className="flex items-center gap-4 text-[11px] font-semibold text-muted-foreground ml-auto">
+              <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
+              <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
+              <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
+              <Legende color={STATUT_COLORS.annule!} label="Annulé" />
+            </div>
+          </div>
+          <div className="p-4">
+            <InterventionsMap
+              markers={points}
+              activeId={active}
+              onSelect={setActive}
+              height={620}
+              scrollWheelZoom
+              routeCoords={itineraire.data?.coords ?? null}
+              tourneeCoords={tourneeReel.data?.coords ?? null}
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
+              {itineraire.isFetching ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
+                </span>
+              ) : itineraire.data ? (
+                <span className="text-primary text-mono">
+                  Nantes → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                  {itineraire.data.estime ? " (estimé)" : " par la route"}
+                </span>
+              ) : (
+                <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>
+              )}
+              {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
+                <span>
+                  Boucle complète : {tourneeReel.data.kmTotal} km ·{" "}
+                  {dureeFr(tourneeReel.data.minutes)}
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="order-3 lg:col-span-2 space-y-6">
+          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" /> Rendez-vous programmés
+          </h2>
+
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
