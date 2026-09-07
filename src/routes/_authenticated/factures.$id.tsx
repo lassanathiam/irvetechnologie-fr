@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, FileText, Loader2, Mail, Printer } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
+import { EmailReceipts } from "@/components/EmailReceipts";
 import {
   envoyerFacture,
   getFacture,
@@ -92,6 +93,8 @@ function FactureDetail() {
   }
 
   const { facture, items } = query.data;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const lienClient = `${origin}/facture-client/${facture.public_token}`;
 
   return (
     <ProShell>
@@ -278,5 +281,16 @@ function FactureDetail() {
         />
       </div>
     </ProShell>
+  );
+}
+
+function TrackRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-[12px] border-b border-border pb-1.5 last:border-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={value ? "text-mono font-bold" : "text-mono text-muted-foreground"}>
+        {value ?? "—"}
+      </span>
+    </div>
   );
 }
