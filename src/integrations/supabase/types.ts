@@ -712,17 +712,21 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          metrage_m: number | null
           montant_ht: number
           notes: string | null
           origine: string
           partenaire: string | null
           partenaire_id: string | null
+          phase_installation: string | null
+          puissance_borne: string | null
           statut: string
           statut_facturation: string
           technicien: string | null
           titre: string
           tva_pct: number
           type: string
+          type_pose: string | null
           updated_at: string
           user_id: string
         }
@@ -748,17 +752,21 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
+          phase_installation?: string | null
+          puissance_borne?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
           titre: string
           tva_pct?: number
           type?: string
+          type_pose?: string | null
           updated_at?: string
           user_id: string
         }
@@ -784,17 +792,21 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
+          phase_installation?: string | null
+          puissance_borne?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
           titre?: string
           tva_pct?: number
           type?: string
+          type_pose?: string | null
           updated_at?: string
           user_id?: string
         }

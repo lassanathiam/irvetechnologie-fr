@@ -201,6 +201,10 @@ function PlanningPage() {
       statut_facturation: "a_facturer" | "facture" | "paye";
       designation?: string | null;
       etiquettes?: string[];
+      metrage_m?: number;
+      puissance_borne?: string | null;
+      phase_installation?: string | null;
+      type_pose?: string | null;
 
     }) => factuFn({ data: p }),
     onSuccess: () => {
@@ -404,6 +408,10 @@ function PlanningPage() {
       statut_facturation: "a_facturer",
       designation: get("designation") || null,
       etiquettes: parseEtiquettes(get("etiquettes")),
+      metrage_m: Number(get("metrage_m") || 0),
+      puissance_borne: get("puissance_borne") || null,
+      phase_installation: get("phase_installation") || null,
+      type_pose: get("type_pose") || null,
 
     });
   }
@@ -531,6 +539,25 @@ function PlanningPage() {
             name="designation"
             placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
           />
+          <Field label="Métrage estimé (m)" name="metrage_m" type="number" defaultValue="0" />
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
+            <select name="puissance_borne" defaultValue="À définir" className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+              <option>3,7 kW</option><option>7,4 kW</option><option>11 kW</option><option>22 kW</option><option>À définir</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Alimentation</span>
+            <select name="phase_installation" defaultValue="À définir" className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+              <option>Monophasé</option><option>Triphasé</option><option>À définir</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+            <select name="type_pose" defaultValue="À définir" className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+              <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
+            </select>
+          </label>
           <label className="block sm:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">
               Étiquettes (séparées par des virgules)
@@ -686,6 +713,14 @@ function PlanningPage() {
                               )}
                             </p>
                             {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+                            {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
+                              <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                                {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
+                                {r.puissance_borne && <span>{r.puissance_borne}</span>}
+                                {r.phase_installation && <span>{r.phase_installation}</span>}
+                                {r.type_pose && <span>Pose {r.type_pose.toLowerCase()}</span>}
+                              </p>
+                            )}
 
                             <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
@@ -925,6 +960,10 @@ function PlanningPage() {
                                   | "paye",
                                 designation: g("designation") || null,
                                 etiquettes: parseEtiquettes(g("etiquettes")),
+                                metrage_m: Number(g("metrage_m") || 0),
+                                puissance_borne: g("puissance_borne") || null,
+                                phase_installation: g("phase_installation") || null,
+                                type_pose: g("type_pose") || null,
                               });
 
                             }}
@@ -982,6 +1021,25 @@ function PlanningPage() {
                                 placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
                               />
                             </div>
+                            <Field label="Métrage estimé (m)" name="metrage_m" type="number" defaultValue={String(r.metrage_m ?? 0)} />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
+                              <select name="puissance_borne" defaultValue={r.puissance_borne ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option>3,7 kW</option><option>7,4 kW</option><option>11 kW</option><option>22 kW</option><option>À définir</option>
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Alimentation</span>
+                              <select name="phase_installation" defaultValue={r.phase_installation ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option>Monophasé</option><option>Triphasé</option><option>À définir</option>
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+                              <select name="type_pose" defaultValue={r.type_pose ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
+                              </select>
+                            </label>
                             <label className="block sm:col-span-2">
                               <span className="text-mono text-xs text-muted-foreground">
                                 Étiquettes (séparées par des virgules)

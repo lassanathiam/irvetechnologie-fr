@@ -33,6 +33,10 @@ const rdvSchema = z.object({
   statut_facturation: z.enum(["a_facturer", "facture", "paye"]).default("a_facturer"),
   designation: z.string().trim().max(200).optional().nullable(),
   etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+  metrage_m: num(0, 10000, 0),
+  puissance_borne: z.string().trim().max(40).optional().nullable(),
+  phase_installation: z.string().trim().max(40).optional().nullable(),
+  type_pose: z.string().trim().max(80).optional().nullable(),
 
 });
 
@@ -286,6 +290,10 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
     statut_facturation: "a_facturer" | "facture" | "paye";
     designation?: string | null;
     etiquettes?: string[];
+    metrage_m?: number;
+    puissance_borne?: string | null;
+    phase_installation?: string | null;
+    type_pose?: string | null;
   }) =>
     z
       .object({
@@ -297,6 +305,10 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
         statut_facturation: z.enum(["a_facturer", "facture", "paye"]),
         designation: z.string().trim().max(200).optional().nullable(),
         etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+        metrage_m: num(0, 10000, 0),
+        puissance_borne: z.string().trim().max(40).optional().nullable(),
+        phase_installation: z.string().trim().max(40).optional().nullable(),
+        type_pose: z.string().trim().max(80).optional().nullable(),
       })
       .parse(raw),
   )

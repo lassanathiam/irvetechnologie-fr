@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Copy, Handshake, Loader2, Plus, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
+import { COMPANY } from "@/lib/company";
 import {
   deletePartenaire,
   listPartenaires,
@@ -44,7 +45,7 @@ function PartenairesAdmin() {
    * Les liens partenaires pointent vers le site publié (accessible à tous).
    * L'aperçu de travail est protégé : un partenaire y verrait une page d'erreur.
    */
-  const lien = (token: string) => `https://www.irvetechnologie.fr/partenaire/${token}`;
+  const lien = (token: string) => `${COMPANY.siteUrl}/partenaire/${token}`;
 
   async function ajouter() {
     setError(null);

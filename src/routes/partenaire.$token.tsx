@@ -37,7 +37,7 @@ function EspacePartenaire() {
   const espace = useQuery({
     queryKey: ["espace-partenaire", token],
     queryFn: () => charger({ data: { token } }),
-    retry: false,
+    retry: 2,
   });
 
   const [form, setForm] = useState(false);
@@ -71,6 +71,10 @@ function EspacePartenaire() {
           adresse: get("adresse"),
           cp_ville: get("cp_ville") || null,
           designation: get("designation") || null,
+          metrage_m: get("metrage_m") || null,
+          puissance_borne: get("puissance_borne") || null,
+          phase_installation: get("phase_installation") || null,
+          type_pose: get("type_pose") || null,
           date_debut: rdvAPrendre ? null : get("date_debut") || null,
           montant_ht: get("montant_ht"),
           notes: get("notes") || null,
@@ -137,6 +141,31 @@ function EspacePartenaire() {
               <span className="text-mono text-xs text-muted-foreground">Nom du client</span>
               <input name="client_nom" required className={INPUT} placeholder="M. Dupont" />
             </label>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <label className="block">
+                <span className="text-mono text-xs text-muted-foreground">Métrage estimé (m)</span>
+                <input name="metrage_m" type="number" min="0" step="0.1" inputMode="decimal" className={INPUT} placeholder="Ex. 18" />
+              </label>
+              <label className="block">
+                <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
+                <select name="puissance_borne" defaultValue="À définir" className={INPUT}>
+                  <option>3,7 kW</option><option>7,4 kW</option><option>11 kW</option><option>22 kW</option><option>À définir</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-mono text-xs text-muted-foreground">Alimentation</span>
+                <select name="phase_installation" defaultValue="À définir" className={INPUT}>
+                  <option>Monophasé</option><option>Triphasé</option><option>À définir</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+                <select name="type_pose" defaultValue="À définir" className={INPUT}>
+                  <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
+                </select>
+              </label>
+            </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="block">
@@ -249,6 +278,14 @@ function EspacePartenaire() {
                       <span className="text-muted-foreground font-normal"> — {d.designation}</span>
                     ) : null}
                   </p>
+                  {(d.metrage_m != null || d.puissance_borne || d.phase_installation || d.type_pose) && (
+                    <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                      {d.metrage_m != null && <span>{Number(d.metrage_m)} m</span>}
+                      {d.puissance_borne && <span>{d.puissance_borne}</span>}
+                      {d.phase_installation && <span>{d.phase_installation}</span>}
+                      {d.type_pose && <span>Pose {d.type_pose.toLowerCase()}</span>}
+                    </p>
+                  )}
                   <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                     <span className="inline-flex items-center gap-1">
                       <MapPin className="h-3 w-3" /> {d.adresse}
