@@ -95,6 +95,9 @@ export const submitDemande = createServerFn({ method: "POST" })
         puissance: data.puissance ?? null,
         type_installation: data.type_installation ?? null,
         distance_m: data.distance_m ?? null,
+        abonnement_kva: data.abonnement_kva ?? null,
+        type_compteur: data.type_compteur ?? null,
+        phase: data.phase ?? null,
         notes: data.notes ?? null,
         formule: data.formule ?? null,
       })
