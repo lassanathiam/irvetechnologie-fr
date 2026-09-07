@@ -31,7 +31,8 @@ import {
   type VoirieInput,
 } from "@/lib/voirie.functions";
 import { ProShell } from "@/components/ProShell";
-import { FranceMap, type MapPoint } from "@/components/FranceMap";
+import { InterventionsMap, type MapMarker } from "@/components/InterventionsMap";
+import { AgendaMois } from "@/components/AgendaMois";
 import { dureeFr } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
 
