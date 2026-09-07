@@ -77,6 +77,10 @@ function PartenairesAdmin() {
             montant, date ou « rendez-vous à prendre »). Il ne voit que ses propres dossiers, jamais
             vos devis, factures ou autres chantiers.
           </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Les liens fonctionnent sur le site en ligne (www.irvetechnologie.fr). Après chaque
+            modification, pensez à publier pour que vos partenaires voient la dernière version.
+          </p>
         </header>
 
         <section className="bg-card border border-border rounded-xl p-5 grid gap-4 sm:grid-cols-2">
