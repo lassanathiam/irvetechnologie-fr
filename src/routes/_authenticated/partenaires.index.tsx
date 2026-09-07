@@ -40,8 +40,11 @@ function PartenairesAdmin() {
   const [error, setError] = useState<string | null>(null);
   const [copie, setCopie] = useState<string | null>(null);
 
-  const lien = (token: string) =>
-    `${typeof window === "undefined" ? "" : window.location.origin}/partenaire/${token}`;
+  /**
+   * Les liens partenaires pointent vers le site publié (accessible à tous).
+   * L'aperçu de travail est protégé : un partenaire y verrait une page d'erreur.
+   */
+  const lien = (token: string) => `https://www.irvetechnologie.fr/partenaire/${token}`;
 
   async function ajouter() {
     setError(null);
@@ -73,6 +76,10 @@ function PartenairesAdmin() {
             Chaque partenaire reçoit un lien privé pour saisir ses dossiers (client, adresse,
             montant, date ou « rendez-vous à prendre »). Il ne voit que ses propres dossiers, jamais
             vos devis, factures ou autres chantiers.
+          </p>
+          <p className="text-xs text-muted-foreground mt-2">
+            Les liens fonctionnent sur le site en ligne (www.irvetechnologie.fr). Après chaque
+            modification, pensez à publier pour que vos partenaires voient la dernière version.
           </p>
         </header>
 
