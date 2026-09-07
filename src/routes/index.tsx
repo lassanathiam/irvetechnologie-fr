@@ -14,6 +14,7 @@ import { useReveal } from "@/hooks/use-reveal";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
+import { COMPANY, GARANTIES } from "@/lib/company";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -427,6 +428,36 @@ function Index() {
             </div>
             <span className="hidden sm:inline text-mono text-primary">Inclus</span>
           </div>
+
+          {/* Cadre légal des garanties */}
+          <div className="mb-16">
+            <div className="text-center mb-8">
+              <h3 className="text-2xl md:text-3xl font-medium tracking-tight">
+                Vos garanties, en clair
+              </h3>
+              <p className="mt-3 text-muted-foreground">
+                Ce que la loi vous garantit sur une borne de recharge, et ce que nous ajoutons.
+              </p>
+              <div className="mt-4 inline-flex items-center gap-2 border border-primary/30 bg-card rounded-sm px-4 py-2">
+                <ShieldCheck className="h-4 w-4 text-primary" />
+                <span className="text-mono text-primary">{COMPANY.qualifications}</span>
+              </div>
+            </div>
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {GARANTIES.map((g) => (
+                <div key={g.titre} className="border border-border bg-card rounded-sm p-6">
+                  <div className="text-mono text-primary mb-2">{g.duree}</div>
+                  <div className="font-semibold leading-snug mb-2">{g.titre}</div>
+                  <p className="text-sm text-muted-foreground leading-relaxed">{g.texte}</p>
+                </div>
+              ))}
+            </div>
+            <p className="mt-5 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
+              Information générale à jour de la réglementation française ; les garanties légales
+              s'appliquent sans supplément et ne remplacent pas les conditions du fabricant.
+            </p>
+          </div>
+
 
           {/* Toggle audience */}
           <div className="flex flex-col items-center gap-3 mb-14">

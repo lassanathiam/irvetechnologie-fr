@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
+import { COMPANY } from "@/lib/company";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
@@ -56,6 +57,13 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </button>
         </div>
       </header>
+      <div className="border-b border-border bg-muted/40">
+        <div className="mx-auto max-w-6xl px-6 py-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+          <span className="text-mono text-xs font-bold text-primary">{COMPANY.qualifications}</span>
+          <span className="text-xs text-muted-foreground">{COMPANY.qualificationsDetail}</span>
+        </div>
+      </div>
       <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
     </div>
   );
