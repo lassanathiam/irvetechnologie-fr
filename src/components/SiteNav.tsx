@@ -26,10 +26,13 @@ export function SiteNav() {
         <div className="flex items-center gap-3">
           <Link
             to="/espace"
-            className="hidden sm:inline-flex items-center gap-1.5 text-mono text-xs text-muted-foreground hover:text-primary"
+            aria-label="Espace pro"
+            className="inline-flex items-center gap-1.5 text-mono text-xs text-muted-foreground hover:text-primary border border-border/70 rounded-sm px-2.5 py-2"
           >
-            <Lock className="h-3.5 w-3.5" /> Espace pro
+            <Lock className="h-3.5 w-3.5" />
+            <span className="hidden xs:inline sm:inline">Espace pro</span>
           </Link>
+
           <Link
             to="/demande"
           className="hero-grad text-primary-foreground text-mono px-4 py-2.5 rounded-sm hover:opacity-90 transition"
