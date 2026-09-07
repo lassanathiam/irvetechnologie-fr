@@ -60,6 +60,7 @@ function RapportDetail() {
 
   const checklist = (r.checklist ?? {}) as Record<string, CheckState>;
   const mesures = (r.mesures ?? {}) as Record<string, string>;
+  const typologie = (r.typologie ?? {}) as Record<string, string>;
   const type = (RAPPORT_TYPES[r.type as RapportType] ? r.type : "conformite") as RapportType;
   const meta = RAPPORT_TYPES[type];
   const photos = (Array.isArray(r.photos) ? r.photos : []) as { kind: string; path: string }[];
@@ -144,6 +145,14 @@ function RapportDetail() {
               <Info label="Puissance" value={r.borne_puissance ? `${r.borne_puissance} kW` : null} />
               <Info label="N° de série" value={r.borne_serie} />
             </div>
+            {Object.keys(typologie).length > 0 && (
+              <div className="mt-4 grid sm:grid-cols-4 gap-4 text-sm">
+                <Info label="Puissance typologie" value={typologie.puissance} />
+                <Info label="Raccordement" value={typologie.phase} />
+                <Info label="Pose" value={typologie.pose} />
+                <Info label="Cheminement" value={typologie.cheminement} />
+              </div>
+            )}
           </section>
 
           <section className="p-6 border-b border-border">
