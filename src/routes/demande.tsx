@@ -301,7 +301,7 @@ function Demande() {
 
 
           <div>
-            <SectionHeading n="03" title="Photos du chantier" />
+            <SectionHeading n="04" title="Photos du chantier" />
             <p className="text-sm text-muted-foreground mt-3 max-w-xl">
               Ces photos nous permettent d'évaluer la faisabilité sans déplacement.
               Le cheminement du câble peut comporter plusieurs vues — ajoutez-en autant
