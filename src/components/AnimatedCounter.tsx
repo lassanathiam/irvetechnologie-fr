@@ -17,25 +17,33 @@ export function AnimatedCounter({
 
   useEffect(() => {
     if (!ref.current) return;
+    let alive = true;
+    let raf = 0;
     const io = new IntersectionObserver((entries) => {
       for (const e of entries) {
         if (e.isIntersecting && !started.current) {
           started.current = true;
           const start = performance.now();
           const tick = (now: number) => {
+            if (!alive) return;
             const p = Math.min(1, (now - start) / duration);
             const eased = 1 - Math.pow(1 - p, 3);
             setValue(Math.round(to * eased));
-            if (p < 1) requestAnimationFrame(tick);
+            if (p < 1) raf = requestAnimationFrame(tick);
           };
-          requestAnimationFrame(tick);
+          raf = requestAnimationFrame(tick);
           io.disconnect();
         }
       }
     }, { threshold: 0.4 });
     io.observe(ref.current);
-    return () => io.disconnect();
+    return () => {
+      alive = false;
+      if (raf) cancelAnimationFrame(raf);
+      io.disconnect();
+    };
   }, [to, duration]);
+
 
   return <span ref={ref}>{prefix}{value}{suffix}</span>;
 }
