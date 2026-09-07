@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Camera, ClipboardCheck, FileText, Loader2, Trash2, X } from "lucide-react";
 import {
   CHECK_LABEL,
@@ -76,6 +76,115 @@ function RapportsPage() {
     devis_id: null,
     rendezvous_id: null,
   });
+  const formRef = useRef<HTMLFormElement | null>(null);
+  const [restaure, setRestaure] = useState(false);
+
+  /* -------- Brouillon local : rien n'est perdu si l'app se recharge -------- */
+  const DRAFT_KEY = "rapport-brouillon-v1";
+  const TEXT_FIELDS = [
+    "client_nom",
+    "date",
+    "client_telephone",
+    "client_email",
+    "chantier_adresse",
+    "chantier_cp_ville",
+    "technicien",
+    "borne_marque",
+    "borne_modele",
+    "borne_puissance",
+    "borne_serie",
+    "observations",
+    "reserves",
+    "signataire_client",
+  ];
+
+  function readFields(): Record<string, string> {
+    const form = formRef.current;
+    if (!form) return {};
+    const fd = new FormData(form);
+    const out: Record<string, string> = {};
+    for (const k of TEXT_FIELDS) {
+      const v = fd.get(k);
+      if (typeof v === "string" && v) out[k] = v;
+    }
+    return out;
+  }
+
+  function saveDraft() {
+    if (typeof window === "undefined" || !restaure) return;
+    try {
+      window.localStorage.setItem(
+        DRAFT_KEY,
+        JSON.stringify({
+          at: Date.now(),
+          type,
+          mode,
+          typologie,
+          checks,
+          mesures,
+          photos,
+          sigTech,
+          sigClient,
+          linked,
+          fields: readFields(),
+        }),
+      );
+    } catch {
+      /* mémoire du téléphone pleine : on continue sans brouillon */
+    }
+  }
+
+  function clearDraft() {
+    try {
+      window.localStorage.removeItem(DRAFT_KEY);
+    } catch {
+      /* ignore */
+    }
+  }
+
+  // Restauration au chargement (mobile : l'app peut être fermée à tout moment).
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem(DRAFT_KEY);
+      if (raw) {
+        const d = JSON.parse(raw) as Record<string, unknown>;
+        if (d && typeof d === "object") {
+          if (typeof d.type === "string") setType(d.type as RapportType);
+          if (typeof d.mode === "string") setMode(d.mode as ChecklistMode);
+          if (d.typologie) setTypologie(d.typologie as Typologie);
+          if (d.checks) setChecks(d.checks as Record<string, CheckState>);
+          if (d.mesures) setMesures(d.mesures as Record<string, string>);
+          if (d.photos) setPhotos(d.photos as Partial<Record<PhotoKind, string>>);
+          if (typeof d.sigTech === "string") setSigTech(d.sigTech);
+          if (typeof d.sigClient === "string") setSigClient(d.sigClient);
+          if (d.linked) setLinked(d.linked as { devis_id: string | null; rendezvous_id: string | null });
+          const fields = (d.fields ?? {}) as Record<string, string>;
+          if (Object.keys(fields).length) {
+            setPrefill(fields);
+            setPrefillKey((k) => k + 1);
+            requestAnimationFrame(() => {
+              const form = formRef.current;
+              if (!form) return;
+              for (const [k, v] of Object.entries(fields)) {
+                const el = form.elements.namedItem(k) as HTMLInputElement | HTMLTextAreaElement | null;
+                if (el && "value" in el) el.value = v;
+              }
+            });
+          }
+        }
+      }
+    } catch {
+      /* brouillon illisible : on repart d'un rapport vierge */
+    }
+    setRestaure(true);
+  }, []);
+
+  // Enregistrement automatique du brouillon dès qu'un choix change.
+  useEffect(() => {
+    if (!restaure) return;
+    const t = setTimeout(saveDraft, 400);
+    return () => clearTimeout(t);
+  }, [restaure, type, mode, typologie, checks, mesures, photos, sigTech, sigClient, linked]);
 
   const sections = useMemo(() => checklistForMode(type, mode), [type, mode]);
   const mesureFields = mesuresFor(type);
@@ -125,24 +234,62 @@ function RapportsPage() {
     setMesures((m) => mesuresFromTypologie(next, m));
   }
 
+  const [envoi, setEnvoi] = useState<string | null>(null);
+
+  /** Réessaie une action réseau : indispensable en 4G instable sur chantier. */
+  async function withRetry<T>(fn: () => Promise<T>, tries = 3): Promise<T> {
+    let last: unknown;
+    for (let i = 0; i < tries; i++) {
+      try {
+        return await fn();
+      } catch (e) {
+        last = e;
+        await new Promise((r) => setTimeout(r, 700 * (i + 1)));
+      }
+    }
+    throw last instanceof Error ? last : new Error("Connexion interrompue.");
+  }
+
   const create = useMutation({
     mutationFn: async (payload: RapportInput) => {
-      const res = await createFn({ data: payload });
-      for (const [kind, data_url] of Object.entries(photos)) {
-        if (!data_url) continue;
+      setEnvoi("Enregistrement du rapport…");
+      const res = await withRetry(() => createFn({ data: payload }));
+      const aEnvoyer = Object.entries(photos).filter(([, v]) => Boolean(v));
+      let i = 0;
+      let echecs = 0;
+      for (const [kind, data_url] of aEnvoyer) {
+        i++;
+        setEnvoi(`Envoi des photos ${i}/${aEnvoyer.length}…`);
         try {
-          await uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url } });
+          await withRetry(() =>
+            uploadPhoto({ data: { rapport_id: res.id, kind: kind as PhotoKind, data_url: data_url! } }),
+          );
         } catch {
-          /* la photo peut être ajoutée plus tard, le rapport reste valide */
+          echecs++;
         }
       }
-      return res;
+      return { ...res, echecs };
     },
     onSuccess: (res) => {
+      setEnvoi(null);
+      clearDraft();
       qc.invalidateQueries({ queryKey: ["rapports"] });
+      if (res.echecs) {
+        setError(
+          `Rapport enregistré, mais ${res.echecs} photo(s) n'ont pas pu être envoyées. Vous pourrez les rajouter avec une meilleure connexion.`,
+        );
+      }
       navigate({ to: "/rapports/$id", params: { id: res.id } });
     },
-    onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
+    onError: (e) => {
+      setEnvoi(null);
+      const msg = e instanceof Error ? e.message : "";
+      setError(
+        /fetch|network|réseau|Failed/i.test(msg)
+          ? "Connexion perdue. Votre saisie est conservée sur le téléphone : réessayez dès que le réseau revient."
+          : msg || "Enregistrement impossible. Votre saisie est conservée, réessayez.",
+      );
+    },
   });
 
   const remove = useMutation({
@@ -228,7 +375,13 @@ function RapportsPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-10 grid lg:grid-cols-[1fr_300px] gap-10 items-start">
-        <form onSubmit={onSubmit} className="space-y-8">
+        <form
+          ref={formRef}
+          onSubmit={onSubmit}
+          onInput={saveDraft}
+          onChange={saveDraft}
+          className="space-y-8"
+        >
           {/* Type */}
           <section className="bg-card border border-border rounded-sm p-6">
             <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Type de rapport</div>
@@ -545,6 +698,11 @@ function RapportsPage() {
           </section>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {envoi && <p className="text-sm text-muted-foreground">{envoi}</p>}
+          <p className="text-xs text-muted-foreground">
+            Votre saisie est enregistrée automatiquement sur l'appareil : si l'application se ferme,
+            vous retrouvez tout en revenant sur cette page.
+          </p>
 
           <button
             type="submit"
