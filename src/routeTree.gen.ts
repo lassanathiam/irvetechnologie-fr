@@ -21,6 +21,7 @@ import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$tok
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
+import { Route as AuthenticatedPartenairesIndexRouteImport } from './routes/_authenticated/partenaires.index'
 import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
@@ -93,6 +94,12 @@ const AuthenticatedPlanningIndexRoute =
     path: '/planning/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedPartenairesIndexRoute =
+  AuthenticatedPartenairesIndexRouteImport.update({
+    id: '/partenaires/',
+    path: '/partenaires/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFacturesIndexRoute =
   AuthenticatedFacturesIndexRouteImport.update({
     id: '/factures/',
@@ -159,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/devis/': typeof AuthenticatedDevisIndexRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
   '/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
@@ -181,6 +189,7 @@ export interface FileRoutesByTo {
   '/devis': typeof AuthenticatedDevisIndexRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
   '/factures': typeof AuthenticatedFacturesIndexRoute
+  '/partenaires': typeof AuthenticatedPartenairesIndexRoute
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
@@ -205,6 +214,7 @@ export interface FileRoutesById {
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
   '/_authenticated/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/_authenticated/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
@@ -229,6 +239,7 @@ export interface FileRouteTypes {
     | '/devis/'
     | '/espace/'
     | '/factures/'
+    | '/partenaires/'
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
@@ -251,6 +262,7 @@ export interface FileRouteTypes {
     | '/devis'
     | '/espace'
     | '/factures'
+    | '/partenaires'
     | '/planning'
     | '/rapports'
     | '/realisations'
@@ -274,6 +286,7 @@ export interface FileRouteTypes {
     | '/_authenticated/devis/'
     | '/_authenticated/espace/'
     | '/_authenticated/factures/'
+    | '/_authenticated/partenaires/'
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
@@ -381,6 +394,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPlanningIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/partenaires/': {
+      id: '/_authenticated/partenaires/'
+      path: '/partenaires'
+      fullPath: '/partenaires/'
+      preLoaderRoute: typeof AuthenticatedPartenairesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/factures/': {
       id: '/_authenticated/factures/'
       path: '/factures'
@@ -455,6 +475,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
   AuthenticatedFacturesIndexRoute: typeof AuthenticatedFacturesIndexRoute
+  AuthenticatedPartenairesIndexRoute: typeof AuthenticatedPartenairesIndexRoute
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
   AuthenticatedRealisationsIndexRoute: typeof AuthenticatedRealisationsIndexRoute
@@ -468,6 +489,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
   AuthenticatedFacturesIndexRoute: AuthenticatedFacturesIndexRoute,
+  AuthenticatedPartenairesIndexRoute: AuthenticatedPartenairesIndexRoute,
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
   AuthenticatedRealisationsIndexRoute: AuthenticatedRealisationsIndexRoute,
