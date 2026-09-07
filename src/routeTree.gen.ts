@@ -14,6 +14,7 @@ import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
 import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
@@ -49,6 +50,12 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRealisationsIndexRoute =
+  AuthenticatedRealisationsIndexRouteImport.update({
+    id: '/realisations/',
+    path: '/realisations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRapportsIndexRoute =
   AuthenticatedRapportsIndexRouteImport.update({
     id: '/rapports/',
@@ -120,6 +127,7 @@ export interface FileRoutesByFullPath {
   '/factures/': typeof AuthenticatedFacturesIndexRoute
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
+  '/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -136,6 +144,7 @@ export interface FileRoutesByTo {
   '/factures': typeof AuthenticatedFacturesIndexRoute
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
+  '/realisations': typeof AuthenticatedRealisationsIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -154,6 +163,7 @@ export interface FileRoutesById {
   '/_authenticated/factures/': typeof AuthenticatedFacturesIndexRoute
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
+  '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -172,6 +182,7 @@ export interface FileRouteTypes {
     | '/factures/'
     | '/planning/'
     | '/rapports/'
+    | '/realisations/'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -188,6 +199,7 @@ export interface FileRouteTypes {
     | '/factures'
     | '/planning'
     | '/rapports'
+    | '/realisations'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -205,6 +217,7 @@ export interface FileRouteTypes {
     | '/_authenticated/factures/'
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
+    | '/_authenticated/realisations/'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -253,6 +266,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/realisations/': {
+      id: '/_authenticated/realisations/'
+      path: '/realisations'
+      fullPath: '/realisations/'
+      preLoaderRoute: typeof AuthenticatedRealisationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/rapports/': {
       id: '/_authenticated/rapports/'
@@ -337,6 +357,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedFacturesIndexRoute: typeof AuthenticatedFacturesIndexRoute
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
+  AuthenticatedRealisationsIndexRoute: typeof AuthenticatedRealisationsIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -349,6 +370,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedFacturesIndexRoute: AuthenticatedFacturesIndexRoute,
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
+  AuthenticatedRealisationsIndexRoute: AuthenticatedRealisationsIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =

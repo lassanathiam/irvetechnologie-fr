@@ -11,6 +11,9 @@ import { HeroSlider } from "@/components/HeroSlider";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useReveal } from "@/hooks/use-reveal";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listPublicRealisations } from "@/lib/realisations.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -62,11 +65,12 @@ const heroSlides = [
   { src: chantier3, label: "Tableau électrique", meta: "Mise en conformité · Nantes (44)" },
 ];
 
-const realisations = [
+const realisationsFallback = [
   { src: chantier2, title: "Maison individuelle · Tesla 11 kW", place: "Nantes (44)", spec: "Pose extérieure sur façade, raccordement triphasé, cheminement en goulotte aluminium 8 m. Mise en service le jour même." },
   { src: chantier1, title: "Borne murale 11 kW", place: "Vannes (56)", spec: "Installation en garage attenant, ajout d'un différentiel 30 mA type A, prise T2S verrouillable. Éligible Advenir." },
   { src: chantier3, title: "Mise en conformité tableau", place: "Angers (49)", spec: "Refonte complète du tableau avant installation borne 22 kW. Contrôle Consuel et attestation IRVE." },
 ];
+
 
 type Plan = {
   name: string;
@@ -144,6 +148,15 @@ function Index() {
   const services_r = useReveal<HTMLDivElement>();
   const parcours_r = useReveal<HTMLDivElement>();
   const real_r = useReveal<HTMLDivElement>();
+  const fetchRealisations = useServerFn(listPublicRealisations);
+  const realisationsQuery = useQuery({
+    queryKey: ["realisations-publiques"],
+    queryFn: () => fetchRealisations(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const realisations = realisationsQuery.data?.length
+    ? realisationsQuery.data.map((r) => ({ src: r.url, title: r.titre, place: r.lieu, spec: r.description }))
+    : realisationsFallback;
   const zones_r = useReveal<HTMLDivElement>();
   const [audience, setAudience] = useState<"client" | "external">("client");
   const isClient = audience === "client";
