@@ -257,9 +257,16 @@ export const envoyerDevis = createServerFn({ method: "POST" })
       .eq("devis_id", data.id)
       .order("ordre", { ascending: true });
 
+    const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(
+      /\/$/,
+      "",
+    );
+    const lien = `${base}/devis-client/${devis.public_token}`;
+
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const result = await sendTemplateEmail("devis-client", devis.client_email, {
-      idempotencyKey: `devis-${devis.id}-${devis.updated_at}`,
+      idempotencyKey: `devis-${devis.id}-${new Date().toISOString()}`,
+      replyTo: "contacts@irvetechnologie.fr",
       templateData: {
         type: "devis",
         numero: devis.numero,
@@ -268,6 +275,7 @@ export const envoyerDevis = createServerFn({ method: "POST" })
         date_emission: devis.date_emission,
         date_limite: devis.date_expiration,
         message: data.message || null,
+        lien,
         remise_pct: Number(devis.remise_pct),
         total_ht_brut: Number(devis.total_ht_brut),
         total_remise: Number(devis.total_remise),
@@ -286,13 +294,36 @@ export const envoyerDevis = createServerFn({ method: "POST" })
       },
     });
 
+    await context.supabase.from("devis_envois").insert({
+      devis_id: devis.id,
+      destinataire: devis.client_email,
+      message: data.message || null,
+      resultat: result.sent ? "envoye" : "bloque",
+      created_by: context.userId,
+    });
+
     if (result.sent) {
       await context.supabase
         .from("devis")
         .update({ sent_at: new Date().toISOString(), statut: "envoye" })
         .eq("id", data.id);
     }
-    return result;
+    return { ...result, lien };
+  });
+
+/** Historique des envois email d'un devis. */
+export const listEnvoisDevis = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("devis_envois")
+      .select("id, destinataire, message, resultat, created_at")
+      .eq("devis_id", data.id)
+      .order("created_at", { ascending: false })
+      .limit(50);
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
 
 /** Convertit un devis accepté en facture (copie des lignes et des totaux). */
