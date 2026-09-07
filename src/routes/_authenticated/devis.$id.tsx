@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Mail, Printer, Receipt } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Printer, Receipt } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import {
   convertirEnFacture,
   envoyerDevis,
   getDevis,
+  listEnvoisDevis,
   updateStatutDevis,
 } from "@/lib/devis.functions";
 
