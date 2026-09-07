@@ -492,6 +492,28 @@ function PlanningPage() {
           <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
           <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
+          <Field
+            label="Désignation du chantier"
+            name="designation"
+            placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
+          />
+          <label className="block sm:col-span-2">
+            <span className="text-mono text-xs text-muted-foreground">
+              Étiquettes (séparées par des virgules)
+            </span>
+            <input
+              name="etiquettes"
+              list="etiquettes-suggestions"
+              placeholder="Borne 7,4 kW, Copropriété, Urgent"
+              className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+            />
+            <datalist id="etiquettes-suggestions">
+              {ETIQUETTES_SUGGEREES.map((e) => (
+                <option key={e} value={e} />
+              ))}
+            </datalist>
+          </label>
+
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">Notes</span>
             <textarea
