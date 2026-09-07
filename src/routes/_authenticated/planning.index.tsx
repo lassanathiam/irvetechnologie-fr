@@ -464,7 +464,8 @@ function PlanningPage() {
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
-                <ul className="space-y-3">
+                <ul className="grid gap-3 xl:grid-cols-2">
+
                   {items.map((r) => {
                     const v = voirieByRdv.get(r.id);
                     const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
