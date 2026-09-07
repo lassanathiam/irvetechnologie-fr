@@ -663,15 +663,6 @@ function PlanningPage() {
             }}
           />
 
-          <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
-              <MapPin className="h-4 w-4 text-primary" /> Carte des chantiers
-            </h2>
-            <InterventionsMap markers={points} activeId={active} onSelect={setActive} height={380} />
-            <p className="text-[11px] text-muted-foreground mt-2">
-              Cliquez un point pour voir le chantier ; le trait pointillé relie la base de Nantes.
-            </p>
-          </div>
 
           <div className="bg-card border border-border rounded-sm p-5">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
