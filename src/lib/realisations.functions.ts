@@ -37,6 +37,11 @@ async function signPaths(
   return map;
 }
 
+/** URL publique permanente (bucket privé servi par /api/public/photo/*). */
+function publicPhotoUrl(path: string) {
+  return `/api/public/photo/${path.split("/").map(encodeURIComponent).join("/")}`;
+}
+
 /** Galerie publique du site (réalisations publiées uniquement). */
 export const listPublicRealisations = createServerFn({ method: "GET" }).handler(async () => {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -51,18 +56,17 @@ export const listPublicRealisations = createServerFn({ method: "GET" }).handler(
     console.error("realisations publiques", error);
     return [] as { id: string; titre: string; lieu: string; description: string; url: string }[];
   }
-  const rows = data ?? [];
-  const urls = await signPaths(supabaseAdmin as never, rows.map((r) => r.photo_path).filter(Boolean) as string[]);
-  return rows
+  return (data ?? [])
     .map((r) => ({
       id: r.id,
       titre: r.titre,
       lieu: r.lieu ?? "",
       description: r.description ?? "",
-      url: r.photo_path ? (urls.get(r.photo_path) ?? "") : "",
+      url: r.photo_path ? publicPhotoUrl(r.photo_path) : "",
     }))
     .filter((r) => r.url);
 });
+
 
 /** Liste complète pour l'espace pro. */
 export const listRealisations = createServerFn({ method: "GET" })
@@ -123,12 +127,20 @@ export const saveRealisation = createServerFn({ method: "POST" })
       ...(photoPath ? { photo_path: photoPath } : {}),
     };
 
+    const cleanupUpload = async () => {
+      if (photoPath) await context.supabase.storage.from("projet-photos").remove([photoPath]);
+    };
+
     if (data.id) {
       const { error } = await context.supabase.from("realisations").update(payload).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) {
+        await cleanupUpload();
+        throw new Error(error.message);
+      }
       if (photoPath && previousPath) {
         await context.supabase.storage.from("projet-photos").remove([previousPath]);
       }
+
       return { ok: true as const, id: data.id };
     }
 
@@ -137,7 +149,11 @@ export const saveRealisation = createServerFn({ method: "POST" })
       .insert(payload)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      await cleanupUpload();
+      throw new Error(error.message);
+    }
+
     return { ok: true as const, id: inserted.id };
   });
 
