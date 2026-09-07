@@ -882,6 +882,38 @@ function PlanningPage() {
                                 <option value="paye">Payé</option>
                               </select>
                             </label>
+                            <div className="sm:col-span-2">
+                              <Field
+                                label="Désignation du chantier"
+                                name="designation"
+                                defaultValue={r.designation ?? ""}
+                                placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
+                              />
+                            </div>
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Étiquettes (séparées par des virgules)
+                              </span>
+                              <input
+                                name="etiquettes"
+                                list="etiquettes-suggestions"
+                                defaultValue={
+                                  Array.isArray(r.etiquettes) ? r.etiquettes.join(", ") : ""
+                                }
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+                              />
+                              <span className="mt-2 flex flex-wrap gap-1.5">
+                                {ETIQUETTES_SUGGEREES.map((et) => (
+                                  <span
+                                    key={et}
+                                    className="text-mono text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground"
+                                  >
+                                    {et}
+                                  </span>
+                                ))}
+                              </span>
+                            </label>
+
                             <div className="sm:col-span-2 flex items-center gap-3">
                               <button
                                 type="submit"
