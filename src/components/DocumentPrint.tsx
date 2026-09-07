@@ -55,9 +55,9 @@ export function DocumentPrint({
   const acompte = acompteAmount(totals.total_ttc, Number(doc.acompte_pct) || 0);
 
   return (
-    <div className="print-doc bg-card border border-border rounded-sm p-8 sm:p-12 text-[13px] leading-relaxed">
+    <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
       {/* En-tête : logo + émetteur à gauche, document à droite */}
-      <div className="flex flex-wrap items-start justify-between gap-8 pb-6 border-b-2 border-primary/70">
+      <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2 border-primary/70">
         <div className="flex items-start gap-4">
           <BrandLogo className="h-16 w-16" />
           <div>
@@ -103,7 +103,7 @@ export function DocumentPrint({
       </div>
 
       {/* Client + objet */}
-      <div className="mt-8 grid sm:grid-cols-2 gap-6">
+      <div className="mt-5 grid sm:grid-cols-2 gap-4 items-start">
         <div className="bg-muted/40 border border-border rounded-sm p-4">
           <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
             {isFacture ? "Facturé à" : "Devis à client"}
@@ -127,7 +127,7 @@ export function DocumentPrint({
       </div>
 
       {/* Lignes */}
-      <table className="mt-8 w-full border-collapse">
+      <table className="mt-5 w-full border-collapse">
         <thead>
           <tr className="bg-muted text-mono text-[10px] font-bold uppercase tracking-[0.14em]">
             <th className="text-left py-2.5 px-3 w-8">#</th>
@@ -160,7 +160,7 @@ export function DocumentPrint({
       </table>
 
       {/* Totaux */}
-      <div className="mt-6 flex justify-end">
+      <div className="mt-4 flex justify-end">
         <div className="w-full sm:w-80 space-y-1.5">
           <TotalRow label="Total HT" value={euro(totals.total_ht_brut)} />
           {totals.total_remise > 0 && (
@@ -256,7 +256,7 @@ export function DocumentPrint({
 
 
       {/* Encart de partage */}
-      <div className="mt-8 border border-primary/40 rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed">
+      <div className="mt-5 border border-primary/40 rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed">
         <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
           Recommandez Borne de l'Ouest
         </div>
