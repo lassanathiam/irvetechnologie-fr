@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -31,6 +32,11 @@ import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/pho
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InstallerRoute = InstallerRouteImport.update({
+  id: '/installer',
+  path: '/installer',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemandeRoute = DemandeRouteImport.update({
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
+  '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
+  '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
+  '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
@@ -190,6 +199,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/demande'
+    | '/installer'
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/devis/$id'
@@ -209,6 +219,7 @@ export interface FileRouteTypes {
     | '/'
     | '/auth'
     | '/demande'
+    | '/installer'
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/devis/$id'
@@ -229,6 +240,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/auth'
     | '/demande'
+    | '/installer'
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/_authenticated/devis/$id'
@@ -250,6 +262,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   DemandeRoute: typeof DemandeRoute
+  InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
@@ -263,6 +276,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/installer': {
+      id: '/installer'
+      path: '/installer'
+      fullPath: '/installer'
+      preLoaderRoute: typeof InstallerRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demande': {
@@ -421,6 +441,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   DemandeRoute: DemandeRoute,
+  InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
