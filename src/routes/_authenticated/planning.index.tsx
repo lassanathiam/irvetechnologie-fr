@@ -750,6 +750,15 @@ function PlanningPage() {
                               >
                                 <Euro className="h-3 w-3" /> Montant & facturation
                               </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
+                                }
+                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                              >
+                                <Pencil className="h-3 w-3" /> Modifier l'adresse
+                              </button>
                               {r.chantier_valide && (
                                 <button
                                   type="button"
@@ -828,6 +837,41 @@ function PlanningPage() {
                               )}
                               Confirmer la réalisation
                             </button>
+                          </form>
+                        )}
+
+                        {isAdressePanel && (
+                          <form
+                            key={`adr-${r.id}`}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              setAdresse.mutate({
+                                id: r.id,
+                                adresse: String(f.get("adresse") ?? "").trim(),
+                                cp_ville: String(f.get("cp_ville") ?? "").trim() || null,
+                              });
+                            }}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
+                          >
+                            <AdresseFields
+                              required
+                              defaultAdresse={r.adresse}
+                              defaultCpVille={r.cp_ville ?? ""}
+                            />
+                            <div className="sm:col-span-2 flex items-center gap-4">
+                              <button
+                                type="submit"
+                                disabled={setAdresse.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 w-fit disabled:opacity-60"
+                              >
+                                {setAdresse.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Enregistrer la nouvelle adresse
+                              </button>
+                              <p className="text-[11px] text-muted-foreground">
+                                La carte et le temps de trajet seront recalculés automatiquement.
+                              </p>
+                            </div>
                           </form>
                         )}
 
