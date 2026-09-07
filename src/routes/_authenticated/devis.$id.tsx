@@ -25,6 +25,7 @@ export const Route = createFileRoute("/_authenticated/devis/$id")({
 
 const STATUTS = [
   { value: "brouillon", label: "Brouillon" },
+  { value: "a_valider", label: "À valider" },
   { value: "envoye", label: "Envoyé" },
   { value: "accepte", label: "Accepté" },
   { value: "refuse", label: "Refusé" },

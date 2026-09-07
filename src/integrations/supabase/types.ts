@@ -134,6 +134,7 @@ export type Database = {
           numero: string
           objet: string | null
           remise_pct: number
+          rendezvous_id: string | null
           sent_at: string | null
           statut: string
           total_ht: number
@@ -161,6 +162,7 @@ export type Database = {
           numero: string
           objet?: string | null
           remise_pct?: number
+          rendezvous_id?: string | null
           sent_at?: string | null
           statut?: string
           total_ht?: number
@@ -188,6 +190,7 @@ export type Database = {
           numero?: string
           objet?: string | null
           remise_pct?: number
+          rendezvous_id?: string | null
           sent_at?: string | null
           statut?: string
           total_ht?: number
@@ -197,7 +200,15 @@ export type Database = {
           total_tva?: number
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "devis_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       devis_items: {
         Row: {
@@ -544,6 +555,10 @@ export type Database = {
       rendezvous: {
         Row: {
           adresse: string
+          chantier_commentaire: string | null
+          chantier_valide: boolean
+          chantier_valide_at: string | null
+          chantier_valide_par: string | null
           client_email: string | null
           client_nom: string
           client_telephone: string | null
@@ -567,6 +582,10 @@ export type Database = {
         }
         Insert: {
           adresse: string
+          chantier_commentaire?: string | null
+          chantier_valide?: boolean
+          chantier_valide_at?: string | null
+          chantier_valide_par?: string | null
           client_email?: string | null
           client_nom: string
           client_telephone?: string | null
@@ -590,6 +609,10 @@ export type Database = {
         }
         Update: {
           adresse?: string
+          chantier_commentaire?: string | null
+          chantier_valide?: boolean
+          chantier_valide_at?: string | null
+          chantier_valide_par?: string | null
           client_email?: string | null
           client_nom?: string
           client_telephone?: string | null
@@ -617,6 +640,62 @@ export type Database = {
             columns: ["demande_id"]
             isOneToOne: false
             referencedRelation: "demande_requests"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      voirie_autorisations: {
+        Row: {
+          autorite: string | null
+          created_at: string
+          created_by: string | null
+          date_demande: string | null
+          date_fin: string | null
+          date_obtention: string | null
+          document_path: string | null
+          id: string
+          notes: string | null
+          reference: string | null
+          rendezvous_id: string
+          statut: string
+          updated_at: string
+        }
+        Insert: {
+          autorite?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_demande?: string | null
+          date_fin?: string | null
+          date_obtention?: string | null
+          document_path?: string | null
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          rendezvous_id: string
+          statut?: string
+          updated_at?: string
+        }
+        Update: {
+          autorite?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_demande?: string | null
+          date_fin?: string | null
+          date_obtention?: string | null
+          document_path?: string | null
+          id?: string
+          notes?: string | null
+          reference?: string | null
+          rendezvous_id?: string
+          statut?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "voirie_autorisations_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
             referencedColumns: ["id"]
           },
         ]
