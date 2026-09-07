@@ -312,3 +312,14 @@ function DevisDetail() {
     </ProShell>
   );
 }
+
+function TrackRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-[12px] border-b border-border pb-1.5 last:border-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={value ? "text-mono font-bold text-right" : "text-mono text-muted-foreground"}>
+        {value ?? "—"}
+      </span>
+    </div>
+  );
+}
