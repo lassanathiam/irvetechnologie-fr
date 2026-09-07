@@ -4,7 +4,18 @@ import { BrandLogo } from "@/components/BrandLogo";
 
 export function SiteNav() {
   return (
-    <header className="fixed top-0 inset-x-0 z-40 backdrop-blur-md bg-background/70 border-b border-border/60">
+    <header className="fixed top-0 inset-x-0 z-40">
+      <div className="bg-primary text-primary-foreground text-mono text-xs flex items-center justify-center gap-3 px-4 py-1.5">
+        <span className="hidden sm:inline">Une question ? Appelez-nous :</span>
+        <a href="tel:+33768084367" className="font-semibold underline-offset-2 hover:underline whitespace-nowrap">
+          07 68 08 43 67
+        </a>
+        <span className="hidden sm:inline opacity-60">·</span>
+        <a href="tel:+33633657840" className="hidden sm:inline font-semibold underline-offset-2 hover:underline whitespace-nowrap">
+          06 33 65 78 40
+        </a>
+      </div>
+      <div className="backdrop-blur-md bg-background/70 border-b border-border/60">
       <div className="mx-auto max-w-7xl px-6 h-16 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2.5 group">
           <BrandLogo className="h-10 w-10" />
