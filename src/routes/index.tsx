@@ -426,7 +426,7 @@ function Index() {
                 Vos garanties, en clair
               </h3>
               <p className="mt-3 text-muted-foreground">
-                Ce que la loi vous garantit sur une borne de recharge, et ce que nous ajoutons.
+                Ce que la loi et le fabricant vous garantissent sur une borne de recharge.
               </p>
               <div className="mt-4 inline-flex items-center gap-2 border border-primary/30 bg-card rounded-sm px-4 py-2">
                 <ShieldCheck className="h-4 w-4 text-primary" />
@@ -523,7 +523,7 @@ function Index() {
                       )}
                     </div>
                     <div className="text-mono text-muted-foreground mt-3">
-                      {isClient ? "Tarif client · après garantie" : "Tarif hors installation maison"}
+                      {isClient ? "Tarif client Borne de l'Ouest" : "Borne installée par un tiers"}
                     </div>
                   </div>
 
@@ -557,7 +557,7 @@ function Index() {
           </div>
 
           <p className="mt-12 text-xs text-muted-foreground text-center max-w-2xl mx-auto">
-            Tarifs indicatifs TTC pour une borne standard 7-22 kW. Sans engagement après 12 mois. Devis personnalisé sur demande.
+            Formules établies sur devis selon la borne, l'accessibilité du site et le nombre de points de charge. Sans engagement de durée.
           </p>
         </div>
       </section>

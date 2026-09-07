@@ -9,17 +9,17 @@ import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 
-type Formule = "essentiel" | "confort" | "pro";
+type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
-  essentiel: { label: "Essentiel", price: "9€ / mois" },
-  confort: { label: "Confort", price: "19€ / mois" },
+  serenite: { label: "Sérénité Entretien", price: "Sur devis" },
+  premium: { label: "Sérénité Premium", price: "Sur devis" },
   pro: { label: "Pro / Flotte", price: "Sur devis" },
 };
 
 export const Route = createFileRoute("/demande")({
   validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
     const f = search.formule;
-    if (f === "essentiel" || f === "confort" || f === "pro") return { formule: f };
+    if (f === "serenite" || f === "premium" || f === "pro") return { formule: f };
     return {};
   },
   head: () => ({
