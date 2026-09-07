@@ -141,7 +141,7 @@ export function DocumentPrint({
               <td className="py-3 px-3">
                 <div className="font-bold">{line.libelle}</div>
                 {line.description && (
-                  <div className="text-muted-foreground text-[12px] mt-0.5">{line.description}</div>
+                  <div className="text-muted-foreground text-[12px] mt-0.5 whitespace-pre-line">{line.description}</div>
                 )}
               </td>
               <td className="py-3 px-3 text-right text-mono font-semibold">{line.quantite}</td>
