@@ -8,6 +8,8 @@ export type MapMarker = {
   sub?: string | null;
   statut?: string | null;
   date?: string | null;
+  /** Ex. "54 km · 48 min" — trajet routier depuis la base. */
+  trajet?: string | null;
 };
 
 const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
@@ -31,6 +33,7 @@ export function InterventionsMap({
   onSelect,
   height = 420,
   routeCoords,
+  routeEstime = false,
   tourneeCoords,
   scrollWheelZoom = false,
 }: {
@@ -40,6 +43,8 @@ export function InterventionsMap({
   height?: number;
   /** Itinéraire routier réel base → chantier sélectionné. */
   routeCoords?: [number, number][] | null;
+  /** true si l'itinéraire est estimé (réseau routier indisponible) : ne pas tracer la ligne droite. */
+  routeEstime?: boolean;
   /** Tracé routier réel de la tournée complète. */
   tourneeCoords?: [number, number][] | null;
   scrollWheelZoom?: boolean;
@@ -87,12 +92,12 @@ export function InterventionsMap({
   }, []);
 
   function dot(color: string, active: boolean, n?: number) {
-    const size = active ? 26 : 18;
+    const size = active ? 40 : 30;
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid #fff;box-shadow:0 0 0 ${active ? 6 : 3}px ${color}33;color:#fff;font:700 ${active ? 12 : 10}px/1 system-ui">${n ?? ""}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid #fff;box-shadow:0 0 0 ${active ? 7 : 4}px ${color}33;color:#fff;font:700 ${active ? 15 : 12}px/1 system-ui">${n ?? ""}</span>`,
     });
   }
 
@@ -121,8 +126,8 @@ export function InterventionsMap({
         .addTo(layer.current);
     }
 
-    // Itinéraire réel vers le chantier sélectionné
-    if (routeCoords && routeCoords.length > 1) {
+    // Itinéraire réel vers le chantier sélectionné (pas de ligne droite à vol d'oiseau)
+    if (routeCoords && routeCoords.length > 1 && !routeEstime) {
       leaflet
         .polyline(routeCoords, { color: "#16a34a", weight: 6, opacity: 0.25 })
         .addTo(layer.current);
@@ -139,7 +144,11 @@ export function InterventionsMap({
         .bindPopup(
           `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
             m.sub ? `<br/>${escapeHtml(m.sub)}` : ""
-          }${m.date ? `<br/><span style="opacity:.7">${escapeHtml(m.date)}</span>` : ""}`,
+          }${m.date ? `<br/><span style="opacity:.7">${escapeHtml(m.date)}</span>` : ""}${
+            m.trajet
+              ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
+              : ""
+          }`,
         );
       mk.on("click", () => onSelect?.(m.id));
       byId.current[m.id] = mk;
@@ -150,7 +159,7 @@ export function InterventionsMap({
         [BASE.lat, BASE.lng],
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
       ]);
-      map.current.fitBounds(bounds, { padding: [34, 34], maxZoom: 11 });
+      map.current.fitBounds(bounds, { padding: [34, 34], maxZoom: 9 });
     }
   }
 
@@ -159,7 +168,7 @@ export function InterventionsMap({
     const mk = activeId ? byId.current[activeId] : null;
     if (mk) mk.openPopup();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, activeId, routeCoords, tourneeCoords]);
+  }, [markers, activeId, routeCoords, routeEstime, tourneeCoords]);
 
   return (
     <div className="rounded-sm overflow-hidden border border-border">
