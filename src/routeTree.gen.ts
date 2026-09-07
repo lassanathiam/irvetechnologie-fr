@@ -25,6 +25,7 @@ import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -112,6 +113,11 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
+  id: '/api/public/photo/$',
+  path: '/api/public/photo/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -128,6 +134,7 @@ export interface FileRoutesByFullPath {
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -145,6 +152,7 @@ export interface FileRoutesByTo {
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -164,6 +172,7 @@ export interface FileRoutesById {
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -183,6 +192,7 @@ export interface FileRouteTypes {
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
+    | '/api/public/photo/$'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/rapports'
     | '/realisations'
+    | '/api/public/photo/$'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -218,6 +229,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
+    | '/api/public/photo/$'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -227,6 +239,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DemandeRoute: typeof DemandeRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -344,6 +357,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/photo/$': {
+      id: '/api/public/photo/$'
+      path: '/api/public/photo/$'
+      fullPath: '/api/public/photo/$'
+      preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -382,6 +402,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DemandeRoute: DemandeRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
