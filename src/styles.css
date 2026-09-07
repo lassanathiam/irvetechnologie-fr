@@ -82,6 +82,14 @@
   * {
     border-color: var(--color-border);
   }
+  html {
+    font-size: 17.5px;
+  }
+  @media (max-width: 640px) {
+    html {
+      font-size: 16.5px;
+    }
+  }
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
@@ -98,9 +106,10 @@
 
 @utility text-mono {
   font-family: var(--font-mono);
-  letter-spacing: 0.08em;
+  letter-spacing: 0.07em;
   text-transform: uppercase;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
+  font-weight: 600;
 }
 
 @utility glow-primary {
