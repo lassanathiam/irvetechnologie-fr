@@ -831,7 +831,10 @@ function PlanningPage() {
                                   | "a_facturer"
                                   | "facture"
                                   | "paye",
+                                designation: g("designation") || null,
+                                etiquettes: parseEtiquettes(g("etiquettes")),
                               });
+
                             }}
                             className="mt-4 pt-4 border-t border-border grid gap-3 sm:grid-cols-2"
                           >
