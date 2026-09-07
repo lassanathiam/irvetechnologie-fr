@@ -96,6 +96,27 @@ const FACTU_LABEL: Record<string, string> = {
   paye: "payé",
 };
 
+const ETIQUETTES_SUGGEREES = [
+  "Borne 7,4 kW",
+  "Borne 11 kW",
+  "Borne 22 kW",
+  "Maison",
+  "Copropriété",
+  "Entreprise",
+  "Tranchée",
+  "Voirie",
+  "Urgent",
+  "SAV",
+];
+
+const parseEtiquettes = (v: string) =>
+  v
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+
+
 const eurosFr = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })
     .format(n);
