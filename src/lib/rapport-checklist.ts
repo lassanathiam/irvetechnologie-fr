@@ -229,3 +229,117 @@ export type PhotoKind = (typeof PHOTOS_REQUISES)[number]["key"];
 
 export const CHECK_LABEL: Record<CheckState, string> = { ok: "Conforme", nc: "Non conforme", na: "Sans objet" };
 
+
+/* ------------------------------------------------------------------ *
+ * Version « Essentiel » : les points indispensables uniquement.
+ * ------------------------------------------------------------------ */
+
+export const CHECKLIST_ESSENTIEL: ChecklistSection[] = [
+  {
+    key: "electrique",
+    title: "1. Alimentation & protections",
+    items: [
+      { key: "circuit_dedie", label: "Circuit dédié à la borne" },
+      { key: "disjoncteur", label: "Disjoncteur calibré selon la puissance" },
+      { key: "differentiel", label: "Différentiel 30 mA + détection 6 mA DC" },
+      { key: "section", label: "Section des conducteurs conforme à la longueur" },
+      { key: "serrage", label: "Serrage des connexions vérifié" },
+      { key: "reperage", label: "Circuit repéré au tableau" },
+    ],
+  },
+  {
+    key: "terre",
+    title: "2. Terre & mesures",
+    items: [
+      { key: "continuite", label: "Continuité du conducteur de protection (PE)" },
+      { key: "prise_terre", label: "Prise de terre conforme" },
+      { key: "isolement", label: "Mesure d'isolement réalisée" },
+      { key: "test_ddr", label: "Test de déclenchement du différentiel réalisé" },
+    ],
+  },
+  {
+    key: "pose",
+    title: "3. Pose & essais",
+    items: [
+      { key: "borne_fixation", label: "Borne fixée et cheminement protégé" },
+      { key: "puissance_param", label: "Puissance paramétrée selon l'abonnement" },
+      { key: "essai_vehicule", label: "Charge réelle avec véhicule validée" },
+      { key: "formation", label: "Prise en main du client réalisée" },
+      { key: "nfc15100", label: "Installation conforme NF C 15-100 (§ IRVE)" },
+    ],
+  },
+];
+
+export type ChecklistMode = "essentiel" | "complet";
+
+export function checklistForMode(type: RapportType, mode: ChecklistMode): ChecklistSection[] {
+  if (mode === "essentiel") return CHECKLIST_ESSENTIEL;
+  return checklistFor(type);
+}
+
+/** Tous les points préréglés sur « conforme » (on ne corrige que les exceptions). */
+export function allOk(sections: ChecklistSection[]): Record<string, CheckState> {
+  const next: Record<string, CheckState> = {};
+  for (const s of sections) for (const i of s.items) next[`${s.key}.${i.key}`] = "ok";
+  return next;
+}
+
+/* ------------------------------------------------------------------ *
+ * Typologies présélectionnables
+ * ------------------------------------------------------------------ */
+
+export type TypologieGroup = {
+  key: "puissance" | "phase" | "pose" | "cheminement";
+  label: string;
+  options: string[];
+};
+
+export const TYPOLOGIES: TypologieGroup[] = [
+  { key: "puissance", label: "Puissance de la borne", options: ["3,7 kW", "7,4 kW", "11 kW", "22 kW"] },
+  { key: "phase", label: "Raccordement", options: ["Monophasé", "Triphasé"] },
+  { key: "pose", label: "Pose", options: ["Murale intérieure", "Murale extérieure", "Sur pied"] },
+  { key: "cheminement", label: "Cheminement", options: ["Apparent (goulotte)", "Encastré", "Tranchée"] },
+];
+
+export type Typologie = Partial<Record<TypologieGroup["key"], string>>;
+
+/** Valeurs conseillées déduites de la puissance choisie. */
+export const PRESET_PUISSANCE: Record<string, { disjoncteur: string; section: string; courant_charge: string; puissance: string }> = {
+  "3,7 kW": { disjoncteur: "20", section: "3G4", courant_charge: "16", puissance: "3,7" },
+  "7,4 kW": { disjoncteur: "40", section: "3G6", courant_charge: "32", puissance: "7,4" },
+  "11 kW": { disjoncteur: "20", section: "5G4", courant_charge: "16", puissance: "11" },
+  "22 kW": { disjoncteur: "40", section: "5G6", courant_charge: "32", puissance: "22" },
+};
+
+/** Mesures préremplies à partir d'une typologie (les valeurs saisies sont conservées). */
+export function mesuresFromTypologie(t: Typologie, current: Record<string, string>): Record<string, string> {
+  const preset = t.puissance ? PRESET_PUISSANCE[t.puissance] : undefined;
+  if (!preset) return current;
+  return {
+    ...current,
+    disjoncteur: current.disjoncteur || preset.disjoncteur,
+    section: current.section || preset.section,
+    courant_charge: current.courant_charge || preset.courant_charge,
+    courant_max: current.courant_max || preset.disjoncteur,
+    puissance: current.puissance || preset.puissance,
+    puissance_testee: current.puissance_testee || preset.puissance,
+    tension: current.tension || (t.phase === "Triphasé" ? "400" : "230"),
+  };
+}
+
+/** Abonnements Enedis courants (kVA). */
+export const ABONNEMENTS_KVA = ["3 kVA", "6 kVA", "9 kVA", "12 kVA", "15 kVA", "18 kVA", "24 kVA", "30 kVA", "36 kVA", "Je ne sais pas"];
+
+/** Puissance de borne demandée côté client. */
+export const PUISSANCES_BORNE = ["3,7 kW", "7,4 kW", "11 kW", "22 kW", "À définir avec vous"];
+
+/** Alerte quand la borne demandée dépasse ce que l'abonnement peut fournir. */
+export function alerteAbonnement(kva: string, borne: string): string | null {
+  const k = Number(kva.replace(/[^0-9]/g, ""));
+  const b = Number(borne.replace(",", ".").replace(/[^0-9.]/g, ""));
+  if (!k || !b) return null;
+  if (b + 2 > k) {
+    return `Avec un abonnement de ${k} kVA, une borne de ${borne} sollicite presque toute votre puissance. Nous prévoirons un pilotage dynamique de la charge, ou une augmentation d'abonnement auprès de votre fournisseur.`;
+  }
+  return null;
+}
