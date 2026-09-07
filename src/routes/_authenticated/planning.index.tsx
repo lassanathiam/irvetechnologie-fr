@@ -31,7 +31,8 @@ import {
   type VoirieInput,
 } from "@/lib/voirie.functions";
 import { ProShell } from "@/components/ProShell";
-import { InterventionsMap, type MapMarker } from "@/components/InterventionsMap";
+import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
+import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
 import { dureeFr } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
