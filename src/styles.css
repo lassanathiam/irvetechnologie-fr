@@ -59,9 +59,29 @@
 }
 
 .dark {
-  --background: oklch(0.99 0.005 150);
-  --foreground: oklch(0.20 0.02 160);
+  --background: oklch(0.20 0.022 165);
+  --foreground: oklch(0.95 0.008 160);
+  --card: oklch(0.245 0.024 165);
+  --card-foreground: oklch(0.95 0.008 160);
+  --popover: oklch(0.245 0.024 165);
+  --popover-foreground: oklch(0.95 0.008 160);
+  --primary: oklch(0.72 0.17 158);
+  --primary-foreground: oklch(0.18 0.02 165);
+  --secondary: oklch(0.28 0.026 165);
+  --secondary-foreground: oklch(0.94 0.01 160);
+  --muted: oklch(0.28 0.024 165);
+  --muted-foreground: oklch(0.72 0.02 160);
+  --accent: oklch(0.72 0.17 158);
+  --accent-foreground: oklch(0.18 0.02 165);
+  --destructive: oklch(0.62 0.2 25);
+  --destructive-foreground: oklch(0.98 0 0);
+  --border: oklch(0.34 0.026 165);
+  --input: oklch(0.30 0.024 165);
+  --ring: oklch(0.72 0.17 158);
+  --grid-line: oklch(0.72 0.17 158 / 0.08);
+  --glow: oklch(0.72 0.17 158 / 0.32);
 }
+
 
 @font-face {
   font-family: "Space Grotesk";

@@ -3,6 +3,7 @@ import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
@@ -45,6 +46,8 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             ))}
           </nav>
 
+          <div className="flex items-center gap-2 shrink-0">
+          <ThemeToggle />
           <button
             type="button"
             onClick={async () => {
@@ -55,6 +58,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           >
             <LogOut className="h-3.5 w-3.5" /> Quitter
           </button>
+          </div>
         </div>
       </header>
       <div className="border-b border-border bg-muted/40">

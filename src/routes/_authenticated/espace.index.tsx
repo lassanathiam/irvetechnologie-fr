@@ -1,21 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
+  ArrowRight,
   CalendarClock,
+  CheckCircle2,
   Euro,
   FileText,
   Inbox,
   Loader2,
   MapPin,
-  Route as RouteIcon,
-  Zap,
+  Receipt,
+  ShieldCheck,
+  Wrench,
 } from "lucide-react";
 import { getDashboard } from "@/lib/planning.functions";
+import { updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
-import { InterventionsMap, type MapMarker } from "@/components/InterventionsMap";
-import { dureeFr } from "@/lib/geo";
 import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/_authenticated/espace/")({
       {
         name: "description",
         content:
-          "Pilotage de l'activité IRVE Technologie : rendez-vous à venir, demandes, devis et carte des interventions.",
+          "Pilotage de l'activité IRVE Technologie : rendez-vous à venir, travaux réalisés, chiffre d'affaires et demandes clients.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -42,188 +43,280 @@ const dateTimeFr = (iso: string) =>
     minute: "2-digit",
   }).format(new Date(iso));
 
+const dateCourteFr = (iso: string) =>
+  new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(iso));
+
+const STATUT_DEMANDE: Record<string, { label: string; cls: string }> = {
+  nouveau: { label: "Nouvelle", cls: "bg-primary/15 text-primary" },
+  en_cours: { label: "En cours", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
+  accepte: { label: "Acceptée", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
+  refuse: { label: "Refusée", cls: "bg-destructive/15 text-destructive" },
+  clos: { label: "Clôturée", cls: "bg-muted text-muted-foreground" },
+};
+
 function EspacePage() {
   const fetchDashboard = useServerFn(getDashboard);
+  const setStatut = useServerFn(updateStatutDemande);
+  const qc = useQueryClient();
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
-  const [active, setActive] = useState<string | null>(null);
+
+  const accepter = useMutation({
+    mutationFn: (id: string) => setStatut({ data: { id, status: "accepte" } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
 
   const rdv = q.data?.rendezvous ?? [];
   const aVenir = rdv
     .filter((r) => new Date(r.date_debut).getTime() >= Date.now() - 36e5 && r.statut !== "annule")
-    .slice(0, 8);
-  const points: MapMarker[] = rdv
-    .filter((r) => r.lat != null && r.lng != null)
-    .map((r) => ({
-      id: r.id,
-      lat: Number(r.lat),
-      lng: Number(r.lng),
-      label: r.client_nom,
-      sub: r.cp_ville,
-      statut: r.statut,
-    }));
+    .slice(0, 6);
+  const realises = rdv
+    .filter((r) => r.statut === "realise")
+    .sort((a, b) => new Date(b.date_debut).getTime() - new Date(a.date_debut).getTime())
+    .slice(0, 5);
+  const demandes = q.data?.demandes ?? [];
+  const nouvelles = demandes.filter((d) => d.status === "nouveau" || d.status === "en_cours").slice(0, 6);
+  const acceptees = demandes.filter((d) => d.status === "accepte").slice(0, 6);
 
   return (
     <ProShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
-          <p className="text-mono text-primary">Espace pro</p>
-          <h1 className="text-2xl font-extrabold tracking-tight mt-1">Pilotage de l'activité</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">Espace pro</p>
+          <h1 className="text-3xl font-semibold tracking-tight mt-2">Tableau de bord</h1>
+          <p className="text-sm text-muted-foreground mt-1.5">
             Borne de l'Ouest — marque commerciale d'IRVE Technologie
           </p>
         </div>
-        <Link
-          to="/planning"
-          className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2"
-        >
-          <CalendarClock className="h-4 w-4" /> Nouveau rendez-vous
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <Link
+            to="/planning"
+            className="hero-grad text-primary-foreground text-mono text-xs font-bold px-4 py-2.5 rounded-full inline-flex items-center gap-2 shadow-sm transition hover:brightness-110"
+          >
+            <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
+          </Link>
+          <Link
+            to="/devis"
+            className="text-mono text-xs font-bold border border-border rounded-full px-4 py-2.5 inline-flex items-center gap-2 hover:border-primary hover:text-primary transition"
+          >
+            <FileText className="h-3.5 w-3.5" /> Nouveau devis
+          </Link>
+        </div>
       </div>
 
       {q.isLoading ? (
         <Loader2 className="h-5 w-5 animate-spin text-primary" />
       ) : (
         <>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-8">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <Stat
               icon={CalendarClock}
-              label="RDV à venir"
+              label="Rendez-vous à venir"
               value={String(q.data?.stats.rdvAVenir ?? 0)}
               hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
             />
             <Stat
-              icon={RouteIcon}
-              label="Km planifiés"
-              value={`${Math.round(q.data?.stats.kmPlanifies ?? 0)} km`}
-              hint="depuis la base de Nantes"
-            />
-            <Stat
-              icon={Inbox}
-              label="Demandes"
-              value={String(q.data?.demandes.length ?? 0)}
-              hint={`${q.data?.stats.demandesNouvelles ?? 0} nouvelles`}
+              icon={Wrench}
+              label="Travaux réalisés"
+              value={String(q.data?.stats.installations ?? 0)}
+              hint={`${q.data?.stats.chantiersValides ?? 0} chantiers validés`}
             />
             <Stat
               icon={Euro}
-              label="Devis récents"
-              value={euro(q.data?.stats.caDevis ?? 0)}
-              hint={`${q.data?.devis.length ?? 0} devis`}
+              label="Chiffre d'affaires encaissé"
+              value={euro(q.data?.stats.caEncaisse ?? 0)}
+              hint={`${euro(q.data?.stats.caEnAttente ?? 0)} en attente de paiement`}
+            />
+            <Stat
+              icon={Inbox}
+              label="Demandes clients"
+              value={String(q.data?.stats.demandesTotal ?? 0)}
+              hint={`${q.data?.stats.demandesNouvelles ?? 0} nouvelles · ${q.data?.stats.demandesAcceptees ?? 0} acceptées`}
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
-            <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
-                <CalendarClock className="h-4 w-4 text-primary" /> Prochains rendez-vous
-              </h2>
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Panel
+              icon={CalendarClock}
+              title="Prochains rendez-vous"
+              action={{ to: "/planning", label: "Voir le planning" }}
+            >
               {!aVenir.length ? (
-                <p className="text-sm text-muted-foreground">
-                  Aucun rendez-vous planifié.{" "}
-                  <Link to="/planning" className="text-primary">
-                    En créer un
-                  </Link>
-                  .
-                </p>
+                <Empty>Aucun rendez-vous planifié.</Empty>
               ) : (
                 <ul className="divide-y divide-border">
                   {aVenir.map((r) => (
-                    <li
-                      key={r.id}
-                      onMouseEnter={() => setActive(r.id)}
-                      onMouseLeave={() => setActive(null)}
-                      className="py-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1"
-                    >
+                    <li key={r.id} className="py-3 flex items-baseline justify-between gap-4">
                       <div className="min-w-0">
-                        <p className="text-sm font-medium truncate">
-                          {r.client_nom}
-                          <span className="text-muted-foreground font-normal"> — {r.titre}</span>
-                        </p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1.5 mt-0.5">
+                        <p className="text-sm font-semibold truncate">{r.client_nom}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
                           <MapPin className="h-3 w-3" /> {r.cp_ville || r.adresse}
-                          {r.distance_km != null && (
-                            <span className="text-mono">
-                              · {Math.round(Number(r.distance_km))} km ·{" "}
-                              {dureeFr(Number(r.duree_trajet_min ?? 0))} de trajet
-                            </span>
-                          )}
                         </p>
                       </div>
-                      <span className="text-mono text-xs text-primary whitespace-nowrap">
+                      <span className="text-mono text-xs font-bold text-primary whitespace-nowrap">
                         {dateTimeFr(r.date_debut)}
                       </span>
                     </li>
                   ))}
                 </ul>
               )}
-            </section>
+            </Panel>
 
-            <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
-                <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
-              </h2>
-              <InterventionsMap markers={points} activeId={active} onSelect={setActive} height={340} />
-              <p className="text-mono text-[10px] text-muted-foreground mt-2">
-                {points.length} point{points.length > 1 ? "s" : ""} géolocalisé
-                {points.length > 1 ? "s" : ""} · distances estimées depuis Nantes
-              </p>
-            </section>
-          </div>
-
-          <div className="grid gap-6 lg:grid-cols-2 mt-6">
-            <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
-                <Inbox className="h-4 w-4 text-primary" /> Dernières demandes
-              </h2>
-              {!q.data?.demandes.length ? (
-                <p className="text-sm text-muted-foreground">Aucune demande.</p>
+            <Panel
+              icon={Inbox}
+              title="Demandes qui viennent d'arriver"
+              action={{ to: "/demandes", label: "Boîte de réception" }}
+            >
+              {!nouvelles.length ? (
+                <Empty>Aucune nouvelle demande.</Empty>
               ) : (
-                <ul className="space-y-2 text-sm">
-                  {q.data.demandes.map((d) => (
-                    <li key={d.id} className="flex items-baseline justify-between gap-3">
-                      <span className="truncate">
-                        {d.nom}{" "}
-                        <span className="text-muted-foreground text-mono text-xs">
-                          {d.code_postal}
-                        </span>
-                      </span>
-                      <span className="text-mono text-xs text-muted-foreground">{d.status}</span>
+                <ul className="divide-y divide-border">
+                  {nouvelles.map((d) => (
+                    <li key={d.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">
+                          {d.nom}{" "}
+                          <span className="text-mono text-xs font-normal text-muted-foreground">
+                            {d.code_postal}
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Reçue le {dateCourteFr(d.created_at)}
+                          {d.formule ? ` · formule ${d.formule}` : ""}
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => accepter.mutate(d.id)}
+                        disabled={accepter.isPending}
+                        className="text-mono text-[11px] font-bold rounded-full border border-primary/50 text-primary px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
+                      </button>
                     </li>
                   ))}
                 </ul>
               )}
-              <Link to="/demandes" className="text-mono text-xs text-primary mt-4 inline-block">
-                Voir la boîte de réception
-              </Link>
-            </section>
+            </Panel>
 
-            <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
-                <FileText className="h-4 w-4 text-primary" /> Devis récents
-              </h2>
-              {!q.data?.devis.length ? (
-                <p className="text-sm text-muted-foreground">Aucun devis.</p>
+            <Panel
+              icon={ShieldCheck}
+              title="Clients validés — prêts pour un devis"
+              action={{ to: "/demandes", label: "Toutes les demandes" }}
+            >
+              {!acceptees.length ? (
+                <Empty>
+                  Acceptez une demande pour créer son devis en un clic, coordonnées client déjà
+                  remplies.
+                </Empty>
               ) : (
-                <ul className="space-y-2 text-sm">
-                  {q.data.devis.map((d) => (
-                    <li key={d.id} className="flex items-baseline justify-between gap-3">
+                <ul className="divide-y divide-border">
+                  {acceptees.map((d) => (
+                    <li key={d.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{d.nom}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {d.email} · {d.telephone} · {d.code_postal}
+                        </p>
+                      </div>
+                      <Link
+                        to="/devis"
+                        search={{ demande: d.id }}
+                        className="hero-grad text-primary-foreground text-mono text-[11px] font-bold rounded-full px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:brightness-110"
+                      >
+                        Créer le devis <ArrowRight className="h-3.5 w-3.5" />
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel
+              icon={Wrench}
+              title="Derniers travaux réalisés"
+              action={{ to: "/rapports", label: "Rapports" }}
+            >
+              {!realises.length ? (
+                <Empty>Aucun chantier réalisé pour l'instant.</Empty>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {realises.map((r) => (
+                    <li key={r.id} className="py-3 flex items-baseline justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate">{r.client_nom}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5 truncate">
+                          {r.titre} · {r.cp_ville || r.adresse}
+                        </p>
+                      </div>
+                      <span className="text-mono text-xs whitespace-nowrap text-emerald-600 dark:text-emerald-400">
+                        {r.chantier_valide ? "Validé" : "Réalisé"} · {dateCourteFr(r.date_debut)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
+
+            <Panel icon={FileText} title="Devis récents" action={{ to: "/devis", label: "Gérer les devis" }}>
+              {!q.data?.devis.length ? (
+                <Empty>Aucun devis.</Empty>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {q.data.devis.slice(0, 6).map((d) => (
+                    <li key={d.id} className="py-3 flex items-baseline justify-between gap-4">
                       <Link
                         to="/devis/$id"
                         params={{ id: d.id }}
-                        className="truncate hover:text-primary"
+                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
                       >
-                        <span className="text-mono text-xs text-primary">{d.numero}</span>{" "}
-                        {d.client_nom}
+                        <span className="text-mono text-xs text-primary">{d.numero}</span> {d.client_nom}
                       </Link>
-                      <span className="text-mono text-xs">{euro(Number(d.total_ttc))}</span>
+                      <span className="text-mono text-xs font-bold whitespace-nowrap">
+                        {euro(Number(d.total_ttc))}
+                      </span>
                     </li>
                   ))}
                 </ul>
               )}
-              <Link to="/devis" className="text-mono text-xs text-primary mt-4 inline-block">
-                Gérer les devis
-              </Link>
-            </section>
+            </Panel>
+
+            <Panel icon={Receipt} title="Factures" action={{ to: "/factures", label: "Gérer les factures" }}>
+              {!q.data?.factures.length ? (
+                <Empty>Aucune facture.</Empty>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {q.data.factures.map((f) => (
+                    <li key={f.id} className="py-3 flex items-baseline justify-between gap-4">
+                      <Link
+                        to="/factures/$id"
+                        params={{ id: f.id }}
+                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
+                      >
+                        <span className="text-mono text-xs text-primary">{f.numero}</span> {f.client_nom}
+                      </Link>
+                      <span className="text-mono text-xs font-bold whitespace-nowrap">
+                        {euro(Number(f.total_ttc))}
+                        <span
+                          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${
+                            f.statut === "payee"
+                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                              : "bg-muted text-muted-foreground"
+                          }`}
+                        >
+                          {f.statut === "payee" ? "Payée" : "En attente"}
+                        </span>
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Panel>
           </div>
+
+          <p className="text-mono text-[11px] text-muted-foreground mt-6">
+            Chiffre d'affaires du mois en cours : {euro(q.data?.stats.caMois ?? 0)} · la carte des
+            interventions se trouve dans l'onglet Planning.
+          </p>
         </>
       )}
     </ProShell>
@@ -236,18 +329,55 @@ function Stat({
   value,
   hint,
 }: {
-  icon: typeof Zap;
+  icon: typeof Euro;
   label: string;
   value: string;
   hint?: string;
 }) {
   return (
-    <div className="bg-card border border-border rounded-sm p-5">
-      <p className="text-mono text-xs text-muted-foreground flex items-center gap-2">
-        <Icon className="h-3.5 w-3.5 text-primary" /> {label}
+    <div className="bg-card border border-border rounded-xl p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md">
+      <p className="text-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground flex items-center gap-2">
+        <Icon className="h-4 w-4 text-primary" /> {label}
       </p>
-      <p className="text-2xl font-extrabold tracking-tight mt-2">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
+      <p className="text-3xl font-bold tracking-tight mt-3">{value}</p>
+      {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
     </div>
   );
 }
+
+function Panel({
+  icon: Icon,
+  title,
+  action,
+  children,
+}: {
+  icon: typeof Euro;
+  title: string;
+  action?: { to: string; label: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+      <div className="flex items-center justify-between gap-3 mb-3">
+        <h2 className="text-sm font-bold flex items-center gap-2">
+          <Icon className="h-4 w-4 text-primary" /> {title}
+        </h2>
+        {action && (
+          <Link
+            to={action.to}
+            className="text-mono text-[11px] font-bold text-primary hover:underline whitespace-nowrap"
+          >
+            {action.label}
+          </Link>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function Empty({ children }: { children: React.ReactNode }) {
+  return <p className="text-sm text-muted-foreground py-2">{children}</p>;
+}
+
+export { STATUT_DEMANDE };
