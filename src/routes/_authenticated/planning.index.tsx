@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CheckCircle2,
   FileCheck2,
+  Euro,
   Fuel,
   Loader2,
   MapPin,
@@ -21,6 +22,7 @@ import {
   listRendezVous,
   updateStatutRendezVous,
   validerChantier,
+  updateFacturationRdv,
   type RendezVousInput,
 } from "@/lib/planning.functions";
 import {
@@ -35,7 +37,7 @@ import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/In
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
-import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
+import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 
 export const Route = createFileRoute("/_authenticated/planning/")({
   head: () => ({
@@ -104,7 +106,9 @@ function PlanningPage() {
   const [active, setActive] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" } | null>(null);
+  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" | "montant" } | null>(
+    null,
+  );
   const [prefillDate, setPrefillDate] = useState<string>("");
 
   const refresh = () => {
@@ -150,6 +154,23 @@ function PlanningPage() {
     },
     onError: (e: unknown) =>
       setError(e instanceof Error ? e.message : "Enregistrement de l'autorisation impossible."),
+  });
+  const factuFn = useServerFn(updateFacturationRdv);
+  const setFacturation = useMutation({
+    mutationFn: (p: {
+      id: string;
+      origine: "direct" | "sous_traitance";
+      partenaire?: string | null;
+      montant_ht: number;
+      tva_pct?: number;
+      statut_facturation: "a_facturer" | "facture" | "paye";
+    }) => factuFn({ data: p }),
+    onSuccess: () => {
+      setPanel(null);
+      setError(null);
+      refresh();
+    },
+    onError: (e: unknown) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
   const removeVoirie = useMutation({
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
@@ -307,6 +328,11 @@ function PlanningPage() {
       duree_min: Number(get("duree_min") || 120),
       technicien: get("technicien") || null,
       notes: get("notes") || null,
+      origine: (get("origine") || "direct") as "direct" | "sous_traitance",
+      partenaire: get("partenaire") || null,
+      montant_ht: Number(get("montant_ht") || 0),
+      tva_pct: Number(get("tva_pct") || 20),
+      statut_facturation: "a_facturer",
     });
   }
 
@@ -414,6 +440,20 @@ function PlanningPage() {
               ))}
             </select>
           </label>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Origine du chantier</span>
+            <select
+              name="origine"
+              defaultValue="direct"
+              className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+            >
+              <option value="direct">Client direct</option>
+              <option value="sous_traitance">Sous-traitance / partenaire</option>
+            </select>
+          </label>
+          <Field label="Partenaire / donneur d'ordre" name="partenaire" placeholder="Ex. ZePlug" />
+          <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
+          <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">Notes</span>
