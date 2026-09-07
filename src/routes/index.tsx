@@ -559,7 +559,7 @@ function Index() {
           </div>
 
           <p className="mt-12 text-xs text-muted-foreground text-center max-w-2xl mx-auto">
-            Formules établies sur devis selon la borne, l'accessibilité du site et le nombre de points de charge. Sans engagement de durée.
+            Sérénité et Sérénité+ : tarifs forfaitaires annuels, sans engagement de durée. Pro / Flotte établi sur devis selon le parc. Pièces de remplacement facturées en sus.
           </p>
         </div>
       </section>

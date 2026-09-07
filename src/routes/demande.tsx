@@ -11,8 +11,8 @@ import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rappo
 
 type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
-  serenite: { label: "Sérénité Entretien", price: "Sur devis" },
-  premium: { label: "Sérénité Premium", price: "Sur devis" },
+  serenite: { label: "Sérénité", price: "149 € TTC/an" },
+  premium: { label: "Sérénité+", price: "290 € TTC/an" },
   pro: { label: "Pro / Flotte", price: "Sur devis" },
 };
 
