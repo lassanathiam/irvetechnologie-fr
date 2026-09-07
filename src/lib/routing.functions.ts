@@ -100,20 +100,21 @@ export type TourneeReelle = {
  * Repli sur une heuristique plus proche voisin si le service de calcul est indisponible.
  */
 export const tourneeReelle = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ stops: z.array(point).max(12) }).parse(d))
+  .inputValidator((d) => z.object({ stops: z.array(point).max(12), base: baseSchema }).parse(d))
   .handler(async ({ data }): Promise<TourneeReelle> => {
     const stops = data.stops;
+    const from = data.base ?? BASE;
     if (!stops.length)
       return { etapes: [], kmTotal: 0, minutes: 0, kmSepares: 0, coords: [], estime: false };
 
-    const coordsParam = [BASE, ...stops].map(lonlat).join(";");
+    const coordsParam = [from, ...stops].map(lonlat).join(";");
     const json =
       stops.length > 1
         ? await osrm(
             `/trip/v1/driving/${coordsParam}?source=first&roundtrip=true&overview=full&geometries=geojson`,
           )
         : await osrm(
-            `/route/v1/driving/${coordsParam};${lonlat(BASE)}?overview=full&geometries=geojson`,
+            `/route/v1/driving/${coordsParam};${lonlat(from)}?overview=full&geometries=geojson`,
           );
 
     const trip = (json?.["trips"] ?? json?.["routes"]) as
@@ -122,13 +123,13 @@ export const tourneeReelle = createServerFn({ method: "POST" })
     const t = trip?.[0];
 
     const kmSepares = Math.round(
-      stops.reduce((sum, s) => sum + haversineKm(BASE, s) * 1.18 * 2, 0),
+      stops.reduce((sum, s) => sum + haversineKm(from, s) * 1.18 * 2, 0),
     );
 
     if (!t) {
       // Repli : plus proche voisin à vol d'oiseau majoré du facteur routier.
       const restants = [...stops];
-      let cur: { lat: number; lng: number } = BASE;
+      let cur: { lat: number; lng: number } = from;
       let kmTotal = 0;
       const etapes: TourneeReelle["etapes"] = [];
       while (restants.length) {
@@ -154,16 +155,16 @@ export const tourneeReelle = createServerFn({ method: "POST" })
         });
         cur = s;
       }
-      kmTotal += Math.round(haversineKm(cur, BASE) * 1.18);
+      kmTotal += Math.round(haversineKm(cur, from) * 1.18);
       return {
         etapes,
         kmTotal,
         minutes: Math.round((kmTotal / 80) * 60),
         kmSepares,
-        coords: [[BASE.lat, BASE.lng], ...etapes.map((e) => {
+        coords: [[from.lat, from.lng], ...etapes.map((e) => {
           const s = stops.find((x) => x.id === e.id)!;
           return [s.lat, s.lng] as [number, number];
-        }), [BASE.lat, BASE.lng]],
+        }), [from.lat, from.lng]],
         estime: true,
       };
     }
