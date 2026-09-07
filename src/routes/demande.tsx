@@ -59,8 +59,8 @@ const MAX_CHEMINEMENT = 5;
 function Demande() {
   const { formule } = Route.useSearch();
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
-  const [kva, setKva] = useState(ABONNEMENTS_KVA[0]!);
-  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[1]!);
+  const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
+  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!);
   const alerte = alerteAbonnement(kva, puissanceBorne);
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);

@@ -18,6 +18,9 @@ const rapportSchema = z.object({
   borne_serie: z.string().trim().max(120).optional().nullable(),
   technicien: z.string().trim().max(160).optional().nullable(),
   mesures: z.record(z.string(), z.string().max(60)),
+  typologie: z.record(z.string(), z.string().max(60)).optional(),
+  devis_id: z.string().uuid().optional().nullable(),
+  rendezvous_id: z.string().uuid().optional().nullable(),
   checklist: z.record(z.string(), checkState),
   observations: z.string().trim().max(4000).optional().nullable(),
   reserves: z.string().trim().max(4000).optional().nullable(),
@@ -88,6 +91,9 @@ export const createRapport = createServerFn({ method: "POST" })
         borne_serie: data.borne_serie ?? null,
         technicien: data.technicien ?? null,
         mesures: data.mesures,
+        typologie: data.typologie ?? {},
+        devis_id: data.devis_id ?? null,
+        rendezvous_id: data.rendezvous_id ?? null,
         checklist: data.checklist,
         observations: data.observations ?? null,
         reserves: data.reserves ?? null,
@@ -181,4 +187,112 @@ export const getRapportPhotoUrls = createServerFn({ method: "POST" })
     return (signed ?? [])
       .filter((s) => s.signedUrl)
       .map((s) => ({ path: s.path ?? "", url: s.signedUrl! }));
+  });
+
+/* ------------------------------------------------------------------ *
+ * Reprise automatique d'un devis ou d'un rendez-vous
+ * ------------------------------------------------------------------ */
+
+/** Devis et rendez-vous disponibles pour préremplir un rapport. */
+export const listRapportSources = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const [devis, rdv] = await Promise.all([
+      context.supabase
+        .from("devis")
+        .select("id, numero, client_nom, date_emission")
+        .order("created_at", { ascending: false })
+        .limit(50),
+      context.supabase
+        .from("rendezvous")
+        .select("id, titre, client_nom, date_debut")
+        .order("date_debut", { ascending: false })
+        .limit(50),
+    ]);
+    if (devis.error) throw new Error(devis.error.message);
+    if (rdv.error) throw new Error(rdv.error.message);
+    return { devis: devis.data ?? [], rendezvous: rdv.data ?? [] };
+  });
+
+const METRAGE_RE = /(\d+(?:[.,]\d+)?)\s*(?:m|ml|mètres?|metres?)\b/i;
+const PUISSANCE_RE = /(\d+(?:[.,]\d+)?)\s*kW/i;
+
+/** Reprend client, chantier, borne et métrage depuis un devis ou un rendez-vous. */
+export const getRapportPrefill = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        devis_id: z.string().uuid().optional().nullable(),
+        rendezvous_id: z.string().uuid().optional().nullable(),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data, context }) => {
+    if (data.devis_id) {
+      const { data: devis, error } = await context.supabase
+        .from("devis")
+        .select("id, numero, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, notes, rendezvous_id")
+        .eq("id", data.devis_id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!devis) throw new Error("Devis introuvable.");
+
+      const { data: items } = await context.supabase
+        .from("devis_items")
+        .select("libelle, description, quantite")
+        .eq("devis_id", devis.id)
+        .order("ordre", { ascending: true });
+
+      const texte = [devis.objet, devis.notes, ...(items ?? []).map((i) => `${i.libelle} ${i.description ?? ""}`)]
+        .filter(Boolean)
+        .join(" \n ");
+      const metrage = METRAGE_RE.exec(texte)?.[1] ?? null;
+      const puissance = PUISSANCE_RE.exec(texte)?.[0] ?? null;
+
+      return {
+        source: "devis" as const,
+        devis_id: devis.id,
+        rendezvous_id: devis.rendezvous_id ?? null,
+        reference: devis.numero,
+        client_nom: devis.client_nom,
+        client_email: devis.client_email ?? "",
+        client_telephone: devis.client_telephone ?? "",
+        chantier_adresse: devis.client_adresse ?? "",
+        chantier_cp_ville: devis.client_cp_ville ?? "",
+        technicien: "",
+        date_intervention: null as string | null,
+        borne_puissance: puissance,
+        longueur: metrage,
+      };
+    }
+
+    if (data.rendezvous_id) {
+      const { data: rdv, error } = await context.supabase
+        .from("rendezvous")
+        .select("id, titre, client_nom, client_email, client_telephone, adresse, cp_ville, technicien, date_debut, notes")
+        .eq("id", data.rendezvous_id)
+        .maybeSingle();
+      if (error) throw new Error(error.message);
+      if (!rdv) throw new Error("Rendez-vous introuvable.");
+
+      const texte = [rdv.titre, rdv.notes].filter(Boolean).join(" \n ");
+      return {
+        source: "rendezvous" as const,
+        devis_id: null,
+        rendezvous_id: rdv.id,
+        reference: rdv.titre,
+        client_nom: rdv.client_nom,
+        client_email: rdv.client_email ?? "",
+        client_telephone: rdv.client_telephone ?? "",
+        chantier_adresse: rdv.adresse ?? "",
+        chantier_cp_ville: rdv.cp_ville ?? "",
+        technicien: rdv.technicien ?? "",
+        date_intervention: rdv.date_debut ? rdv.date_debut.slice(0, 10) : null,
+        borne_puissance: PUISSANCE_RE.exec(texte)?.[0] ?? null,
+        longueur: METRAGE_RE.exec(texte)?.[1] ?? null,
+      };
+    }
+
+    throw new Error("Aucune source sélectionnée.");
   });
