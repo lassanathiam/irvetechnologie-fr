@@ -438,8 +438,7 @@ function PlanningPage() {
           <Field label="Client" name="client_nom" required />
           <Field label="Téléphone" name="client_telephone" />
           <Field label="Email" name="client_email" type="email" />
-          <Field label="Adresse du chantier" name="adresse" required placeholder="12 rue des Lilas" />
-          <Field label="Code postal & ville" name="cp_ville" placeholder="44000 Nantes" />
+          <AdresseFields required />
           <label className="block">
             <span className="text-mono text-xs text-muted-foreground">Type</span>
             <select
