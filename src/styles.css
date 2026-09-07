@@ -162,6 +162,9 @@
   @page {
     margin: 12mm;
   }
+  html {
+    font-size: 15px !important;
+  }
   html,
   body,
   main,
