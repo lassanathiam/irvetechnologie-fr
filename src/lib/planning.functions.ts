@@ -251,7 +251,7 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         origine: z.enum(["direct", "sous_traitance"]),
         partenaire: z.string().trim().max(160).optional().nullable(),
-        montant_ht: z.coerce.number().min(0).max(1_000_000),
+        montant_ht: num(0, 1_000_000, 0),
         tva_pct: num(0, 30, 20),
         statut_facturation: z.enum(["a_facturer", "facture", "paye"]),
         designation: z.string().trim().max(200).optional().nullable(),
