@@ -2,7 +2,10 @@ import { createServerFn } from "@tanstack/react-start";
 import { getRequestHeader, getRequestIP } from "@tanstack/react-start/server";
 import { z } from "zod";
 
-const formuleSchema = z.enum(["essentiel", "confort", "pro"]).nullable().optional();
+const formuleSchema = z
+  .enum(["serenite", "premium", "pro", "essentiel", "confort"])
+  .nullable()
+  .optional();
 
 const submitSchema = z.object({
   nom: z.string().trim().min(1).max(120),
