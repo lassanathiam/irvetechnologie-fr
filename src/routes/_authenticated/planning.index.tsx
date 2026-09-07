@@ -737,7 +737,7 @@ function PlanningPage() {
           )}
         </section>
 
-        <aside className="space-y-6">
+        <aside className="order-2 space-y-6">
           <AgendaMois
             events={rows.map((r) => ({
               id: r.id,
