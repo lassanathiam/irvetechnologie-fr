@@ -48,21 +48,29 @@ const toCoords = (geometry: unknown): [number, number][] => {
   return c.map(([lng, lat]) => [lat, lng] as [number, number]);
 };
 
-/** Itinéraire routier réel entre la base et un chantier. */
+const baseSchema = z
+  .object({ lat: z.number(), lng: z.number() })
+  .optional()
+  .nullable();
+
+/** Itinéraire routier réel entre le point de départ du technicien et un chantier. */
 export const itineraireDepuisBase = createServerFn({ method: "POST" })
-  .inputValidator((d) => z.object({ lat: z.number(), lng: z.number() }).parse(d))
+  .inputValidator((d) =>
+    z.object({ lat: z.number(), lng: z.number(), base: baseSchema }).parse(d),
+  )
   .handler(async ({ data }): Promise<Itineraire> => {
+    const from = data.base ?? BASE;
     const json = await osrm(
-      `/route/v1/driving/${lonlat(BASE)};${lonlat(data)}?overview=full&geometries=geojson`,
+      `/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson`,
     );
     const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
     if (!route) {
-      const km = Math.round(haversineKm(BASE, data) * 1.18);
+      const km = Math.round(haversineKm(from, data) * 1.18);
       return {
         km,
         minutes: Math.round((km / 80) * 60),
         coords: [
-          [BASE.lat, BASE.lng],
+          [from.lat, from.lng],
           [data.lat, data.lng],
         ],
         estime: true,
@@ -75,6 +83,7 @@ export const itineraireDepuisBase = createServerFn({ method: "POST" })
       estime: false,
     };
   });
+
 
 export type TourneeReelle = {
   etapes: { id: string; ordre: number; km: number; minutes: number; label: string; sub?: string | null }[];
