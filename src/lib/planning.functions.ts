@@ -220,3 +220,32 @@ export const listChantiersLight = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+/** Mise à jour des informations commerciales d'une intervention. */
+export const updateFacturationRdv = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: {
+    id: string;
+    origine: "direct" | "sous_traitance";
+    partenaire?: string | null;
+    montant_ht: number;
+    tva_pct?: number;
+    statut_facturation: "a_facturer" | "facture" | "paye";
+  }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        origine: z.enum(["direct", "sous_traitance"]),
+        partenaire: z.string().trim().max(160).optional().nullable(),
+        montant_ht: z.coerce.number().min(0).max(1_000_000),
+        tva_pct: z.coerce.number().min(0).max(30).default(20),
+        statut_facturation: z.enum(["a_facturer", "facture", "paye"]),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { id, ...patch } = data;
+    const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
