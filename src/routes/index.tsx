@@ -194,8 +194,8 @@ function Index() {
               <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.02] transition">
                 Demande de raccordement <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="tel:0768084367" className="border border-border text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:border-primary hover:text-primary transition">
-                <Phone className="h-4 w-4" /> 07 68 08 43 67
+              <a href="tel:+33633657840" className="border border-border text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:border-primary hover:text-primary transition">
+                <Phone className="h-4 w-4" /> 06 33 65 78 40
               </a>
             </div>
 
