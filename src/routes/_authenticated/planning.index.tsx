@@ -258,7 +258,7 @@ function PlanningPage() {
 
   const [jourSel, setJourSel] = useState<string | null>(null);
   const jourActif =
-    (jourSel && joursDispo.find((j) => j.key === jourSel)) ?? joursDispo[0] ?? null;
+    (jourSel ? joursDispo.find((j) => j.key === jourSel) : undefined) ?? joursDispo[0] ?? null;
   const stopsJour = jourActif?.stops ?? [];
 
   const tournee = useMemo(() => optimiserTournee(stopsJour, depart), [stopsJour, depart]);
