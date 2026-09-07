@@ -31,6 +31,8 @@ export type DevisEmailData = {
   date_emission: string;
   date_limite: string;
   message?: string | null;
+  /** Lien sécurisé de consultation / téléchargement / signature en ligne. */
+  lien?: string | null;
   remise_pct: number;
   total_ht_brut: number;
   total_remise: number;
