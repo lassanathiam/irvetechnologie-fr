@@ -375,7 +375,13 @@ function RapportsPage() {
       </header>
 
       <div className="mx-auto max-w-5xl px-6 py-10 grid lg:grid-cols-[1fr_300px] gap-10 items-start">
-        <form onSubmit={onSubmit} className="space-y-8">
+        <form
+          ref={formRef}
+          onSubmit={onSubmit}
+          onInput={saveDraft}
+          onChange={saveDraft}
+          className="space-y-8"
+        >
           {/* Type */}
           <section className="bg-card border border-border rounded-sm p-6">
             <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">Type de rapport</div>
