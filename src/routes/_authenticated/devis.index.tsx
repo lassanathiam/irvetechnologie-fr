@@ -314,7 +314,7 @@ function DevisPage() {
                       </button>
                     </div>
                     {line.description && (
-                      <p className="text-xs text-muted-foreground leading-relaxed">{line.description}</p>
+                      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{line.description}</p>
                     )}
                     <div className="flex flex-wrap items-end gap-4">
                       <div className="flex items-center gap-2">
