@@ -505,6 +505,42 @@ export type Database = {
         }
         Relationships: []
       }
+      realisations: {
+        Row: {
+          created_at: string
+          description: string
+          id: string
+          lieu: string
+          photo_path: string | null
+          position: number
+          publie: boolean
+          titre: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string
+          id?: string
+          lieu?: string
+          photo_path?: string | null
+          position?: number
+          publie?: boolean
+          titre: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          id?: string
+          lieu?: string
+          photo_path?: string | null
+          position?: number
+          publie?: boolean
+          titre?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       rendezvous: {
         Row: {
           adresse: string
