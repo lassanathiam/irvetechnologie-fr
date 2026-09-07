@@ -15,6 +15,7 @@ import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
@@ -57,6 +58,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
+  id: '/partenaire/$token',
+  path: '/partenaire/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const FactureClientTokenRoute = FactureClientTokenRouteImport.update({
@@ -145,6 +151,7 @@ export interface FileRoutesByFullPath {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/partenaire/$token': typeof PartenaireTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -166,6 +173,7 @@ export interface FileRoutesByTo {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/partenaire/$token': typeof PartenaireTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -189,6 +197,7 @@ export interface FileRoutesById {
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/partenaire/$token': typeof PartenaireTokenRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -212,6 +221,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/partenaire/$token'
     | '/devis/$id'
     | '/factures/$id'
     | '/rapports/$id'
@@ -233,6 +243,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/partenaire/$token'
     | '/devis/$id'
     | '/factures/$id'
     | '/rapports/$id'
@@ -255,6 +266,7 @@ export interface FileRouteTypes {
     | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/partenaire/$token'
     | '/_authenticated/devis/$id'
     | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
@@ -278,6 +290,7 @@ export interface RootRouteChildren {
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
+  PartenaireTokenRoute: typeof PartenaireTokenRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/partenaire/$token': {
+      id: '/partenaire/$token'
+      path: '/partenaire/$token'
+      fullPath: '/partenaire/$token'
+      preLoaderRoute: typeof PartenaireTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/facture-client/$token': {
@@ -465,6 +485,7 @@ const rootRouteChildren: RootRouteChildren = {
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
+  PartenaireTokenRoute: PartenaireTokenRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
