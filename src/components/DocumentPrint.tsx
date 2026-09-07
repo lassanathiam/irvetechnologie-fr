@@ -191,8 +191,8 @@ export function DocumentPrint({
       </div>
 
       {/* CGV / conditions */}
-      <div className="mt-8 grid sm:grid-cols-[1fr_240px] gap-8 items-start">
-        <div className="space-y-3">
+      <div className="mt-5">
+        <div className="space-y-2">
           <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]">
             Conditions générales de vente (CGV)
           </div>
@@ -208,7 +208,7 @@ export function DocumentPrint({
               {doc.notes}
             </p>
           )}
-          <ul className="text-[11px] text-muted-foreground space-y-1">
+          <ul className="text-[11px] text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-0.5">
             {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
               <li key={m}>
                 <span className="text-primary font-bold">·</span> {m}
@@ -217,24 +217,19 @@ export function DocumentPrint({
           </ul>
         </div>
 
+        {/* Signatures côte à côte (horizontal) */}
         {!isFacture && (
-          <div className="space-y-3">
-            <div className="border-2 border-primary/70 rounded-sm p-3 text-center">
-              <div className="text-mono text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
-                {signature?.signature_client ? "Devis signé" : "Signer le devis"}
-              </div>
-              <div className="text-[10px] text-muted-foreground mt-1">Bon pour accord</div>
-            </div>
-            <div className="border border-border rounded-sm p-3 min-h-24">
-              <div className="text-mono text-[10px] font-semibold text-muted-foreground">
-                Date &amp; signature du client
+          <div className="mt-5 grid grid-cols-2 gap-4">
+            <div className="border-2 border-primary/70 rounded-sm p-3">
+              <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em] text-primary">
+                {signature?.signature_client ? "Devis signé — bon pour accord" : "Client — bon pour accord"}
               </div>
               {signature?.signature_client ? (
                 <div className="mt-1">
                   <img
                     src={signature.signature_client}
                     alt="Signature du client"
-                    className="h-14 w-full object-contain object-left"
+                    className="h-12 w-full object-contain object-left"
                   />
                   <div className="text-[10px] text-muted-foreground">
                     {signature.signataire_nom}
@@ -243,17 +238,22 @@ export function DocumentPrint({
                       : null}
                   </div>
                 </div>
-              ) : null}
+              ) : (
+                <div className="mt-1 h-12 text-[10px] text-muted-foreground">
+                  Date &amp; signature
+                </div>
+              )}
             </div>
-            <div className="border border-dashed border-border rounded-sm p-3 h-20">
-              <div className="text-mono text-[10px] font-semibold text-muted-foreground">
+            <div className="border border-border rounded-sm p-3">
+              <div className="text-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {COMPANY.raisonSociale}
               </div>
+              <div className="mt-1 h-12 text-[10px] text-muted-foreground">Date &amp; signature</div>
             </div>
           </div>
         )}
-
       </div>
+
 
       {/* Encart de partage */}
       <div className="mt-8 border border-primary/40 rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed">
