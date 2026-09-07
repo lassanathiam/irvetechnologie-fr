@@ -154,7 +154,11 @@
     margin: 12mm;
   }
   html,
-  body {
+  body,
+  main,
+  header,
+  #app,
+  #root {
     background: #ffffff !important;
   }
   /* Force les navigateurs à imprimer les couleurs et les fonds (logo, en-têtes, total TTC) */
