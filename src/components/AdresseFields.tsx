@@ -94,6 +94,11 @@ export function AdresseFields({ required }: { required?: boolean }) {
             className={INPUT_CLS}
           />
         </label>
+        {open && suggestions.length === 0 && (
+          <div className="absolute z-30 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg px-3 py-2 text-xs text-muted-foreground">
+            Aucune suggestion trouvée — continuez la saisie manuellement, l'adresse sera enregistrée telle quelle.
+          </div>
+        )}
         {open && suggestions.length > 0 && (
           <ul className="absolute z-30 left-0 right-0 mt-1 bg-popover border border-border rounded-lg shadow-lg overflow-hidden">
             {suggestions.map((f, i) => (
