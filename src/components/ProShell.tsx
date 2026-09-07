@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Inbox, LayoutDashboard, LogOut, Receipt, Zap } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt, Zap } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const LINKS = [
@@ -9,7 +9,9 @@ const LINKS = [
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/factures", label: "Factures", icon: Receipt },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
+  { to: "/realisations", label: "Photos", icon: Images },
 ] as const;
+
 
 export function ProShell({ children }: { children: React.ReactNode }) {
   return (
