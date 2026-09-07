@@ -621,6 +621,10 @@ function PlanningPage() {
                               {r.client_nom}
                               <span className="text-muted-foreground font-normal"> — {r.titre}</span>
                             </p>
+                            {r.designation && (
+                              <p className="text-sm text-primary mt-0.5">{r.designation}</p>
+                            )}
+
                             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="inline-flex items-center gap-1">
                                 <CalendarClock className="h-3 w-3" /> {dateTimeFr(r.date_debut)} ·{" "}
