@@ -51,8 +51,12 @@ export function AdresseFields({ required }: { required?: boolean }) {
     }
     timer.current = setTimeout(async () => {
       try {
+        // On enrichit la recherche avec le code postal / la ville si déjà saisi,
+        // cela améliore fortement les résultats en zone rurale.
+        const cpVille = cpRef.current?.value.trim() ?? "";
+        const q = cpVille ? `${value.trim()} ${cpVille}` : value.trim();
         const res = await fetch(
-          `https://api-adresse.data.gouv.fr/search/?limit=5&q=${encodeURIComponent(value.trim())}`,
+          `https://api-adresse.data.gouv.fr/search/?limit=7&q=${encodeURIComponent(q)}`,
           { headers: { accept: "application/json" } },
         );
         if (!res.ok) return;
