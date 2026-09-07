@@ -51,7 +51,7 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: devis, error } = await supabaseAdmin
       .from("devis")
-      .select("id, numero, signed_at")
+      .select("id, numero, signed_at, client_nom, objet, total_ttc")
       .eq("public_token", data.token)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -69,6 +69,24 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
       })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
+
+    // Notification interne : on prévient l'équipe dès que le client signe.
+    try {
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+      await sendTemplateEmail("devis-signe", "", {
+        idempotencyKey: `devis-signe-${devis.id}`,
+        templateData: {
+          numero: devis.numero,
+          client_nom: devis.client_nom,
+          objet: devis.objet,
+          total_ttc: devis.total_ttc,
+          signataire_nom: data.signataire_nom,
+          signed_at: signedAt,
+        },
+      });
+    } catch (e) {
+      console.error("Notification de signature non envoyée:", e);
+    }
 
     return { ok: true, already: false };
   });

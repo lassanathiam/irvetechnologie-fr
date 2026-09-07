@@ -1,5 +1,7 @@
 import type { ComponentType } from 'react'
 import { template as devisClientTemplate } from './devis-client'
+import { template as devisSigneTemplate } from './devis-signe'
+
 
 export interface TemplateEntry {
   component: ComponentType<any>
@@ -20,4 +22,6 @@ export interface TemplateEntry {
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'devis-client': devisClientTemplate,
+  'devis-signe': devisSigneTemplate,
 }
+
