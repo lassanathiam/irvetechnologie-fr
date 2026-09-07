@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 import { getDashboard } from "@/lib/planning.functions";
 import { ProShell } from "@/components/ProShell";
-import { FranceMap, type MapPoint } from "@/components/FranceMap";
+import { InterventionsMap, type MapMarker } from "@/components/InterventionsMap";
 import { dureeFr } from "@/lib/geo";
 import { euro } from "@/lib/company";
 
@@ -51,7 +51,7 @@ function EspacePage() {
   const aVenir = rdv
     .filter((r) => new Date(r.date_debut).getTime() >= Date.now() - 36e5 && r.statut !== "annule")
     .slice(0, 8);
-  const points: MapPoint[] = rdv
+  const points: MapMarker[] = rdv
     .filter((r) => r.lat != null && r.lng != null)
     .map((r) => ({
       id: r.id,
@@ -161,7 +161,7 @@ function EspacePage() {
               <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
               </h2>
-              <FranceMap points={points} activeId={active} onSelect={setActive} />
+              <InterventionsMap markers={points} activeId={active} onSelect={setActive} height={340} />
               <p className="text-mono text-[10px] text-muted-foreground mt-2">
                 {points.length} point{points.length > 1 ? "s" : ""} géolocalisé
                 {points.length > 1 ? "s" : ""} · distances estimées depuis Nantes
