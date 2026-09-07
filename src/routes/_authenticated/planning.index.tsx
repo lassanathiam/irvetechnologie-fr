@@ -257,6 +257,10 @@ function PlanningPage() {
       sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
       statut: r.statut,
       date: dateTimeFr(r.date_debut),
+      trajet:
+        r.distance_km != null
+          ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
+          : null,
     }));
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
@@ -587,6 +591,7 @@ function PlanningPage() {
               height={620}
               scrollWheelZoom
               routeCoords={itineraire.data?.coords ?? null}
+              routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
             />
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
