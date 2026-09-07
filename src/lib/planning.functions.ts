@@ -22,6 +22,9 @@ const rdvSchema = z.object({
   montant_ht: z.coerce.number().min(0).max(1_000_000).default(0),
   tva_pct: z.coerce.number().min(0).max(30).default(20),
   statut_facturation: z.enum(["a_facturer", "facture", "paye"]).default("a_facturer"),
+  designation: z.string().trim().max(200).optional().nullable(),
+  etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+
 });
 
 
@@ -231,6 +234,8 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
     montant_ht: number;
     tva_pct?: number;
     statut_facturation: "a_facturer" | "facture" | "paye";
+    designation?: string | null;
+    etiquettes?: string[];
   }) =>
     z
       .object({
@@ -240,9 +245,12 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
         montant_ht: z.coerce.number().min(0).max(1_000_000),
         tva_pct: z.coerce.number().min(0).max(30).default(20),
         statut_facturation: z.enum(["a_facturer", "facture", "paye"]),
+        designation: z.string().trim().max(200).optional().nullable(),
+        etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
       })
       .parse(raw),
   )
+
   .handler(async ({ data, context }) => {
     const { id, ...patch } = data;
     const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", id);

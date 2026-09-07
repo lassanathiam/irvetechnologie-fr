@@ -652,9 +652,11 @@ export type Database = {
           created_at: string
           date_debut: string
           demande_id: string | null
+          designation: string | null
           distance_km: number | null
           duree_min: number
           duree_trajet_min: number | null
+          etiquettes: string[]
           id: string
           lat: number | null
           lng: number | null
@@ -684,9 +686,11 @@ export type Database = {
           created_at?: string
           date_debut: string
           demande_id?: string | null
+          designation?: string | null
           distance_km?: number | null
           duree_min?: number
           duree_trajet_min?: number | null
+          etiquettes?: string[]
           id?: string
           lat?: number | null
           lng?: number | null
@@ -716,9 +720,11 @@ export type Database = {
           created_at?: string
           date_debut?: string
           demande_id?: string | null
+          designation?: string | null
           distance_km?: number | null
           duree_min?: number
           duree_trajet_min?: number | null
+          etiquettes?: string[]
           id?: string
           lat?: number | null
           lng?: number | null

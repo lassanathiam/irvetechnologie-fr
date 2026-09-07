@@ -96,6 +96,27 @@ const FACTU_LABEL: Record<string, string> = {
   paye: "payé",
 };
 
+const ETIQUETTES_SUGGEREES = [
+  "Borne 7,4 kW",
+  "Borne 11 kW",
+  "Borne 22 kW",
+  "Maison",
+  "Copropriété",
+  "Entreprise",
+  "Tranchée",
+  "Voirie",
+  "Urgent",
+  "SAV",
+];
+
+const parseEtiquettes = (v: string) =>
+  v
+    .split(",")
+    .map((s) => s.trim())
+    .filter(Boolean)
+    .slice(0, 12);
+
+
 const eurosFr = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })
     .format(n);
@@ -174,6 +195,9 @@ function PlanningPage() {
       montant_ht: number;
       tva_pct?: number;
       statut_facturation: "a_facturer" | "facture" | "paye";
+      designation?: string | null;
+      etiquettes?: string[];
+
     }) => factuFn({ data: p }),
     onSuccess: () => {
       setPanel(null);
@@ -343,6 +367,9 @@ function PlanningPage() {
       montant_ht: Number(get("montant_ht") || 0),
       tva_pct: Number(get("tva_pct") || 20),
       statut_facturation: "a_facturer",
+      designation: get("designation") || null,
+      etiquettes: parseEtiquettes(get("etiquettes")),
+
     });
   }
 
@@ -465,6 +492,28 @@ function PlanningPage() {
           <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
           <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
+          <Field
+            label="Désignation du chantier"
+            name="designation"
+            placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
+          />
+          <label className="block sm:col-span-2">
+            <span className="text-mono text-xs text-muted-foreground">
+              Étiquettes (séparées par des virgules)
+            </span>
+            <input
+              name="etiquettes"
+              list="etiquettes-suggestions"
+              placeholder="Borne 7,4 kW, Copropriété, Urgent"
+              className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+            />
+            <datalist id="etiquettes-suggestions">
+              {ETIQUETTES_SUGGEREES.map((e) => (
+                <option key={e} value={e} />
+              ))}
+            </datalist>
+          </label>
+
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">Notes</span>
             <textarea
@@ -572,6 +621,10 @@ function PlanningPage() {
                               {r.client_nom}
                               <span className="text-muted-foreground font-normal"> — {r.titre}</span>
                             </p>
+                            {r.designation && (
+                              <p className="text-sm text-primary mt-0.5">{r.designation}</p>
+                            )}
+
                             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="inline-flex items-center gap-1">
                                 <CalendarClock className="h-3 w-3" /> {dateTimeFr(r.date_debut)} ·{" "}
@@ -612,6 +665,20 @@ function PlanningPage() {
                                 {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
+
+                            {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
+                              <p className="mt-2 flex flex-wrap gap-1.5">
+                                {r.etiquettes.map((et: string) => (
+                                  <span
+                                    key={et}
+                                    className="text-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border"
+                                  >
+                                    {et}
+                                  </span>
+                                ))}
+                              </p>
+                            )}
+
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {r.chantier_valide ? (
@@ -764,7 +831,10 @@ function PlanningPage() {
                                   | "a_facturer"
                                   | "facture"
                                   | "paye",
+                                designation: g("designation") || null,
+                                etiquettes: parseEtiquettes(g("etiquettes")),
                               });
+
                             }}
                             className="mt-4 pt-4 border-t border-border grid gap-3 sm:grid-cols-2"
                           >
@@ -812,6 +882,38 @@ function PlanningPage() {
                                 <option value="paye">Payé</option>
                               </select>
                             </label>
+                            <div className="sm:col-span-2">
+                              <Field
+                                label="Désignation du chantier"
+                                name="designation"
+                                defaultValue={r.designation ?? ""}
+                                placeholder="Ex. Inter de Rennes — prestation pour PureEnergie"
+                              />
+                            </div>
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Étiquettes (séparées par des virgules)
+                              </span>
+                              <input
+                                name="etiquettes"
+                                list="etiquettes-suggestions"
+                                defaultValue={
+                                  Array.isArray(r.etiquettes) ? r.etiquettes.join(", ") : ""
+                                }
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+                              />
+                              <span className="mt-2 flex flex-wrap gap-1.5">
+                                {ETIQUETTES_SUGGEREES.map((et) => (
+                                  <span
+                                    key={et}
+                                    className="text-mono text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground"
+                                  >
+                                    {et}
+                                  </span>
+                                ))}
+                              </span>
+                            </label>
+
                             <div className="sm:col-span-2 flex items-center gap-3">
                               <button
                                 type="submit"
