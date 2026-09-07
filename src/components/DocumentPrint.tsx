@@ -74,9 +74,9 @@ export function DocumentPrint({
               <div>{COMPANY.adresse}</div>
               <div>{COMPANY.cpVille}</div>
               <div className="font-semibold text-foreground">{COMPANY.email}</div>
-              <div>{COMPANY.telephone}</div>
+              <div>{COMPANY.telephone} · {COMPANY.telephone2}</div>
               <div className="text-mono text-[10px] pt-1">
-                SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+                SIRET {COMPANY.siret} · TVA {COMPANY.tva} · {COMPANY.site}
               </div>
             </div>
           </div>
@@ -253,6 +253,20 @@ export function DocumentPrint({
           </div>
         )}
 
+      </div>
+
+      {/* Encart de partage */}
+      <div className="mt-8 border border-primary/40 rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed">
+        <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+          Recommandez Borne de l'Ouest
+        </div>
+        <p className="mt-1.5 text-muted-foreground">
+          Si quelqu'un de votre entourage a besoin d'installer ou d'entretenir sa borne de recharge,
+          partagez notre lien : <span className="font-semibold text-foreground">{COMPANY.siteUrl}</span>
+        </p>
+        <p className="mt-1 text-muted-foreground">
+          Contact : {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2}
+        </p>
       </div>
     </div>
   );

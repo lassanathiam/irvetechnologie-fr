@@ -102,9 +102,9 @@ function RapportDetail() {
                 <div className="text-xs text-muted-foreground mt-1 leading-relaxed">
                   {COMPANY.adresse} · {COMPANY.cpVille}
                   <br />
-                  {COMPANY.telephone} · {COMPANY.email}
+                  {COMPANY.telephone} · {COMPANY.telephone2} · {COMPANY.email}
                   <br />
-                  SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+                  SIRET {COMPANY.siret} · TVA {COMPANY.tva} · {COMPANY.site}
                 </div>
               </div>
             </div>

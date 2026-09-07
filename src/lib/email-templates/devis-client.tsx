@@ -167,11 +167,15 @@ export function DevisClientEmail(data: DevisEmailData) {
             <Text style={{ color: muted, fontSize: 11, lineHeight: "18px", margin: 0 }}>
               {COMPANY.raisonSociale} ({COMPANY.forme}) · {COMPANY.adresse}, {COMPANY.cpVille}
               <br />
-              {COMPANY.email} · {COMPANY.telephone} · SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+              {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2} · SIRET {COMPANY.siret} · TVA {COMPANY.tva}
               <br />
               {COMPANY.qualifications}
               <br />
               Émis le {dateFr(data.date_emission)}.
+            </Text>
+            <Text style={{ color: muted, fontSize: 11, lineHeight: "18px", margin: "12px 0 0" }}>
+              Si quelqu'un de votre entourage a besoin d'installer ou d'entretenir sa borne de recharge,
+              partagez notre lien : {COMPANY.siteUrl}
             </Text>
           </Section>
         </Container>
