@@ -961,7 +961,7 @@ function PlanningPage() {
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
-              {tourneeAff.etapes.length > 1 ? "Tournée optimisée" : "Trajet du jour"}
+              {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
               {tourneeReel.data && !tourneeReel.data.estime && (
                 <span className="text-[10px] font-bold text-primary normal-case tracking-normal bg-primary/10 px-1.5 py-0.5 rounded-full">
                   itinéraires réels
@@ -985,9 +985,27 @@ function PlanningPage() {
                 </button>
               ))}
             </div>
+            {joursDispo.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {joursDispo.map((j) => (
+                  <button
+                    key={j.key}
+                    type="button"
+                    onClick={() => setJourSel(j.key)}
+                    className={`text-mono text-[11px] px-2 py-1 rounded-full border transition ${
+                      jourActif?.key === j.key
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    {j.label} · {j.stops.length}
+                  </button>
+                ))}
+              </div>
+            )}
             {tourneeAff.etapes.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucun chantier à venir géolocalisé pour {depart.nom}.
+                Aucun chantier géolocalisé ce jour-là pour {depart.nom}.
               </p>
             ) : (
               <>
@@ -1016,7 +1034,7 @@ function PlanningPage() {
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">
                       {tourneeAff.etapes.length > 1
-                        ? `Tournée groupée (${tourneeAff.etapes.length} chantiers)`
+                        ? `${jourActif?.label ?? "Journée"} · ${tourneeAff.etapes.length} chantiers`
                         : `Aller-retour depuis ${depart.label}`}
                     </span>
                     <span>
@@ -1043,6 +1061,90 @@ function PlanningPage() {
                 </div>
               </>
             )}
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
+              <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Répartit les chantiers sur plusieurs journées en suivant les secteurs : au-delà de
+              150 km, la journée prévoit une nuitée sur place.
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {[7, 14].map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => {
+                    setHorizon(h);
+                    setCampagneOn(true);
+                  }}
+                  className={`text-mono text-[11px] px-2.5 py-1.5 rounded-sm border transition ${
+                    campagneOn && horizon === h
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  Sur {h} jours
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCampagneOn((v) => !v)}
+                className="hero-grad text-primary-foreground text-mono text-[11px] px-3 py-1.5 rounded-sm"
+              >
+                {campagneOn ? "Masquer" : "Programmer les tournées"}
+              </button>
+            </div>
+            {campagneOn &&
+              (!campagne || !campagne.jours.length ? (
+                <p className="text-sm text-muted-foreground">
+                  Aucun chantier à répartir pour {depart.nom}.
+                </p>
+              ) : (
+                <>
+                  <ol className="space-y-2">
+                    {campagne.jours.map((j) => (
+                      <li key={j.jour} className="text-sm border border-border rounded-lg p-2.5">
+                        <p className="flex items-center gap-2">
+                          <span className="text-mono text-[11px] font-bold w-6 h-6 rounded-full hero-grad text-primary-foreground grid place-items-center shrink-0">
+                            J{j.jour}
+                          </span>
+                          <span className="font-semibold truncate">{j.secteur}</span>
+                          <span className="ml-auto text-mono text-xs text-muted-foreground shrink-0">
+                            +{j.km} km
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {j.stops.map((s) => s.label).join(" · ")}
+                        </p>
+                        {j.nuitee && (
+                          <p className="text-mono text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                            Nuitée sur place conseillée
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="mt-3 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {campagne.jours.length} journées · {campagne.nuitees} nuitée(s)
+                      </span>
+                      <span>{campagne.kmTotal} km</span>
+                    </p>
+                    {campagne.kmSepares > campagne.kmTotal && (
+                      <p className="flex justify-between text-primary">
+                        <span className="inline-flex items-center gap-1">
+                          <Fuel className="h-3.5 w-3.5" /> Économie estimée
+                        </span>
+                        <span>{campagne.kmSepares - campagne.kmTotal} km</span>
+                      </p>
+                    )}
+                  </div>
+                </>
+              ))}
           </div>
 
           {grappes.length > 0 && (
