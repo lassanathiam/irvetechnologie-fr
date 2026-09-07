@@ -153,20 +153,30 @@ function PartenairesAdmin() {
                       >
                         <Copy className="h-3.5 w-3.5" /> {copie === p.id ? "Copié" : "Copier le lien"}
                       </button>
-                      <button
-                        type="button"
-                        onClick={async () => {
-                          await save({ data: { id: p.id, nom: p.nom, actif: !p.actif, notes: p.notes } });
-                          await list.refetch();
-                        }}
-                        className={`text-mono text-xs font-semibold px-3 py-2 rounded-sm border ${
+                      <span
+                        className={`text-mono text-xs font-semibold px-3 py-2 rounded-sm border select-none ${
                           p.actif
                             ? "border-primary/40 text-primary"
                             : "border-border text-muted-foreground"
                         }`}
                       >
                         {p.actif ? "Actif" : "Désactivé"}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={async () => {
+                          const msg = p.actif
+                            ? `Désactiver le lien de ${p.nom} ? Il ne pourra plus saisir de dossier.`
+                            : `Réactiver le lien de ${p.nom} ?`;
+                          if (!window.confirm(msg)) return;
+                          await save({ data: { id: p.id, nom: p.nom, actif: !p.actif, notes: p.notes } });
+                          await list.refetch();
+                        }}
+                        className="text-mono text-xs font-semibold px-3 py-2 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary"
+                      >
+                        {p.actif ? "Désactiver" : "Réactiver"}
                       </button>
+
                       <button
                         type="button"
                         onClick={async () => {
