@@ -57,12 +57,30 @@ export function SignaturePad({ label, value, onChange }: Props) {
     setEmpty(false);
   }
 
+  /** Export léger (JPEG sur fond blanc, largeur max 900 px) : indispensable en 4G. */
+  function exportSignature(canvas: HTMLCanvasElement): string | null {
+    try {
+      const scale = Math.min(1, 900 / Math.max(1, canvas.width));
+      const out = document.createElement("canvas");
+      out.width = Math.max(1, Math.round(canvas.width * scale));
+      out.height = Math.max(1, Math.round(canvas.height * scale));
+      const ctx = out.getContext("2d");
+      if (!ctx) return canvas.toDataURL("image/jpeg", 0.7);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, out.width, out.height);
+      ctx.drawImage(canvas, 0, 0, out.width, out.height);
+      return out.toDataURL("image/jpeg", 0.7);
+    } catch {
+      return null;
+    }
+  }
+
   function end() {
     if (!drawing.current) return;
     drawing.current = false;
     const canvas = canvasRef.current;
     if (!canvas) return;
-    onChange(hasStroke.current ? canvas.toDataURL("image/png") : null);
+    onChange(hasStroke.current ? exportSignature(canvas) : null);
   }
 
   function clear() {
