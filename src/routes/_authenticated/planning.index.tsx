@@ -349,7 +349,7 @@ function PlanningPage() {
       {open && (
         <form
           onSubmit={onSubmit}
-          className="bg-card border border-border rounded-sm p-5 mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="bg-card border border-border rounded-xl p-5 shadow-sm mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <Field label="Client" name="client_nom" required />
           <Field label="Téléphone" name="client_telephone" />
@@ -402,8 +402,58 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_380px]">
-        <section className="space-y-6">
+      <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
+        {/* CARTE — en haut à gauche */}
+        <section className="order-1 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
+            </h2>
+            <div className="flex items-center gap-4 text-[11px] font-semibold text-muted-foreground ml-auto">
+              <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
+              <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
+              <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
+              <Legende color={STATUT_COLORS.annule!} label="Annulé" />
+            </div>
+          </div>
+          <div className="p-4">
+            <InterventionsMap
+              markers={points}
+              activeId={active}
+              onSelect={setActive}
+              height={620}
+              scrollWheelZoom
+              routeCoords={itineraire.data?.coords ?? null}
+              tourneeCoords={tourneeReel.data?.coords ?? null}
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
+              {itineraire.isFetching ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
+                </span>
+              ) : itineraire.data ? (
+                <span className="text-primary text-mono">
+                  Nantes → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                  {itineraire.data.estime ? " (estimé)" : " par la route"}
+                </span>
+              ) : (
+                <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>
+              )}
+              {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
+                <span>
+                  Boucle complète : {tourneeReel.data.kmTotal} km ·{" "}
+                  {dureeFr(tourneeReel.data.minutes)}
+                </span>
+              )}
+            </div>
+          </div>
+        </section>
+
+        <section className="order-3 lg:col-span-2 space-y-6">
+          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-primary" /> Rendez-vous programmés
+          </h2>
+
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
@@ -414,7 +464,8 @@ function PlanningPage() {
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
-                <ul className="space-y-3">
+                <ul className="grid gap-3 xl:grid-cols-2">
+
                   {items.map((r) => {
                     const v = voirieByRdv.get(r.id);
                     const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
@@ -423,9 +474,12 @@ function PlanningPage() {
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`bg-card border rounded-sm p-4 ${
-                          active === r.id ? "border-primary" : "border-border"
+                        className={`bg-card border rounded-xl p-4 h-fit transition-all duration-200 hover:shadow-md ${
+                          active === r.id
+                            ? "border-primary shadow-md ring-1 ring-primary/30"
+                            : "border-border"
                         }`}
+
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
@@ -686,7 +740,7 @@ function PlanningPage() {
           )}
         </section>
 
-        <aside className="space-y-6">
+        <aside className="order-2 space-y-6">
           <AgendaMois
             events={rows.map((r) => ({
               id: r.id,
@@ -707,11 +761,11 @@ function PlanningPage() {
           />
 
 
-          <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
               {tourneeReel.data && !tourneeReel.data.estime && (
-                <span className="text-[10px] text-primary normal-case tracking-normal">
+                <span className="text-[10px] font-bold text-primary normal-case tracking-normal bg-primary/10 px-1.5 py-0.5 rounded-full">
                   itinéraires réels
                 </span>
               )}
@@ -722,23 +776,27 @@ function PlanningPage() {
               </p>
             ) : (
               <>
-                <ol className="space-y-2">
+                <ol className="space-y-1.5">
                   {tourneeAff.etapes.map((e) => (
                     <li
                       key={e.id}
                       onMouseEnter={() => setActive(e.id)}
-                      className="flex items-center gap-2 text-sm"
+                      onClick={() => setActive(e.id)}
+                      className={`flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 cursor-pointer transition ${
+                        active === e.id ? "bg-primary/12" : "hover:bg-muted/70"
+                      }`}
                     >
-                      <span className="text-mono text-[11px] w-5 h-5 rounded-sm border border-border grid place-items-center shrink-0">
+                      <span className="text-mono text-[11px] font-bold w-6 h-6 rounded-full hero-grad text-primary-foreground grid place-items-center shrink-0">
                         {e.ordre}
                       </span>
-                      <span className="truncate">{e.label}</span>
-                      <span className="ml-auto text-mono text-xs text-muted-foreground shrink-0">
+                      <span className="truncate font-semibold">{e.label}</span>
+                      <span className="ml-auto text-mono text-xs font-bold text-muted-foreground shrink-0">
                         +{e.km} km
                       </span>
                     </li>
                   ))}
                 </ol>
+
                 <div className="mt-4 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Tournée groupée</span>
@@ -767,7 +825,7 @@ function PlanningPage() {
           </div>
 
           {grappes.length > 0 && (
-            <div className="bg-card border border-border rounded-sm p-5">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
@@ -788,139 +846,6 @@ function PlanningPage() {
         </aside>
       </div>
 
-      {/* CARTE PLEINE LARGEUR + LISTE DES INTERVENTIONS */}
-      <section className="mt-8 bg-card border border-border rounded-sm overflow-hidden">
-        <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
-          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
-          </h2>
-          <div className="flex items-center gap-4 text-[11px] text-muted-foreground ml-auto">
-            <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
-            <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
-            <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
-            <Legende color={STATUT_COLORS.annule!} label="Annulé" />
-          </div>
-        </div>
-
-        <div className="grid lg:grid-cols-[1fr_360px]">
-          <div className="p-4">
-            <InterventionsMap
-              markers={points}
-              activeId={active}
-              onSelect={setActive}
-              height={560}
-              scrollWheelZoom
-              routeCoords={itineraire.data?.coords ?? null}
-              tourneeCoords={tourneeReel.data?.coords ?? null}
-            />
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
-              {itineraire.isFetching ? (
-                <span className="inline-flex items-center gap-1.5">
-                  <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
-                </span>
-              ) : itineraire.data ? (
-                <span className="text-primary text-mono">
-                  Nantes → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
-                  {itineraire.data.estime ? " (estimé)" : " par la route"}
-                </span>
-              ) : (
-                <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>
-              )}
-              {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
-                <span>
-                  Boucle complète : {tourneeReel.data.kmTotal} km ·{" "}
-                  {dureeFr(tourneeReel.data.minutes)}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className="border-t lg:border-t-0 lg:border-l border-border max-h-[640px] overflow-y-auto">
-            {!points.length ? (
-              <p className="p-5 text-sm text-muted-foreground">
-                Aucune intervention géolocalisée pour le moment.
-              </p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {rows
-                  .filter((r) => r.lat != null && r.lng != null)
-                  .map((r) => {
-                    const color = STATUT_COLORS[r.statut] ?? STATUT_COLORS.planifie!;
-                    const isActive = active === r.id;
-                    const v = voirieByRdv.get(r.id);
-                    return (
-                      <li key={r.id}>
-                        <button
-                          type="button"
-                          onClick={() => setActive(r.id)}
-                          className={`w-full text-left px-4 py-3.5 transition hover:bg-muted/60 ${
-                            isActive ? "bg-muted" : ""
-                          }`}
-                        >
-                          <span className="flex items-start gap-2.5">
-                            <span
-                              className="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
-                              style={{ background: color }}
-                            />
-                            <span className="min-w-0 flex-1">
-                              <span className="block font-bold text-sm truncate">
-                                {r.client_nom}
-                              </span>
-                              <span className="block text-xs text-muted-foreground truncate">
-                                {[r.adresse, r.cp_ville].filter(Boolean).join(", ")}
-                              </span>
-                              <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
-                                <span className="text-mono" style={{ color }}>
-                                  {r.chantier_valide
-                                    ? "Validé"
-                                    : (STATUTS.find((s) => s.v === r.statut)?.l ?? r.statut)}
-                                </span>
-                                <span className="text-muted-foreground">
-                                  {dateTimeFr(r.date_debut)}
-                                </span>
-                                {r.distance_km != null && (
-                                  <span className="text-muted-foreground">
-                                    {Math.round(Number(r.distance_km))} km
-                                  </span>
-                                )}
-                                {v && (
-                                  <span className="text-muted-foreground">
-                                    Voirie : {VOIRIE_LABEL[v.statut] ?? v.statut}
-                                  </span>
-                                )}
-                              </span>
-                            </span>
-                          </span>
-                        </button>
-                        {isActive && r.statut !== "realise" && (
-                          <div className="px-4 pb-3.5 -mt-1 flex flex-wrap gap-2">
-                            <button
-                              type="button"
-                              onClick={() => setStatut.mutate({ id: r.id, statut: "confirme" })}
-                              className="text-mono text-[11px] px-2.5 py-1.5 rounded-sm border border-border hover:border-primary hover:text-primary"
-                            >
-                              Confirmer
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => {
-                                setStatut.mutate({ id: r.id, statut: "realise" });
-                                valider.mutate({ id: r.id, valide: true, par: r.technicien ?? null });
-                              }}
-                              className="text-mono text-[11px] px-2.5 py-1.5 rounded-sm hero-grad text-primary-foreground inline-flex items-center gap-1.5"
-                            >
-                              <CheckCircle2 className="h-3 w-3" /> Clôturer
-                            </button>
-                          </div>
-                        )}
-                      </li>
-                    );
-                  })}
-              </ul>
-            )}
-          </div>
-        </div>
-      </section>
     </ProShell>
   );
 }
