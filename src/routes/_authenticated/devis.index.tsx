@@ -108,7 +108,10 @@ function DevisPage() {
       client_cp_ville: d.code_postal ?? "",
       notes: [
         d.type_bien ? `Type de bien : ${d.type_bien}` : null,
-        d.puissance ? `Puissance : ${d.puissance}` : null,
+        d.puissance ? `Puissance borne : ${d.puissance}` : null,
+        d.abonnement_kva ? `Abonnement compteur : ${d.abonnement_kva}` : null,
+        d.type_compteur ? `Compteur : ${d.type_compteur}` : null,
+        d.phase ? `Alimentation : ${d.phase}` : null,
         d.type_installation ? `Installation : ${d.type_installation}` : null,
         d.distance_m ? `Distance tableau → borne : ${d.distance_m} m` : null,
         d.notes ? `Demande client : ${d.notes}` : null,

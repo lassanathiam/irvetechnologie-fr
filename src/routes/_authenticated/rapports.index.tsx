@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Camera, ClipboardCheck, FileText, Loader2, Trash2, X } from "lucide-react";
 import {
   CHECK_LABEL,
@@ -11,11 +11,19 @@ import {
   RAPPORT_TYPES,
   type RapportType,
   checklistFor,
+  checklistForMode,
   mesuresFor,
+  allOk,
+  TYPOLOGIES,
+  type Typologie,
+  type ChecklistMode,
+  mesuresFromTypologie,
 } from "@/lib/rapport-checklist";
 import {
   createRapport,
   deleteRapport,
+  getRapportPrefill,
+  listRapportSources,
   listRapports,
   uploadRapportPhoto,
   type RapportInput,
@@ -52,16 +60,70 @@ function RapportsPage() {
   const rapports = useQuery({ queryKey: ["rapports"], queryFn: () => fetchRapports() });
 
   const [type, setType] = useState<RapportType>("assurance");
+  const [mode, setMode] = useState<ChecklistMode>("essentiel");
+  const [typologie, setTypologie] = useState<Typologie>({});
+  const [sourceKind, setSourceKind] = useState<"devis" | "rendezvous">("devis");
+  const [sourceId, setSourceId] = useState("");
+  const [prefill, setPrefill] = useState<Record<string, string>>({});
+  const [prefillKey, setPrefillKey] = useState(0);
   const [checks, setChecks] = useState<Record<string, CheckState>>({});
   const [mesures, setMesures] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<Partial<Record<PhotoKind, string>>>({});
   const [sigTech, setSigTech] = useState<string | null>(null);
   const [sigClient, setSigClient] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [linked, setLinked] = useState<{ devis_id: string | null; rendezvous_id: string | null }>({
+    devis_id: null,
+    rendezvous_id: null,
+  });
 
-  const sections = checklistFor(type);
+  const sections = useMemo(() => checklistForMode(type, mode), [type, mode]);
   const mesureFields = mesuresFor(type);
   const uploadPhoto = useServerFn(uploadRapportPhoto);
+  const fetchSources = useServerFn(listRapportSources);
+  const fetchPrefill = useServerFn(getRapportPrefill);
+
+  const sources = useQuery({ queryKey: ["rapport-sources"], queryFn: () => fetchSources() });
+
+  // Mode Essentiel : tous les points sont préréglés « conforme ».
+  useEffect(() => {
+    if (mode === "essentiel") setChecks(allOk(checklistForMode(type, "essentiel")));
+  }, [mode, type]);
+
+  const reprendre = useMutation({
+    mutationFn: async () => {
+      if (!sourceId) throw new Error("Choisissez un devis ou un chantier.");
+      return fetchPrefill({
+        data: sourceKind === "devis" ? { devis_id: sourceId } : { rendezvous_id: sourceId },
+      });
+    },
+    onSuccess: (d) => {
+      setPrefill({
+        client_nom: d.client_nom ?? "",
+        client_email: d.client_email ?? "",
+        client_telephone: d.client_telephone ?? "",
+        chantier_adresse: d.chantier_adresse ?? "",
+        chantier_cp_ville: d.chantier_cp_ville ?? "",
+        technicien: d.technicien ?? "",
+        date: d.date_intervention ?? today(),
+        borne_puissance: d.borne_puissance ?? "",
+      });
+      setPrefillKey((k) => k + 1);
+      setLinked({ devis_id: d.devis_id ?? null, rendezvous_id: d.rendezvous_id ?? null });
+      if (d.longueur) setMesures((m) => ({ ...m, longueur: d.longueur!.replace(".", ",") }));
+      if (d.borne_puissance) {
+        const p = d.borne_puissance.replace(".", ",").replace(/\s+/g, " ");
+        setTypologie((t) => ({ ...t, puissance: t.puissance ?? p }));
+      }
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "Reprise impossible."),
+  });
+
+  function pickTypologie(key: keyof Typologie, value: string) {
+    const next: Typologie = { ...typologie, [key]: typologie[key] === value ? undefined : value };
+    setTypologie(next);
+    setMesures((m) => mesuresFromTypologie(next, m));
+  }
 
   const create = useMutation({
     mutationFn: async (payload: RapportInput) => {
@@ -133,6 +195,10 @@ function RapportsPage() {
       borne_serie: get("borne_serie") || null,
       technicien: get("technicien") || null,
       mesures,
+      typologie: Object.fromEntries(Object.entries(typologie).filter(([, v]) => Boolean(v))) as Record<string, string>,
+      devis_id: linked.devis_id,
+      rendezvous_id: linked.rendezvous_id,
+      
       checklist: checks,
       observations: get("observations") || null,
       reserves: get("reserves") || null,
@@ -183,17 +249,106 @@ function RapportsPage() {
             </div>
           </section>
 
+          {/* Reprise d'un devis ou d'un chantier */}
+          <section className="bg-card border border-border rounded-sm p-6">
+            <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-1">
+              Reprendre un devis / un chantier
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Le client, l'adresse, la puissance et le métrage sont repris automatiquement — tout reste modifiable.
+            </p>
+            <div className="mt-4 flex flex-wrap items-end gap-3">
+              <div className="flex gap-1">
+                {(["devis", "rendezvous"] as const).map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => {
+                      setSourceKind(k);
+                      setSourceId("");
+                    }}
+                    className={`text-mono text-[11px] rounded-sm px-3 py-2 border transition ${
+                      sourceKind === k ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    {k === "devis" ? "Devis" : "Chantier"}
+                  </button>
+                ))}
+              </div>
+              <select
+                value={sourceId}
+                onChange={(e) => setSourceId(e.target.value)}
+                className="flex-1 min-w-[220px] bg-background border border-border rounded-sm px-3 py-2 text-sm focus:border-primary outline-none"
+              >
+                <option value="">— Choisir —</option>
+                {sourceKind === "devis"
+                  ? (sources.data?.devis ?? []).map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.numero} · {d.client_nom}
+                      </option>
+                    ))
+                  : (sources.data?.rendezvous ?? []).map((r) => (
+                      <option key={r.id} value={r.id}>
+                        {dateFr(r.date_debut)} · {r.client_nom} — {r.titre}
+                      </option>
+                    ))}
+              </select>
+              <button
+                type="button"
+                disabled={!sourceId || reprendre.isPending}
+                onClick={() => reprendre.mutate()}
+                className="hero-grad text-primary-foreground rounded-sm px-4 py-2 text-mono text-[11px] inline-flex items-center gap-2 disabled:opacity-50"
+              >
+                {reprendre.isPending ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : null}
+                Remplir automatiquement
+              </button>
+            </div>
+          </section>
+
+          {/* Typologie */}
+          <section className="bg-card border border-border rounded-sm p-6 space-y-5">
+            <div>
+              <div className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-1">
+                Typologie de l'installation
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Un clic renseigne la puissance, le calibre du disjoncteur, la section de câble et la tension.
+              </p>
+            </div>
+            {TYPOLOGIES.map((g) => (
+              <div key={g.key}>
+                <div className="text-xs text-muted-foreground mb-2">{g.label}</div>
+                <div className="flex flex-wrap gap-2">
+                  {g.options.map((o) => (
+                    <button
+                      key={o}
+                      type="button"
+                      onClick={() => pickTypologie(g.key, o)}
+                      className={`text-mono text-[11px] rounded-sm px-3 py-2 border transition ${
+                        typologie[g.key] === o
+                          ? "border-primary bg-primary/15 text-primary"
+                          : "border-border text-muted-foreground hover:border-primary/50"
+                      }`}
+                    >
+                      {o}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </section>
+
           {/* Client & chantier */}
           <section className="bg-card border border-border rounded-sm p-6 space-y-4">
             <div className="text-mono text-muted-foreground">Client & chantier</div>
-            <div className="grid sm:grid-cols-2 gap-4">
-              <Field name="client_nom" label="Nom du client *" required />
-              <Field name="date" label="Date d'intervention" type="date" defaultValue={today()} />
-              <Field name="client_telephone" label="Téléphone" />
-              <Field name="client_email" label="Email" type="email" />
-              <Field name="chantier_adresse" label="Adresse du chantier" />
-              <Field name="chantier_cp_ville" label="CP / Ville" />
-              <Field name="technicien" label="Technicien" />
+            <div key={prefillKey} className="grid sm:grid-cols-2 gap-4">
+              <Field name="client_nom" label="Nom du client *" required defaultValue={prefill.client_nom} />
+              <Field name="date" label="Date d'intervention" type="date" defaultValue={prefill.date ?? today()} />
+              <Field name="client_telephone" label="Téléphone" defaultValue={prefill.client_telephone} />
+              <Field name="client_email" label="Email" type="email" defaultValue={prefill.client_email} />
+              <Field name="chantier_adresse" label="Adresse du chantier" defaultValue={prefill.chantier_adresse} />
+              <Field name="chantier_cp_ville" label="CP / Ville" defaultValue={prefill.chantier_cp_ville} />
+              <Field name="technicien" label="Technicien" defaultValue={prefill.technicien} />
             </div>
           </section>
 
@@ -203,7 +358,7 @@ function RapportsPage() {
             <div className="grid sm:grid-cols-2 gap-4">
               <Field name="borne_marque" label="Marque de la borne" />
               <Field name="borne_modele" label="Modèle" />
-              <Field name="borne_puissance" label="Puissance (kW)" />
+              <Field key={prefillKey} name="borne_puissance" label="Puissance (kW)" defaultValue={prefill.borne_puissance} />
               <Field name="borne_serie" label="N° de série" />
             </div>
           </section>
@@ -289,7 +444,19 @@ function RapportsPage() {
                   {filled} / {total} points renseignés
                 </p>
               </div>
-              <div className="flex gap-2 text-mono text-xs">
+              <div className="flex flex-wrap gap-2 text-mono text-xs">
+                {(["essentiel", "complet"] as ChecklistMode[]).map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setMode(m)}
+                    className={`rounded-sm px-3 py-1.5 border transition ${
+                      mode === m ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    {m === "essentiel" ? "Essentiel" : "Complet"}
+                  </button>
+                ))}
                 <button type="button" onClick={() => setAll("ok")} className="border border-border rounded-sm px-3 py-1.5 hover:border-primary hover:text-primary">
                   Tout conforme
                 </button>

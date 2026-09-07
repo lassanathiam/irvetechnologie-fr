@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { submitDemande } from "@/lib/demande.functions";
 import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
+import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 
 type Formule = "essentiel" | "confort" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -58,6 +59,9 @@ const MAX_CHEMINEMENT = 5;
 function Demande() {
   const { formule } = Route.useSearch();
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
+  const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
+  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!);
+  const alerte = alerteAbonnement(kva, puissanceBorne);
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
@@ -156,6 +160,9 @@ function Demande() {
           type_bien: get("bien") || null,
           puissance: get("puissance") || null,
           type_installation: get("type") || null,
+          abonnement_kva: get("abonnement_kva") || null,
+          type_compteur: get("type_compteur") || null,
+          phase: get("phase") || null,
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
           notes: get("notes") || null,
           formule: formule ?? null,
@@ -259,18 +266,49 @@ function Demande() {
           </div>
 
           <div>
-            <SectionHeading n="02" title="Votre projet" />
+            <SectionHeading n="02" title="Votre compteur" />
+            <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+              Ces informations figurent sur votre facture d'électricité. Elles nous permettent de savoir si votre
+              abonnement suffit pour la borne souhaitée.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mt-8">
+              <SelectControlled
+                label="Abonnement souscrit (kVA)"
+                name="abonnement_kva"
+                options={ABONNEMENTS_KVA}
+                value={kva}
+                onChange={setKva}
+              />
+              <Select label="Type de compteur" name="type_compteur" options={["Linky", "Ancien compteur", "Je ne sais pas"]} />
+              <Select label="Alimentation" name="phase" options={["Monophasé", "Triphasé", "Je ne sais pas"]} />
+              <SelectControlled
+                label="Puissance de borne souhaitée"
+                name="puissance"
+                options={PUISSANCES_BORNE}
+                value={puissanceBorne}
+                onChange={setPuissanceBorne}
+              />
+            </div>
+            {alerte && (
+              <div className="mt-4 border border-primary/40 bg-primary/5 rounded-sm px-4 py-3 text-sm text-muted-foreground">
+                {alerte}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <SectionHeading n="03" title="Votre projet" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <Select label="Type de bien" name="bien" options={["Maison individuelle", "Copropriété", "Entreprise / parking", "Concession auto"]} />
-              <Select label="Puissance souhaitée" name="puissance" options={["7 kW (monophasé)", "11 kW (triphasé)", "22 kW (triphasé)", "Je ne sais pas"]} />
               <Select label="Type d'installation" name="type" options={["Intérieure (garage)", "Extérieure (façade)", "Sur poteau / borne", "À déterminer"]} />
               <Field label="Distance tableau → borne (m)" name="distance" type="number" />
             </div>
             <Textarea label="Précisions" name="notes" placeholder="Modèle de véhicule, contraintes particulières, délais souhaités…" />
           </div>
 
+
           <div>
-            <SectionHeading n="03" title="Photos du chantier" />
+            <SectionHeading n="04" title="Photos du chantier" />
             <p className="text-sm text-muted-foreground mt-3 max-w-xl">
               Ces photos nous permettent d'évaluer la faisabilité sans déplacement.
               Le cheminement du câble peut comporter plusieurs vues — ajoutez-en autant
@@ -350,6 +388,24 @@ function Select({ label, name, options }: { label: string; name: string; options
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}</span>
       <select name={name} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+        {options.map((o) => <option key={o}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function SelectControlled({
+  label, name, options, value, onChange,
+}: { label: string; name: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="text-mono text-muted-foreground">{label}</span>
+      <select
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+      >
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
     </label>
