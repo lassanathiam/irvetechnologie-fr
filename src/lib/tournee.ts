@@ -18,7 +18,10 @@ export type TourneeEtape = TourneeStop & {
 const routier = (km: number) => Math.round(km * 1.18);
 
 /** Ordonne les étapes au plus proche voisin (heuristique rapide et stable). */
-export function optimiserTournee(stops: TourneeStop[]): {
+export function optimiserTournee(
+  stops: TourneeStop[],
+  base: { lat: number; lng: number } = BASE,
+): {
   etapes: TourneeEtape[];
   kmTotal: number;
   kmDirect: number;
@@ -26,7 +29,7 @@ export function optimiserTournee(stops: TourneeStop[]): {
 } {
   const restants = [...stops];
   const etapes: TourneeEtape[] = [];
-  let courant = { lat: BASE.lat, lng: BASE.lng };
+  let courant = { lat: base.lat, lng: base.lng };
   let kmTotal = 0;
 
   while (restants.length) {
@@ -47,11 +50,11 @@ export function optimiserTournee(stops: TourneeStop[]): {
   }
 
   // Retour à la base
-  const retour = etapes.length ? routier(haversineKm(courant, BASE)) : 0;
+  const retour = etapes.length ? routier(haversineKm(courant, base)) : 0;
   kmTotal += retour;
 
   // Comparaison : aller-retour indépendant depuis la base pour chaque chantier
-  const kmDirect = stops.reduce((t, s) => t + routier(haversineKm(BASE, s)) * 2, 0);
+  const kmDirect = stops.reduce((t, s) => t + routier(haversineKm(base, s)) * 2, 0);
 
   return {
     etapes,

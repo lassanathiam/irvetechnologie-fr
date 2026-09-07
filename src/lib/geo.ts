@@ -1,5 +1,42 @@
-/** Base opérationnelle (Nantes) — point de départ des trajets. */
-export const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
+/** Techniciens et leur point de départ (domicile). */
+export type Technicien = {
+  id: string;
+  nom: string;
+  adresse: string;
+  lat: number;
+  lng: number;
+  label: string;
+};
+
+export const TECHNICIENS: Technicien[] = [
+  {
+    id: "altaj",
+    nom: "Altaj Mohamed",
+    adresse: "36 rue Saint-Médard, 44300 Nantes",
+    lat: 47.235974,
+    lng: -1.499838,
+    label: "Nantes",
+  },
+  {
+    id: "lassana",
+    nom: "Lassana Thiam",
+    adresse: "280 rue des Chevaliers de Malte, 44522 Mésanger",
+    lat: 47.433547,
+    lng: -1.228373,
+    label: "Mésanger",
+  },
+];
+
+export const technicienByNom = (nom?: string | null) =>
+  nom
+    ? TECHNICIENS.find(
+        (t) => t.nom.toLowerCase() === nom.trim().toLowerCase() || t.id === nom.trim().toLowerCase(),
+      )
+    : undefined;
+
+/** Base opérationnelle par défaut (départ Nantes). */
+export const BASE = { lat: 47.235974, lng: -1.499838, label: "Nantes" };
+
 
 /** Bornes de la carte (France métropolitaine + Corse). */
 const BOUNDS = { lngMin: -5.4, lngMax: 9.8, latMin: 41.2, latMax: 51.3 };
@@ -32,8 +69,12 @@ export function haversineKm(
 }
 
 /** Distance routière estimée (facteur 1,25) et temps de trajet depuis la base. */
-export function trajetDepuisBase(lat: number, lng: number) {
-  const km = Math.round(haversineKm(BASE, { lat, lng }) * 1.18);
+export function trajetDepuisBase(
+  lat: number,
+  lng: number,
+  base: { lat: number; lng: number } = BASE,
+) {
+  const km = Math.round(haversineKm(base, { lat, lng }) * 1.18);
   const min = km === 0 ? 10 : Math.round((km / 95) * 60) + 10;
   return { distance_km: km, duree_trajet_min: min };
 }

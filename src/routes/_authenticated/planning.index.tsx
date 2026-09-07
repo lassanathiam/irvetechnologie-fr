@@ -34,7 +34,7 @@ import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
-import { dureeFr } from "@/lib/geo";
+import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -157,6 +157,9 @@ function PlanningPage() {
   });
 
   const rows = list.data ?? [];
+  /** Technicien dont on calcule les trajets (son domicile est le point de départ). */
+  const [departId, setDepartId] = useState(TECHNICIENS[0]!.id);
+  const depart = TECHNICIENS.find((t) => t.id === departId) ?? TECHNICIENS[0]!;
   const voirieByRdv = useMemo(() => {
     type Row = NonNullable<typeof voirie.data>[number];
     const m = new Map<string, Row>();
@@ -193,9 +196,11 @@ function PlanningPage() {
           r.lat != null &&
           r.lng != null &&
           r.statut !== "annule" &&
-          new Date(r.date_debut).getTime() >= Date.now() - 12 * 3600e3,
+          new Date(r.date_debut).getTime() >= Date.now() - 12 * 3600e3 &&
+          // Chantiers du technicien sélectionné + chantiers encore sans technicien.
+          (!r.technicien?.trim() || technicienByNom(r.technicien)?.id === depart.id),
       ),
-    [rows],
+    [rows, depart.id],
   );
 
   const tournee = useMemo(
@@ -208,8 +213,9 @@ function PlanningPage() {
           label: r.client_nom,
           sub: r.cp_ville,
         })),
+        depart,
       ),
-    [aVenir],
+    [aVenir, depart],
   );
 
   const grappes = useMemo(
@@ -232,11 +238,17 @@ function PlanningPage() {
   const routeFn = useServerFn(itineraireDepuisBase);
   const activeRow = rows.find((r) => r.id === active && r.lat != null && r.lng != null);
   const itineraire = useQuery({
-    queryKey: ["itineraire", activeRow?.id],
+    queryKey: ["itineraire", activeRow?.id, depart.id],
     enabled: !!activeRow,
     staleTime: 30 * 60_000,
     queryFn: () =>
-      routeFn({ data: { lat: Number(activeRow!.lat), lng: Number(activeRow!.lng) } }),
+      routeFn({
+        data: {
+          lat: Number(activeRow!.lat),
+          lng: Number(activeRow!.lng),
+          base: { lat: depart.lat, lng: depart.lng },
+        },
+      }),
   });
 
   /** Tournée complète sur le réseau routier réel. */
@@ -253,10 +265,11 @@ function PlanningPage() {
     [aVenir],
   );
   const tourneeReel = useQuery({
-    queryKey: ["tournee-reelle", tourneeStops.map((s) => s.id).join(",")],
+    queryKey: ["tournee-reelle", depart.id, tourneeStops.map((s) => s.id).join(",")],
     enabled: tourneeStops.length > 0,
     staleTime: 30 * 60_000,
-    queryFn: () => tourneeFn({ data: { stops: tourneeStops } }),
+    queryFn: () =>
+      tourneeFn({ data: { stops: tourneeStops, base: { lat: depart.lat, lng: depart.lng } } }),
   });
 
   /** Données affichées : routier réel si disponible, sinon estimation locale. */
@@ -379,7 +392,21 @@ function PlanningPage() {
             defaultValue={prefillDate ? `${prefillDate}T09:00` : undefined}
           />
           <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue="120" />
-          <Field label="Technicien" name="technicien" />
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Technicien</span>
+            <select
+              name="technicien"
+              defaultValue={depart.nom}
+              className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+            >
+              <option value="">À attribuer</option>
+              {TECHNICIENS.map((t) => (
+                <option key={t.id} value={t.nom}>
+                  {t.nom} — départ {t.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">Notes</span>
@@ -433,7 +460,7 @@ function PlanningPage() {
                 </span>
               ) : itineraire.data ? (
                 <span className="text-primary text-mono">
-                  Nantes → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                  {depart.label} → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
                   {itineraire.data.estime ? " (estimé)" : " par la route"}
                 </span>
               ) : (
@@ -763,16 +790,34 @@ function PlanningPage() {
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
-              <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
+              <RouteIcon className="h-4 w-4 text-primary" />
+              {tourneeAff.etapes.length > 1 ? "Tournée optimisée" : "Trajet du jour"}
               {tourneeReel.data && !tourneeReel.data.estime && (
                 <span className="text-[10px] font-bold text-primary normal-case tracking-normal bg-primary/10 px-1.5 py-0.5 rounded-full">
                   itinéraires réels
                 </span>
               )}
             </h2>
+            <div className="mb-3 flex flex-wrap gap-2">
+              {TECHNICIENS.map((t) => (
+                <button
+                  key={t.id}
+                  type="button"
+                  onClick={() => setDepartId(t.id)}
+                  className={`text-left border rounded-lg px-3 py-2 text-xs transition ${
+                    depart.id === t.id
+                      ? "border-primary bg-primary/10"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <span className="block font-semibold">{t.nom}</span>
+                  <span className="block text-muted-foreground">Départ {t.adresse}</span>
+                </button>
+              ))}
+            </div>
             {tourneeAff.etapes.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucun chantier à venir géolocalisé pour le moment.
+                Aucun chantier à venir géolocalisé pour {depart.nom}.
               </p>
             ) : (
               <>
@@ -799,16 +844,22 @@ function PlanningPage() {
 
                 <div className="mt-4 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
                   <p className="flex justify-between">
-                    <span className="text-muted-foreground">Tournée groupée</span>
+                    <span className="text-muted-foreground">
+                      {tourneeAff.etapes.length > 1
+                        ? `Tournée groupée (${tourneeAff.etapes.length} chantiers)`
+                        : `Aller-retour depuis ${depart.label}`}
+                    </span>
                     <span>
                       {tourneeAff.kmTotal} km · {dureeFr(tourneeAff.minutes)}
                     </span>
                   </p>
-                  <p className="flex justify-between">
-                    <span className="text-muted-foreground">Trajets séparés</span>
-                    <span>{tourneeAff.kmDirect} km</span>
-                  </p>
-                  {tourneeAff.kmDirect > tourneeAff.kmTotal && (
+                  {tourneeAff.etapes.length > 1 && (
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">Un aller-retour par chantier</span>
+                      <span>{tourneeAff.kmDirect} km</span>
+                    </p>
+                  )}
+                  {tourneeAff.etapes.length > 1 && tourneeAff.kmDirect > tourneeAff.kmTotal && (
                     <p className="flex justify-between text-primary">
                       <span className="inline-flex items-center gap-1">
                         <Fuel className="h-3.5 w-3.5" /> Économie estimée
