@@ -89,6 +89,29 @@ export function DevisClientEmail(data: DevisEmailData) {
             </Text>
           </Section>
 
+          {data.lien && (
+            <Section style={{ padding: "20px 32px 4px", textAlign: "center" as const }}>
+              <a
+                href={data.lien}
+                style={{
+                  display: "inline-block",
+                  backgroundColor: accent,
+                  color: "#ffffff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  padding: "13px 26px",
+                  borderRadius: 4,
+                }}
+              >
+                {isFacture ? "Voir et télécharger la facture" : "Voir, télécharger et signer le devis"}
+              </a>
+              <Text style={{ color: muted, fontSize: 11, margin: "10px 0 0" }}>
+                Lien personnel — consultation, téléchargement PDF et signature en ligne.
+              </Text>
+            </Section>
+          )}
+
           <Section style={{ padding: "16px 32px" }}>
             {items.map((item, i) => (
               <Row key={i} style={{ borderBottom: "1px solid #eef2f1" }}>
