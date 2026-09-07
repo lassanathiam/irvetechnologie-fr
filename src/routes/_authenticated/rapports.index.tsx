@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Camera, ClipboardCheck, FileText, Loader2, Trash2, X } from "lucide-react";
 import {
   CHECK_LABEL,
@@ -11,11 +11,19 @@ import {
   RAPPORT_TYPES,
   type RapportType,
   checklistFor,
+  checklistForMode,
   mesuresFor,
+  allOk,
+  TYPOLOGIES,
+  type Typologie,
+  type ChecklistMode,
+  mesuresFromTypologie,
 } from "@/lib/rapport-checklist";
 import {
   createRapport,
   deleteRapport,
+  getRapportPrefill,
+  listRapportSources,
   listRapports,
   uploadRapportPhoto,
   type RapportInput,
@@ -52,16 +60,70 @@ function RapportsPage() {
   const rapports = useQuery({ queryKey: ["rapports"], queryFn: () => fetchRapports() });
 
   const [type, setType] = useState<RapportType>("assurance");
+  const [mode, setMode] = useState<ChecklistMode>("essentiel");
+  const [typologie, setTypologie] = useState<Typologie>({});
+  const [sourceKind, setSourceKind] = useState<"devis" | "rendezvous">("devis");
+  const [sourceId, setSourceId] = useState("");
+  const [prefill, setPrefill] = useState<Record<string, string>>({});
+  const [prefillKey, setPrefillKey] = useState(0);
   const [checks, setChecks] = useState<Record<string, CheckState>>({});
   const [mesures, setMesures] = useState<Record<string, string>>({});
   const [photos, setPhotos] = useState<Partial<Record<PhotoKind, string>>>({});
   const [sigTech, setSigTech] = useState<string | null>(null);
   const [sigClient, setSigClient] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [linked, setLinked] = useState<{ devis_id: string | null; rendezvous_id: string | null }>({
+    devis_id: null,
+    rendezvous_id: null,
+  });
 
-  const sections = checklistFor(type);
+  const sections = useMemo(() => checklistForMode(type, mode), [type, mode]);
   const mesureFields = mesuresFor(type);
   const uploadPhoto = useServerFn(uploadRapportPhoto);
+  const fetchSources = useServerFn(listRapportSources);
+  const fetchPrefill = useServerFn(getRapportPrefill);
+
+  const sources = useQuery({ queryKey: ["rapport-sources"], queryFn: () => fetchSources() });
+
+  // Mode Essentiel : tous les points sont préréglés « conforme ».
+  useEffect(() => {
+    if (mode === "essentiel") setChecks(allOk(checklistForMode(type, "essentiel")));
+  }, [mode, type]);
+
+  const reprendre = useMutation({
+    mutationFn: async () => {
+      if (!sourceId) throw new Error("Choisissez un devis ou un chantier.");
+      return fetchPrefill({
+        data: sourceKind === "devis" ? { devis_id: sourceId } : { rendezvous_id: sourceId },
+      });
+    },
+    onSuccess: (d) => {
+      setPrefill({
+        client_nom: d.client_nom ?? "",
+        client_email: d.client_email ?? "",
+        client_telephone: d.client_telephone ?? "",
+        chantier_adresse: d.chantier_adresse ?? "",
+        chantier_cp_ville: d.chantier_cp_ville ?? "",
+        technicien: d.technicien ?? "",
+        date: d.date_intervention ?? today(),
+        borne_puissance: d.borne_puissance ?? "",
+      });
+      setPrefillKey((k) => k + 1);
+      setLinked({ devis_id: d.devis_id ?? null, rendezvous_id: d.rendezvous_id ?? null });
+      if (d.longueur) setMesures((m) => ({ ...m, longueur: d.longueur!.replace(".", ",") }));
+      if (d.borne_puissance) {
+        const p = d.borne_puissance.replace(".", ",").replace(/\s+/g, " ");
+        setTypologie((t) => ({ ...t, puissance: t.puissance ?? p }));
+      }
+    },
+    onError: (e) => setError(e instanceof Error ? e.message : "Reprise impossible."),
+  });
+
+  function pickTypologie(key: keyof Typologie, value: string) {
+    const next: Typologie = { ...typologie, [key]: typologie[key] === value ? undefined : value };
+    setTypologie(next);
+    setMesures((m) => mesuresFromTypologie(next, m));
+  }
 
   const create = useMutation({
     mutationFn: async (payload: RapportInput) => {
@@ -133,6 +195,10 @@ function RapportsPage() {
       borne_serie: get("borne_serie") || null,
       technicien: get("technicien") || null,
       mesures,
+      typologie: Object.fromEntries(Object.entries(typologie).filter(([, v]) => Boolean(v))) as Record<string, string>,
+      devis_id: linked.devis_id,
+      rendezvous_id: linked.rendezvous_id,
+      mesures_typologie: undefined,
       checklist: checks,
       observations: get("observations") || null,
       reserves: get("reserves") || null,
