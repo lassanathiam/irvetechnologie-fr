@@ -104,6 +104,7 @@ function PlanningPage() {
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" } | null>(null);
+  const [prefillDate, setPrefillDate] = useState<string>("");
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -171,15 +172,16 @@ function PlanningPage() {
     return [...map.entries()];
   }, [rows]);
 
-  const points: MapPoint[] = rows
+  const points: MapMarker[] = rows
     .filter((r) => r.lat != null && r.lng != null)
     .map((r) => ({
       id: r.id,
       lat: Number(r.lat),
       lng: Number(r.lng),
       label: r.client_nom,
-      sub: r.cp_ville,
+      sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
       statut: r.statut,
+      date: dateTimeFr(r.date_debut),
     }));
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
@@ -325,7 +327,14 @@ function PlanningPage() {
               ))}
             </select>
           </label>
-          <Field label="Date & heure" name="date_debut" type="datetime-local" required />
+          <Field
+            key={prefillDate}
+            label="Date & heure"
+            name="date_debut"
+            type="datetime-local"
+            required
+            defaultValue={prefillDate ? `${prefillDate}T09:00` : undefined}
+          />
           <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue="120" />
           <Field label="Technicien" name="technicien" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
