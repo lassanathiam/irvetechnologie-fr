@@ -4,6 +4,14 @@ import { z } from "zod";
 
 const checkState = z.enum(["ok", "nc", "na"]);
 
+/** Texte tolérant : accepte null/undefined/nombre et tronque au lieu d'échouer. */
+const txt = (max: number) =>
+  z.preprocess((v) => {
+    if (v === null || v === undefined) return "";
+    const s = typeof v === "string" ? v : String(v);
+    return s.trim().slice(0, max);
+  }, z.string().max(max));
+
 const rapportSchema = z.object({
   type: z.enum(["controle", "conformite", "assurance"]),
   date_intervention: z.string().min(4).max(20),
