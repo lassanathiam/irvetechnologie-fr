@@ -699,15 +699,20 @@ function PlanningPage() {
           <div className="bg-card border border-border rounded-sm p-5">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
+              {tourneeReel.data && !tourneeReel.data.estime && (
+                <span className="text-[10px] text-primary normal-case tracking-normal">
+                  itinéraires réels
+                </span>
+              )}
             </h2>
-            {tournee.etapes.length === 0 ? (
+            {tourneeAff.etapes.length === 0 ? (
               <p className="text-sm text-muted-foreground">
                 Aucun chantier à venir géolocalisé pour le moment.
               </p>
             ) : (
               <>
                 <ol className="space-y-2">
-                  {tournee.etapes.map((e) => (
+                  {tourneeAff.etapes.map((e) => (
                     <li
                       key={e.id}
                       onMouseEnter={() => setActive(e.id)}
