@@ -174,6 +174,9 @@ function PlanningPage() {
       montant_ht: number;
       tva_pct?: number;
       statut_facturation: "a_facturer" | "facture" | "paye";
+      designation?: string | null;
+      etiquettes?: string[];
+
     }) => factuFn({ data: p }),
     onSuccess: () => {
       setPanel(null);
