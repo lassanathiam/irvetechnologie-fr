@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Printer, Receipt } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
+import { EmailReceipts } from "@/components/EmailReceipts";
 import {
   convertirEnFacture,
   envoyerDevis,
@@ -228,8 +229,20 @@ function DevisDetail() {
                 value={devis.sent_at ? new Date(devis.sent_at).toLocaleString("fr-FR") : null}
               />
               <TrackRow
-                label="Ouvert par le client"
+                label="Première ouverture"
                 value={devis.viewed_at ? new Date(devis.viewed_at).toLocaleString("fr-FR") : null}
+              />
+              <TrackRow
+                label="Dernière ouverture"
+                value={
+                  devis.last_viewed_at
+                    ? new Date(devis.last_viewed_at).toLocaleString("fr-FR")
+                    : null
+                }
+              />
+              <TrackRow
+                label="Nombre de consultations"
+                value={devis.view_count ? String(devis.view_count) : null}
               />
               <TrackRow
                 label="Signé en ligne"
@@ -247,6 +260,8 @@ function DevisDetail() {
                 />
               )}
             </div>
+
+            <EmailReceipts email={devis.client_email} />
 
             <div className="border border-border rounded-sm bg-card p-6 space-y-3">
               <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">

@@ -139,6 +139,7 @@ export type Database = {
           date_expiration: string
           facture_id: string | null
           id: string
+          last_viewed_at: string | null
           notes: string | null
           numero: string
           objet: string | null
@@ -156,6 +157,7 @@ export type Database = {
           total_ttc: number
           total_tva: number
           updated_at: string
+          view_count: number
           viewed_at: string | null
         }
         Insert: {
@@ -172,6 +174,7 @@ export type Database = {
           date_expiration?: string
           facture_id?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           numero: string
           objet?: string | null
@@ -189,6 +192,7 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          view_count?: number
           viewed_at?: string | null
         }
         Update: {
@@ -205,6 +209,7 @@ export type Database = {
           date_expiration?: string
           facture_id?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           numero?: string
           objet?: string | null
@@ -222,6 +227,7 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          view_count?: number
           viewed_at?: string | null
         }
         Relationships: [
@@ -375,10 +381,12 @@ export type Database = {
           date_emission: string
           devis_id: string | null
           id: string
+          last_viewed_at: string | null
           notes: string | null
           numero: string
           objet: string | null
           paid_at: string | null
+          public_token: string
           remise_pct: number
           sent_at: string | null
           statut: string
@@ -388,6 +396,8 @@ export type Database = {
           total_ttc: number
           total_tva: number
           updated_at: string
+          view_count: number
+          viewed_at: string | null
         }
         Insert: {
           acompte_pct?: number
@@ -403,10 +413,12 @@ export type Database = {
           date_emission?: string
           devis_id?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           numero: string
           objet?: string | null
           paid_at?: string | null
+          public_token?: string
           remise_pct?: number
           sent_at?: string | null
           statut?: string
@@ -416,6 +428,8 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          view_count?: number
+          viewed_at?: string | null
         }
         Update: {
           acompte_pct?: number
@@ -431,10 +445,12 @@ export type Database = {
           date_emission?: string
           devis_id?: string | null
           id?: string
+          last_viewed_at?: string | null
           notes?: string | null
           numero?: string
           objet?: string | null
           paid_at?: string | null
+          public_token?: string
           remise_pct?: number
           sent_at?: string | null
           statut?: string
@@ -444,6 +460,8 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          view_count?: number
+          viewed_at?: string | null
         }
         Relationships: [
           {

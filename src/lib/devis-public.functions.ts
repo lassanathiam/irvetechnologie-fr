@@ -16,7 +16,7 @@ export const getDevisPublic = createServerFn({ method: "GET" })
     const { data: devis, error } = await supabaseAdmin
       .from("devis")
       .select(
-        "id, numero, date_emission, date_expiration, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, remise_pct, acompte_pct, conditions_paiement, notes, statut, signed_at, signature_client, signataire_nom",
+        "id, numero, date_emission, date_expiration, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, remise_pct, acompte_pct, conditions_paiement, notes, statut, signed_at, signature_client, signataire_nom, viewed_at, view_count",
       )
       .eq("public_token", data.token)
       .maybeSingle();
@@ -29,11 +29,15 @@ export const getDevisPublic = createServerFn({ method: "GET" })
       .eq("devis_id", devis.id)
       .order("ordre", { ascending: true });
 
+    const now = new Date().toISOString();
     await supabaseAdmin
       .from("devis")
-      .update({ viewed_at: new Date().toISOString() })
-      .eq("id", devis.id)
-      .is("viewed_at", null);
+      .update({
+        viewed_at: devis.viewed_at ?? now,
+        last_viewed_at: now,
+        view_count: (devis.view_count ?? 0) + 1,
+      })
+      .eq("id", devis.id);
 
     return { devis, items: items ?? [] };
   });

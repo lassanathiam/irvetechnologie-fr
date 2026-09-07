@@ -2,9 +2,10 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, FileText, Loader2, Mail, Printer } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
+import { EmailReceipts } from "@/components/EmailReceipts";
 import {
   envoyerFacture,
   getFacture,
@@ -92,6 +93,8 @@ function FactureDetail() {
   }
 
   const { facture, items } = query.data;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const lienClient = `${origin}/facture-client/${facture.public_token}`;
 
   return (
     <ProShell>
@@ -201,6 +204,58 @@ function FactureDetail() {
           </div>
           {feedback && <p className="text-mono text-xs text-primary">{feedback}</p>}
           {error && <p className="text-mono text-xs text-destructive">{error}</p>}
+
+          <div className="pt-4 border-t border-border space-y-2">
+            <div className="text-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+              Lien client (consultation, PDF)
+            </div>
+            <div className="flex items-center gap-2">
+              <input
+                readOnly
+                value={lienClient}
+                className="flex-1 bg-input border border-border rounded-sm px-3 py-2 text-mono text-[11px]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  void navigator.clipboard?.writeText(lienClient);
+                  setFeedback("Lien client copié.");
+                }}
+                className="border border-border rounded-sm px-3 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
+              >
+                <Copy className="h-3.5 w-3.5" /> Copier
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-2 gap-6">
+          <div className="border border-border rounded-sm bg-card p-6 space-y-2">
+            <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+              Suivi de lecture
+            </h2>
+            <TrackRow
+              label="Envoyée"
+              value={facture.sent_at ? new Date(facture.sent_at).toLocaleString("fr-FR") : null}
+            />
+            <TrackRow
+              label="Première ouverture"
+              value={facture.viewed_at ? new Date(facture.viewed_at).toLocaleString("fr-FR") : null}
+            />
+            <TrackRow
+              label="Dernière ouverture"
+              value={
+                facture.last_viewed_at
+                  ? new Date(facture.last_viewed_at).toLocaleString("fr-FR")
+                  : null
+              }
+            />
+            <TrackRow
+              label="Nombre de consultations"
+              value={facture.view_count ? String(facture.view_count) : null}
+            />
+          </div>
+          <EmailReceipts email={facture.client_email} />
         </div>
       </div>
 
@@ -226,5 +281,16 @@ function FactureDetail() {
         />
       </div>
     </ProShell>
+  );
+}
+
+function TrackRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex items-baseline justify-between gap-3 text-[12px] border-b border-border pb-1.5 last:border-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={value ? "text-mono font-bold" : "text-mono text-muted-foreground"}>
+        {value ?? "—"}
+      </span>
+    </div>
   );
 }
