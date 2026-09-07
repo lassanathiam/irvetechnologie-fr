@@ -56,7 +56,7 @@ export function DocumentPrint({
 
   return (
     <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
-      {/* En-tête : logo + émetteur à gauche, document à droite */}
+      {/* En-tête : émetteur à gauche, client en face à droite */}
       <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2 border-primary/70">
         <div className="flex items-start gap-4">
           <BrandLogo className="h-16 w-16" />
