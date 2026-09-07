@@ -149,7 +149,11 @@ export const saveRealisation = createServerFn({ method: "POST" })
       .insert(payload)
       .select("id")
       .single();
-    if (error) throw new Error(error.message);
+    if (error) {
+      await cleanupUpload();
+      throw new Error(error.message);
+    }
+
     return { ok: true as const, id: inserted.id };
   });
 
