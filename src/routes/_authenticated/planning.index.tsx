@@ -663,9 +663,12 @@ function PlanningPage() {
 
                             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="inline-flex items-center gap-1">
-                                <CalendarClock className="h-3 w-3" /> {dateTimeFr(r.date_debut)} ·{" "}
-                                {dureeFr(r.duree_min)}
+                                <CalendarClock className="h-3 w-3" />{" "}
+                                {r.date_a_confirmer
+                                  ? "Rendez-vous à prendre"
+                                  : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
                               </span>
+
                               <span className="inline-flex items-center gap-1">
                                 <MapPin className="h-3 w-3" /> {r.adresse}
                                 {r.cp_ville ? `, ${r.cp_ville}` : ""}
