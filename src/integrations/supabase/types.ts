@@ -133,9 +133,13 @@ export type Database = {
           notes: string | null
           numero: string
           objet: string | null
+          public_token: string
           remise_pct: number
           rendezvous_id: string | null
           sent_at: string | null
+          signataire_nom: string | null
+          signature_client: string | null
+          signed_at: string | null
           statut: string
           total_ht: number
           total_ht_brut: number
@@ -143,6 +147,7 @@ export type Database = {
           total_ttc: number
           total_tva: number
           updated_at: string
+          viewed_at: string | null
         }
         Insert: {
           acompte_pct?: number
@@ -161,9 +166,13 @@ export type Database = {
           notes?: string | null
           numero: string
           objet?: string | null
+          public_token?: string
           remise_pct?: number
           rendezvous_id?: string | null
           sent_at?: string | null
+          signataire_nom?: string | null
+          signature_client?: string | null
+          signed_at?: string | null
           statut?: string
           total_ht?: number
           total_ht_brut?: number
@@ -171,6 +180,7 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          viewed_at?: string | null
         }
         Update: {
           acompte_pct?: number
@@ -189,9 +199,13 @@ export type Database = {
           notes?: string | null
           numero?: string
           objet?: string | null
+          public_token?: string
           remise_pct?: number
           rendezvous_id?: string | null
           sent_at?: string | null
+          signataire_nom?: string | null
+          signature_client?: string | null
+          signed_at?: string | null
           statut?: string
           total_ht?: number
           total_ht_brut?: number
@@ -199,6 +213,7 @@ export type Database = {
           total_ttc?: number
           total_tva?: number
           updated_at?: string
+          viewed_at?: string | null
         }
         Relationships: [
           {
@@ -206,6 +221,44 @@ export type Database = {
             columns: ["rendezvous_id"]
             isOneToOne: false
             referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devis_envois: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          destinataire: string
+          devis_id: string
+          id: string
+          message: string | null
+          resultat: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          destinataire: string
+          devis_id: string
+          id?: string
+          message?: string | null
+          resultat?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          destinataire?: string
+          devis_id?: string
+          id?: string
+          message?: string | null
+          resultat?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_envois_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: false
+            referencedRelation: "devis"
             referencedColumns: ["id"]
           },
         ]

@@ -14,6 +14,7 @@ import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
@@ -49,6 +50,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevisClientTokenRoute = DevisClientTokenRouteImport.update({
+  id: '/devis-client/$token',
+  path: '/devis-client/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedRealisationsIndexRoute =
@@ -124,6 +130,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/devis-client/$token': typeof DevisClientTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -142,6 +149,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/devis-client/$token': typeof DevisClientTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -162,6 +170,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/devis-client/$token': typeof DevisClientTokenRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
@@ -182,6 +191,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/sitemap.xml'
+    | '/devis-client/$token'
     | '/devis/$id'
     | '/factures/$id'
     | '/rapports/$id'
@@ -200,6 +210,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/sitemap.xml'
+    | '/devis-client/$token'
     | '/devis/$id'
     | '/factures/$id'
     | '/rapports/$id'
@@ -219,6 +230,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/sitemap.xml'
+    | '/devis-client/$token'
     | '/_authenticated/devis/$id'
     | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
@@ -239,6 +251,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DemandeRoute: typeof DemandeRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  DevisClientTokenRoute: typeof DevisClientTokenRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
@@ -278,6 +291,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devis-client/$token': {
+      id: '/devis-client/$token'
+      path: '/devis-client/$token'
+      fullPath: '/devis-client/$token'
+      preLoaderRoute: typeof DevisClientTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/realisations/': {
@@ -402,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DemandeRoute: DemandeRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  DevisClientTokenRoute: DevisClientTokenRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }

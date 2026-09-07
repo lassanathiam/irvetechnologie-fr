@@ -2,13 +2,14 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, CheckCircle2, Loader2, Mail, Printer, Receipt } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Printer, Receipt } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import {
   convertirEnFacture,
   envoyerDevis,
   getDevis,
+  listEnvoisDevis,
   updateStatutDevis,
 } from "@/lib/devis.functions";
 
@@ -40,12 +41,17 @@ function DevisDetail() {
   const sendFn = useServerFn(envoyerDevis);
   const statutFn = useServerFn(updateStatutDevis);
   const convertFn = useServerFn(convertirEnFacture);
+  const envoisFn = useServerFn(listEnvoisDevis);
 
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({ queryKey: ["devis", id], queryFn: () => fetchDevis({ data: { id } }) });
+  const envois = useQuery({
+    queryKey: ["devis-envois", id],
+    queryFn: () => envoisFn({ data: { id } }),
+  });
 
   const send = useMutation({
     mutationFn: () => sendFn({ data: { id, message: message || null } }),
@@ -57,6 +63,7 @@ function DevisDetail() {
           : "Adresse email bloquée (désinscription) — envoi non effectué.",
       );
       qc.invalidateQueries({ queryKey: ["devis"] });
+      qc.invalidateQueries({ queryKey: ["devis-envois", id] });
     },
     onError: (err) => setError(err instanceof Error ? err.message : "Envoi impossible."),
   });
@@ -94,6 +101,8 @@ function DevisDetail() {
   }
 
   const { devis, items } = query.data;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const lienClient = `${origin}/devis-client/${devis.public_token}`;
 
   return (
     <ProShell>
@@ -145,44 +154,132 @@ function DevisDetail() {
           )}
         </div>
 
-        <div className="border border-border rounded-sm bg-card p-6 space-y-3">
-          <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
-            Envoyer au client
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            {devis.client_email
-              ? `Destinataire : ${devis.client_email}`
-              : "Aucune adresse email sur ce devis — ajoutez-la pour pouvoir l'envoyer."}
-          </p>
-          <textarea
-            rows={3}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Message personnalisé (optionnel)"
-            className="w-full bg-input border border-border rounded-sm px-4 py-3 text-sm resize-none"
-          />
-          <div className="flex flex-wrap items-center gap-4">
-            <button
-              type="button"
-              disabled={!devis.client_email || send.isPending}
-              onClick={() => {
-                setFeedback(null);
-                setError(null);
-                send.mutate();
-              }}
-              className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
-            >
-              {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-              Envoyer le devis
-            </button>
-            {devis.sent_at && (
-              <span className="text-mono text-xs text-muted-foreground">
-                Dernier envoi : {new Date(devis.sent_at).toLocaleString("fr-FR")}
-              </span>
-            )}
+        <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
+          <div className="border border-border rounded-sm bg-card p-6 space-y-3">
+            <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+              Envoyer au client
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              {devis.client_email
+                ? `Destinataire : ${devis.client_email}`
+                : "Aucune adresse email sur ce devis — ajoutez-la pour pouvoir l'envoyer."}
+            </p>
+            <textarea
+              rows={3}
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              placeholder="Message personnalisé (optionnel)"
+              className="w-full bg-input border border-border rounded-sm px-4 py-3 text-sm resize-none"
+            />
+            <div className="flex flex-wrap items-center gap-4">
+              <button
+                type="button"
+                disabled={!devis.client_email || send.isPending}
+                onClick={() => {
+                  setFeedback(null);
+                  setError(null);
+                  send.mutate();
+                }}
+                className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
+              >
+                {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                Envoyer le devis
+              </button>
+              {devis.sent_at && (
+                <span className="text-mono text-xs text-muted-foreground">
+                  Dernier envoi : {new Date(devis.sent_at).toLocaleString("fr-FR")}
+                </span>
+              )}
+            </div>
+            {feedback && <p className="text-mono text-xs text-primary">{feedback}</p>}
+            {error && <p className="text-mono text-xs text-destructive">{error}</p>}
+
+            <div className="pt-4 border-t border-border space-y-2">
+              <div className="text-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
+                Lien client (consultation, PDF, signature)
+              </div>
+              <div className="flex items-center gap-2">
+                <input
+                  readOnly
+                  value={lienClient}
+                  className="flex-1 bg-input border border-border rounded-sm px-3 py-2 text-mono text-[11px]"
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    void navigator.clipboard?.writeText(lienClient);
+                    setFeedback("Lien client copié.");
+                  }}
+                  className="border border-border rounded-sm px-3 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
+                >
+                  <Copy className="h-3.5 w-3.5" /> Copier
+                </button>
+              </div>
+            </div>
           </div>
-          {feedback && <p className="text-mono text-xs text-primary">{feedback}</p>}
-          {error && <p className="text-mono text-xs text-destructive">{error}</p>}
+
+          <div className="space-y-6">
+            <div className="border border-border rounded-sm bg-card p-6 space-y-2">
+              <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                Suivi de signature
+              </h2>
+              <TrackRow
+                label="Envoyé"
+                value={devis.sent_at ? new Date(devis.sent_at).toLocaleString("fr-FR") : null}
+              />
+              <TrackRow
+                label="Ouvert par le client"
+                value={devis.viewed_at ? new Date(devis.viewed_at).toLocaleString("fr-FR") : null}
+              />
+              <TrackRow
+                label="Signé en ligne"
+                value={
+                  devis.signed_at
+                    ? `${devis.signataire_nom ?? "Client"} — ${new Date(devis.signed_at).toLocaleString("fr-FR")}`
+                    : null
+                }
+              />
+              {devis.signature_client && (
+                <img
+                  src={devis.signature_client}
+                  alt="Signature du client"
+                  className="mt-2 h-16 w-full object-contain object-left bg-background border border-border rounded-sm"
+                />
+              )}
+            </div>
+
+            <div className="border border-border rounded-sm bg-card p-6 space-y-3">
+              <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                Historique d&apos;envois
+              </h2>
+              {(envois.data ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun envoi enregistré.</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {(envois.data ?? []).map((e) => (
+                    <li key={e.id} className="text-[12px] border-b border-border pb-2 last:border-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-mono font-bold">
+                          {new Date(e.created_at).toLocaleString("fr-FR")}
+                        </span>
+                        <span
+                          className={
+                            e.resultat === "envoye"
+                              ? "text-mono text-[10px] text-primary uppercase"
+                              : "text-mono text-[10px] text-destructive uppercase"
+                          }
+                        >
+                          {e.resultat === "envoye" ? "Envoyé" : "Bloqué"}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground">{e.destinataire}</div>
+                      {e.message && <div className="text-muted-foreground italic">{e.message}</div>}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
@@ -205,8 +302,24 @@ function DevisDetail() {
             notes: devis.notes,
           }}
           items={items}
+          signature={{
+            signature_client: devis.signature_client,
+            signataire_nom: devis.signataire_nom,
+            signed_at: devis.signed_at,
+          }}
         />
       </div>
     </ProShell>
+  );
+}
+
+function TrackRow({ label, value }: { label: string; value: string | null }) {
+  return (
+    <div className="flex items-start justify-between gap-3 text-[12px] border-b border-border pb-1.5 last:border-0">
+      <span className="text-muted-foreground">{label}</span>
+      <span className={value ? "text-mono font-bold text-right" : "text-mono text-muted-foreground"}>
+        {value ?? "—"}
+      </span>
+    </div>
   );
 }

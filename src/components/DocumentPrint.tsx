@@ -26,15 +26,23 @@ export type DocHeader = {
   notes?: string | null;
 };
 
+export type DocSignature = {
+  signature_client?: string | null;
+  signataire_nom?: string | null;
+  signed_at?: string | null;
+};
+
 /** Rendu papier A4 partagé pour les devis et les factures. */
 export function DocumentPrint({
   type,
   doc,
   items,
+  signature,
 }: {
   type: "devis" | "facture";
   doc: DocHeader;
   items: DocLine[];
+  signature?: DocSignature | null;
 }) {
   const lines = items.map((i) => ({
     ...i,
@@ -210,14 +218,29 @@ export function DocumentPrint({
           <div className="space-y-3">
             <div className="border-2 border-primary/70 rounded-sm p-3 text-center">
               <div className="text-mono text-[11px] font-extrabold uppercase tracking-[0.14em] text-primary">
-                Signer le devis
+                {signature?.signature_client ? "Devis signé" : "Signer le devis"}
               </div>
               <div className="text-[10px] text-muted-foreground mt-1">Bon pour accord</div>
             </div>
-            <div className="border border-dashed border-border rounded-sm p-3 h-24">
+            <div className="border border-border rounded-sm p-3 min-h-24">
               <div className="text-mono text-[10px] font-semibold text-muted-foreground">
-                Date & signature du client
+                Date &amp; signature du client
               </div>
+              {signature?.signature_client ? (
+                <div className="mt-1">
+                  <img
+                    src={signature.signature_client}
+                    alt="Signature du client"
+                    className="h-14 w-full object-contain object-left"
+                  />
+                  <div className="text-[10px] text-muted-foreground">
+                    {signature.signataire_nom}
+                    {signature.signed_at
+                      ? ` — signé le ${new Date(signature.signed_at).toLocaleString("fr-FR")}`
+                      : null}
+                  </div>
+                </div>
+              ) : null}
             </div>
             <div className="border border-dashed border-border rounded-sm p-3 h-20">
               <div className="text-mono text-[10px] font-semibold text-muted-foreground">
@@ -226,6 +249,7 @@ export function DocumentPrint({
             </div>
           </div>
         )}
+
       </div>
     </div>
   );

@@ -31,6 +31,8 @@ export type DevisEmailData = {
   date_emission: string;
   date_limite: string;
   message?: string | null;
+  /** Lien sécurisé de consultation / téléchargement / signature en ligne. */
+  lien?: string | null;
   remise_pct: number;
   total_ht_brut: number;
   total_remise: number;
@@ -86,6 +88,29 @@ export function DevisClientEmail(data: DevisEmailData) {
                   : `Voici le détail de votre devis ${data.numero}${data.objet ? ` — ${data.objet}` : ""}. Il est valable jusqu'au ${dateFr(data.date_limite)}.`}
             </Text>
           </Section>
+
+          {data.lien && (
+            <Section style={{ padding: "20px 32px 4px", textAlign: "center" as const }}>
+              <a
+                href={data.lien}
+                style={{
+                  display: "inline-block",
+                  backgroundColor: accent,
+                  color: "#ffffff",
+                  fontSize: 14,
+                  fontWeight: 700,
+                  textDecoration: "none",
+                  padding: "13px 26px",
+                  borderRadius: 4,
+                }}
+              >
+                {isFacture ? "Voir et télécharger la facture" : "Voir, télécharger et signer le devis"}
+              </a>
+              <Text style={{ color: muted, fontSize: 11, margin: "10px 0 0" }}>
+                Lien personnel — consultation, téléchargement PDF et signature en ligne.
+              </Text>
+            </Section>
+          )}
 
           <Section style={{ padding: "16px 32px" }}>
             {items.map((item, i) => (
