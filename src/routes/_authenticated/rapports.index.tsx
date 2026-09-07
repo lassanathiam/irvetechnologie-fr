@@ -198,7 +198,7 @@ function RapportsPage() {
       typologie: Object.fromEntries(Object.entries(typologie).filter(([, v]) => Boolean(v))) as Record<string, string>,
       devis_id: linked.devis_id,
       rendezvous_id: linked.rendezvous_id,
-      mesures_typologie: undefined,
+      
       checklist: checks,
       observations: get("observations") || null,
       reserves: get("reserves") || null,
