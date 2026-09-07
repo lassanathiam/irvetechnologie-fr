@@ -286,7 +286,7 @@ function PlanningPage() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
-          <h1 className="text-2xl font-medium tracking-tight mt-1">
+          <h1 className="text-2xl font-extrabold tracking-tight mt-1">
             Chantiers, tournées & autorisations
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
@@ -674,7 +674,7 @@ function PlanningPage() {
           </div>
 
           <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
             </h2>
             {tournee.etapes.length === 0 ? (
@@ -729,7 +729,7 @@ function PlanningPage() {
 
           {grappes.length > 0 && (
             <div className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-3">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
               <ul className="space-y-3">

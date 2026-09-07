@@ -67,7 +67,7 @@ function EspacePage() {
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Espace pro</p>
-          <h1 className="text-2xl font-medium tracking-tight mt-1">Pilotage de l'activité</h1>
+          <h1 className="text-2xl font-extrabold tracking-tight mt-1">Pilotage de l'activité</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Borne de l'Ouest — marque commerciale d'IRVE Technologie
           </p>
@@ -113,7 +113,7 @@ function EspacePage() {
 
           <div className="grid gap-6 lg:grid-cols-[1fr_420px]">
             <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-4 flex items-center gap-2">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
                 <CalendarClock className="h-4 w-4 text-primary" /> Prochains rendez-vous
               </h2>
               {!aVenir.length ? (
@@ -158,7 +158,7 @@ function EspacePage() {
             </section>
 
             <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
                 <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
               </h2>
               <InterventionsMap markers={points} activeId={active} onSelect={setActive} height={340} />
@@ -171,7 +171,7 @@ function EspacePage() {
 
           <div className="grid gap-6 lg:grid-cols-2 mt-6">
             <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-4 flex items-center gap-2">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
                 <Inbox className="h-4 w-4 text-primary" /> Dernières demandes
               </h2>
               {!q.data?.demandes.length ? (
@@ -197,7 +197,7 @@ function EspacePage() {
             </section>
 
             <section className="bg-card border border-border rounded-sm p-5">
-              <h2 className="text-mono text-muted-foreground mb-4 flex items-center gap-2">
+              <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-4 flex items-center gap-2">
                 <FileText className="h-4 w-4 text-primary" /> Devis récents
               </h2>
               {!q.data?.devis.length ? (
@@ -246,7 +246,7 @@ function Stat({
       <p className="text-mono text-xs text-muted-foreground flex items-center gap-2">
         <Icon className="h-3.5 w-3.5 text-primary" /> {label}
       </p>
-      <p className="text-2xl font-medium tracking-tight mt-2">{value}</p>
+      <p className="text-2xl font-extrabold tracking-tight mt-2">{value}</p>
       {hint && <p className="text-xs text-muted-foreground mt-1">{hint}</p>}
     </div>
   );
