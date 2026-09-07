@@ -101,6 +101,8 @@ function DevisDetail() {
   }
 
   const { devis, items } = query.data;
+  const origin = typeof window === "undefined" ? "" : window.location.origin;
+  const lienClient = `${origin}/devis-client/${devis.public_token}`;
 
   return (
     <ProShell>
