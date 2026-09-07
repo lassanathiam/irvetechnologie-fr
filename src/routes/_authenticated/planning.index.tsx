@@ -349,7 +349,7 @@ function PlanningPage() {
       {open && (
         <form
           onSubmit={onSubmit}
-          className="bg-card border border-border rounded-sm p-5 mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
+          className="bg-card border border-border rounded-xl p-5 shadow-sm mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <Field label="Client" name="client_nom" required />
           <Field label="Téléphone" name="client_telephone" />
@@ -822,7 +822,7 @@ function PlanningPage() {
           </div>
 
           {grappes.length > 0 && (
-            <div className="bg-card border border-border rounded-sm p-5">
+            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
