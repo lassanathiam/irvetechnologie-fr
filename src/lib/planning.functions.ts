@@ -105,19 +105,22 @@ export const getDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const s = context.supabase;
-    const [demandes, devis, rapports, rdv] = await Promise.all([
+    const [demandes, devis, rapports, rdv, factures] = await Promise.all([
       s
         .from("demande_requests")
-        .select("id, nom, code_postal, formule, status, created_at")
+        .select("id, nom, email, telephone, code_postal, formule, status, created_at")
         .order("created_at", { ascending: false })
-        .limit(6),
+        .limit(40),
       s.from("devis").select("id, numero, client_nom, total_ttc, statut, created_at")
         .order("created_at", { ascending: false })
-        .limit(6),
+        .limit(8),
       s.from("rapports").select("id, numero, type, client_nom, date_intervention")
         .order("created_at", { ascending: false })
         .limit(5),
       s.from("rendezvous").select("*").order("date_debut", { ascending: true }).limit(200),
+      s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, paid_at")
+        .order("created_at", { ascending: false })
+        .limit(50),
     ]);
 
     const now = Date.now();
@@ -126,24 +129,47 @@ export const getDashboard = createServerFn({ method: "GET" })
       (r) => new Date(r.date_debut).getTime() >= now && r.statut !== "annule",
     );
     const devisRows = devis.data ?? [];
+    const demandeRows = demandes.data ?? [];
+    const factureRows = factures.data ?? [];
+    const debutMois = new Date();
+    debutMois.setDate(1);
+    debutMois.setHours(0, 0, 0, 0);
+
+    const caEncaisse = factureRows
+      .filter((f) => f.statut === "payee")
+      .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
+    const caEnAttente = factureRows
+      .filter((f) => f.statut !== "payee" && f.statut !== "annulee")
+      .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
+    const caMois = factureRows
+      .filter((f) => f.paid_at && new Date(f.paid_at).getTime() >= debutMois.getTime())
+      .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
 
     return {
-      demandes: demandes.data ?? [],
+      demandes: demandeRows,
       devis: devisRows,
       rapports: rapports.data ?? [],
       rendezvous: rows,
+      factures: factureRows.slice(0, 6),
       stats: {
         rdvAVenir: aVenir.length,
         rdvSemaine: aVenir.filter(
           (r) => new Date(r.date_debut).getTime() <= now + 7 * 864e5,
         ).length,
         installations: rows.filter((r) => r.statut === "realise").length,
+        chantiersValides: rows.filter((r) => r.chantier_valide).length,
         kmPlanifies: aVenir.reduce((t, r) => t + Number(r.distance_km ?? 0), 0),
         caDevis: devisRows.reduce((t, d) => t + Number(d.total_ttc ?? 0), 0),
-        demandesNouvelles: (demandes.data ?? []).filter((d) => d.status === "nouveau").length,
+        caEncaisse,
+        caEnAttente,
+        caMois,
+        demandesNouvelles: demandeRows.filter((d) => d.status === "nouveau").length,
+        demandesAcceptees: demandeRows.filter((d) => d.status === "accepte").length,
+        demandesTotal: demandeRows.length,
       },
     };
   });
+
 
 /** Validation de chantier : confirme qu'une intervention a bien été réalisée. */
 export const validerChantier = createServerFn({ method: "POST" })

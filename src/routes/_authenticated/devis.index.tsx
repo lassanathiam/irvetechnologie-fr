@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
   CheckCircle2,
@@ -18,8 +18,12 @@ import { dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
 import { createDevis, deleteDevis, listDevis, listPrestations } from "@/lib/devis.functions";
 import { listChantiersLight } from "@/lib/planning.functions";
+import { getDemandeClient } from "@/lib/demandes-admin.functions";
 
 export const Route = createFileRoute("/_authenticated/devis/")({
+  validateSearch: (search: Record<string, unknown>): { demande?: string } =>
+    typeof search.demande === "string" ? { demande: search.demande } : {},
+
   head: () => ({
     meta: [
       { title: "Devis — Espace pro Borne de l'Ouest" },
@@ -29,6 +33,7 @@ export const Route = createFileRoute("/_authenticated/devis/")({
   }),
   component: DevisPage,
 });
+
 
 type LineState = {
   key: string;
@@ -81,6 +86,39 @@ function DevisPage() {
     notes: "",
   });
   const [error, setError] = useState<string | null>(null);
+
+  // Demande client acceptée : préremplissage automatique des coordonnées.
+  const { demande: demandeId } = Route.useSearch();
+  const fetchDemande = useServerFn(getDemandeClient);
+  const demande = useQuery({
+    queryKey: ["demande-client", demandeId],
+    queryFn: () => fetchDemande({ data: { id: demandeId as string } }),
+    enabled: Boolean(demandeId),
+  });
+  const [prefilled, setPrefilled] = useState<string | null>(null);
+  useEffect(() => {
+    const d = demande.data;
+    if (!d || prefilled === d.id) return;
+    setPrefilled(d.id);
+    setClient((c) => ({
+      ...c,
+      client_nom: d.nom,
+      client_email: d.email ?? "",
+      client_telephone: d.telephone ?? "",
+      client_cp_ville: d.code_postal ?? "",
+      notes: [
+        d.type_bien ? `Type de bien : ${d.type_bien}` : null,
+        d.puissance ? `Puissance : ${d.puissance}` : null,
+        d.type_installation ? `Installation : ${d.type_installation}` : null,
+        d.distance_m ? `Distance tableau → borne : ${d.distance_m} m` : null,
+        d.notes ? `Demande client : ${d.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+    }));
+  }, [demande.data, prefilled]);
+
+
 
   const totals = useMemo(() => computeTotals(lines, remise), [lines, remise]);
   const acompteTtc = acompteAmount(totals.total_ttc, acompte);
