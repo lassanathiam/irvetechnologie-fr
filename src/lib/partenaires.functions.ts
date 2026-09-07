@@ -120,7 +120,7 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, created_at",
+        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, created_at",
       )
       .eq("partenaire_id", partenaire.id)
       .order("created_at", { ascending: false })
@@ -135,6 +135,14 @@ const dossierSchema = tokenSchema.extend({
   adresse: z.string().trim().min(3).max(300),
   cp_ville: z.string().trim().max(160).optional().nullable(),
   designation: z.string().trim().max(200).optional().nullable(),
+  metrage_m: z.preprocess((v) => {
+    if (v === null || v === undefined || v === "") return null;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : null;
+  }, z.number().min(0).max(10000).nullable()).optional(),
+  puissance_borne: z.enum(["3,7 kW", "7,4 kW", "11 kW", "22 kW", "À définir"]).optional().nullable(),
+  phase_installation: z.enum(["Monophasé", "Triphasé", "À définir"]).optional().nullable(),
+  type_pose: z.enum(["Intérieure", "Extérieure", "Sur pied", "À définir"]).optional().nullable(),
   /** Date/heure souhaitée ; vide = rendez-vous à prendre. */
   date_debut: z.string().trim().max(40).optional().nullable(),
   montant_ht: z
@@ -168,6 +176,10 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
       origine: "sous_traitance",
       titre: data.designation?.trim() || `Intervention ${partenaire.nom}`,
       designation: data.designation ?? null,
+      metrage_m: data.metrage_m ?? null,
+      puissance_borne: data.puissance_borne ?? null,
+      phase_installation: data.phase_installation ?? null,
+      type_pose: data.type_pose ?? null,
       type: "installation",
       statut: "planifie",
       client_nom: data.client_nom,

@@ -44,7 +44,7 @@ function PartenairesAdmin() {
    * Les liens partenaires pointent vers le site publié (accessible à tous).
    * L'aperçu de travail est protégé : un partenaire y verrait une page d'erreur.
    */
-  const lien = (token: string) => `https://www.irvetechnologie.fr/partenaire/${token}`;
+  const lien = (token: string) => `https://irvetechnologie.fr/partenaire/${token}`;
 
   async function ajouter() {
     setError(null);
