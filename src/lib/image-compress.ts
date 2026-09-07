@@ -48,7 +48,7 @@ function draw(source: CanvasImageSource, w: number, h: number, quality: number) 
 export async function compressImage(file: File, maxSize = 1280, quality = 0.66): Promise<string> {
   const img = await loadImage(file);
   try {
-    if (!img.width || !img.height) throw new Error("dimensions invasides");
+    if (!img.width || !img.height) throw new Error("dimensions invalides");
     const LIMIT = 900_000; // longueur de la data URL
     let size = maxSize;
     let q = quality;
