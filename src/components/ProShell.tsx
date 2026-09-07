@@ -1,7 +1,8 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
+import { COMPANY } from "@/lib/company";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
