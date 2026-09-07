@@ -13,6 +13,9 @@ const submitSchema = z.object({
   puissance: z.string().trim().max(120).optional().nullable(),
   type_installation: z.string().trim().max(120).optional().nullable(),
   distance_m: z.number().int().min(0).max(10000).optional().nullable(),
+  abonnement_kva: z.string().trim().max(40).optional().nullable(),
+  type_compteur: z.string().trim().max(60).optional().nullable(),
+  phase: z.string().trim().max(40).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
   formule: formuleSchema,
   // Honeypot — must stay empty. Bots usually fill every field.
