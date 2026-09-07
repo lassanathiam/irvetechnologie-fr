@@ -66,6 +66,7 @@ export type Database = {
       }
       demande_requests: {
         Row: {
+          abonnement_kva: string | null
           code_postal: string
           created_at: string
           distance_m: number | null
@@ -74,14 +75,17 @@ export type Database = {
           id: string
           nom: string
           notes: string | null
+          phase: string | null
           puissance: string | null
           status: string
           telephone: string
           type_bien: string | null
+          type_compteur: string | null
           type_installation: string | null
           updated_at: string
         }
         Insert: {
+          abonnement_kva?: string | null
           code_postal: string
           created_at?: string
           distance_m?: number | null
@@ -90,14 +94,17 @@ export type Database = {
           id?: string
           nom: string
           notes?: string | null
+          phase?: string | null
           puissance?: string | null
           status?: string
           telephone: string
           type_bien?: string | null
+          type_compteur?: string | null
           type_installation?: string | null
           updated_at?: string
         }
         Update: {
+          abonnement_kva?: string | null
           code_postal?: string
           created_at?: string
           distance_m?: number | null
@@ -106,10 +113,12 @@ export type Database = {
           id?: string
           nom?: string
           notes?: string | null
+          phase?: string | null
           puissance?: string | null
           status?: string
           telephone?: string
           type_bien?: string | null
+          type_compteur?: string | null
           type_installation?: string | null
           updated_at?: string
         }
@@ -497,17 +506,20 @@ export type Database = {
           created_at: string
           date_intervention: string
           declaration_acceptee: boolean
+          devis_id: string | null
           id: string
           mesures: Json
           numero: string
           observations: string | null
           photos: Json
+          rendezvous_id: string | null
           reserves: string | null
           signataire_client: string | null
           signature_client: string | null
           signature_technicien: string | null
           technicien: string | null
           type: string
+          typologie: Json
           updated_at: string
           user_id: string
         }
@@ -525,17 +537,20 @@ export type Database = {
           created_at?: string
           date_intervention?: string
           declaration_acceptee?: boolean
+          devis_id?: string | null
           id?: string
           mesures?: Json
           numero: string
           observations?: string | null
           photos?: Json
+          rendezvous_id?: string | null
           reserves?: string | null
           signataire_client?: string | null
           signature_client?: string | null
           signature_technicien?: string | null
           technicien?: string | null
           type?: string
+          typologie?: Json
           updated_at?: string
           user_id: string
         }
@@ -553,21 +568,39 @@ export type Database = {
           created_at?: string
           date_intervention?: string
           declaration_acceptee?: boolean
+          devis_id?: string | null
           id?: string
           mesures?: Json
           numero?: string
           observations?: string | null
           photos?: Json
+          rendezvous_id?: string | null
           reserves?: string | null
           signataire_client?: string | null
           signature_client?: string | null
           signature_technicien?: string | null
           technicien?: string | null
           type?: string
+          typologie?: Json
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "rapports_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: false
+            referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rapports_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       realisations: {
         Row: {
