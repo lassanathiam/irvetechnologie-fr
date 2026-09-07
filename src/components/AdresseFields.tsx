@@ -23,7 +23,15 @@ const INPUT_CLS =
  * (aucun risque de perte de frappe si le parent se ré-affiche). La sélection
  * d'une suggestion écrit directement dans les champs.
  */
-export function AdresseFields({ required }: { required?: boolean }) {
+export function AdresseFields({
+  required,
+  defaultAdresse,
+  defaultCpVille,
+}: {
+  required?: boolean;
+  defaultAdresse?: string;
+  defaultCpVille?: string;
+}) {
   const [suggestions, setSuggestions] = useState<AdresseFeature[]>([]);
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -87,6 +95,7 @@ export function AdresseFields({ required }: { required?: boolean }) {
             name="adresse"
             type="text"
             required={required}
+            defaultValue={defaultAdresse}
             placeholder="12 rue des Lilas"
             onChange={(e) => onAdresseChange(e.target.value)}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
@@ -122,6 +131,7 @@ export function AdresseFields({ required }: { required?: boolean }) {
           ref={cpRef}
           name="cp_ville"
           type="text"
+          defaultValue={defaultCpVille}
           placeholder="44000 Nantes"
           autoComplete="off"
           className={INPUT_CLS}

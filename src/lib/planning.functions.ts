@@ -113,6 +113,47 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Modification de l'adresse d'un rendez-vous : re-géocodage + recalcul du trajet. */
+export const updateAdresseRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; adresse: string; cp_ville?: string | null }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        adresse: z.string().trim().min(3).max(300),
+        cp_ville: z.string().trim().max(160).optional().nullable(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: current, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select("technicien")
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+
+    const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
+    const tech = technicienByNom(current?.technicien);
+    const trajet = geo
+      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+      : null;
+
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        adresse: data.adresse,
+        cp_ville: data.cp_ville ?? null,
+        lat: geo?.lat ?? null,
+        lng: geo?.lng ?? null,
+        distance_km: trajet?.distance_km ?? null,
+        duree_trajet_min: trajet?.duree_trajet_min ?? null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true, geocode: Boolean(geo) };
+  });
+
 export const deleteRendezVous = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
