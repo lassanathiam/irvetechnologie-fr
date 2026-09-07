@@ -739,7 +739,150 @@ function PlanningPage() {
           )}
         </aside>
       </div>
+
+      {/* CARTE PLEINE LARGEUR + LISTE DES INTERVENTIONS */}
+      <section className="mt-8 bg-card border border-border rounded-sm overflow-hidden">
+        <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
+          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
+            <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
+          </h2>
+          <div className="flex items-center gap-4 text-[11px] text-muted-foreground ml-auto">
+            <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
+            <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
+            <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
+            <Legende color={STATUT_COLORS.annule!} label="Annulé" />
+          </div>
+        </div>
+
+        <div className="grid lg:grid-cols-[1fr_360px]">
+          <div className="p-4">
+            <InterventionsMap
+              markers={points}
+              activeId={active}
+              onSelect={setActive}
+              height={560}
+              scrollWheelZoom
+              routeCoords={itineraire.data?.coords ?? null}
+              tourneeCoords={tourneeReel.data?.coords ?? null}
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] text-muted-foreground">
+              {itineraire.isFetching ? (
+                <span className="inline-flex items-center gap-1.5">
+                  <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
+                </span>
+              ) : itineraire.data ? (
+                <span className="text-primary text-mono">
+                  Nantes → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                  {itineraire.data.estime ? " (estimé)" : " par la route"}
+                </span>
+              ) : (
+                <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>
+              )}
+              {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
+                <span>
+                  Boucle complète : {tourneeReel.data.kmTotal} km ·{" "}
+                  {dureeFr(tourneeReel.data.minutes)}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="border-t lg:border-t-0 lg:border-l border-border max-h-[640px] overflow-y-auto">
+            {!points.length ? (
+              <p className="p-5 text-sm text-muted-foreground">
+                Aucune intervention géolocalisée pour le moment.
+              </p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {rows
+                  .filter((r) => r.lat != null && r.lng != null)
+                  .map((r) => {
+                    const color = STATUT_COLORS[r.statut] ?? STATUT_COLORS.planifie!;
+                    const isActive = active === r.id;
+                    const v = voirieByRdv.get(r.id);
+                    return (
+                      <li key={r.id}>
+                        <button
+                          type="button"
+                          onClick={() => setActive(r.id)}
+                          className={`w-full text-left px-4 py-3.5 transition hover:bg-muted/60 ${
+                            isActive ? "bg-muted" : ""
+                          }`}
+                        >
+                          <span className="flex items-start gap-2.5">
+                            <span
+                              className="mt-1 h-2.5 w-2.5 rounded-full shrink-0"
+                              style={{ background: color }}
+                            />
+                            <span className="min-w-0 flex-1">
+                              <span className="block font-bold text-sm truncate">
+                                {r.client_nom}
+                              </span>
+                              <span className="block text-xs text-muted-foreground truncate">
+                                {[r.adresse, r.cp_ville].filter(Boolean).join(", ")}
+                              </span>
+                              <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px]">
+                                <span className="text-mono" style={{ color }}>
+                                  {r.chantier_valide
+                                    ? "Validé"
+                                    : (STATUTS.find((s) => s.v === r.statut)?.l ?? r.statut)}
+                                </span>
+                                <span className="text-muted-foreground">
+                                  {dateTimeFr(r.date_debut)}
+                                </span>
+                                {r.distance_km != null && (
+                                  <span className="text-muted-foreground">
+                                    {Math.round(Number(r.distance_km))} km
+                                  </span>
+                                )}
+                                {v && (
+                                  <span className="text-muted-foreground">
+                                    Voirie : {VOIRIE_LABEL[v.statut] ?? v.statut}
+                                  </span>
+                                )}
+                              </span>
+                            </span>
+                          </span>
+                        </button>
+                        {isActive && r.statut !== "realise" && (
+                          <div className="px-4 pb-3.5 -mt-1 flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setStatut.mutate({ id: r.id, statut: "confirme" })}
+                              className="text-mono text-[11px] px-2.5 py-1.5 rounded-sm border border-border hover:border-primary hover:text-primary"
+                            >
+                              Confirmer
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setStatut.mutate({ id: r.id, statut: "realise" });
+                                valider.mutate({ id: r.id, valide: true, par: r.technicien ?? null });
+                              }}
+                              className="text-mono text-[11px] px-2.5 py-1.5 rounded-sm hero-grad text-primary-foreground inline-flex items-center gap-1.5"
+                            >
+                              <CheckCircle2 className="h-3 w-3" /> Clôturer
+                            </button>
+                          </div>
+                        )}
+                      </li>
+                    );
+                  })}
+              </ul>
+            )}
+          </div>
+        </div>
+      </section>
     </ProShell>
+  );
+}
+
+function Legende({ color, label }: { color: string; label: string }) {
+  return (
+    <span className="inline-flex items-center gap-1.5">
+      <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />
+      {label}
+    </span>
   );
 }
 
