@@ -662,6 +662,20 @@ function PlanningPage() {
                               </span>
                             </p>
 
+                            {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
+                              <p className="mt-2 flex flex-wrap gap-1.5">
+                                {r.etiquettes.map((et: string) => (
+                                  <span
+                                    key={et}
+                                    className="text-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border"
+                                  >
+                                    {et}
+                                  </span>
+                                ))}
+                              </p>
+                            )}
+
+
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {r.chantier_valide ? (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
