@@ -698,6 +698,11 @@ function RapportsPage() {
           </section>
 
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {envoi && <p className="text-sm text-muted-foreground">{envoi}</p>}
+          <p className="text-xs text-muted-foreground">
+            Votre saisie est enregistrée automatiquement sur l'appareil : si l'application se ferme,
+            vous retrouvez tout en revenant sur cette page.
+          </p>
 
           <button
             type="submit"
