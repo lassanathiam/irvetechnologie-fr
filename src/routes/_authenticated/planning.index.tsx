@@ -732,20 +732,20 @@ function PlanningPage() {
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Tournée groupée</span>
                     <span>
-                      {tournee.kmTotal} km · {dureeFr(tournee.minutes)}
+                      {tourneeAff.kmTotal} km · {dureeFr(tourneeAff.minutes)}
                     </span>
                   </p>
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Trajets séparés</span>
-                    <span>{tournee.kmDirect} km</span>
+                    <span>{tourneeAff.kmDirect} km</span>
                   </p>
-                  {tournee.kmDirect > tournee.kmTotal && (
+                  {tourneeAff.kmDirect > tourneeAff.kmTotal && (
                     <p className="flex justify-between text-primary">
                       <span className="inline-flex items-center gap-1">
                         <Fuel className="h-3.5 w-3.5" /> Économie estimée
                       </span>
                       <span>
-                        {tournee.kmDirect - tournee.kmTotal} km · {economie.litres} L ·{" "}
+                        {tourneeAff.kmDirect - tourneeAff.kmTotal} km · {economie.litres} L ·{" "}
                         {economie.euros} €
                       </span>
                     </p>
