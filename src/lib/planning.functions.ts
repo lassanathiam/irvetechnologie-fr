@@ -3,6 +3,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
 
+/** Nombre tolérant : vide, texte invalide ou NaN → valeur par défaut. */
+const num = (min: number, max: number, def: number) =>
+  z.preprocess((v) => {
+    if (v === null || v === undefined || v === "") return def;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : def;
+  }, z.number().min(min).max(max)).default(def);
+
+
 const rdvSchema = z.object({
   titre: z.string().trim().min(1).max(160),
   type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
