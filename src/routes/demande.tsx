@@ -7,6 +7,7 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { submitDemande } from "@/lib/demande.functions";
 import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
+import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 
 type Formule = "essentiel" | "confort" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -58,6 +59,9 @@ const MAX_CHEMINEMENT = 5;
 function Demande() {
   const { formule } = Route.useSearch();
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
+  const [kva, setKva] = useState(ABONNEMENTS_KVA[0]!);
+  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[1]!);
+  const alerte = alerteAbonnement(kva, puissanceBorne);
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
@@ -156,6 +160,9 @@ function Demande() {
           type_bien: get("bien") || null,
           puissance: get("puissance") || null,
           type_installation: get("type") || null,
+          abonnement_kva: get("abonnement_kva") || null,
+          type_compteur: get("type_compteur") || null,
+          phase: get("phase") || null,
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
           notes: get("notes") || null,
           formule: formule ?? null,
@@ -381,6 +388,24 @@ function Select({ label, name, options }: { label: string; name: string; options
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}</span>
       <select name={name} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+        {options.map((o) => <option key={o}>{o}</option>)}
+      </select>
+    </label>
+  );
+}
+
+function SelectControlled({
+  label, name, options, value, onChange,
+}: { label: string; name: string; options: string[]; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block">
+      <span className="text-mono text-muted-foreground">{label}</span>
+      <select
+        name={name}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition"
+      >
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
     </label>
