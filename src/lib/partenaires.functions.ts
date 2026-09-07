@@ -13,10 +13,12 @@ import { trajetDepuisBase } from "@/lib/geo";
 const tokenSchema = z.object({ token: z.string().uuid() });
 
 async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 3500);
   try {
     const res = await fetch(
       `https://api-adresse.data.gouv.fr/search/?limit=1&q=${encodeURIComponent(query)}`,
-      { headers: { accept: "application/json" } },
+      { headers: { accept: "application/json" }, signal: controller.signal },
     );
     if (!res.ok) return null;
     const json = (await res.json()) as {
@@ -26,6 +28,8 @@ async function geocode(query: string): Promise<{ lat: number; lng: number } | nu
     return c ? { lng: c[0], lat: c[1] } : null;
   } catch {
     return null;
+  } finally {
+    clearTimeout(timeout);
   }
 }
 
@@ -169,7 +173,7 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
     const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
     const trajet = geo ? trajetDepuisBase(geo.lat, geo.lng) : null;
 
-    const { error } = await supabaseAdmin.from("rendezvous").insert({
+    const { data: dossier, error } = await supabaseAdmin.from("rendezvous").insert({
       user_id: partenaire.owner_user_id,
       partenaire_id: partenaire.id,
       partenaire: partenaire.nom,
@@ -197,7 +201,7 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
       lng: geo?.lng ?? null,
       distance_km: trajet?.distance_km ?? null,
       duree_trajet_min: trajet?.duree_trajet_min ?? null,
-    });
+    }).select("id").single();
     if (error) throw new Error(error.message);
-    return { ok: true, geocode: Boolean(geo) };
+    return { ok: true, id: dossier.id, geocode: Boolean(geo) };
   });
