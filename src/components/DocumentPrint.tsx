@@ -26,15 +26,23 @@ export type DocHeader = {
   notes?: string | null;
 };
 
+export type DocSignature = {
+  signature_client?: string | null;
+  signataire_nom?: string | null;
+  signed_at?: string | null;
+};
+
 /** Rendu papier A4 partagé pour les devis et les factures. */
 export function DocumentPrint({
   type,
   doc,
   items,
+  signature,
 }: {
   type: "devis" | "facture";
   doc: DocHeader;
   items: DocLine[];
+  signature?: DocSignature | null;
 }) {
   const lines = items.map((i) => ({
     ...i,
