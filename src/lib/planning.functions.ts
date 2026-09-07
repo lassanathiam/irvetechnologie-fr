@@ -3,6 +3,15 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
 
+/** Nombre tolérant : vide, texte invalide ou NaN → valeur par défaut. */
+const num = (min: number, max: number, def: number) =>
+  z.preprocess((v) => {
+    if (v === null || v === undefined || v === "") return def;
+    const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+    return Number.isFinite(n) ? n : def;
+  }, z.number().min(min).max(max)).default(def);
+
+
 const rdvSchema = z.object({
   titre: z.string().trim().min(1).max(160),
   type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
@@ -19,8 +28,8 @@ const rdvSchema = z.object({
   demande_id: z.string().uuid().optional().nullable(),
   origine: z.enum(["direct", "sous_traitance"]).default("direct"),
   partenaire: z.string().trim().max(160).optional().nullable(),
-  montant_ht: z.coerce.number().min(0).max(1_000_000).default(0),
-  tva_pct: z.coerce.number().min(0).max(30).default(20),
+  montant_ht: num(0, 1_000_000, 0),
+  tva_pct: num(0, 30, 20),
   statut_facturation: z.enum(["a_facturer", "facture", "paye"]).default("a_facturer"),
   designation: z.string().trim().max(200).optional().nullable(),
   etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
@@ -242,8 +251,8 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         origine: z.enum(["direct", "sous_traitance"]),
         partenaire: z.string().trim().max(160).optional().nullable(),
-        montant_ht: z.coerce.number().min(0).max(1_000_000),
-        tva_pct: z.coerce.number().min(0).max(30).default(20),
+        montant_ht: num(0, 1_000_000, 0),
+        tva_pct: num(0, 30, 20),
         statut_facturation: z.enum(["a_facturer", "facture", "paye"]),
         designation: z.string().trim().max(200).optional().nullable(),
         etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
