@@ -5,7 +5,7 @@ export const COMPANY = {
   adresse: "60 rue François 1er",
   cpVille: "75008 Paris, FR",
   email: "contacts@irvetechnologie.fr",
-  telephone: "+33 7 68 08 43 67",
+  telephone: "+33 6 33 65 78 40",
   site: "www.irvetechnologie.fr",
   siret: "98953372400013",
   tva: "FR89989533724",
