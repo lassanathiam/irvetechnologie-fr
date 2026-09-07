@@ -90,6 +90,16 @@ const dayKey = (iso: string) =>
 
 const MAX_DOC = 8_000_000;
 
+const FACTU_LABEL: Record<string, string> = {
+  a_facturer: "à facturer",
+  facture: "facturé",
+  paye: "payé",
+};
+
+const eurosFr = (n: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })
+    .format(n);
+
 function PlanningPage() {
   const qc = useQueryClient();
   const fetchList = useServerFn(listRendezVous);
@@ -544,6 +554,7 @@ function PlanningPage() {
                     const v = voirieByRdv.get(r.id);
                     const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
+                    const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     return (
                       <li
                         key={r.id}
@@ -583,6 +594,24 @@ function PlanningPage() {
                               )}
                             </p>
                             {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+
+                            <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
+                              <span
+                                className={`px-2 py-0.5 rounded-full border ${
+                                  r.origine === "sous_traitance"
+                                    ? "border-amber-500/50 text-amber-600 dark:text-amber-400"
+                                    : "border-primary/40 text-primary"
+                                }`}
+                              >
+                                {r.origine === "sous_traitance"
+                                  ? `Sous-traitance${r.partenaire ? ` · ${r.partenaire}` : ""}`
+                                  : "Client direct"}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {eurosFr(Number(r.montant_ht ?? 0))} HT ·{" "}
+                                {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
+                              </span>
+                            </p>
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {r.chantier_valide ? (
@@ -629,6 +658,15 @@ function PlanningPage() {
                                   Voir le document
                                 </a>
                               )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
+                                }
+                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                              >
+                                <Euro className="h-3 w-3" /> Montant & facturation
+                              </button>
                               {r.chantier_valide && (
                                 <button
                                   type="button"
@@ -707,6 +745,91 @@ function PlanningPage() {
                               )}
                               Confirmer la réalisation
                             </button>
+                          </form>
+                        )}
+
+                        {isMontantPanel && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const g = (k: string) => String(f.get(k) ?? "").trim();
+                              setFacturation.mutate({
+                                id: r.id,
+                                origine: g("origine") as "direct" | "sous_traitance",
+                                partenaire: g("partenaire") || null,
+                                montant_ht: Number(g("montant_ht") || 0),
+                                tva_pct: Number(g("tva_pct") || 20),
+                                statut_facturation: g("statut_facturation") as
+                                  | "a_facturer"
+                                  | "facture"
+                                  | "paye",
+                              });
+                            }}
+                            className="mt-4 pt-4 border-t border-border grid gap-3 sm:grid-cols-2"
+                          >
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Origine
+                              </span>
+                              <select
+                                name="origine"
+                                defaultValue={r.origine ?? "direct"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="direct">Client direct</option>
+                                <option value="sous_traitance">Sous-traitance / partenaire</option>
+                              </select>
+                            </label>
+                            <Field
+                              label="Partenaire / donneur d'ordre"
+                              name="partenaire"
+                              defaultValue={r.partenaire ?? ""}
+                            />
+                            <Field
+                              label="Montant HT (€)"
+                              name="montant_ht"
+                              type="number"
+                              defaultValue={String(r.montant_ht ?? 0)}
+                            />
+                            <Field
+                              label="TVA (%)"
+                              name="tva_pct"
+                              type="number"
+                              defaultValue={String(r.tva_pct ?? 20)}
+                            />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Facturation
+                              </span>
+                              <select
+                                name="statut_facturation"
+                                defaultValue={r.statut_facturation ?? "a_facturer"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="a_facturer">À facturer</option>
+                                <option value="facture">Facturé</option>
+                                <option value="paye">Payé</option>
+                              </select>
+                            </label>
+                            <div className="sm:col-span-2 flex items-center gap-3">
+                              <button
+                                type="submit"
+                                disabled={setFacturation.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                              >
+                                {setFacturation.isPending && (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                )}
+                                Enregistrer
+                              </button>
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Total TTC :{" "}
+                                {eurosFr(
+                                  Number(r.montant_ht ?? 0) * (1 + Number(r.tva_pct ?? 20) / 100),
+                                )}
+                              </span>
+                            </div>
                           </form>
                         )}
 
