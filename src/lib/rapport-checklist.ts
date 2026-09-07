@@ -105,7 +105,7 @@ export const CHECKLIST: ChecklistSection[] = [
       { key: "formation", label: "Prise en main / formation du client réalisée" },
       { key: "photos_apres", label: "Photos après travaux réalisées" },
       { key: "consuel", label: "Attestation de conformité / Consuel prévue ou transmise" },
-      { key: "garantie", label: "Garantie 12 mois et maintenance présentées au client" },
+      { key: "garantie", label: "Garanties légales et formule Sérénité présentées au client" },
     ],
   },
 ];

@@ -50,10 +50,10 @@ export const GARANTIES = [
       "Installation réalisée selon la NF C 15-100 par un installateur qualifié IRVE, avec attestation de conformité visée par le Consuel lorsqu'elle est requise.",
   },
   {
-    titre: "Notre garantie commerciale",
-    duree: "12 mois offerts",
+    titre: "Entretien Sérénité",
+    duree: "Sur devis",
     texte:
-      "Pièces, main d'œuvre et déplacement inclus sur toute installation Borne de l'Ouest, en plus des garanties légales qui restent toujours acquises.",
+      "Formule d'entretien annuel proposée après installation : visite de contrôle, mesures et paramétrage. Les garanties légales restent acquises sans supplément.",
   },
 ];
 
