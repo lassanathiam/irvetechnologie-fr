@@ -13,28 +13,40 @@ const txt = (max: number) =>
   }, z.string().max(max));
 
 const rapportSchema = z.object({
-  type: z.enum(["controle", "conformite", "assurance"]),
-  date_intervention: z.string().min(4).max(20),
-  client_nom: z.string().trim().min(1).max(160),
-  client_telephone: z.string().trim().max(40).optional().nullable(),
-  client_email: z.string().trim().max(255).optional().nullable(),
-  chantier_adresse: z.string().trim().max(300).optional().nullable(),
-  chantier_cp_ville: z.string().trim().max(160).optional().nullable(),
-  borne_marque: z.string().trim().max(120).optional().nullable(),
-  borne_modele: z.string().trim().max(120).optional().nullable(),
-  borne_puissance: z.string().trim().max(60).optional().nullable(),
-  borne_serie: z.string().trim().max(120).optional().nullable(),
-  technicien: z.string().trim().max(160).optional().nullable(),
-  mesures: z.record(z.string(), z.string().max(60)),
-  typologie: z.record(z.string(), z.string().max(60)).optional(),
-  devis_id: z.string().uuid().optional().nullable(),
-  rendezvous_id: z.string().uuid().optional().nullable(),
-  checklist: z.record(z.string(), checkState),
-  observations: z.string().trim().max(4000).optional().nullable(),
-  reserves: z.string().trim().max(4000).optional().nullable(),
-  signature_technicien: z.string().max(400_000).optional().nullable(),
-  signature_client: z.string().max(400_000).optional().nullable(),
-  signataire_client: z.string().trim().max(160).optional().nullable(),
+  type: z.enum(["controle", "conformite", "assurance"]).catch("conformite"),
+  date_intervention: z.preprocess(
+    (v) => {
+      const s = typeof v === "string" ? v.trim() : "";
+      return s.length >= 4 ? s.slice(0, 20) : new Date().toISOString().slice(0, 10);
+    },
+    z.string().min(4).max(20),
+  ),
+  client_nom: z.preprocess(
+    (v) => {
+      const s = typeof v === "string" ? v.trim() : "";
+      return s ? s.slice(0, 160) : "Client non renseigné";
+    },
+    z.string().min(1).max(160),
+  ),
+  client_telephone: txt(40).optional().nullable(),
+  client_email: txt(255).optional().nullable(),
+  chantier_adresse: txt(300).optional().nullable(),
+  chantier_cp_ville: txt(160).optional().nullable(),
+  borne_marque: txt(120).optional().nullable(),
+  borne_modele: txt(120).optional().nullable(),
+  borne_puissance: txt(60).optional().nullable(),
+  borne_serie: txt(120).optional().nullable(),
+  technicien: txt(160).optional().nullable(),
+  mesures: z.record(z.string(), txt(120)).catch({}),
+  typologie: z.record(z.string(), txt(120)).catch({}).optional(),
+  devis_id: z.string().uuid().optional().nullable().catch(null),
+  rendezvous_id: z.string().uuid().optional().nullable().catch(null),
+  checklist: z.record(z.string(), checkState).catch({}),
+  observations: txt(4000).optional().nullable(),
+  reserves: txt(4000).optional().nullable(),
+  signature_technicien: z.string().max(1_500_000).optional().nullable().catch(null),
+  signature_client: z.string().max(1_500_000).optional().nullable().catch(null),
+  signataire_client: txt(160).optional().nullable(),
 });
 
 export type RapportInput = z.infer<typeof rapportSchema>;
