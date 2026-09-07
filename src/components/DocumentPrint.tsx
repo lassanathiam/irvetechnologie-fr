@@ -67,6 +67,9 @@ export function DocumentPrint({
             <div className="text-mono text-[11px] font-bold text-primary uppercase tracking-[0.18em]">
               Borne de l&apos;Ouest
             </div>
+            <div className="mt-1.5 inline-block border border-primary/60 rounded-sm px-2 py-1 text-mono text-[10px] font-bold text-primary">
+              {COMPANY.qualifications}
+            </div>
             <div className="mt-2 text-[12px] text-muted-foreground space-y-0.5">
               <div>{COMPANY.adresse}</div>
               <div>{COMPANY.cpVille}</div>

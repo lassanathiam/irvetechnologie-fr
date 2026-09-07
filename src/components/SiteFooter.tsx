@@ -17,6 +17,7 @@ export function SiteFooter() {
           <div className="md:text-right">
             <div>SIRET 989 533 724 00013</div>
             <div>TVA intracom. FR89 989533724</div>
+            <div className="text-foreground/80">Qualifications IRVE P1 · P2 · P3</div>
           </div>
         </div>
       </div>

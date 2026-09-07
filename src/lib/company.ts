@@ -9,6 +9,10 @@ export const COMPANY = {
   site: "www.irvetechnologie.fr",
   siret: "98953372400013",
   tva: "FR89989533724",
+  /** Qualifications IRVE de l'entreprise, affichées sur tous les documents générés. */
+  qualifications: "Qualifications IRVE P1 · P2 · P3",
+  qualificationsDetail:
+    "Installateur qualifié IRVE P1 (≤ 22 kW sans supervision), P2 (≤ 22 kW avec supervision) et P3 (recharge rapide > 22 kW).",
 };
 
 /** Logo affiché sur les devis. Remplacer par l'URL du logo fourni. */
