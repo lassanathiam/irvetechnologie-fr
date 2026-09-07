@@ -14,6 +14,7 @@ import { useReveal } from "@/hooks/use-reveal";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
+import { COMPANY, GARANTIES } from "@/lib/company";
 
 export const Route = createFileRoute("/")({
   head: () => ({
