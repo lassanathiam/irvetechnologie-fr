@@ -346,6 +346,9 @@ function PlanningPage() {
       montant_ht: Number(get("montant_ht") || 0),
       tva_pct: Number(get("tva_pct") || 20),
       statut_facturation: "a_facturer",
+      designation: get("designation") || null,
+      etiquettes: parseEtiquettes(get("etiquettes")),
+
     });
   }
 
