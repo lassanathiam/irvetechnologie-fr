@@ -41,12 +41,17 @@ function DevisDetail() {
   const sendFn = useServerFn(envoyerDevis);
   const statutFn = useServerFn(updateStatutDevis);
   const convertFn = useServerFn(convertirEnFacture);
+  const envoisFn = useServerFn(listEnvoisDevis);
 
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({ queryKey: ["devis", id], queryFn: () => fetchDevis({ data: { id } }) });
+  const envois = useQuery({
+    queryKey: ["devis-envois", id],
+    queryFn: () => envoisFn({ data: { id } }),
+  });
 
   const send = useMutation({
     mutationFn: () => sendFn({ data: { id, message: message || null } }),
