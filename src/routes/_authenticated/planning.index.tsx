@@ -365,6 +365,20 @@ function PlanningPage() {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
     const get = (k: string) => String(f.get(k) ?? "").trim();
+    if (!get("client_nom")) {
+      setError("Merci d'indiquer le nom du client.");
+      return;
+    }
+    if (!get("adresse")) {
+      setError("Merci d'indiquer l'adresse du chantier.");
+      return;
+    }
+    const d = new Date(get("date_debut"));
+    if (Number.isNaN(d.getTime())) {
+      setError("Merci d'indiquer la date et l'heure du rendez-vous.");
+      return;
+    }
+    setError(null);
     create.mutate({
       titre: get("titre") || "Intervention",
       type: get("type") as RendezVousInput["type"],
@@ -374,7 +388,8 @@ function PlanningPage() {
       client_email: get("client_email") || null,
       adresse: get("adresse"),
       cp_ville: get("cp_ville") || null,
-      date_debut: new Date(get("date_debut")).toISOString(),
+      date_debut: d.toISOString(),
+
       duree_min: Number(get("duree_min") || 120),
       technicien: get("technicien") || null,
       notes: get("notes") || null,
@@ -791,8 +806,17 @@ function PlanningPage() {
                             </select>
                             <button
                               type="button"
-                              onClick={() => remove.mutate(r.id)}
+                              onClick={() => {
+                                if (
+                                  window.confirm(
+                                    `Supprimer définitivement le rendez-vous de ${r.client_nom} ? Cette action est irréversible.`,
+                                  )
+                                ) {
+                                  remove.mutate(r.id);
+                                }
+                              }}
                               aria-label="Supprimer le rendez-vous"
+
                               className="text-muted-foreground hover:text-destructive"
                             >
                               <Trash2 className="h-4 w-4" />
