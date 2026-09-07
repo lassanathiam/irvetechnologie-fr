@@ -758,11 +758,11 @@ function PlanningPage() {
           />
 
 
-          <div className="bg-card border border-border rounded-sm p-5">
-            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3 flex items-center gap-2">
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
               {tourneeReel.data && !tourneeReel.data.estime && (
-                <span className="text-[10px] text-primary normal-case tracking-normal">
+                <span className="text-[10px] font-bold text-primary normal-case tracking-normal bg-primary/10 px-1.5 py-0.5 rounded-full">
                   itinéraires réels
                 </span>
               )}
@@ -773,23 +773,27 @@ function PlanningPage() {
               </p>
             ) : (
               <>
-                <ol className="space-y-2">
+                <ol className="space-y-1.5">
                   {tourneeAff.etapes.map((e) => (
                     <li
                       key={e.id}
                       onMouseEnter={() => setActive(e.id)}
-                      className="flex items-center gap-2 text-sm"
+                      onClick={() => setActive(e.id)}
+                      className={`flex items-center gap-2.5 text-sm rounded-lg px-2 py-1.5 cursor-pointer transition ${
+                        active === e.id ? "bg-primary/12" : "hover:bg-muted/70"
+                      }`}
                     >
-                      <span className="text-mono text-[11px] w-5 h-5 rounded-sm border border-border grid place-items-center shrink-0">
+                      <span className="text-mono text-[11px] font-bold w-6 h-6 rounded-full hero-grad text-primary-foreground grid place-items-center shrink-0">
                         {e.ordre}
                       </span>
-                      <span className="truncate">{e.label}</span>
-                      <span className="ml-auto text-mono text-xs text-muted-foreground shrink-0">
+                      <span className="truncate font-semibold">{e.label}</span>
+                      <span className="ml-auto text-mono text-xs font-bold text-muted-foreground shrink-0">
                         +{e.km} km
                       </span>
                     </li>
                   ))}
                 </ol>
+
                 <div className="mt-4 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">Tournée groupée</span>
