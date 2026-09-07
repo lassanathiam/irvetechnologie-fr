@@ -40,8 +40,11 @@ function PartenairesAdmin() {
   const [error, setError] = useState<string | null>(null);
   const [copie, setCopie] = useState<string | null>(null);
 
-  const lien = (token: string) =>
-    `${typeof window === "undefined" ? "" : window.location.origin}/partenaire/${token}`;
+  /**
+   * Les liens partenaires pointent vers le site publié (accessible à tous).
+   * L'aperçu de travail est protégé : un partenaire y verrait une page d'erreur.
+   */
+  const lien = (token: string) => `https://www.irvetechnologie.fr/partenaire/${token}`;
 
   async function ajouter() {
     setError(null);
