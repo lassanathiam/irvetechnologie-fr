@@ -11,6 +11,9 @@ import { HeroSlider } from "@/components/HeroSlider";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useReveal } from "@/hooks/use-reveal";
+import { useServerFn } from "@tanstack/react-start";
+import { useQuery } from "@tanstack/react-query";
+import { listPublicRealisations } from "@/lib/realisations.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -145,6 +148,15 @@ function Index() {
   const services_r = useReveal<HTMLDivElement>();
   const parcours_r = useReveal<HTMLDivElement>();
   const real_r = useReveal<HTMLDivElement>();
+  const fetchRealisations = useServerFn(listPublicRealisations);
+  const realisationsQuery = useQuery({
+    queryKey: ["realisations-publiques"],
+    queryFn: () => fetchRealisations(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const realisations = realisationsQuery.data?.length
+    ? realisationsQuery.data.map((r) => ({ src: r.url, title: r.titre, place: r.lieu, spec: r.description }))
+    : realisationsFallback;
   const zones_r = useReveal<HTMLDivElement>();
   const [audience, setAudience] = useState<"client" | "external">("client");
   const isClient = audience === "client";
