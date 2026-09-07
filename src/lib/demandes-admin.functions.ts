@@ -27,7 +27,7 @@ export const getDemandeClient = createServerFn({ method: "GET" })
     const { data: row, error } = await context.supabase
       .from("demande_requests")
       .select(
-        "id, nom, email, telephone, code_postal, type_bien, puissance, type_installation, distance_m, notes, formule, status",
+        "id, nom, email, telephone, code_postal, type_bien, puissance, type_installation, distance_m, abonnement_kva, type_compteur, phase, notes, formule, status",
       )
       .eq("id", data.id)
       .maybeSingle();
