@@ -63,6 +63,7 @@ function DevisDetail() {
           : "Adresse email bloquée (désinscription) — envoi non effectué.",
       );
       qc.invalidateQueries({ queryKey: ["devis"] });
+      qc.invalidateQueries({ queryKey: ["devis-envois", id] });
     },
     onError: (err) => setError(err instanceof Error ? err.message : "Envoi impossible."),
   });
