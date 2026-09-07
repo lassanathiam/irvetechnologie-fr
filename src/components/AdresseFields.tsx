@@ -18,26 +18,31 @@ const INPUT_CLS =
 /**
  * Champs « Adresse » + « Code postal & ville » avec suggestions automatiques
  * via l'API Adresse officielle (data.gouv.fr), gratuite et sans clé.
- * La sélection remplit les deux champs, qui restent modifiables à la main.
+ *
+ * Les deux champs sont NON contrôlés : la saisie clavier est toujours native
+ * (aucun risque de perte de frappe si le parent se ré-affiche). La sélection
+ * d'une suggestion écrit directement dans les champs.
  */
 export function AdresseFields({ required }: { required?: boolean }) {
-  const [adresse, setAdresse] = useState("");
-  const [cpVille, setCpVille] = useState("");
   const [suggestions, setSuggestions] = useState<AdresseFeature[]>([]);
   const [open, setOpen] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const boxRef = useRef<HTMLDivElement>(null);
+  const adresseRef = useRef<HTMLInputElement>(null);
+  const cpRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {
       if (boxRef.current && !boxRef.current.contains(e.target as Node)) setOpen(false);
     }
     document.addEventListener("mousedown", onClickOutside);
-    return () => document.removeEventListener("mousedown", onClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", onClickOutside);
+      if (timer.current) clearTimeout(timer.current);
+    };
   }, []);
 
   function onAdresseChange(value: string) {
-    setAdresse(value);
     if (timer.current) clearTimeout(timer.current);
     if (value.trim().length < 4) {
       setSuggestions([]);
@@ -57,13 +62,13 @@ export function AdresseFields({ required }: { required?: boolean }) {
       } catch {
         /* réseau indisponible : saisie manuelle toujours possible */
       }
-    }, 300);
+    }, 350);
   }
 
   function pick(f: AdresseFeature) {
     const p = f.properties;
-    setAdresse(p.name || p.label);
-    setCpVille(`${p.postcode} ${p.city}`);
+    if (adresseRef.current) adresseRef.current.value = p.name || p.label;
+    if (cpRef.current) cpRef.current.value = `${p.postcode} ${p.city}`;
     setSuggestions([]);
     setOpen(false);
   }
@@ -74,11 +79,11 @@ export function AdresseFields({ required }: { required?: boolean }) {
         <label className="block">
           <span className="text-mono text-xs text-muted-foreground">Adresse du chantier</span>
           <input
+            ref={adresseRef}
             name="adresse"
             type="text"
             required={required}
             placeholder="12 rue des Lilas"
-            value={adresse}
             onChange={(e) => onAdresseChange(e.target.value)}
             onFocus={() => suggestions.length > 0 && setOpen(true)}
             autoComplete="off"
@@ -105,11 +110,10 @@ export function AdresseFields({ required }: { required?: boolean }) {
       <label className="block">
         <span className="text-mono text-xs text-muted-foreground">Code postal & ville</span>
         <input
+          ref={cpRef}
           name="cp_ville"
           type="text"
           placeholder="44000 Nantes"
-          value={cpVille}
-          onChange={(e) => setCpVille(e.target.value)}
           autoComplete="off"
           className={INPUT_CLS}
         />
