@@ -474,9 +474,12 @@ function PlanningPage() {
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`bg-card border rounded-sm p-4 ${
-                          active === r.id ? "border-primary" : "border-border"
+                        className={`bg-card border rounded-xl p-4 h-fit transition-all duration-200 hover:shadow-md ${
+                          active === r.id
+                            ? "border-primary shadow-md ring-1 ring-primary/30"
+                            : "border-border"
                         }`}
+
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
