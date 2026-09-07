@@ -259,15 +259,46 @@ function Demande() {
           </div>
 
           <div>
-            <SectionHeading n="02" title="Votre projet" />
+            <SectionHeading n="02" title="Votre compteur" />
+            <p className="text-sm text-muted-foreground mt-3 max-w-xl">
+              Ces informations figurent sur votre facture d'électricité. Elles nous permettent de savoir si votre
+              abonnement suffit pour la borne souhaitée.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4 mt-8">
+              <SelectControlled
+                label="Abonnement souscrit (kVA)"
+                name="abonnement_kva"
+                options={ABONNEMENTS_KVA}
+                value={kva}
+                onChange={setKva}
+              />
+              <Select label="Type de compteur" name="type_compteur" options={["Linky", "Ancien compteur", "Je ne sais pas"]} />
+              <Select label="Alimentation" name="phase" options={["Monophasé", "Triphasé", "Je ne sais pas"]} />
+              <SelectControlled
+                label="Puissance de borne souhaitée"
+                name="puissance"
+                options={PUISSANCES_BORNE}
+                value={puissanceBorne}
+                onChange={setPuissanceBorne}
+              />
+            </div>
+            {alerte && (
+              <div className="mt-4 border border-primary/40 bg-primary/5 rounded-sm px-4 py-3 text-sm text-muted-foreground">
+                {alerte}
+              </div>
+            )}
+          </div>
+
+          <div>
+            <SectionHeading n="03" title="Votre projet" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <Select label="Type de bien" name="bien" options={["Maison individuelle", "Copropriété", "Entreprise / parking", "Concession auto"]} />
-              <Select label="Puissance souhaitée" name="puissance" options={["7 kW (monophasé)", "11 kW (triphasé)", "22 kW (triphasé)", "Je ne sais pas"]} />
               <Select label="Type d'installation" name="type" options={["Intérieure (garage)", "Extérieure (façade)", "Sur poteau / borne", "À déterminer"]} />
               <Field label="Distance tableau → borne (m)" name="distance" type="number" />
             </div>
             <Textarea label="Précisions" name="notes" placeholder="Modèle de véhicule, contraintes particulières, délais souhaités…" />
           </div>
+
 
           <div>
             <SectionHeading n="03" title="Photos du chantier" />
