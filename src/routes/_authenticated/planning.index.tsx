@@ -2,17 +2,38 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { CalendarClock, Loader2, MapPin, Plus, Route as RouteIcon, Trash2 } from "lucide-react";
+import {
+  CalendarClock,
+  CheckCircle2,
+  FileCheck2,
+  Fuel,
+  Loader2,
+  MapPin,
+  Plus,
+  Route as RouteIcon,
+  ShieldCheck,
+  Trash2,
+  Upload,
+} from "lucide-react";
 import {
   createRendezVous,
   deleteRendezVous,
   listRendezVous,
   updateStatutRendezVous,
+  validerChantier,
   type RendezVousInput,
 } from "@/lib/planning.functions";
+import {
+  deleteVoirie,
+  listVoirie,
+  saveVoirie,
+  VOIRIE_STATUTS,
+  type VoirieInput,
+} from "@/lib/voirie.functions";
 import { ProShell } from "@/components/ProShell";
 import { FranceMap, type MapPoint } from "@/components/FranceMap";
 import { dureeFr } from "@/lib/geo";
+import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
 
 export const Route = createFileRoute("/_authenticated/planning/")({
   head: () => ({
@@ -21,7 +42,7 @@ export const Route = createFileRoute("/_authenticated/planning/")({
       {
         name: "description",
         content:
-          "Planification des rendez-vous IRVE : adresse géolocalisée, distance et temps de trajet, statut d'intervention.",
+          "Planification des rendez-vous IRVE : adresse géolocalisée, tournées optimisées, validation de chantier et autorisations de voirie.",
       },
       { name: "robots", content: "noindex" },
     ],
@@ -44,6 +65,11 @@ const STATUTS = [
   { v: "annule", l: "Annulé" },
 ] as const;
 
+const VOIRIE_LABEL = Object.fromEntries(VOIRIE_STATUTS.map((s) => [s.v, s.l])) as Record<
+  string,
+  string
+>;
+
 const dateTimeFr = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", {
     weekday: "long",
@@ -58,20 +84,29 @@ const dayKey = (iso: string) =>
     new Date(iso),
   );
 
+const MAX_DOC = 8_000_000;
+
 function PlanningPage() {
   const qc = useQueryClient();
   const fetchList = useServerFn(listRendezVous);
   const createFn = useServerFn(createRendezVous);
   const statutFn = useServerFn(updateStatutRendezVous);
   const deleteFn = useServerFn(deleteRendezVous);
+  const validerFn = useServerFn(validerChantier);
+  const fetchVoirie = useServerFn(listVoirie);
+  const saveVoirieFn = useServerFn(saveVoirie);
+  const deleteVoirieFn = useServerFn(deleteVoirie);
 
   const list = useQuery({ queryKey: ["rendezvous"], queryFn: () => fetchList() });
+  const voirie = useQuery({ queryKey: ["voirie"], queryFn: () => fetchVoirie() });
   const [active, setActive] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
+  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" } | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
+    qc.invalidateQueries({ queryKey: ["voirie"] });
     qc.invalidateQueries({ queryKey: ["dashboard"] });
   };
 
@@ -94,8 +129,38 @@ function PlanningPage() {
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: refresh,
   });
+  const valider = useMutation({
+    mutationFn: (p: { id: string; valide: boolean; commentaire?: string | null; par?: string | null }) =>
+      validerFn({ data: p }),
+    onSuccess: () => {
+      setPanel(null);
+      refresh();
+    },
+    onError: (e: unknown) => setError(e instanceof Error ? e.message : "Validation impossible."),
+  });
+  const saveVoirieMut = useMutation({
+    mutationFn: (payload: VoirieInput) => saveVoirieFn({ data: payload }),
+    onSuccess: () => {
+      setPanel(null);
+      setError(null);
+      refresh();
+    },
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Enregistrement de l'autorisation impossible."),
+  });
+  const removeVoirie = useMutation({
+    mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
+    onSuccess: refresh,
+  });
 
   const rows = list.data ?? [];
+  const voirieByRdv = useMemo(() => {
+    type Row = NonNullable<typeof voirie.data>[number];
+    const m = new Map<string, Row>();
+    for (const v of voirie.data ?? []) if (!m.has(v.rendezvous_id)) m.set(v.rendezvous_id, v);
+    return m;
+  }, [voirie.data]);
+
   const groups = useMemo(() => {
     const map = new Map<string, typeof rows>();
     for (const r of rows) {
@@ -112,8 +177,52 @@ function PlanningPage() {
       lat: Number(r.lat),
       lng: Number(r.lng),
       label: r.client_nom,
+      sub: r.cp_ville,
       statut: r.statut,
     }));
+
+  /** Chantiers à venir non annulés : base de la tournée optimisée. */
+  const aVenir = useMemo(
+    () =>
+      rows.filter(
+        (r) =>
+          r.lat != null &&
+          r.lng != null &&
+          r.statut !== "annule" &&
+          new Date(r.date_debut).getTime() >= Date.now() - 12 * 3600e3,
+      ),
+    [rows],
+  );
+
+  const tournee = useMemo(
+    () =>
+      optimiserTournee(
+        aVenir.map((r) => ({
+          id: r.id,
+          lat: Number(r.lat),
+          lng: Number(r.lng),
+          label: r.client_nom,
+          sub: r.cp_ville,
+        })),
+      ),
+    [aVenir],
+  );
+
+  const grappes = useMemo(
+    () =>
+      groupesProximite(
+        aVenir.map((r) => ({
+          id: r.id,
+          lat: Number(r.lat),
+          lng: Number(r.lng),
+          label: r.client_nom,
+          sub: r.cp_ville,
+        })),
+      ).filter((g) => g.length > 1),
+    [aVenir],
+  );
+
+  const economie = economieCarburant(Math.max(tournee.kmDirect - tournee.kmTotal, 0));
 
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -135,15 +244,51 @@ function PlanningPage() {
     });
   }
 
+  async function onVoirieSubmit(e: React.FormEvent<HTMLFormElement>, rdvId: string, existingId?: string) {
+    e.preventDefault();
+    const form = e.currentTarget;
+    const f = new FormData(form);
+    const get = (k: string) => String(f.get(k) ?? "").trim();
+    const file = f.get("document") as File | null;
+    let data_url: string | null = null;
+    if (file && file.size > 0) {
+      if (file.size > MAX_DOC) {
+        setError("Document trop lourd (8 Mo maximum).");
+        return;
+      }
+      data_url = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("Lecture du fichier impossible."));
+        reader.readAsDataURL(file);
+      });
+    }
+    saveVoirieMut.mutate({
+      id: existingId ?? null,
+      rendezvous_id: rdvId,
+      statut: (get("statut") || "en_attente") as VoirieInput["statut"],
+      reference: get("reference") || null,
+      autorite: get("autorite") || null,
+      date_demande: get("date_demande") || null,
+      date_obtention: get("date_obtention") || null,
+      date_fin: get("date_fin") || null,
+      notes: get("notes") || null,
+      data_url,
+      file_name: file && file.size > 0 ? file.name : null,
+    });
+  }
+
   return (
     <ProShell>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
-          <h1 className="text-2xl font-medium tracking-tight mt-1">Rendez-vous & tournées</h1>
+          <h1 className="text-2xl font-medium tracking-tight mt-1">
+            Chantiers, tournées & autorisations
+          </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            L'adresse saisie est géolocalisée automatiquement : distance et temps de trajet depuis
-            Nantes.
+            Adresse géolocalisée automatiquement, tournée optimisée, validation de chantier et
+            autorisation de voirie.
           </p>
         </div>
         <button
@@ -217,80 +362,358 @@ function PlanningPage() {
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
                 <ul className="space-y-3">
-                  {items.map((r) => (
-                    <li
-                      key={r.id}
-                      onMouseEnter={() => setActive(r.id)}
-                      className={`bg-card border rounded-sm p-4 ${
-                        active === r.id ? "border-primary" : "border-border"
-                      }`}
-                    >
-                      <div className="flex flex-wrap items-start justify-between gap-3">
-                        <div className="min-w-0">
-                          <p className="font-medium">
-                            {r.client_nom}
-                            <span className="text-muted-foreground font-normal"> — {r.titre}</span>
-                          </p>
-                          <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                            <span className="inline-flex items-center gap-1">
-                              <CalendarClock className="h-3 w-3" /> {dateTimeFr(r.date_debut)} ·{" "}
-                              {dureeFr(r.duree_min)}
-                            </span>
-                            <span className="inline-flex items-center gap-1">
-                              <MapPin className="h-3 w-3" /> {r.adresse}
-                              {r.cp_ville ? `, ${r.cp_ville}` : ""}
-                            </span>
-                            {r.distance_km != null ? (
-                              <span className="inline-flex items-center gap-1 text-mono">
-                                <RouteIcon className="h-3 w-3" />{" "}
-                                {Math.round(Number(r.distance_km))} km ·{" "}
-                                {dureeFr(Number(r.duree_trajet_min ?? 0))}
+                  {items.map((r) => {
+                    const v = voirieByRdv.get(r.id);
+                    const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
+                    const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
+                    return (
+                      <li
+                        key={r.id}
+                        onMouseEnter={() => setActive(r.id)}
+                        className={`bg-card border rounded-sm p-4 ${
+                          active === r.id ? "border-primary" : "border-border"
+                        }`}
+                      >
+                        <div className="flex flex-wrap items-start justify-between gap-3">
+                          <div className="min-w-0">
+                            <p className="font-medium">
+                              {r.client_nom}
+                              <span className="text-muted-foreground font-normal"> — {r.titre}</span>
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarClock className="h-3 w-3" /> {dateTimeFr(r.date_debut)} ·{" "}
+                                {dureeFr(r.duree_min)}
                               </span>
-                            ) : (
-                              <span className="text-mono text-destructive">
-                                adresse non géolocalisée
+                              <span className="inline-flex items-center gap-1">
+                                <MapPin className="h-3 w-3" /> {r.adresse}
+                                {r.cp_ville ? `, ${r.cp_ville}` : ""}
                               </span>
+                              {r.distance_km != null ? (
+                                <span className="inline-flex items-center gap-1 text-mono">
+                                  <RouteIcon className="h-3 w-3" />{" "}
+                                  {Math.round(Number(r.distance_km))} km ·{" "}
+                                  {dureeFr(Number(r.duree_trajet_min ?? 0))}
+                                </span>
+                              ) : (
+                                <span className="text-mono text-destructive">
+                                  adresse non géolocalisée
+                                </span>
+                              )}
+                            </p>
+                            {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              {r.chantier_valide ? (
+                                <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
+                                  <CheckCircle2 className="h-3 w-3" /> Chantier validé
+                                  {r.chantier_valide_at
+                                    ? ` le ${new Date(r.chantier_valide_at).toLocaleDateString("fr-FR")}`
+                                    : ""}
+                                </span>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isChantierPanel ? null : { id: r.id, tab: "chantier" })
+                                  }
+                                  className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                                >
+                                  <FileCheck2 className="h-3 w-3" /> Valider le chantier
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPanel(isVoiriePanel ? null : { id: r.id, tab: "voirie" })
+                                }
+                                className={`text-mono text-[11px] px-2 py-1 rounded-sm border inline-flex items-center gap-1 ${
+                                  v?.statut === "obtenue"
+                                    ? "border-primary/40 text-primary"
+                                    : v?.statut === "refusee"
+                                      ? "border-destructive/40 text-destructive"
+                                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                                }`}
+                              >
+                                <ShieldCheck className="h-3 w-3" /> Voirie :{" "}
+                                {v ? (VOIRIE_LABEL[v.statut] ?? v.statut) : "à renseigner"}
+                              </button>
+                              {v?.url && (
+                                <a
+                                  href={v.url}
+                                  target="_blank"
+                                  rel="noreferrer"
+                                  className="text-mono text-[11px] text-primary hover:underline"
+                                >
+                                  Voir le document
+                                </a>
+                              )}
+                              {r.chantier_valide && (
+                                <button
+                                  type="button"
+                                  onClick={() => valider.mutate({ id: r.id, valide: false })}
+                                  className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                >
+                                  Annuler la validation
+                                </button>
+                              )}
+                            </div>
+                            {r.chantier_commentaire && (
+                              <p className="text-xs text-muted-foreground mt-2">
+                                Validation : {r.chantier_commentaire}
+                              </p>
                             )}
-                          </p>
-                          {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+                          </div>
+                          <div className="flex items-center gap-2 shrink-0">
+                            <select
+                              value={r.statut}
+                              onChange={(e) =>
+                                setStatut.mutate({ id: r.id, statut: e.target.value })
+                              }
+                              className="bg-input border border-border rounded-sm px-2 py-1.5 text-mono text-xs"
+                            >
+                              {STATUTS.map((s) => (
+                                <option key={s.v} value={s.v}>
+                                  {s.l}
+                                </option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => remove.mutate(r.id)}
+                              aria-label="Supprimer le rendez-vous"
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </button>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                          <select
-                            value={r.statut}
-                            onChange={(e) =>
-                              setStatut.mutate({ id: r.id, statut: e.target.value })
-                            }
-                            className="bg-input border border-border rounded-sm px-2 py-1.5 text-mono text-xs"
+
+                        {isChantierPanel && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              valider.mutate({
+                                id: r.id,
+                                valide: true,
+                                par: String(f.get("par") ?? "").trim() || r.technicien || null,
+                                commentaire: String(f.get("commentaire") ?? "").trim() || null,
+                              });
+                            }}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
                           >
-                            {STATUTS.map((s) => (
-                              <option key={s.v} value={s.v}>
-                                {s.l}
-                              </option>
-                            ))}
-                          </select>
-                          <button
-                            type="button"
-                            onClick={() => remove.mutate(r.id)}
-                            aria-label="Supprimer le rendez-vous"
-                            className="text-muted-foreground hover:text-destructive"
+                            <Field label="Validé par" name="par" defaultValue={r.technicien ?? ""} />
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Commentaire de fin de chantier
+                              </span>
+                              <textarea
+                                name="commentaire"
+                                rows={2}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <button
+                              type="submit"
+                              disabled={valider.isPending}
+                              className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 w-fit disabled:opacity-60"
+                            >
+                              {valider.isPending ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                <CheckCircle2 className="h-4 w-4" />
+                              )}
+                              Confirmer la réalisation
+                            </button>
+                          </form>
+                        )}
+
+                        {isVoiriePanel && (
+                          <form
+                            onSubmit={(e) => onVoirieSubmit(e, r.id, v?.id)}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
                           >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Statut</span>
+                              <select
+                                name="statut"
+                                defaultValue={v?.statut ?? "en_attente"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                {VOIRIE_STATUTS.map((s) => (
+                                  <option key={s.v} value={s.v}>
+                                    {s.l}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <Field
+                              label="Référence de l'arrêté"
+                              name="reference"
+                              defaultValue={v?.reference ?? ""}
+                            />
+                            <Field
+                              label="Autorité (mairie, métropole…)"
+                              name="autorite"
+                              defaultValue={v?.autorite ?? ""}
+                            />
+                            <Field
+                              label="Date de demande"
+                              name="date_demande"
+                              type="date"
+                              defaultValue={v?.date_demande ?? ""}
+                            />
+                            <Field
+                              label="Date d'obtention"
+                              name="date_obtention"
+                              type="date"
+                              defaultValue={v?.date_obtention ?? ""}
+                            />
+                            <Field
+                              label="Valable jusqu'au"
+                              name="date_fin"
+                              type="date"
+                              defaultValue={v?.date_fin ?? ""}
+                            />
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Document (PDF ou photo, 8 Mo max.)
+                              </span>
+                              <input
+                                type="file"
+                                name="document"
+                                accept="application/pdf,image/jpeg,image/png,image/webp"
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm"
+                              />
+                            </label>
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">Notes</span>
+                              <textarea
+                                name="notes"
+                                rows={2}
+                                defaultValue={v?.notes ?? ""}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <div className="sm:col-span-2 flex items-center gap-4">
+                              <button
+                                type="submit"
+                                disabled={saveVoirieMut.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                              >
+                                {saveVoirieMut.isPending ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  <Upload className="h-4 w-4" />
+                                )}
+                                Enregistrer l'autorisation
+                              </button>
+                              {v && (
+                                <button
+                                  type="button"
+                                  onClick={() => removeVoirie.mutate(v.id)}
+                                  className="text-mono text-xs text-muted-foreground hover:text-destructive"
+                                >
+                                  Supprimer
+                                </button>
+                              )}
+                              {error && (
+                                <p className="text-mono text-xs text-destructive">{error}</p>
+                              )}
+                            </div>
+                          </form>
+                        )}
+                      </li>
+                    );
+                  })}
                 </ul>
               </div>
             ))
           )}
         </section>
 
-        <aside className="bg-card border border-border rounded-sm p-5 lg:sticky lg:top-24 h-fit">
-          <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
-            <MapPin className="h-4 w-4 text-primary" /> Carte des rendez-vous
-          </h2>
-          <FranceMap points={points} activeId={active} onSelect={setActive} />
+        <aside className="space-y-6 lg:sticky lg:top-24 h-fit">
+          <div className="bg-card border border-border rounded-sm p-5">
+            <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
+              <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
+            </h2>
+            <FranceMap points={points} activeId={active} onSelect={setActive} />
+          </div>
+
+          <div className="bg-card border border-border rounded-sm p-5">
+            <h2 className="text-mono text-muted-foreground mb-3 flex items-center gap-2">
+              <RouteIcon className="h-4 w-4 text-primary" /> Tournée optimisée
+            </h2>
+            {tournee.etapes.length === 0 ? (
+              <p className="text-sm text-muted-foreground">
+                Aucun chantier à venir géolocalisé pour le moment.
+              </p>
+            ) : (
+              <>
+                <ol className="space-y-2">
+                  {tournee.etapes.map((e) => (
+                    <li
+                      key={e.id}
+                      onMouseEnter={() => setActive(e.id)}
+                      className="flex items-center gap-2 text-sm"
+                    >
+                      <span className="text-mono text-[11px] w-5 h-5 rounded-sm border border-border grid place-items-center shrink-0">
+                        {e.ordre}
+                      </span>
+                      <span className="truncate">{e.label}</span>
+                      <span className="ml-auto text-mono text-xs text-muted-foreground shrink-0">
+                        +{e.km} km
+                      </span>
+                    </li>
+                  ))}
+                </ol>
+                <div className="mt-4 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Tournée groupée</span>
+                    <span>
+                      {tournee.kmTotal} km · {dureeFr(tournee.minutes)}
+                    </span>
+                  </p>
+                  <p className="flex justify-between">
+                    <span className="text-muted-foreground">Trajets séparés</span>
+                    <span>{tournee.kmDirect} km</span>
+                  </p>
+                  {tournee.kmDirect > tournee.kmTotal && (
+                    <p className="flex justify-between text-primary">
+                      <span className="inline-flex items-center gap-1">
+                        <Fuel className="h-3.5 w-3.5" /> Économie estimée
+                      </span>
+                      <span>
+                        {tournee.kmDirect - tournee.kmTotal} km · {economie.litres} L ·{" "}
+                        {economie.euros} €
+                      </span>
+                    </p>
+                  )}
+                </div>
+              </>
+            )}
+          </div>
+
+          {grappes.length > 0 && (
+            <div className="bg-card border border-border rounded-sm p-5">
+              <h2 className="text-mono text-muted-foreground mb-3">
+                Chantiers proches (moins de 25 km)
+              </h2>
+              <ul className="space-y-3">
+                {grappes.map((g, i) => (
+                  <li key={i} className="text-sm">
+                    <p className="text-mono text-xs text-primary">
+                      Secteur {i + 1} · {g.length} chantiers
+                    </p>
+                    <p className="text-muted-foreground text-xs mt-1">
+                      {g.map((s) => s.label).join(" · ")}
+                    </p>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
         </aside>
       </div>
     </ProShell>

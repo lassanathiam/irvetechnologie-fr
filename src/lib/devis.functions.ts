@@ -32,11 +32,19 @@ const devisSchema = z.object({
   conditions_paiement: z.string().trim().max(2000).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
   items: z.array(itemSchema).min(1).max(50),
+  rendezvous_id: z.string().uuid().optional().nullable(),
 });
 
 export type DevisInput = z.infer<typeof devisSchema>;
 
-const STATUTS = ["brouillon", "envoye", "accepte", "refuse", "expire"] as const;
+const STATUTS = [
+  "brouillon",
+  "a_valider",
+  "envoye",
+  "accepte",
+  "refuse",
+  "expire",
+] as const;
 
 export const listPrestations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -56,7 +64,7 @@ export const listDevis = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("devis")
       .select(
-        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_expiration, sent_at, facture_id",
+        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_expiration, sent_at, facture_id, rendezvous_id",
       )
       .order("created_at", { ascending: false })
       .limit(200);
@@ -125,6 +133,7 @@ export const createDevis = createServerFn({ method: "POST" })
         acompte_pct: data.acompte_pct,
         conditions_paiement: data.conditions_paiement || CONDITIONS_DEFAUT,
         notes: data.notes ?? null,
+        rendezvous_id: data.rendezvous_id ?? null,
         total_ht_brut: totals.total_ht_brut,
         total_remise: totals.total_remise,
         total_ht: totals.total_ht,
@@ -174,6 +183,7 @@ export const updateDevis = createServerFn({ method: "POST" })
         acompte_pct: data.acompte_pct,
         conditions_paiement: data.conditions_paiement || CONDITIONS_DEFAUT,
         notes: data.notes ?? null,
+        rendezvous_id: data.rendezvous_id ?? null,
         total_ht_brut: totals.total_ht_brut,
         total_remise: totals.total_remise,
         total_ht: totals.total_ht,

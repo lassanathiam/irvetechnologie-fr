@@ -17,6 +17,7 @@ import { ProShell } from "@/components/ProShell";
 import { dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
 import { createDevis, deleteDevis, listDevis, listPrestations } from "@/lib/devis.functions";
+import { listChantiersLight } from "@/lib/planning.functions";
 
 export const Route = createFileRoute("/_authenticated/devis/")({
   head: () => ({
@@ -43,6 +44,7 @@ const plusDays = (n: number) => new Date(Date.now() + n * 864e5).toISOString().s
 
 const STATUT_LABEL: Record<string, string> = {
   brouillon: "Brouillon",
+  a_valider: "À valider",
   envoye: "Envoyé",
   accepte: "Accepté",
   refuse: "Refusé",
@@ -59,6 +61,9 @@ function DevisPage() {
 
   const prestations = useQuery({ queryKey: ["prestations"], queryFn: () => fetchPrestations() });
   const devis = useQuery({ queryKey: ["devis"], queryFn: () => fetchDevis() });
+  const fetchChantiers = useServerFn(listChantiersLight);
+  const chantiers = useQuery({ queryKey: ["chantiers-light"], queryFn: () => fetchChantiers() });
+  const [chantierId, setChantierId] = useState("");
 
   const [lines, setLines] = useState<LineState[]>([]);
   const [remise, setRemise] = useState(0);
@@ -96,6 +101,7 @@ function DevisPage() {
           remise_pct: remise,
           acompte_pct: acompte,
           conditions_paiement: conditions || null,
+          rendezvous_id: chantierId || null,
           items: lines.map(({ libelle, description, quantite, prix_unitaire, tva }) => ({
             libelle,
             description,
@@ -188,6 +194,23 @@ function DevisPage() {
                 value={dates.expiration}
                 onChange={(v) => setDates({ ...dates, expiration: v })}
               />
+              <label className="block sm:col-span-2">
+                <span className="text-mono text-xs text-muted-foreground">
+                  Chantier / intervention rattaché (facultatif)
+                </span>
+                <select
+                  value={chantierId}
+                  onChange={(e) => setChantierId(e.target.value)}
+                  className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-2.5 text-sm"
+                >
+                  <option value="">— Aucun —</option>
+                  {(chantiers.data ?? []).map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.client_nom} · {c.titre} · {new Date(c.date_debut).toLocaleDateString("fr-FR")}
+                    </option>
+                  ))}
+                </select>
+              </label>
             </div>
           </Card>
 

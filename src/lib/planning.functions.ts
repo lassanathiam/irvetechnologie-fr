@@ -144,3 +144,44 @@ export const getDashboard = createServerFn({ method: "GET" })
       },
     };
   });
+
+/** Validation de chantier : confirme qu'une intervention a bien été réalisée. */
+export const validerChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; valide: boolean; commentaire?: string | null; par?: string | null }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        valide: z.boolean(),
+        commentaire: z.string().trim().max(2000).optional().nullable(),
+        par: z.string().trim().max(160).optional().nullable(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        chantier_valide: data.valide,
+        chantier_valide_at: data.valide ? new Date().toISOString() : null,
+        chantier_valide_par: data.valide ? (data.par ?? null) : null,
+        chantier_commentaire: data.commentaire ?? null,
+        ...(data.valide ? { statut: "realise" } : {}),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Liste courte des chantiers, pour rattacher un devis à une intervention. */
+export const listChantiersLight = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, titre, client_nom, adresse, cp_ville, date_debut, statut")
+      .order("date_debut", { ascending: false })
+      .limit(200);
+    if (error) throw new Error(error.message);
+    return data ?? [];
+  });
