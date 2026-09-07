@@ -658,10 +658,15 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          montant_ht: number
           notes: string | null
+          origine: string
+          partenaire: string | null
           statut: string
+          statut_facturation: string
           technicien: string | null
           titre: string
+          tva_pct: number
           type: string
           updated_at: string
           user_id: string
@@ -685,10 +690,15 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          montant_ht?: number
           notes?: string | null
+          origine?: string
+          partenaire?: string | null
           statut?: string
+          statut_facturation?: string
           technicien?: string | null
           titre: string
+          tva_pct?: number
           type?: string
           updated_at?: string
           user_id: string
@@ -712,10 +722,15 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          montant_ht?: number
           notes?: string | null
+          origine?: string
+          partenaire?: string | null
           statut?: string
+          statut_facturation?: string
           technicien?: string | null
           titre?: string
+          tva_pct?: number
           type?: string
           updated_at?: string
           user_id?: string

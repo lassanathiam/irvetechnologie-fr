@@ -6,6 +6,7 @@ import {
   CalendarClock,
   CheckCircle2,
   FileCheck2,
+  Euro,
   Fuel,
   Loader2,
   MapPin,
@@ -21,6 +22,7 @@ import {
   listRendezVous,
   updateStatutRendezVous,
   validerChantier,
+  updateFacturationRdv,
   type RendezVousInput,
 } from "@/lib/planning.functions";
 import {
@@ -35,7 +37,7 @@ import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/In
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
-import { economieCarburant, groupesProximite, optimiserTournee } from "@/lib/tournee";
+import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 
 export const Route = createFileRoute("/_authenticated/planning/")({
   head: () => ({
@@ -88,6 +90,16 @@ const dayKey = (iso: string) =>
 
 const MAX_DOC = 8_000_000;
 
+const FACTU_LABEL: Record<string, string> = {
+  a_facturer: "à facturer",
+  facture: "facturé",
+  paye: "payé",
+};
+
+const eurosFr = (n: number) =>
+  new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR", maximumFractionDigits: 0 })
+    .format(n);
+
 function PlanningPage() {
   const qc = useQueryClient();
   const fetchList = useServerFn(listRendezVous);
@@ -104,7 +116,9 @@ function PlanningPage() {
   const [active, setActive] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" } | null>(null);
+  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" | "montant" } | null>(
+    null,
+  );
   const [prefillDate, setPrefillDate] = useState<string>("");
 
   const refresh = () => {
@@ -150,6 +164,23 @@ function PlanningPage() {
     },
     onError: (e: unknown) =>
       setError(e instanceof Error ? e.message : "Enregistrement de l'autorisation impossible."),
+  });
+  const factuFn = useServerFn(updateFacturationRdv);
+  const setFacturation = useMutation({
+    mutationFn: (p: {
+      id: string;
+      origine: "direct" | "sous_traitance";
+      partenaire?: string | null;
+      montant_ht: number;
+      tva_pct?: number;
+      statut_facturation: "a_facturer" | "facture" | "paye";
+    }) => factuFn({ data: p }),
+    onSuccess: () => {
+      setPanel(null);
+      setError(null);
+      refresh();
+    },
+    onError: (e: unknown) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
   const removeVoirie = useMutation({
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
@@ -203,32 +234,48 @@ function PlanningPage() {
     [rows, depart.id],
   );
 
-  const tournee = useMemo(
+  const asStop = (r: (typeof rows)[number]) => ({
+    id: r.id,
+    lat: Number(r.lat),
+    lng: Number(r.lng),
+    label: r.client_nom,
+    sub: r.cp_ville,
+  });
+
+  /** Chantiers regroupés par journée : une tournée ne peut concerner qu'un seul jour. */
+  const joursDispo = useMemo(() => {
+    const m = new Map<string, { key: string; label: string; stops: ReturnType<typeof asStop>[] }>();
+    for (const r of aVenir) {
+      const d = new Date(r.date_debut);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      const entry = m.get(key) ?? { key, label: dayKey(r.date_debut), stops: [] };
+      entry.stops.push(asStop(r));
+      m.set(key, entry);
+    }
+    return [...m.values()].sort((a, b) => a.key.localeCompare(b.key));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [aVenir]);
+
+  const [jourSel, setJourSel] = useState<string | null>(null);
+  const jourActif =
+    (jourSel ? joursDispo.find((j) => j.key === jourSel) : undefined) ?? joursDispo[0] ?? null;
+  const stopsJour = jourActif?.stops ?? [];
+
+  const tournee = useMemo(() => optimiserTournee(stopsJour, depart), [stopsJour, depart]);
+
+  /** Campagne sur plusieurs jours (chantiers éloignés : une nuitée sur place). */
+  const [horizon, setHorizon] = useState(7);
+  const [campagneOn, setCampagneOn] = useState(false);
+  const campagne = useMemo(
     () =>
-      optimiserTournee(
-        aVenir.map((r) => ({
-          id: r.id,
-          lat: Number(r.lat),
-          lng: Number(r.lng),
-          label: r.client_nom,
-          sub: r.cp_ville,
-        })),
-        depart,
-      ),
-    [aVenir, depart],
+      campagneOn ? planifierCampagne(aVenir.map(asStop), depart, { jours: horizon }) : null,
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [campagneOn, horizon, aVenir, depart],
   );
 
   const grappes = useMemo(
-    () =>
-      groupesProximite(
-        aVenir.map((r) => ({
-          id: r.id,
-          lat: Number(r.lat),
-          lng: Number(r.lng),
-          label: r.client_nom,
-          sub: r.cp_ville,
-        })),
-      ).filter((g) => g.length > 1),
+    () => groupesProximite(aVenir.map(asStop)).filter((g) => g.length > 1),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     [aVenir],
   );
 
@@ -251,19 +298,9 @@ function PlanningPage() {
       }),
   });
 
-  /** Tournée complète sur le réseau routier réel. */
+  /** Tournée de la journée sélectionnée, sur le réseau routier réel. */
   const tourneeFn = useServerFn(tourneeReelle);
-  const tourneeStops = useMemo(
-    () =>
-      aVenir.slice(0, 10).map((r) => ({
-        id: r.id,
-        lat: Number(r.lat),
-        lng: Number(r.lng),
-        label: r.client_nom,
-        sub: r.cp_ville,
-      })),
-    [aVenir],
-  );
+  const tourneeStops = useMemo(() => stopsJour.slice(0, 10), [stopsJour]);
   const tourneeReel = useQuery({
     queryKey: ["tournee-reelle", depart.id, tourneeStops.map((s) => s.id).join(",")],
     enabled: tourneeStops.length > 0,
@@ -283,6 +320,7 @@ function PlanningPage() {
         }
       : { ...tournee, kmDirect: tournee.kmDirect };
 
+
   function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const f = new FormData(e.currentTarget);
@@ -300,6 +338,11 @@ function PlanningPage() {
       duree_min: Number(get("duree_min") || 120),
       technicien: get("technicien") || null,
       notes: get("notes") || null,
+      origine: (get("origine") || "direct") as "direct" | "sous_traitance",
+      partenaire: get("partenaire") || null,
+      montant_ht: Number(get("montant_ht") || 0),
+      tva_pct: Number(get("tva_pct") || 20),
+      statut_facturation: "a_facturer",
     });
   }
 
@@ -407,6 +450,20 @@ function PlanningPage() {
               ))}
             </select>
           </label>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Origine du chantier</span>
+            <select
+              name="origine"
+              defaultValue="direct"
+              className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+            >
+              <option value="direct">Client direct</option>
+              <option value="sous_traitance">Sous-traitance / partenaire</option>
+            </select>
+          </label>
+          <Field label="Partenaire / donneur d'ordre" name="partenaire" placeholder="Ex. ZePlug" />
+          <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
+          <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
           <label className="block sm:col-span-2 lg:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">Notes</span>
@@ -497,6 +554,7 @@ function PlanningPage() {
                     const v = voirieByRdv.get(r.id);
                     const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
+                    const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     return (
                       <li
                         key={r.id}
@@ -536,6 +594,24 @@ function PlanningPage() {
                               )}
                             </p>
                             {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+
+                            <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
+                              <span
+                                className={`px-2 py-0.5 rounded-full border ${
+                                  r.origine === "sous_traitance"
+                                    ? "border-amber-500/50 text-amber-600 dark:text-amber-400"
+                                    : "border-primary/40 text-primary"
+                                }`}
+                              >
+                                {r.origine === "sous_traitance"
+                                  ? `Sous-traitance${r.partenaire ? ` · ${r.partenaire}` : ""}`
+                                  : "Client direct"}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {eurosFr(Number(r.montant_ht ?? 0))} HT ·{" "}
+                                {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
+                              </span>
+                            </p>
 
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {r.chantier_valide ? (
@@ -582,6 +658,15 @@ function PlanningPage() {
                                   Voir le document
                                 </a>
                               )}
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
+                                }
+                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                              >
+                                <Euro className="h-3 w-3" /> Montant & facturation
+                              </button>
                               {r.chantier_valide && (
                                 <button
                                   type="button"
@@ -660,6 +745,91 @@ function PlanningPage() {
                               )}
                               Confirmer la réalisation
                             </button>
+                          </form>
+                        )}
+
+                        {isMontantPanel && (
+                          <form
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const g = (k: string) => String(f.get(k) ?? "").trim();
+                              setFacturation.mutate({
+                                id: r.id,
+                                origine: g("origine") as "direct" | "sous_traitance",
+                                partenaire: g("partenaire") || null,
+                                montant_ht: Number(g("montant_ht") || 0),
+                                tva_pct: Number(g("tva_pct") || 20),
+                                statut_facturation: g("statut_facturation") as
+                                  | "a_facturer"
+                                  | "facture"
+                                  | "paye",
+                              });
+                            }}
+                            className="mt-4 pt-4 border-t border-border grid gap-3 sm:grid-cols-2"
+                          >
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Origine
+                              </span>
+                              <select
+                                name="origine"
+                                defaultValue={r.origine ?? "direct"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="direct">Client direct</option>
+                                <option value="sous_traitance">Sous-traitance / partenaire</option>
+                              </select>
+                            </label>
+                            <Field
+                              label="Partenaire / donneur d'ordre"
+                              name="partenaire"
+                              defaultValue={r.partenaire ?? ""}
+                            />
+                            <Field
+                              label="Montant HT (€)"
+                              name="montant_ht"
+                              type="number"
+                              defaultValue={String(r.montant_ht ?? 0)}
+                            />
+                            <Field
+                              label="TVA (%)"
+                              name="tva_pct"
+                              type="number"
+                              defaultValue={String(r.tva_pct ?? 20)}
+                            />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Facturation
+                              </span>
+                              <select
+                                name="statut_facturation"
+                                defaultValue={r.statut_facturation ?? "a_facturer"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="a_facturer">À facturer</option>
+                                <option value="facture">Facturé</option>
+                                <option value="paye">Payé</option>
+                              </select>
+                            </label>
+                            <div className="sm:col-span-2 flex items-center gap-3">
+                              <button
+                                type="submit"
+                                disabled={setFacturation.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                              >
+                                {setFacturation.isPending && (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                )}
+                                Enregistrer
+                              </button>
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Total TTC :{" "}
+                                {eurosFr(
+                                  Number(r.montant_ht ?? 0) * (1 + Number(r.tva_pct ?? 20) / 100),
+                                )}
+                              </span>
+                            </div>
                           </form>
                         )}
 
@@ -791,7 +961,7 @@ function PlanningPage() {
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
-              {tourneeAff.etapes.length > 1 ? "Tournée optimisée" : "Trajet du jour"}
+              {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
               {tourneeReel.data && !tourneeReel.data.estime && (
                 <span className="text-[10px] font-bold text-primary normal-case tracking-normal bg-primary/10 px-1.5 py-0.5 rounded-full">
                   itinéraires réels
@@ -815,9 +985,27 @@ function PlanningPage() {
                 </button>
               ))}
             </div>
+            {joursDispo.length > 0 && (
+              <div className="mb-3 flex flex-wrap gap-1.5">
+                {joursDispo.map((j) => (
+                  <button
+                    key={j.key}
+                    type="button"
+                    onClick={() => setJourSel(j.key)}
+                    className={`text-mono text-[11px] px-2 py-1 rounded-full border transition ${
+                      jourActif?.key === j.key
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:border-primary/50"
+                    }`}
+                  >
+                    {j.label} · {j.stops.length}
+                  </button>
+                ))}
+              </div>
+            )}
             {tourneeAff.etapes.length === 0 ? (
               <p className="text-sm text-muted-foreground">
-                Aucun chantier à venir géolocalisé pour {depart.nom}.
+                Aucun chantier géolocalisé ce jour-là pour {depart.nom}.
               </p>
             ) : (
               <>
@@ -846,7 +1034,7 @@ function PlanningPage() {
                   <p className="flex justify-between">
                     <span className="text-muted-foreground">
                       {tourneeAff.etapes.length > 1
-                        ? `Tournée groupée (${tourneeAff.etapes.length} chantiers)`
+                        ? `${jourActif?.label ?? "Journée"} · ${tourneeAff.etapes.length} chantiers`
                         : `Aller-retour depuis ${depart.label}`}
                     </span>
                     <span>
@@ -873,6 +1061,90 @@ function PlanningPage() {
                 </div>
               </>
             )}
+          </div>
+
+          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
+              <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
+            </h2>
+            <p className="text-xs text-muted-foreground mb-3">
+              Répartit les chantiers sur plusieurs journées en suivant les secteurs : au-delà de
+              150 km, la journée prévoit une nuitée sur place.
+            </p>
+            <div className="flex flex-wrap items-center gap-2 mb-3">
+              {[7, 14].map((h) => (
+                <button
+                  key={h}
+                  type="button"
+                  onClick={() => {
+                    setHorizon(h);
+                    setCampagneOn(true);
+                  }}
+                  className={`text-mono text-[11px] px-2.5 py-1.5 rounded-sm border transition ${
+                    campagneOn && horizon === h
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/50"
+                  }`}
+                >
+                  Sur {h} jours
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setCampagneOn((v) => !v)}
+                className="hero-grad text-primary-foreground text-mono text-[11px] px-3 py-1.5 rounded-sm"
+              >
+                {campagneOn ? "Masquer" : "Programmer les tournées"}
+              </button>
+            </div>
+            {campagneOn &&
+              (!campagne || !campagne.jours.length ? (
+                <p className="text-sm text-muted-foreground">
+                  Aucun chantier à répartir pour {depart.nom}.
+                </p>
+              ) : (
+                <>
+                  <ol className="space-y-2">
+                    {campagne.jours.map((j) => (
+                      <li key={j.jour} className="text-sm border border-border rounded-lg p-2.5">
+                        <p className="flex items-center gap-2">
+                          <span className="text-mono text-[11px] font-bold w-6 h-6 rounded-full hero-grad text-primary-foreground grid place-items-center shrink-0">
+                            J{j.jour}
+                          </span>
+                          <span className="font-semibold truncate">{j.secteur}</span>
+                          <span className="ml-auto text-mono text-xs text-muted-foreground shrink-0">
+                            +{j.km} km
+                          </span>
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {j.stops.map((s) => s.label).join(" · ")}
+                        </p>
+                        {j.nuitee && (
+                          <p className="text-mono text-[11px] text-amber-600 dark:text-amber-400 mt-1">
+                            Nuitée sur place conseillée
+                          </p>
+                        )}
+                      </li>
+                    ))}
+                  </ol>
+                  <div className="mt-3 pt-3 border-t border-border space-y-1.5 text-mono text-xs">
+                    <p className="flex justify-between">
+                      <span className="text-muted-foreground">
+                        {campagne.jours.length} journées · {campagne.nuitees} nuitée(s)
+                      </span>
+                      <span>{campagne.kmTotal} km</span>
+                    </p>
+                    {campagne.kmSepares > campagne.kmTotal && (
+                      <p className="flex justify-between text-primary">
+                        <span className="inline-flex items-center gap-1">
+                          <Fuel className="h-3.5 w-3.5" /> Économie estimée
+                        </span>
+                        <span>{campagne.kmSepares - campagne.kmTotal} km</span>
+                      </p>
+                    )}
+                  </div>
+                </>
+              ))}
           </div>
 
           {grappes.length > 0 && (
