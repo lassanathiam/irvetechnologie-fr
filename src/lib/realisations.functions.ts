@@ -127,12 +127,20 @@ export const saveRealisation = createServerFn({ method: "POST" })
       ...(photoPath ? { photo_path: photoPath } : {}),
     };
 
+    const cleanupUpload = async () => {
+      if (photoPath) await context.supabase.storage.from("projet-photos").remove([photoPath]);
+    };
+
     if (data.id) {
       const { error } = await context.supabase.from("realisations").update(payload).eq("id", data.id);
-      if (error) throw new Error(error.message);
+      if (error) {
+        await cleanupUpload();
+        throw new Error(error.message);
+      }
       if (photoPath && previousPath) {
         await context.supabase.storage.from("projet-photos").remove([previousPath]);
       }
+
       return { ok: true as const, id: data.id };
     }
 
