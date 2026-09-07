@@ -10,6 +10,7 @@ import {
   Fuel,
   Loader2,
   MapPin,
+  Pencil,
   Plus,
   Route as RouteIcon,
   ShieldCheck,
@@ -21,6 +22,7 @@ import {
   deleteRendezVous,
   listRendezVous,
   updateStatutRendezVous,
+  updateAdresseRendezVous,
   validerChantier,
   updateFacturationRdv,
   type RendezVousInput,
@@ -138,9 +140,10 @@ function PlanningPage() {
   const [active, setActive] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
-  const [panel, setPanel] = useState<{ id: string; tab: "chantier" | "voirie" | "montant" } | null>(
-    null,
-  );
+  const [panel, setPanel] = useState<{
+    id: string;
+    tab: "chantier" | "voirie" | "montant" | "adresse";
+  } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
 
   const refresh = () => {
@@ -206,6 +209,18 @@ function PlanningPage() {
       refresh();
     },
     onError: (e: unknown) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
+  });
+  const adresseFn = useServerFn(updateAdresseRendezVous);
+  const setAdresse = useMutation({
+    mutationFn: (p: { id: string; adresse: string; cp_ville?: string | null }) =>
+      adresseFn({ data: p }),
+    onSuccess: () => {
+      setPanel(null);
+      setError(null);
+      refresh();
+    },
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Modification de l'adresse impossible."),
   });
   const removeVoirie = useMutation({
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
@@ -604,6 +619,7 @@ function PlanningPage() {
                     const isChantierPanel = panel?.id === r.id && panel.tab === "chantier";
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
+                    const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
                     return (
                       <li
                         key={r.id}
