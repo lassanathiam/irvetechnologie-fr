@@ -473,6 +473,39 @@ export type Database = {
           },
         ]
       }
+      partenaires: {
+        Row: {
+          actif: boolean
+          created_at: string
+          id: string
+          nom: string
+          notes: string | null
+          owner_user_id: string | null
+          token: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          id?: string
+          nom: string
+          notes?: string | null
+          owner_user_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          id?: string
+          nom?: string
+          notes?: string | null
+          owner_user_id?: string | null
+          token?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       prestations: {
         Row: {
           actif: boolean
@@ -668,6 +701,7 @@ export type Database = {
           client_telephone: string | null
           cp_ville: string | null
           created_at: string
+          date_a_confirmer: boolean
           date_debut: string
           demande_id: string | null
           designation: string | null
@@ -682,6 +716,7 @@ export type Database = {
           notes: string | null
           origine: string
           partenaire: string | null
+          partenaire_id: string | null
           statut: string
           statut_facturation: string
           technicien: string | null
@@ -702,6 +737,7 @@ export type Database = {
           client_telephone?: string | null
           cp_ville?: string | null
           created_at?: string
+          date_a_confirmer?: boolean
           date_debut: string
           demande_id?: string | null
           designation?: string | null
@@ -716,6 +752,7 @@ export type Database = {
           notes?: string | null
           origine?: string
           partenaire?: string | null
+          partenaire_id?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
@@ -736,6 +773,7 @@ export type Database = {
           client_telephone?: string | null
           cp_ville?: string | null
           created_at?: string
+          date_a_confirmer?: boolean
           date_debut?: string
           demande_id?: string | null
           designation?: string | null
@@ -750,6 +788,7 @@ export type Database = {
           notes?: string | null
           origine?: string
           partenaire?: string | null
+          partenaire_id?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
@@ -765,6 +804,13 @@ export type Database = {
             columns: ["demande_id"]
             isOneToOne: false
             referencedRelation: "demande_requests"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rendezvous_partenaire_id_fkey"
+            columns: ["partenaire_id"]
+            isOneToOne: false
+            referencedRelation: "partenaires"
             referencedColumns: ["id"]
           },
         ]

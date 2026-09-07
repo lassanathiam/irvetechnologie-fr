@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Images, Inbox, LayoutDashboard, LogOut, Receipt, ShieldCheck } from "lucide-react";
+import { CalendarClock, ClipboardCheck, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Receipt, ShieldCheck } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
@@ -12,8 +12,10 @@ const LINKS = [
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/factures", label: "Factures", icon: Receipt },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
+  { to: "/partenaires", label: "Partenaires", icon: Handshake },
   { to: "/realisations", label: "Photos", icon: Images },
 ] as const;
+
 
 
 export function ProShell({ children }: { children: React.ReactNode }) {
