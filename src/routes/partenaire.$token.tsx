@@ -48,7 +48,8 @@ function EspacePartenaire() {
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    const fd = new FormData(e.currentTarget);
+    const formElement = e.currentTarget;
+    const fd = new FormData(formElement);
     const get = (k: string) => String(fd.get(k) ?? "").trim();
     setError(null);
     setNotice(null);
@@ -62,7 +63,7 @@ function EspacePartenaire() {
     }
     setBusy(true);
     try {
-      await creer({
+      const resultat = await creer({
         data: {
           token,
           client_nom: get("client_nom"),
@@ -80,10 +81,12 @@ function EspacePartenaire() {
           notes: get("notes") || null,
         },
       });
+      if (!resultat?.ok) throw new Error("Le dossier n'a pas pu être enregistré.");
       setNotice("Dossier transmis à Borne de l'Ouest.");
       setForm(false);
       setRdvAPrendre(true);
-      await espace.refetch();
+      formElement.reset();
+      void espace.refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Envoi impossible. Réessayez.");
     } finally {
