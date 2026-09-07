@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { trajetDepuisBase } from "@/lib/geo";
+import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
 
 const rdvSchema = z.object({
   titre: z.string().trim().min(1).max(160),
@@ -55,7 +55,10 @@ export const createRendezVous = createServerFn({ method: "POST" })
   .inputValidator((raw: RendezVousInput) => rdvSchema.parse(raw))
   .handler(async ({ data, context }) => {
     const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
-    const trajet = geo ? trajetDepuisBase(geo.lat, geo.lng) : null;
+    const tech = technicienByNom(data.technicien);
+    const trajet = geo
+      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+      : null;
 
     const { data: row, error } = await context.supabase
       .from("rendezvous")

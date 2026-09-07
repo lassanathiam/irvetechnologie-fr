@@ -69,8 +69,12 @@ export function haversineKm(
 }
 
 /** Distance routière estimée (facteur 1,25) et temps de trajet depuis la base. */
-export function trajetDepuisBase(lat: number, lng: number) {
-  const km = Math.round(haversineKm(BASE, { lat, lng }) * 1.18);
+export function trajetDepuisBase(
+  lat: number,
+  lng: number,
+  base: { lat: number; lng: number } = BASE,
+) {
+  const km = Math.round(haversineKm(base, { lat, lng }) * 1.18);
   const min = km === 0 ? 10 : Math.round((km / 95) * 60) + 10;
   return { distance_km: km, duree_trajet_min: min };
 }
