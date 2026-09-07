@@ -52,6 +52,7 @@ export function SiteNav() {
           </Link>
         </div>
       </div>
+      </div>
     </header>
   );
 }
