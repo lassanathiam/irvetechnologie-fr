@@ -38,6 +38,7 @@ function RapportDetail() {
   const { data: r, isLoading, error } = useQuery({
     queryKey: ["rapport", id],
     queryFn: () => fetchRapport({ data: { id } }),
+    retry: 1,
   });
   const sheetRef = useRef<HTMLElement>(null);
   const [pdfEnCours, setPdfEnCours] = useState(false);
@@ -58,8 +59,14 @@ function RapportDetail() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen grid place-items-center">
-        <Loader2 className="h-6 w-6 animate-spin text-primary" />
+      <div className="min-h-screen grid place-items-center px-6">
+        <div className="flex flex-col items-center gap-3 text-center">
+          <Loader2 className="h-6 w-6 animate-spin text-primary" />
+          <p className="text-mono text-sm text-muted-foreground">Chargement du rapport…</p>
+          <Link to="/rapports" className="text-mono text-xs text-muted-foreground hover:text-primary underline-offset-2 hover:underline">
+            Retour aux rapports
+          </Link>
+        </div>
       </div>
     );
   }

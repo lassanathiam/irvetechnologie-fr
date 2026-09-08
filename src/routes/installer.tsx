@@ -42,8 +42,17 @@ function Installer() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-14">
+    <div className="min-h-screen bg-background text-foreground px-4 py-10">
       <div className="mx-auto max-w-2xl space-y-8">
+        <nav className="flex flex-wrap items-center gap-3 text-mono text-xs">
+          <Link to="/" className="text-muted-foreground hover:text-primary underline-offset-2 hover:underline">
+            Accueil
+          </Link>
+          <span className="text-muted-foreground">·</span>
+          <Link to="/espace" className="text-muted-foreground hover:text-primary underline-offset-2 hover:underline">
+            Espace pro
+          </Link>
+        </nav>
         <div className="flex items-center gap-4">
           <img
             src="/app-icon-192.png"

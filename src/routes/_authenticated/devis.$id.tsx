@@ -48,10 +48,15 @@ function DevisDetail() {
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  const query = useQuery({ queryKey: ["devis", id], queryFn: () => fetchDevis({ data: { id } }) });
+  const query = useQuery({
+    queryKey: ["devis", id],
+    queryFn: () => fetchDevis({ data: { id } }),
+    retry: 1,
+  });
   const envois = useQuery({
     queryKey: ["devis-envois", id],
     queryFn: () => envoisFn({ data: { id } }),
+    retry: 1,
   });
 
   const send = useMutation({
