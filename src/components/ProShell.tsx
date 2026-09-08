@@ -1,9 +1,11 @@
 import { Link } from "@tanstack/react-router";
-import { CalendarClock, ClipboardCheck, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Receipt, ShieldCheck } from "lucide-react";
+import { useState } from "react";
+import { CalendarClock, ClipboardCheck, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Menu, Receipt, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Button } from "@/components/ui/button";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
@@ -19,10 +21,12 @@ const LINKS = [
 
 
 export function ProShell({ children }: { children: React.ReactNode }) {
+  const [menuOuvert, setMenuOuvert] = useState(false);
+
   return (
     <div className="min-h-screen bg-background">
       <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-6 h-16 flex items-center justify-between gap-6">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <BrandLogo className="h-9 w-9" />
             <span className="hidden sm:block leading-tight">
@@ -35,7 +39,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             </span>
           </Link>
 
-          <nav className="flex items-center gap-1 overflow-x-auto">
+          <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
             {LINKS.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
@@ -49,19 +53,59 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
-          <ThemeToggle />
-          <button
-            type="button"
-            onClick={async () => {
-              await supabase.auth.signOut();
-              window.location.href = "/";
-            }}
-            className="text-mono text-xs text-muted-foreground hover:text-destructive inline-flex items-center gap-1.5 shrink-0"
-          >
-            <LogOut className="h-3.5 w-3.5" /> Quitter
-          </button>
+            <ThemeToggle />
+            <Button
+              type="button"
+              variant="ghost"
+              size="icon"
+              className="md:hidden"
+              aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
+              aria-expanded={menuOuvert}
+              onClick={() => setMenuOuvert((ouvert) => !ouvert)}
+            >
+              {menuOuvert ? <X /> : <Menu />}
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = "/";
+              }}
+              className="hidden md:inline-flex text-mono text-xs text-muted-foreground hover:text-destructive"
+            >
+              <LogOut /> Quitter
+            </Button>
           </div>
         </div>
+
+        {menuOuvert && (
+          <nav className="md:hidden border-t border-border bg-card px-4 py-3 grid grid-cols-2 gap-2">
+            {LINKS.map(({ to, label, icon: Icon }) => (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMenuOuvert(false)}
+                className="min-h-11 rounded-sm border border-border px-3 py-2 text-sm font-semibold text-foreground inline-flex items-center gap-2"
+                activeProps={{ className: "border-primary bg-muted text-primary" }}
+              >
+                <Icon className="h-4 w-4" /> {label}
+              </Link>
+            ))}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={async () => {
+                await supabase.auth.signOut();
+                window.location.href = "/";
+              }}
+              className="col-span-2 justify-start text-destructive"
+            >
+              <LogOut /> Quitter
+            </Button>
+          </nav>
+        )}
       </header>
       <div className="border-b border-border bg-muted/40">
         <div className="mx-auto max-w-6xl px-6 py-2 flex flex-wrap items-center gap-x-3 gap-y-1">
