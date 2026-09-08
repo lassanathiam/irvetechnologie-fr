@@ -27,6 +27,32 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
     if (remaining > 0.5) pdf.addPage();
   }
 
-  const safe = fileName.replace(/[^a-zA-Z0-9-_]+/g, "-");
-  pdf.save(`${safe}.pdf`);
+  const safe = `${fileName.replace(/[^a-zA-Z0-9-_]+/g, "-")}.pdf`;
+  const blob = pdf.output("blob") as Blob;
+  const file = new File([blob], safe, { type: "application/pdf" });
+
+  // Mobile / PWA : le partage natif permet d'enregistrer réellement le fichier dans le téléphone.
+  const nav = navigator as Navigator & {
+    canShare?: (data: { files?: File[] }) => boolean;
+    share?: (data: { files?: File[]; title?: string }) => Promise<void>;
+  };
+  if (nav.canShare?.({ files: [file] }) && nav.share) {
+    try {
+      await nav.share({ files: [file], title: safe });
+      return;
+    } catch (err) {
+      if ((err as DOMException)?.name === "AbortError") return;
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = safe;
+  a.rel = "noopener";
+  a.target = "_blank";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 60_000);
 }
