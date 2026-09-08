@@ -92,18 +92,29 @@ function RapportDetail() {
           <Link to="/rapports" className="text-mono text-muted-foreground hover:text-primary inline-flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" /> Rapports
           </Link>
-          <button
-            type="button"
-            onClick={() => window.print()}
-            className="hero-grad text-primary-foreground rounded-sm px-4 py-2.5 text-mono inline-flex items-center gap-2"
-          >
-            <Printer className="h-4 w-4" /> Imprimer / PDF
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void telechargerPdf(r.numero)}
+              disabled={pdfEnCours}
+              className="hero-grad text-primary-foreground rounded-sm px-4 py-2.5 text-mono inline-flex items-center gap-2 disabled:opacity-60"
+            >
+              {pdfEnCours ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {pdfEnCours ? "Préparation…" : "Télécharger le PDF"}
+            </button>
+            <button
+              type="button"
+              onClick={() => window.print()}
+              className="border border-border rounded-sm px-4 py-2.5 text-mono inline-flex items-center gap-2"
+            >
+              <Printer className="h-4 w-4" /> Imprimer
+            </button>
+          </div>
         </div>
       </div>
 
       <div className="mx-auto max-w-4xl px-6 py-10 print:p-0">
-        <article className="print-sheet bg-card border border-border rounded-sm print:border-0 print:rounded-none">
+        <article ref={sheetRef} className="print-sheet bg-card border border-border rounded-sm print:border-0 print:rounded-none">
           <header className="p-8 border-b border-border flex items-start justify-between gap-6 flex-wrap">
             <div className="flex items-center gap-3">
               {LOGO_URL ? (
