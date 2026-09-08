@@ -368,7 +368,7 @@ function RapportsPage() {
       </div>
 
 
-      <div className="mx-auto max-w-5xl px-6 py-10 grid lg:grid-cols-[1fr_300px] gap-10 items-start">
+      <div className="grid lg:grid-cols-[1fr_300px] gap-10 items-start">
         <form
           ref={formRef}
           onSubmit={onSubmit}
