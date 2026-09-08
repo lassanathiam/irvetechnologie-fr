@@ -55,6 +55,8 @@ export function InterventionsMap({
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const layer = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const routeLayer = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const L = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byId = useRef<Record<string, any>>({});
@@ -79,7 +81,9 @@ export function InterventionsMap({
         })
         .addTo(map.current);
       layer.current = leaflet.layerGroup().addTo(map.current);
-      draw();
+      routeLayer.current = leaflet.layerGroup().addTo(map.current);
+      drawMarkers();
+      drawRoutes();
     })();
     return () => {
       cancelled = true;
@@ -101,7 +105,7 @@ export function InterventionsMap({
     });
   }
 
-  function draw() {
+  function drawMarkers() {
     const leaflet = L.current;
     if (!leaflet || !layer.current) return;
     layer.current.clearLayers();
@@ -118,23 +122,6 @@ export function InterventionsMap({
       })
       .addTo(layer.current)
       .bindTooltip(`Base · ${BASE.label}`, { direction: "top" });
-
-    // Tournée complète (réseau routier réel)
-    if (tourneeCoords && tourneeCoords.length > 1) {
-      leaflet
-        .polyline(tourneeCoords, { color: "#0f172a", weight: 3, opacity: 0.35 })
-        .addTo(layer.current);
-    }
-
-    // Itinéraire réel vers le chantier sélectionné (pas de ligne droite à vol d'oiseau)
-    if (routeCoords && routeCoords.length > 1 && !routeEstime) {
-      leaflet
-        .polyline(routeCoords, { color: "#16a34a", weight: 6, opacity: 0.25 })
-        .addTo(layer.current);
-      leaflet
-        .polyline(routeCoords, { color: "#16a34a", weight: 3, opacity: 0.95 })
-        .addTo(layer.current);
-    }
 
     markers.forEach((m, i) => {
       const color = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
@@ -163,12 +150,43 @@ export function InterventionsMap({
     }
   }
 
+  function drawRoutes() {
+    const leaflet = L.current;
+    if (!leaflet || !routeLayer.current) return;
+    routeLayer.current.clearLayers();
+
+    // Tournée complète (réseau routier réel)
+    if (tourneeCoords && tourneeCoords.length > 1) {
+      leaflet
+        .polyline(tourneeCoords, { color: "#0f172a", weight: 3, opacity: 0.35 })
+        .addTo(routeLayer.current);
+    }
+
+    // Itinéraire réel vers le chantier sélectionné (pas de ligne droite à vol d'oiseau)
+    if (routeCoords && routeCoords.length > 1 && !routeEstime) {
+      leaflet
+        .polyline(routeCoords, { color: "#16a34a", weight: 6, opacity: 0.25 })
+        .addTo(routeLayer.current);
+      leaflet
+        .polyline(routeCoords, { color: "#16a34a", weight: 3, opacity: 0.95 })
+        .addTo(routeLayer.current);
+    }
+  }
+
   useEffect(() => {
-    draw();
+    drawMarkers();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markers]);
+
+  useEffect(() => {
     const mk = activeId ? byId.current[activeId] : null;
     if (mk) mk.openPopup();
+  }, [activeId]);
+
+  useEffect(() => {
+    drawRoutes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, activeId, routeCoords, routeEstime, tourneeCoords]);
+  }, [routeCoords, routeEstime, tourneeCoords]);
 
   return (
     <div className="rounded-sm overflow-hidden border border-border">

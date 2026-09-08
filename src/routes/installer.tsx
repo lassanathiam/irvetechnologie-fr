@@ -27,6 +27,7 @@ type PromptEvent = Event & { prompt: () => Promise<void> };
 function Installer() {
   const [promptEvent, setPromptEvent] = useState<PromptEvent | null>(null);
   const [installee, setInstallee] = useState(false);
+  const [ios, setIos] = useState(false);
 
   useEffect(() => {
     const onPrompt = (e: Event) => {
@@ -36,6 +37,7 @@ function Installer() {
     window.addEventListener("beforeinstallprompt", onPrompt);
     window.addEventListener("appinstalled", () => setInstallee(true));
     if (window.matchMedia("(display-mode: standalone)").matches) setInstallee(true);
+    setIos(/iPad|iPhone|iPod/.test(navigator.userAgent));
     return () => window.removeEventListener("beforeinstallprompt", onPrompt);
   }, []);
 
@@ -71,6 +73,11 @@ function Installer() {
           >
             Installer maintenant
           </button>
+        ) : ios ? (
+          <p className="rounded-sm border border-primary/40 bg-card p-4 text-sm">
+            Sur iPhone, l'application ne se télécharge pas comme dans l'App Store : ouvrez cette
+            page dans Safari, touchez Partager, puis « Sur l'écran d'accueil ».
+          </p>
         ) : null}
 
         <section className="rounded-sm border border-border bg-card p-6 space-y-3">

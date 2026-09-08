@@ -29,10 +29,10 @@ export function SiteNav() {
           </span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-mono text-muted-foreground">
-          <a href="/#services" className="hover:text-foreground transition">Services</a>
-          <a href="/#realisations" className="hover:text-foreground transition">Réalisations</a>
-          <a href="/#maintenance" className="hover:text-foreground transition">Maintenance</a>
-          <a href="/#zones" className="hover:text-foreground transition">Zones</a>
+          <Link to="/" hash="services" className="hover:text-foreground transition">Services</Link>
+          <Link to="/" hash="realisations" className="hover:text-foreground transition">Réalisations</Link>
+          <Link to="/" hash="maintenance" className="hover:text-foreground transition">Maintenance</Link>
+          <Link to="/" hash="zones" className="hover:text-foreground transition">Zones</Link>
         </nav>
         <div className="flex items-center gap-3">
           <Link

@@ -26,6 +26,10 @@ export const Route = createFileRoute("/demande")({
     meta: [
       { title: "Demande de raccordement — Borne de l'Ouest" },
       { name: "description", content: "Décrivez votre projet et joignez les photos du tableau électrique, du cheminement de câble et de l'emplacement de la borne." },
+      { property: "og:title", content: "Demande de raccordement — Borne de l'Ouest" },
+      { property: "og:description", content: "Décrivez votre installation de borne et transmettez les informations nécessaires à son étude." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
     scripts: [
       {
@@ -38,13 +42,13 @@ export const Route = createFileRoute("/demande")({
               "@type": "ListItem",
               position: 1,
               name: "Accueil",
-              item: "https://kindred-share-beam.lovable.app/",
+              item: "https://www.irvetechnologie.fr/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Demande de raccordement",
-              item: "https://kindred-share-beam.lovable.app/demande",
+              item: "https://www.irvetechnologie.fr/demande",
             },
           ],
         }),

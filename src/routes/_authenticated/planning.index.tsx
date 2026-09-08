@@ -251,21 +251,25 @@ function PlanningPage() {
     return [...map.entries()];
   }, [rows]);
 
-  const points: MapMarker[] = rows
-    .filter((r) => r.lat != null && r.lng != null)
-    .map((r) => ({
-      id: r.id,
-      lat: Number(r.lat),
-      lng: Number(r.lng),
-      label: r.client_nom,
-      sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
-      statut: r.statut,
-      date: dateTimeFr(r.date_debut),
-      trajet:
-        r.distance_km != null
-          ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
-          : null,
-    }));
+  const points: MapMarker[] = useMemo(
+    () =>
+      rows
+        .filter((r) => r.lat != null && r.lng != null)
+        .map((r) => ({
+          id: r.id,
+          lat: Number(r.lat),
+          lng: Number(r.lng),
+          label: r.client_nom,
+          sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
+          statut: r.statut,
+          date: dateTimeFr(r.date_debut),
+          trajet:
+            r.distance_km != null
+              ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
+              : null,
+        })),
+    [rows],
+  );
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
   const aVenir = useMemo(
