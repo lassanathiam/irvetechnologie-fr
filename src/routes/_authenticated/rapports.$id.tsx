@@ -39,6 +39,22 @@ function RapportDetail() {
     queryKey: ["rapport", id],
     queryFn: () => fetchRapport({ data: { id } }),
   });
+  const sheetRef = useRef<HTMLElement>(null);
+  const [pdfEnCours, setPdfEnCours] = useState(false);
+
+  async function telechargerPdf(numero: string) {
+    const el = sheetRef.current;
+    if (!el || pdfEnCours) return;
+    setPdfEnCours(true);
+    try {
+      await downloadElementAsPdf(el, `Rapport-${numero}`);
+      toast.success("Rapport téléchargé.");
+    } catch {
+      toast.error("Téléchargement impossible. Réessayez dans un instant.");
+    } finally {
+      setPdfEnCours(false);
+    }
+  }
 
   if (isLoading) {
     return (
