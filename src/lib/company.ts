@@ -1,3 +1,5 @@
+import logoAsset from "@/assets/logo-irve.png.asset.json";
+
 export const COMPANY = {
   raisonSociale: "IRVE Technologie",
   forme: "SAS",
