@@ -29,6 +29,7 @@ import {
   type RapportInput,
 } from "@/lib/rapports.functions";
 import { SignaturePad } from "@/components/SignaturePad";
+import { ProShell } from "@/components/ProShell";
 import { compressImage } from "@/lib/image-compress";
 import { dateFr } from "@/lib/company";
 
@@ -360,19 +361,12 @@ function RapportsPage() {
 
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b border-border bg-card sticky top-0 z-20">
-        <div className="mx-auto max-w-5xl px-6 h-16 flex items-center justify-between gap-4">
-          <div className="flex items-center gap-2 text-mono">
-            <ClipboardCheck className="h-4 w-4 text-primary" />
-            Rapports d'intervention
-          </div>
-          <nav className="flex items-center gap-4 text-mono text-sm">
-            <Link to="/devis" className="text-muted-foreground hover:text-primary">Devis</Link>
-            <Link to="/demandes" className="text-muted-foreground hover:text-primary">Demandes</Link>
-          </nav>
-        </div>
-      </header>
+    <ProShell>
+      <div className="mb-6 flex items-center gap-2 text-mono">
+        <ClipboardCheck className="h-4 w-4 text-primary" />
+        Rapports d'intervention
+      </div>
+
 
       <div className="mx-auto max-w-5xl px-6 py-10 grid lg:grid-cols-[1fr_300px] gap-10 items-start">
         <form
@@ -746,7 +740,7 @@ function RapportsPage() {
           )}
         </aside>
       </div>
-    </div>
+    </ProShell>
   );
 }
 
