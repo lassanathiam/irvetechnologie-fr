@@ -1,7 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Loader2, Printer, Zap } from "lucide-react";
+import { useRef, useState } from "react";
+import { toast } from "sonner";
+import { ArrowLeft, Download, Loader2, Printer, Zap } from "lucide-react";
+import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { COMPANY, LOGO_URL, dateFr } from "@/lib/company";
 import { getRapport, getRapportPhotoUrls } from "@/lib/rapports.functions";
 import {
