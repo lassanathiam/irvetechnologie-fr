@@ -58,7 +58,6 @@ export const GARANTIES = [
 ];
 
 /** Logo affiché sur les documents (devis, factures, rapports). */
-import logoAsset from "@/assets/logo-irve.png.asset.json";
 export const LOGO_URL: string | null = logoAsset.url;
 
 export const euro = (n: number) =>
