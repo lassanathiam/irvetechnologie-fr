@@ -23,6 +23,8 @@ export const Route = createFileRoute("/")({
       { name: "description", content: "Borne de l'Ouest : installation de bornes de recharge IRVE en Bretagne et Pays de la Loire. Étude, génie civil, électricité et maintenance — 44, 49, 56, 35, 85, 72, 53." },
       { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE dans le Grand Ouest" },
       { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW en Bretagne & Pays de la Loire." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
     scripts: [
       {
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/")({
               "@type": "ListItem",
               position: 1,
               name: "Accueil",
-              item: "https://kindred-share-beam.lovable.app/",
+              item: "https://www.irvetechnologie.fr/",
             },
           ],
         }),

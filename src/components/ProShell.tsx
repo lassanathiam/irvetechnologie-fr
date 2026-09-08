@@ -1,6 +1,6 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarClock, ClipboardCheck, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Menu, Receipt, ShieldCheck, X } from "lucide-react";
+import { CalendarClock, ClipboardCheck, Download, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Menu, Receipt, ShieldCheck, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
@@ -53,6 +53,14 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </nav>
 
           <div className="flex items-center gap-2 shrink-0">
+            <Link
+              to="/installer"
+              aria-label="Installer l'application"
+              title="Installer l'application"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-primary"
+            >
+              <Download className="h-4 w-4" />
+            </Link>
             <ThemeToggle />
             <Button
               type="button"
@@ -93,6 +101,13 @@ export function ProShell({ children }: { children: React.ReactNode }) {
                 <Icon className="h-4 w-4" /> {label}
               </Link>
             ))}
+            <Link
+              to="/installer"
+              onClick={() => setMenuOuvert(false)}
+              className="col-span-2 min-h-11 rounded-sm border border-border px-3 py-2 text-sm font-semibold text-foreground inline-flex items-center gap-2"
+            >
+              <Download className="h-4 w-4" /> Installer sur ce téléphone
+            </Link>
             <Button
               type="button"
               variant="ghost"

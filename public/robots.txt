@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kindred-share-beam.lovable.app/sitemap.xml
+Sitemap: https://www.irvetechnologie.fr/sitemap.xml

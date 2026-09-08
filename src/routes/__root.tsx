@@ -18,16 +18,16 @@ function NotFoundComponent() {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Page not found</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Page introuvable</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          The page you're looking for doesn't exist or has been moved.
+          Ce lien n'existe pas ou a été déplacé.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Go home
+            Retour à l'accueil
           </Link>
         </div>
       </div>
@@ -46,10 +46,10 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          This page didn't load
+          Cette page n'a pas pu être chargée
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Something went wrong on our end. You can try refreshing or head back home.
+          Une erreur s'est produite. Vous pouvez réessayer sans quitter cette page.
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
           <button
@@ -59,14 +59,14 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
             }}
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Try again
+            Réessayer
           </button>
-          <a
-            href="/"
+          <Link
+            to="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
           >
-            Go home
-          </a>
+            Retour à l'accueil
+          </Link>
         </div>
       </div>
     </div>
@@ -77,19 +77,16 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
   head: () => ({
     meta: [
       { charSet: "utf-8" },
-      { name: "viewport", content: "width=device-width, initial-scale=1" },
+      { name: "viewport", content: "width=device-width, initial-scale=1, viewport-fit=cover" },
       { title: "Borne de l'Ouest — IRVE Technologie, bornes de recharge" },
-      { name: "description", content: "Sparkling Insights is a dynamic web application for showcasing electrical installation projects and services." },
+      { name: "description", content: "Installation, raccordement et maintenance de bornes de recharge par IRVE Technologie dans le Grand Ouest." },
       { name: "author", content: "IRVE Technologie" },
       { property: "og:title", content: "Borne de l'Ouest — IRVE Technologie" },
-      { property: "og:description", content: "Sparkling Insights is a dynamic web application for showcasing electrical installation projects and services." },
+      { property: "og:description", content: "Installation, raccordement et maintenance de bornes de recharge dans le Grand Ouest." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
-      { name: "twitter:site", content: "@Lovable" },
       { name: "twitter:title", content: "Borne de l'Ouest — IRVE Technologie" },
-      { name: "twitter:description", content: "Sparkling Insights is a dynamic web application for showcasing electrical installation projects and services." },
-      { property: "og:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/t2fqodpLLXe5OkA9nyNI7psg5Hl2/social-images/social-1780524315634-logo.webp" },
-      { name: "twitter:image", content: "https://storage.googleapis.com/gpt-engineer-file-uploads/t2fqodpLLXe5OkA9nyNI7psg5Hl2/social-images/social-1780524315634-logo.webp" },
+      { name: "twitter:description", content: "Installation, raccordement et maintenance de bornes de recharge dans le Grand Ouest." },
       { name: "theme-color", content: "#2f3f3a" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
@@ -120,7 +117,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "Organization",
           name: "IRVE Technologie",
           alternateName: "Borne de l'Ouest",
-          url: "https://kindred-share-beam.lovable.app",
+          url: "https://www.irvetechnologie.fr",
           telephone: "+33768084367",
           vatID: "FR89989533724",
           taxID: "98953372400013",
@@ -141,7 +138,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "WebSite",
           name: "Borne de l'Ouest",
           alternateName: "IRVE Technologie",
-          url: "https://kindred-share-beam.lovable.app",
+          url: "https://www.irvetechnologie.fr",
           inLanguage: "fr-FR",
           publisher: {
             "@type": "Organization",
@@ -159,7 +156,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 
 function RootShell({ children }: { children: ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="fr">
       <head>
         <HeadContent />
       </head>
