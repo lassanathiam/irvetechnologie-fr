@@ -1,3 +1,5 @@
+import logoAsset from "@/assets/logo-irve.png.asset.json";
+
 export const COMPANY = {
   raisonSociale: "IRVE Technologie",
   forme: "SAS",
@@ -57,8 +59,8 @@ export const GARANTIES = [
   },
 ];
 
-/** Logo affiché sur les devis. Remplacer par l'URL du logo fourni. */
-export const LOGO_URL: string | null = null;
+/** Logo affiché sur les documents (devis, factures, rapports). */
+export const LOGO_URL: string | null = logoAsset.url;
 
 export const euro = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
