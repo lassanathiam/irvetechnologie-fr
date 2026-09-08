@@ -46,6 +46,7 @@ function FactureDetail() {
   const query = useQuery({
     queryKey: ["facture", id],
     queryFn: () => fetchFacture({ data: { id } }),
+    retry: 1,
   });
 
   const invalidate = () => {
