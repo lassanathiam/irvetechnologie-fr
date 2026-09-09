@@ -410,11 +410,11 @@ function SectionHeading({ n, title }: { n: string; title: string }) {
   );
 }
 
-function Field({ label, name, type = "text", required }: { label: string; name: string; type?: string; required?: boolean }) {
+function Field({ label, name, type = "text", required, defaultValue }: { label: string; name: string; type?: string; required?: boolean; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}{required && <span className="text-primary"> *</span>}</span>
-      <input name={name} type={type} required={required} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+      <input name={name} type={type} required={required} defaultValue={defaultValue} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
     </label>
   );
 }
