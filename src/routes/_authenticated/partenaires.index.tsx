@@ -49,6 +49,7 @@ function PartenairesAdmin() {
 
   const [nom, setNom] = useState("");
   const [notes, setNotes] = useState("");
+  const [email, setEmail] = useState("");
   const [couleur, setCouleur] = useState(COULEURS[0]!);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -70,10 +71,17 @@ function PartenairesAdmin() {
     setBusy(true);
     try {
       await save({
-        data: { nom: nom.trim(), actif: true, notes: notes.trim() || null, couleur },
+        data: {
+          nom: nom.trim(),
+          actif: true,
+          notes: notes.trim() || null,
+          couleur,
+          email: email.trim() || null,
+        },
       });
       setNom("");
       setNotes("");
+      setEmail("");
       setCouleur(COULEURS[(list.data?.length ?? 0) % COULEURS.length]!);
 
       await list.refetch();
@@ -119,6 +127,18 @@ function PartenairesAdmin() {
               onChange={(e) => setNotes(e.target.value)}
               className={INPUT}
               placeholder="Contact, conditions tarifaires…"
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-mono text-xs text-muted-foreground">
+              Email du partenaire (reçoit le bilan et les photos à l&apos;archivage du chantier)
+            </span>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              className={INPUT}
+              placeholder="contact@pure-energie.fr"
             />
           </label>
           <div className="sm:col-span-2">
@@ -179,6 +199,39 @@ function PartenairesAdmin() {
                         </span>
                       </p>
                       {p.notes && <p className="text-xs text-muted-foreground mt-1">{p.notes}</p>}
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {p.email ? `Email : ${p.email}` : "Aucun email — pas de bilan envoyé"}{" "}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const saisie = window.prompt(
+                              `Email de ${p.nom} pour recevoir le bilan de chantier :`,
+                              p.email ?? "",
+                            );
+                            if (saisie === null) return;
+                            try {
+                              await save({
+                                data: {
+                                  id: p.id,
+                                  nom: p.nom,
+                                  actif: p.actif,
+                                  notes: p.notes,
+                                  couleur: p.couleur ?? "#0284c7",
+                                  email: saisie.trim() || null,
+                                },
+                              });
+                              await list.refetch();
+                            } catch (e) {
+                              window.alert(
+                                e instanceof Error ? e.message : "Enregistrement impossible.",
+                              );
+                            }
+                          }}
+                          className="underline hover:text-primary"
+                        >
+                          modifier
+                        </button>
+                      </p>
                       <p className="text-[11px] text-mono mt-2 break-all text-muted-foreground">
                         {lien(p.token)}
                       </p>
@@ -196,6 +249,7 @@ function PartenairesAdmin() {
                                   actif: p.actif,
                                   notes: p.notes,
                                   couleur: c,
+                                  email: p.email,
                                 },
                               });
                               await list.refetch();
@@ -244,6 +298,7 @@ function PartenairesAdmin() {
                               actif: !p.actif,
                               notes: p.notes,
                               couleur: p.couleur ?? "#0284c7",
+                              email: p.email,
                             },
                           });
 

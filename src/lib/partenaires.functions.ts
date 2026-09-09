@@ -40,7 +40,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, token, actif, notes, couleur, created_at")
+      .select("id, nom, token, actif, notes, couleur, email, created_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -68,6 +68,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
       actif?: boolean;
       notes?: string | null;
       couleur?: string | null;
+      email?: string | null;
     }) =>
       z
         .object({
@@ -80,6 +81,12 @@ export const savePartenaire = createServerFn({ method: "POST" })
             .trim()
             .regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide")
             .default("#0284c7"),
+          email: z
+            .preprocess(
+              (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+              z.string().trim().email("Adresse email invalide").max(255).nullable(),
+            )
+            .default(null),
         })
         .parse(raw),
   )
@@ -92,6 +99,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
           actif: data.actif,
           notes: data.notes ?? null,
           couleur: data.couleur,
+          email: data.email ?? null,
         })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -104,6 +112,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
         actif: data.actif,
         notes: data.notes ?? null,
         couleur: data.couleur,
+        email: data.email ?? null,
         owner_user_id: context.userId,
       })
       .select("id")

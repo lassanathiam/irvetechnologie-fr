@@ -169,22 +169,135 @@ export const updateAdresseRendezVous = createServerFn({ method: "POST" })
     return { ok: true, geocode: Boolean(geo) };
   });
 
-/** Archive (ou sort des archives) un chantier clôturé, sans le supprimer. */
+/**
+ * Archive (ou sort des archives) un chantier clôturé, sans le supprimer.
+ * À l'archivage, envoie automatiquement le bilan et les photos au client
+ * et au partenaire donneur d'ordre (une seule fois par chantier).
+ */
 export const archiverRendezVous = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string; archive: boolean }) =>
-    z.object({ id: z.string().uuid(), archive: z.boolean() }).parse(raw),
+  .inputValidator((raw: { id: string; archive: boolean; notifier?: boolean }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        archive: z.boolean(),
+        notifier: z.boolean().default(true),
+      })
+      .parse(raw),
   )
   .handler(async ({ data, context }) => {
+    const maintenant = new Date().toISOString();
     const { error } = await context.supabase
       .from("rendezvous")
       .update({
         archive: data.archive,
-        archive_at: data.archive ? new Date().toISOString() : null,
+        archive_at: data.archive ? maintenant : null,
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    if (!data.archive || !data.notifier) return { ok: true, envois: 0 };
+
+    let envois = 0;
+    try {
+      const { data: rdv } = await context.supabase
+        .from("rendezvous")
+        .select(
+          "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, date_debut, demarre_at, termine_at, metrage_m, puissance_borne, phase_installation, type_pose, montant_ht, notif_archive_at",
+        )
+        .eq("id", data.id)
+        .single();
+      if (!rdv || rdv.notif_archive_at) return { ok: true, envois: 0 };
+
+      // Photos du chantier : liens signés valables 7 jours.
+      const { data: photos } = await context.supabase
+        .from("rendezvous_photos")
+        .select("path")
+        .eq("rendezvous_id", data.id)
+        .order("created_at", { ascending: true })
+        .limit(6);
+      let urls: string[] = [];
+      if (photos?.length) {
+        const { data: signed } = await context.supabase.storage
+          .from("chantier-photos")
+          .createSignedUrls(
+            photos.map((p) => p.path),
+            60 * 60 * 24 * 7,
+          );
+        urls = (signed ?? [])
+          .map((s) => s.signedUrl)
+          .filter((u): u is string => Boolean(u));
+      }
+
+      const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
+      const fin = rdv.termine_at ? new Date(rdv.termine_at) : null;
+      const dureeMin =
+        debut && fin ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
+
+      const base = {
+        client_nom: rdv.client_nom,
+        adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
+        objet: rdv.designation || rdv.titre,
+        partenaire: rdv.partenaire,
+        date_debut: rdv.date_debut,
+        demarre_at: rdv.demarre_at,
+        termine_at: rdv.termine_at,
+        duree_min: dureeMin,
+        metrage_m: rdv.metrage_m,
+        puissance_borne: rdv.puissance_borne,
+        phase_installation: rdv.phase_installation,
+        type_pose: rdv.type_pose,
+        photos: urls,
+      };
+
+      const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+
+      // 1) Le client : bilan sans montant.
+      const emailClient = rdv.client_email?.trim();
+      if (emailClient) {
+        try {
+          const res = await sendTemplateEmail("chantier-archive", emailClient, {
+            templateData: { ...base, destinataire: "client" },
+            idempotencyKey: `chantier-archive-client-${data.id}`,
+          });
+          if (res.sent) envois += 1;
+        } catch {
+          /* échec d'envoi : l'archivage reste valable */
+        }
+      }
+
+      // 2) Le partenaire donneur d'ordre : bilan complet avec le montant.
+      let emailPartenaire: string | null = null;
+      if (rdv.partenaire_id) {
+        const { data: p } = await context.supabase
+          .from("partenaires")
+          .select("email")
+          .eq("id", rdv.partenaire_id)
+          .maybeSingle();
+        emailPartenaire = p?.email?.trim() || null;
+      }
+      if (emailPartenaire && emailPartenaire !== emailClient) {
+        try {
+          const res = await sendTemplateEmail("chantier-archive", emailPartenaire, {
+            templateData: { ...base, destinataire: "partenaire", montant_ht: rdv.montant_ht },
+            idempotencyKey: `chantier-archive-partenaire-${data.id}`,
+          });
+          if (res.sent) envois += 1;
+        } catch {
+          /* échec d'envoi : l'archivage reste valable */
+        }
+      }
+
+      if (envois > 0) {
+        await context.supabase
+          .from("rendezvous")
+          .update({ notif_archive_at: maintenant })
+          .eq("id", data.id);
+      }
+    } catch {
+      /* le bilan n'a pas pu partir : le chantier est tout de même archivé */
+    }
+    return { ok: true, envois };
   });
 
 export const deleteRendezVous = createServerFn({ method: "POST" })
