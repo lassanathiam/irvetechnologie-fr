@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -10,7 +11,7 @@ import {
   FileText,
   Inbox,
   Loader2,
-  MapPin,
+  
   Receipt,
   ShieldCheck,
   Wrench,
@@ -36,15 +37,6 @@ export const Route = createFileRoute("/_authenticated/espace/")({
   component: EspacePage,
 });
 
-const dateTimeFr = (iso: string) =>
-  new Intl.DateTimeFormat("fr-FR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
-
 const dateCourteFr = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(iso));
 
@@ -56,11 +48,29 @@ const STATUT_DEMANDE: Record<string, { label: string; cls: string }> = {
   clos: { label: "Clôturée", cls: "bg-muted text-muted-foreground" },
 };
 
+const DEVIS_BADGE: Record<string, { label: string; cls: string }> = {
+  brouillon: { label: "Brouillon", cls: "bg-slate-500/15 text-dashboard-muted border-dashboard-line" },
+  envoye: { label: "Envoyé", cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" },
+  accepte: { label: "Accepté", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
+  signe: { label: "Signé", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
+  refuse: { label: "Refusé", cls: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25" },
+};
+
+const moisJour = (iso: string) => {
+  const d = new Date(iso);
+  return {
+    mois: d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
+    jour: d.toLocaleDateString("fr-FR", { day: "2-digit" }),
+    heure: d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+  };
+};
+
 function EspacePage() {
   const fetchDashboard = useServerFn(getDashboard);
   const setStatut = useServerFn(updateStatutDemande);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
+  const [docTab, setDocTab] = useState<"devis" | "factures">("devis");
 
   const accepter = useMutation({
     mutationFn: (id: string) => setStatut({ data: { id, status: "accepte" } }),
@@ -180,39 +190,102 @@ function EspacePage() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-            <section className="neo-dashboard-panel overflow-hidden rounded-md lg:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashboard-line px-5 py-4">
-                <div>
-                  <p className="text-mono text-[10px] text-dashboard-foreground">Flux financier</p>
-                  <h2 className="mt-1 text-lg font-bold">Derniers devis et factures</h2>
+            <section className="neo-dashboard-panel overflow-hidden lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
+                <div className="flex items-center gap-6">
+                  <button
+                    type="button"
+                    onClick={() => setDocTab("devis")}
+                    className={`pro-heading border-b-2 px-1 pb-3 text-lg font-bold transition ${
+                      docTab === "devis"
+                        ? "border-dashboard-cyan text-dashboard-foreground"
+                        : "border-transparent text-dashboard-muted hover:text-dashboard-foreground"
+                    }`}
+                  >
+                    Devis récents
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocTab("factures")}
+                    className={`pro-heading border-b-2 px-1 pb-3 text-lg font-bold transition ${
+                      docTab === "factures"
+                        ? "border-dashboard-cyan text-dashboard-foreground"
+                        : "border-transparent text-dashboard-muted hover:text-dashboard-foreground"
+                    }`}
+                  >
+                    Factures
+                  </button>
                 </div>
-                <Link to="/factures" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-dashboard-foreground">
+                <Link
+                  to={docTab === "devis" ? "/devis" : "/factures"}
+                  className="inline-flex min-h-11 items-center gap-1 pb-3 text-xs font-semibold text-dashboard-cyan hover:underline"
+                >
                   Tout afficher <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-sm">
-                  <thead className="neo-dashboard-muted bg-dashboard-raised text-mono text-[10px]">
-                    <tr><th className="px-5 py-3">Document</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">État</th><th className="px-5 py-3 text-right">Montant TTC</th></tr>
+                  <thead className="border-y border-dashboard-line bg-dashboard-raised text-[11px] font-bold uppercase tracking-wider text-dashboard-muted">
+                    <tr>
+                      <th className="px-5 py-3">Référence</th>
+                      <th className="px-4 py-3">Client</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-5 py-3 text-right">Montant TTC</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-dashboard-line">
-                    {(q.data?.factures ?? []).slice(0, 4).map((f) => (
-                      <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs text-dashboard-foreground">{f.numero}</Link></td>
-                        <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
-                        <td className="px-4 py-3.5"><span className={f.statut === "payee" ? "text-dashboard-foreground" : "text-dashboard-muted"}>{f.statut === "payee" ? "Payée" : "En attente"}</span></td>
-                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(f.total_ttc))}</td>
-                      </tr>
-                    ))}
-                    {(q.data?.devis ?? []).slice(0, 3).map((d) => (
-                      <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs text-dashboard-muted">{d.numero}</Link></td>
-                        <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
-                        <td className="px-4 py-3.5 neo-dashboard-muted">Devis · {d.statut}</td>
-                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(d.total_ttc))}</td>
-                      </tr>
-                    ))}
-                    {!q.data?.factures.length && !q.data?.devis.length && <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucun document financier.</td></tr>}
+                  <tbody className="divide-y divide-dashboard-line/60">
+                    {docTab === "devis" &&
+                      (q.data?.devis ?? []).slice(0, 6).map((d) => {
+                        const badge = DEVIS_BADGE[d.statut] ?? DEVIS_BADGE.brouillon;
+                        return (
+                          <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised/60">
+                            <td className="px-5 py-3.5">
+                              <Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs font-medium text-dashboard-cyan">
+                                {d.numero}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold tabular-nums">{euro(Number(d.total_ttc))}</td>
+                          </tr>
+                        );
+                      })}
+                    {docTab === "factures" &&
+                      (q.data?.factures ?? []).slice(0, 6).map((f) => {
+                        const payee = f.statut === "payee";
+                        return (
+                          <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised/60">
+                            <td className="px-5 py-3.5">
+                              <Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs font-medium text-dashboard-cyan">
+                                {f.numero}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
+                            <td className="px-4 py-3.5">
+                              <span
+                                className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${
+                                  payee
+                                    ? "border-dashboard-cyan/30 bg-dashboard-cyan/10 text-dashboard-cyan"
+                                    : "border-amber-500/25 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                }`}
+                              >
+                                {payee ? "Payée" : "En attente"}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold tabular-nums">{euro(Number(f.total_ttc))}</td>
+                          </tr>
+                        );
+                      })}
+                    {docTab === "devis" && !q.data?.devis.length && (
+                      <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucun devis.</td></tr>
+                    )}
+                    {docTab === "factures" && !q.data?.factures.length && (
+                      <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucune facture.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
@@ -225,29 +298,35 @@ function EspacePage() {
               {!aVenir.length ? (
                 <Empty>Aucun rendez-vous planifié.</Empty>
               ) : (
-                <ul className="divide-y divide-border">
-                  {aVenir.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        to="/planning"
-                        search={{ rdv: r.id }}
-                        className="py-3.5 flex flex-wrap items-baseline justify-between gap-3 hover:text-primary"
-                      >
-                        <span className="min-w-0">
-                          <span className="block text-base font-semibold truncate">
-                            {r.client_nom}
+                <ul className="divide-y divide-dashboard-line/60">
+                  {aVenir.map((r) => {
+                    const dj = moisJour(r.date_debut);
+                    return (
+                      <li key={r.id}>
+                        <Link
+                          to="/planning"
+                          search={{ rdv: r.id }}
+                          className="flex items-center gap-4 px-1 py-3 transition hover:bg-dashboard-raised/60 rounded-md"
+                        >
+                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-lg border border-dashboard-line bg-dashboard-raised">
+                            <span className="text-[10px] font-bold uppercase leading-none text-dashboard-muted">
+                              {dj.mois}
+                            </span>
+                            <span className="pro-heading text-xl font-bold leading-none text-dashboard-foreground">
+                              {dj.jour}
+                            </span>
                           </span>
-                          <span className="mt-1 block text-sm text-muted-foreground truncate">
-                            <MapPin className="inline h-3.5 w-3.5 mr-1" />
-                            {r.cp_ville || r.adresse}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{r.client_nom}</span>
+                            <span className="mt-0.5 block truncate text-xs text-dashboard-muted">
+                              {dj.heure} — {r.cp_ville || r.adresse}
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-mono text-sm font-bold text-primary whitespace-nowrap">
-                          {dateTimeFr(r.date_debut)}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                          <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-dashboard-cyan/70" />
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Panel>
@@ -261,28 +340,30 @@ function EspacePage() {
               {!nouvelles.length ? (
                 <Empty>Aucune nouvelle demande.</Empty>
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="space-y-3">
                   {nouvelles.map((d) => (
-                    <li key={d.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                    <li
+                      key={d.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashboard-line/60 bg-dashboard-raised/60 p-4"
+                    >
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">
+                        <p className="truncate text-sm font-bold">
                           {d.nom}{" "}
-                          <span className="text-mono text-xs font-normal text-muted-foreground">
+                          <span className="font-mono text-xs font-normal text-dashboard-muted">
                             {d.code_postal}
                           </span>
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="mt-1 text-xs text-dashboard-muted">
                           Reçue le {dateCourteFr(d.created_at)}
                           {d.formule ? ` · formule ${d.formule}` : ""}
                         </p>
                       </div>
                       <Button
                         type="button"
-                        variant="outline"
                         size="sm"
                         onClick={() => accepter.mutate(d.id)}
                         disabled={accepter.isPending}
-                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-foreground hover:border-dashboard-muted"
+                        className="min-h-11 rounded-md bg-dashboard-cyan font-bold text-dashboard-panel hover:brightness-110"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
                       </Button>
@@ -351,60 +432,6 @@ function EspacePage() {
               )}
             </Panel>
 
-            <Panel icon={FileText} title="Devis récents" action={{ to: "/devis", label: "Gérer les devis" }}>
-              {!q.data?.devis.length ? (
-                <Empty>Aucun devis.</Empty>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {q.data.devis.slice(0, 6).map((d) => (
-                    <li key={d.id} className="py-3 flex items-baseline justify-between gap-4">
-                      <Link
-                        to="/devis/$id"
-                        params={{ id: d.id }}
-                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
-                      >
-                        <span className="text-mono text-xs text-primary">{d.numero}</span> {d.client_nom}
-                      </Link>
-                      <span className="text-mono text-xs font-bold whitespace-nowrap">
-                        {euro(Number(d.total_ttc))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
-
-            <Panel icon={Receipt} title="Factures" action={{ to: "/factures", label: "Gérer les factures" }}>
-              {!q.data?.factures.length ? (
-                <Empty>Aucune facture.</Empty>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {q.data.factures.map((f) => (
-                    <li key={f.id} className="py-3 flex items-baseline justify-between gap-4">
-                      <Link
-                        to="/factures/$id"
-                        params={{ id: f.id }}
-                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
-                      >
-                        <span className="text-mono text-xs text-primary">{f.numero}</span> {f.client_nom}
-                      </Link>
-                      <span className="text-mono text-xs font-bold whitespace-nowrap">
-                        {euro(Number(f.total_ttc))}
-                        <span
-                          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${
-                            f.statut === "payee"
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {f.statut === "payee" ? "Payée" : "En attente"}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
           </div>
 
           <p className="neo-dashboard-muted mt-6 text-mono text-[10px]">
