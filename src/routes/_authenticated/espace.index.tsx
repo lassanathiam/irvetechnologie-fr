@@ -11,7 +11,7 @@ import {
   FileText,
   Inbox,
   Loader2,
-  MapPin,
+  
   Receipt,
   ShieldCheck,
   Wrench,
@@ -36,15 +36,6 @@ export const Route = createFileRoute("/_authenticated/espace/")({
   }),
   component: EspacePage,
 });
-
-const dateTimeFr = (iso: string) =>
-  new Intl.DateTimeFormat("fr-FR", {
-    weekday: "short",
-    day: "2-digit",
-    month: "short",
-    hour: "2-digit",
-    minute: "2-digit",
-  }).format(new Date(iso));
 
 const dateCourteFr = (iso: string) =>
   new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short" }).format(new Date(iso));
