@@ -261,6 +261,15 @@
 .neo-dashboard-panel {
   background: var(--dashboard-panel);
   border: 1px solid var(--dashboard-line);
+  border-radius: 0.75rem;
+}
+
+.pro-workspace {
+  font-family: "Figtree", system-ui, sans-serif;
+}
+.pro-workspace .pro-heading {
+  font-family: "Outfit", "Space Grotesk", sans-serif;
+}
 }
 
 .neo-dashboard-kpi {
