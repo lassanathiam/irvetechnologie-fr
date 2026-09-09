@@ -476,6 +476,7 @@ export type Database = {
       partenaires: {
         Row: {
           actif: boolean
+          couleur: string
           created_at: string
           id: string
           nom: string
@@ -486,6 +487,7 @@ export type Database = {
         }
         Insert: {
           actif?: boolean
+          couleur?: string
           created_at?: string
           id?: string
           nom: string
@@ -496,6 +498,7 @@ export type Database = {
         }
         Update: {
           actif?: boolean
+          couleur?: string
           created_at?: string
           id?: string
           nom?: string
@@ -706,6 +709,7 @@ export type Database = {
           date_a_confirmer: boolean
           date_debut: string
           demande_id: string | null
+          demarre_at: string | null
           designation: string | null
           distance_km: number | null
           duree_min: number
@@ -717,6 +721,7 @@ export type Database = {
           metrage_m: number | null
           montant_ht: number
           notes: string | null
+          notif_fin_at: string | null
           origine: string
           partenaire: string | null
           partenaire_id: string | null
@@ -725,6 +730,7 @@ export type Database = {
           statut: string
           statut_facturation: string
           technicien: string | null
+          termine_at: string | null
           titre: string
           tva_pct: number
           type: string
@@ -748,6 +754,7 @@ export type Database = {
           date_a_confirmer?: boolean
           date_debut: string
           demande_id?: string | null
+          demarre_at?: string | null
           designation?: string | null
           distance_km?: number | null
           duree_min?: number
@@ -759,6 +766,7 @@ export type Database = {
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
+          notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
@@ -767,6 +775,7 @@ export type Database = {
           statut?: string
           statut_facturation?: string
           technicien?: string | null
+          termine_at?: string | null
           titre: string
           tva_pct?: number
           type?: string
@@ -790,6 +799,7 @@ export type Database = {
           date_a_confirmer?: boolean
           date_debut?: string
           demande_id?: string | null
+          demarre_at?: string | null
           designation?: string | null
           distance_km?: number | null
           duree_min?: number
@@ -801,6 +811,7 @@ export type Database = {
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
+          notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
@@ -809,6 +820,7 @@ export type Database = {
           statut?: string
           statut_facturation?: string
           technicien?: string | null
+          termine_at?: string | null
           titre?: string
           tva_pct?: number
           type?: string
