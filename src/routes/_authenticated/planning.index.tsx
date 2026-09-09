@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
+  Archive,
+  ArchiveRestore,
   CalendarClock,
   CheckCircle2,
   FileCheck2,
@@ -10,7 +12,9 @@ import {
   Fuel,
   Loader2,
   MapPin,
+  MessageCircle,
   Pencil,
+  Phone,
   Plus,
   Route as RouteIcon,
   ShieldCheck,
@@ -18,6 +22,7 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  archiverRendezVous,
   createRendezVous,
   deleteRendezVous,
   listRendezVous,
@@ -39,8 +44,10 @@ import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/In
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
+import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
+
 
 export const Route = createFileRoute("/_authenticated/planning/")({
   head: () => ({
