@@ -190,6 +190,22 @@ function DemandesPage() {
                         {st.label}
                       </span>
                     </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-mono text-[11px] font-bold rounded-full border border-primary/50 text-primary px-2.5 py-1">
+                        {TYPE_DEMANDE_LABELS[d.type_demande ?? "raccordement"] ??
+                          "Demande de raccordement"}
+                      </span>
+                      {d.formule && (
+                        <span className="text-mono text-[11px] rounded-full border border-border text-muted-foreground px-2.5 py-1">
+                          Formule {FORMULE_LABELS[d.formule] ?? d.formule}
+                        </span>
+                      )}
+                      {Number(d.nb_bornes ?? 0) > 0 && (
+                        <span className="text-mono text-[11px] rounded-full border border-border text-muted-foreground px-2.5 py-1">
+                          {d.nb_bornes} borne{Number(d.nb_bornes) > 1 ? "s" : ""}
+                        </span>
+                      )}
+                    </div>
                     <div className="text-xs text-muted-foreground mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
                       <span className="inline-flex items-center gap-1">
                         <Mail className="h-3 w-3" /> {d.email}
