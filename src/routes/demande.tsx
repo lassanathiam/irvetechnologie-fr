@@ -16,6 +16,14 @@ const FORMULES: Record<Formule, { label: string; price: string }> = {
   pro: { label: "Pro / Flotte", price: "Sur devis" },
 };
 
+type TypeDemande = "raccordement" | "intervention" | "maintenance" | "souscription";
+const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
+  { v: "raccordement", label: "Demande de raccordement (installation)" },
+  { v: "intervention", label: "Demande d'intervention (dépannage)" },
+  { v: "maintenance", label: "Demande de maintenance / entretien" },
+  { v: "souscription", label: "Souscription à une formule" },
+];
+
 export const Route = createFileRoute("/demande")({
   validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
     const f = search.formule;
@@ -66,6 +74,9 @@ function Demande() {
   const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
   const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!);
   const alerte = alerteAbonnement(kva, puissanceBorne);
+  const [typeDemande, setTypeDemande] = useState<TypeDemande>(
+    formule ? "souscription" : "raccordement",
+  );
   const [tableau, setTableau] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
@@ -155,6 +166,8 @@ function Demande() {
       const get = (k: string) => (fd.get(k)?.toString() ?? "").trim();
       const distanceRaw = get("distance");
       const distance = distanceRaw ? Number(distanceRaw) : null;
+      const nbRaw = get("nb_bornes");
+      const nb = nbRaw ? Number(nbRaw) : null;
       const res = await submitDemandeFn({
         data: {
           nom: get("nom"),
@@ -170,6 +183,8 @@ function Demande() {
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
           notes: get("notes") || null,
           formule: formule ?? null,
+          type_demande: typeDemande,
+          nb_bornes: nb && Number.isFinite(nb) && nb > 0 ? Math.round(nb) : null,
           website: get("website") || null,
           elapsed_ms: Date.now() - mountedAt.current,
         },
@@ -303,6 +318,23 @@ function Demande() {
           <div>
             <SectionHeading n="03" title="Votre projet" />
             <div className="grid md:grid-cols-2 gap-4 mt-8">
+              <SelectControlled
+                label="Objet de votre demande"
+                name="type_demande"
+                options={TYPES_DEMANDE.map((t) => t.label)}
+                value={TYPES_DEMANDE.find((t) => t.v === typeDemande)!.label}
+                onChange={(label) =>
+                  setTypeDemande(
+                    TYPES_DEMANDE.find((t) => t.label === label)?.v ?? "raccordement",
+                  )
+                }
+              />
+              <Field
+                label="Nombre de bornes"
+                name="nb_bornes"
+                type="number"
+                defaultValue={formule === "pro" ? "2" : "1"}
+              />
               <Select label="Type de bien" name="bien" options={["Maison individuelle", "Copropriété", "Entreprise / parking", "Concession auto"]} />
               <Select label="Type d'installation" name="type" options={["Intérieure (garage)", "Extérieure (façade)", "Sur poteau / borne", "À déterminer"]} />
               <Field label="Distance tableau → borne (m)" name="distance" type="number" />
@@ -378,11 +410,11 @@ function SectionHeading({ n, title }: { n: string; title: string }) {
   );
 }
 
-function Field({ label, name, type = "text", required }: { label: string; name: string; type?: string; required?: boolean }) {
+function Field({ label, name, type = "text", required, defaultValue }: { label: string; name: string; type?: string; required?: boolean; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}{required && <span className="text-primary"> *</span>}</span>
-      <input name={name} type={type} required={required} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
+      <input name={name} type={type} required={required} defaultValue={defaultValue} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition" />
     </label>
   );
 }

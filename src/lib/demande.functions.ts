@@ -21,6 +21,11 @@ const submitSchema = z.object({
   phase: z.string().trim().max(40).optional().nullable(),
   notes: z.string().trim().max(2000).optional().nullable(),
   formule: formuleSchema,
+  /** Nature de la demande : raccordement, intervention, maintenance ou souscription. */
+  type_demande: z
+    .enum(["raccordement", "intervention", "maintenance", "souscription"])
+    .default("raccordement"),
+  nb_bornes: z.number().int().min(1).max(500).optional().nullable(),
   // Honeypot — must stay empty. Bots usually fill every field.
   website: z.string().max(0).optional().nullable(),
   // Time spent on the form in ms — humans take >1.5s
@@ -103,6 +108,8 @@ export const submitDemande = createServerFn({ method: "POST" })
         phase: data.phase ?? null,
         notes: data.notes ?? null,
         formule: data.formule ?? null,
+        type_demande: data.type_demande,
+        nb_bornes: data.nb_bornes ?? null,
       })
       .select("id")
       .single();

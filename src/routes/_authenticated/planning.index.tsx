@@ -230,7 +230,7 @@ function PlanningPage() {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{
     id: string;
-    tab: "chantier" | "voirie" | "montant" | "adresse";
+    tab: "chantier" | "voirie" | "montant" | "adresse" | "date";
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
@@ -1141,6 +1141,7 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
                     const tel = telLien(r.client_telephone);
@@ -1218,7 +1219,19 @@ function PlanningPage() {
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
                                   : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
-                              </span>
+                               </span>
+                              {r.date_a_confirmer && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDossier(r.id);
+                                    setPanel({ id: r.id, tab: "date" });
+                                  }}
+                                  className="text-mono text-[11px] rounded-full border border-amber-500/60 text-amber-600 dark:text-amber-400 px-2.5 py-1 inline-flex items-center gap-1 transition hover:bg-amber-500/10"
+                                >
+                                  <CalendarClock className="h-3 w-3" /> Fixer la date
+                                </button>
+                              )}
 
                               <span className="inline-flex items-center gap-1">
                                 <MapPin className="h-3 w-3" /> {r.adresse}
@@ -1488,6 +1501,22 @@ function PlanningPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
+                                    setPanel(isDatePanel ? null : { id: r.id, tab: "date" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isDatePanel
+                                      ? "border-primary text-primary"
+                                      : r.date_a_confirmer
+                                        ? "border-amber-500/60 text-amber-600 dark:text-amber-400"
+                                        : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <CalendarClock className="h-3 w-3" />{" "}
+                                  {r.date_a_confirmer ? "Fixer la date" : "Modifier la date"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
                                     setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
                                   }
                                   className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
@@ -1636,6 +1665,61 @@ function PlanningPage() {
                               </button>
                               <p className="text-[11px] text-muted-foreground">
                                 La carte et le temps de trajet seront recalculés automatiquement.
+                              </p>
+                            </div>
+                          </form>
+                        )}
+
+                        {isDatePanel && (
+                          <form
+                            key={`date-${r.id}`}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const val = String(f.get("date_debut") ?? "");
+                              const d = new Date(val);
+                              if (Number.isNaN(d.getTime())) {
+                                setError("Date de rendez-vous invalide.");
+                                return;
+                              }
+                              appliquer.mutate([{ id: r.id, date_debut: d.toISOString() }]);
+                              setPanel(null);
+                            }}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
+                          >
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Date et heure du rendez-vous
+                              </span>
+                              <input
+                                type="datetime-local"
+                                name="date_debut"
+                                required
+                                defaultValue={
+                                  r.date_a_confirmer
+                                    ? ""
+                                    : new Date(
+                                        new Date(r.date_debut).getTime() -
+                                          new Date(r.date_debut).getTimezoneOffset() * 60000,
+                                      )
+                                        .toISOString()
+                                        .slice(0, 16)
+                                }
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <div className="sm:col-span-2 flex flex-wrap items-center gap-4">
+                              <button
+                                type="submit"
+                                disabled={appliquer.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 w-fit disabled:opacity-60"
+                              >
+                                {appliquer.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Enregistrer la date
+                              </button>
+                              <p className="text-[11px] text-muted-foreground">
+                                La date apparaît aussitôt dans l&apos;agenda du partenaire et du
+                                client.
                               </p>
                             </div>
                           </form>
