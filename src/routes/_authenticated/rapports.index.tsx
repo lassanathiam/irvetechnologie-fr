@@ -362,9 +362,16 @@ function RapportsPage() {
 
   return (
     <ProShell>
-      <div className="mb-6 flex items-center gap-2 text-mono">
-        <ClipboardCheck className="h-4 w-4 text-primary" />
-        Rapports d'intervention
+      <div className="pro-workspace">
+      <div className="mb-8">
+        <div className="pro-kicker flex items-center gap-2">
+          <ClipboardCheck className="h-4 w-4" /> Contrôle terrain
+        </div>
+        <h1 className="pro-title mt-2 text-3xl sm:text-5xl">Rapports d’intervention</h1>
+        <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
+          Une saisie guidée, enregistrée automatiquement sur votre appareil.
+        </p>
+      </div>
       </div>
 
 

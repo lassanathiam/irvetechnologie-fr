@@ -132,6 +132,7 @@ function DemandesPage() {
 
   return (
     <ProShell>
+      <div className="pro-workspace">
       <div className="mb-6">
         <p className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
           Boîte de réception
@@ -144,6 +145,7 @@ function DemandesPage() {
           demande refusée reste consultable : vous pouvez la relancer et la remettre en cours à tout
           moment.
         </p>
+      </div>
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-6">

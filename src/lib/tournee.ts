@@ -121,7 +121,7 @@ export function planifierCampagne(
   base: { lat: number; lng: number } = BASE,
   options: { jours?: number; parJour?: number; rayonKm?: number; rayonJournee?: number } = {},
 ): Campagne {
-  const { jours: maxJours = 7, parJour = 3, rayonKm = 45, rayonJournee = 150 } = options;
+  const { jours: maxJours = 365, parJour = 3, rayonKm = 45, rayonJournee = 150 } = options;
   if (!stops.length) return { jours: [], kmTotal: 0, kmSepares: 0, nuitees: 0 };
 
   // 1. Secteurs géographiques

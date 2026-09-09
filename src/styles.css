@@ -28,7 +28,12 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-copper: var(--copper);
+  --color-copper-foreground: var(--copper-foreground);
+  --color-operational: var(--operational);
+  --color-operational-foreground: var(--operational-foreground);
   --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
 }
 
@@ -53,6 +58,10 @@
   --border: oklch(0.82 0.018 160);
   --input: oklch(0.91 0.015 160);
   --ring: oklch(0.55 0.15 158);
+  --copper: oklch(0.66 0.13 52);
+  --copper-foreground: oklch(0.19 0.02 160);
+  --operational: oklch(0.62 0.13 196);
+  --operational-foreground: oklch(0.98 0.005 160);
 
   --grid-line: oklch(0.55 0.15 158 / 0.07);
   --glow: oklch(0.55 0.15 158 / 0.28);
@@ -78,6 +87,10 @@
   --border: oklch(0.34 0.026 165);
   --input: oklch(0.30 0.024 165);
   --ring: oklch(0.72 0.17 158);
+  --copper: oklch(0.72 0.14 55);
+  --copper-foreground: oklch(0.18 0.02 165);
+  --operational: oklch(0.76 0.13 196);
+  --operational-foreground: oklch(0.16 0.018 165);
   --grid-line: oklch(0.72 0.17 158 / 0.08);
   --glow: oklch(0.72 0.17 158 / 0.32);
 }
@@ -100,7 +113,7 @@
   html, body {
     background-color: var(--color-background);
     color: var(--color-foreground);
-    font-family: var(--font-display);
+    font-family: var(--font-body);
     -webkit-font-smoothing: antialiased;
   }
   body {
@@ -108,6 +121,67 @@
       linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
       linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
     background-size: 64px 64px;
+  }
+}
+
+@utility pro-surface {
+  background: color-mix(in oklab, var(--card) 90%, transparent);
+  border: 1px solid color-mix(in oklab, var(--border) 76%, var(--primary));
+  box-shadow: 0 18px 48px -36px color-mix(in oklab, var(--foreground) 28%, transparent);
+  backdrop-filter: blur(16px);
+}
+
+@utility pro-kicker {
+  color: var(--operational);
+  font-family: var(--font-mono);
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+}
+
+@utility pro-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0;
+}
+
+.pro-shell {
+  background-color: var(--background);
+  background-image:
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+
+.pro-main > .pro-workspace,
+.pro-main > form {
+  animation: fade-up 0.45s ease-out both;
+}
+
+.pro-workspace section,
+.pro-workspace article {
+  box-shadow: 0 18px 48px -38px color-mix(in oklab, var(--foreground) 28%, transparent);
+}
+
+.pro-workspace input,
+.pro-workspace select,
+.pro-workspace textarea {
+  min-height: 44px;
+}
+
+.dark .pro-shell {
+  background-image:
+    radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--operational) 13%, transparent), transparent 34%),
+    radial-gradient(circle at 82% 72%, color-mix(in oklab, var(--primary) 11%, transparent), transparent 36%),
+    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
+    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pro-main > .pro-workspace,
+  .pro-main > form {
+    animation: none;
   }
 }
 

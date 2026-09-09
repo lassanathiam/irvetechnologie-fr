@@ -1,0 +1,4 @@
+- [x] Étendre la planification à un nombre libre de jours (1 à 365)
+- [x] Moderniser le tableau de bord selon la direction neo-précision choisie
+- [x] Harmoniser demandes, factures et rapports avec le nouveau langage visuel
+- [x] Vérifier les parcours principaux et les affichages mobile/ordinateur
