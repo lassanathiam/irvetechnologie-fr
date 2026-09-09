@@ -10,13 +10,17 @@ import {
   Loader2,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
+  RotateCcw,
   XCircle,
 } from "lucide-react";
 import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
 import { updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
+import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dateFr } from "@/lib/company";
+
 
 export const Route = createFileRoute("/_authenticated/demandes/")({
   head: () => ({
