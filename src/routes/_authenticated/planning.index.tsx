@@ -829,6 +829,21 @@ function PlanningPage() {
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => setMontantsVisibles((v) => !v)}
+              className="text-mono text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
+            >
+              {montantsVisibles ? (
+                <>
+                  <EyeOff className="h-3.5 w-3.5" /> Masquer les montants
+                </>
+              ) : (
+                <>
+                  <Eye className="h-3.5 w-3.5" /> Afficher les montants
+                </>
+              )}
+            </button>
           </div>
 
           {list.isLoading ? (
@@ -1747,6 +1762,33 @@ function PlanningPage() {
                       </p>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const items = campagne.jours.flatMap((j) =>
+                        j.stops.map((stop, i) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + j.jour);
+                          d.setHours(8 + i * 3, 0, 0, 0);
+                          return { id: stop.id, date_debut: d.toISOString() };
+                        }),
+                      );
+                      if (!items.length) return;
+                      if (
+                        !window.confirm(
+                          `Appliquer ce programme ? ${items.length} rendez-vous seront replanifiés aux dates proposées.`,
+                        )
+                      )
+                        return;
+                      appliquer.mutate(items);
+                    }}
+                    disabled={appliquer.isPending}
+                    className="mt-3 w-full hero-grad text-primary-foreground text-mono text-[11px] font-bold min-h-[42px] rounded-sm disabled:opacity-60"
+                  >
+                    {appliquer.isPending
+                      ? "Application en cours…"
+                      : "Appliquer ce programme aux rendez-vous"}
+                  </button>
                 </>
               ))}
           </div>
