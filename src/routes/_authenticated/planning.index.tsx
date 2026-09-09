@@ -53,7 +53,11 @@ import {
   VOIRIE_STATUTS,
   type VoirieInput,
 } from "@/lib/voirie.functions";
-import { listPartenaires } from "@/lib/partenaires.functions";
+import {
+  listPartenaires,
+  MATERIEL_LABELS,
+  PHOTO_CATEGORIES_LABELS,
+} from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
