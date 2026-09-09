@@ -683,7 +683,7 @@ export const listPhotosChantier = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("rendezvous_photos")
-      .select("id, path, source, legende, created_at")
+      .select("id, path, source, legende, categorie, created_at")
       .eq("rendezvous_id", data.rendezvous_id)
       .order("created_at", { ascending: false })
       .limit(60);
