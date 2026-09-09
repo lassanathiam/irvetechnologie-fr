@@ -712,17 +712,65 @@ function PlanningPage() {
         </section>
 
         <section className="order-3 lg:col-span-2 space-y-6">
-          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-primary" /> Rendez-vous programmés
-          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-primary" />
+              {vueArchives ? "Chantiers archivés" : "Rendez-vous programmés"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setVueArchives((v) => !v)}
+              className={`ml-auto text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                vueArchives
+                  ? "border-primary text-primary"
+                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              {vueArchives ? "Revenir aux chantiers actifs" : `Archives (${nbArchives})`}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { v: "tous", l: "Tous", point: "bg-muted-foreground" },
+              ...STATUTS.map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
+            ].map((f) => {
+              const nb =
+                f.v === "tous"
+                  ? toutes.filter((r) => Boolean(r.archive) === vueArchives).length
+                  : toutes.filter((r) => Boolean(r.archive) === vueArchives && r.statut === f.v)
+                      .length;
+              const on = filtreStatut === f.v;
+              return (
+                <button
+                  key={f.v}
+                  type="button"
+                  onClick={() => setFiltreStatut(f.v)}
+                  className={`text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                    on
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/60"
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${f.point}`} /> {f.l} ({nb})
+                </button>
+              );
+            })}
+          </div>
 
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
             <p className="text-sm text-muted-foreground">
-              Aucun rendez-vous. Créez le premier avec « Nouveau rendez-vous ».
+              {vueArchives
+                ? "Aucun chantier archivé pour le moment."
+                : filtreStatut !== "tous"
+                  ? "Aucun chantier dans cet état."
+                  : "Aucun rendez-vous. Créez le premier avec « Nouveau rendez-vous »."}
             </p>
           ) : (
+
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
