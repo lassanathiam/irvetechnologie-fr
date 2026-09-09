@@ -9,7 +9,11 @@ import {
   CheckCircle2,
   FileCheck2,
   Euro,
+  Eye,
+  EyeOff,
+  Flag,
   Fuel,
+  Play,
   Loader2,
   MapPin,
   MessageCircle,
@@ -22,8 +26,11 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  appliquerProgramme,
   archiverRendezVous,
   createRendezVous,
+  demarrerChantier,
+  terminerChantier,
   deleteRendezVous,
   listRendezVous,
   updateStatutRendezVous,
@@ -39,6 +46,7 @@ import {
   VOIRIE_STATUTS,
   type VoirieInput,
 } from "@/lib/voirie.functions";
+import { listPartenaires } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
@@ -75,42 +83,63 @@ const TYPES = [
 const STATUTS = [
   { v: "planifie", l: "Planifié" },
   { v: "confirme", l: "Confirmé" },
+  { v: "en_cours", l: "Travaux en cours" },
+  { v: "termine", l: "Terminé" },
   { v: "realise", l: "Réalisé" },
   { v: "annule", l: "Annulé" },
 ] as const;
 
-/** Code couleur unique pour l'état d'un chantier (badge + liseré de la fiche). */
+/** Code couleur unique pour l'état d'un chantier (badge + liseré + fond de la fiche). */
 const STATUT_STYLE: Record<
   string,
-  { label: string; badge: string; barre: string; point: string }
+  { label: string; badge: string; barre: string; point: string; fond: string }
 > = {
   planifie: {
     label: "Planifié",
-    badge: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40",
+    badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/50",
     barre: "before:bg-amber-500",
     point: "bg-amber-500",
+    fond: "bg-amber-50 dark:bg-amber-500/10 border-amber-300/70 dark:border-amber-500/30",
   },
   confirme: {
     label: "Confirmé",
-    badge: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/40",
+    badge: "bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/50",
     barre: "before:bg-sky-500",
     point: "bg-sky-500",
+    fond: "bg-sky-50 dark:bg-sky-500/10 border-sky-300/70 dark:border-sky-500/30",
+  },
+  en_cours: {
+    label: "Travaux en cours",
+    badge: "bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/50",
+    barre: "before:bg-violet-500",
+    point: "bg-violet-500",
+    fond: "bg-violet-50 dark:bg-violet-500/10 border-violet-300/70 dark:border-violet-500/30",
+  },
+  termine: {
+    label: "Terminé",
+    badge: "bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/50",
+    barre: "before:bg-teal-500",
+    point: "bg-teal-500",
+    fond: "bg-teal-50 dark:bg-teal-500/10 border-teal-300/70 dark:border-teal-500/30",
   },
   realise: {
     label: "Réalisé",
-    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40",
+    badge: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/50",
     barre: "before:bg-emerald-500",
     point: "bg-emerald-500",
+    fond: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300/70 dark:border-emerald-500/30",
   },
   annule: {
     label: "Annulé",
-    badge: "bg-destructive/15 text-destructive border-destructive/40",
+    badge: "bg-destructive/20 text-destructive border-destructive/50",
     barre: "before:bg-destructive",
     point: "bg-destructive",
+    fond: "bg-destructive/10 border-destructive/30",
   },
 };
 
 const styleStatut = (s?: string | null) => STATUT_STYLE[s ?? "planifie"] ?? STATUT_STYLE.planifie!;
+
 
 
 
@@ -187,6 +216,8 @@ function PlanningPage() {
     tab: "chantier" | "voirie" | "montant" | "adresse";
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
+  /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
+  const [dossier, setDossier] = useState<string | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -277,6 +308,45 @@ function PlanningPage() {
     mutationFn: (p: { id: string; archive: boolean }) => archiveFn({ data: p }),
     onSuccess: refresh,
   });
+  const demarrerFn = useServerFn(demarrerChantier);
+  const demarrer = useMutation({
+    mutationFn: (p: { id: string; demarre: boolean }) => demarrerFn({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Démarrage du chantier impossible."),
+  });
+  const terminerFn = useServerFn(terminerChantier);
+  const terminer = useMutation({
+    mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Clôture du chantier impossible."),
+  });
+  const programmeFn = useServerFn(appliquerProgramme);
+  const appliquer = useMutation({
+    mutationFn: (items: Array<{ id: string; date_debut: string }>) =>
+      programmeFn({ data: { items } }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Application du programme impossible."),
+  });
+
+  /** Couleur d'identification de chaque partenaire (carte + fiches). */
+  const fetchPartenaires = useServerFn(listPartenaires);
+  const partenaires = useQuery({
+    queryKey: ["partenaires"],
+    queryFn: () => fetchPartenaires(),
+  });
+  const couleurPartenaire = (nom?: string | null) => {
+    if (!nom?.trim()) return null;
+    const cible = nom.trim().toLowerCase();
+    return (
+      partenaires.data?.find((p) => p.nom.trim().toLowerCase() === cible)?.couleur ?? null
+    );
+  };
+
+  /** Confidentialité : les montants peuvent être masqués à l'écran (chantier, clients présents). */
+  const [montantsVisibles, setMontantsVisibles] = useState(true);
 
   /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
   const [vueArchives, setVueArchives] = useState(false);
@@ -325,13 +395,15 @@ function PlanningPage() {
           label: r.client_nom,
           sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           statut: r.statut,
+          couleur: couleurPartenaire(r.partenaire),
           date: dateTimeFr(r.date_debut),
           trajet:
             r.distance_km != null
               ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
               : null,
         })),
-    [rows],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, partenaires.data],
   );
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
@@ -757,6 +829,21 @@ function PlanningPage() {
                 </button>
               );
             })}
+            <button
+              type="button"
+              onClick={() => setMontantsVisibles((v) => !v)}
+              className="text-mono text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
+            >
+              {montantsVisibles ? (
+                <>
+                  <EyeOff className="h-3.5 w-3.5" /> Masquer les montants
+                </>
+              ) : (
+                <>
+                  <Eye className="h-3.5 w-3.5" /> Afficher les montants
+                </>
+              )}
+            </button>
           </div>
 
           {list.isLoading ? (
@@ -782,6 +869,7 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
                     const tel = telLien(r.client_telephone);
                     const wa = whatsappLien(
@@ -792,7 +880,7 @@ function PlanningPage() {
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`relative overflow-hidden bg-card border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${
+                        className={`relative overflow-hidden border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${st.fond} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
                             : "border-border"
@@ -894,13 +982,19 @@ function PlanningPage() {
                                     : "border-primary/40 text-primary"
                                 }`}
                               >
+                                {r.partenaire && couleurPartenaire(r.partenaire) && (
+                                  <span
+                                    className="inline-block h-2.5 w-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ background: couleurPartenaire(r.partenaire)! }}
+                                  />
+                                )}
                                 {r.origine === "sous_traitance"
                                   ? `Sous-traitance${r.partenaire ? ` · ${r.partenaire}` : ""}`
                                   : "Client direct"}
                               </span>
                               <span className="text-muted-foreground">
-                                {eurosFr(Number(r.montant_ht ?? 0))} HT ·{" "}
-                                {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
+                                {montantsVisibles ? `${eurosFr(Number(r.montant_ht ?? 0))} HT` : "montant masqué"}{" "}
+                                · {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
 
@@ -918,98 +1012,188 @@ function PlanningPage() {
                             )}
 
 
+                            {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              {r.chantier_valide ? (
+                              {!r.demarre_at && !r.termine_at && (
+                                <button
+                                  type="button"
+                                  onClick={() => demarrer.mutate({ id: r.id, demarre: true })}
+                                  disabled={demarrer.isPending}
+                                  className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-violet-600 text-white inline-flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                  <Play className="h-3.5 w-3.5" /> Démarrer les travaux
+                                </button>
+                              )}
+                              {r.demarre_at && !r.termine_at && (
+                                <>
+                                  <span className="text-mono text-[11px] text-violet-600 dark:text-violet-300">
+                                    Démarré à{" "}
+                                    {new Date(r.demarre_at).toLocaleTimeString("fr-FR", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (
+                                        !window.confirm(
+                                          `Terminer le chantier de ${r.client_nom} ? Un email de fin de chantier sera envoyé.`,
+                                        )
+                                      )
+                                        return;
+                                      terminer.mutate({ id: r.id, notifier: true });
+                                    }}
+                                    disabled={terminer.isPending}
+                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-teal-600 text-white inline-flex items-center gap-1.5 disabled:opacity-50"
+                                  >
+                                    <Flag className="h-3.5 w-3.5" /> Terminer le chantier
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => demarrer.mutate({ id: r.id, demarre: false })}
+                                    className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                  >
+                                    Annuler le démarrage
+                                  </button>
+                                </>
+                              )}
+                              {r.termine_at && (
+                                <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-teal-500/50 text-teal-700 dark:text-teal-300 inline-flex items-center gap-1">
+                                  <Flag className="h-3 w-3" /> Terminé le{" "}
+                                  {new Date(r.termine_at).toLocaleString("fr-FR")}
+                                  {r.notif_fin_at ? " · client prévenu" : ""}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Un seul bouton pour gérer tout le dossier */}
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDossier(dossierOuvert ? null : r.id);
+                                  if (dossierOuvert) setPanel(null);
+                                }}
+                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
+                                  dossierOuvert
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border hover:border-primary hover:text-primary"
+                                }`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
+                              </button>
+                              {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
                                   {r.chantier_valide_at
                                     ? ` le ${new Date(r.chantier_valide_at).toLocaleDateString("fr-FR")}`
                                     : ""}
                                 </span>
-                              ) : (
+                              )}
+                              {v && (
+                                <span className="text-mono text-[11px] text-muted-foreground">
+                                  Voirie : {VOIRIE_LABEL[v.statut] ?? v.statut}
+                                </span>
+                              )}
+                            </div>
+
+                            {dossierOuvert && (
+                              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     setPanel(isChantierPanel ? null : { id: r.id, tab: "chantier" })
                                   }
-                                  className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isChantierPanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
                                 >
-                                  <FileCheck2 className="h-3 w-3" /> Valider le chantier
+                                  <FileCheck2 className="h-3 w-3" /> Validation du chantier
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isVoiriePanel ? null : { id: r.id, tab: "voirie" })
-                                }
-                                className={`text-mono text-[11px] px-2 py-1 rounded-sm border inline-flex items-center gap-1 ${
-                                  v?.statut === "obtenue"
-                                    ? "border-primary/40 text-primary"
-                                    : v?.statut === "refusee"
-                                      ? "border-destructive/40 text-destructive"
-                                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-                                }`}
-                              >
-                                <ShieldCheck className="h-3 w-3" /> Voirie :{" "}
-                                {v ? (VOIRIE_LABEL[v.statut] ?? v.statut) : "à renseigner"}
-                              </button>
-                              {v?.url && (
-                                <a
-                                  href={v.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-mono text-[11px] text-primary hover:underline"
-                                >
-                                  Voir le document
-                                </a>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
-                                }
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
-                              >
-                                <Euro className="h-3 w-3" /> Montant & facturation
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
-                                }
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
-                              >
-                                <Pencil className="h-3 w-3" /> Modifier l'adresse
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  archiver.mutate({ id: r.id, archive: !r.archive })
-                                }
-                                disabled={archiver.isPending}
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
-                              >
-                                {r.archive ? (
-                                  <>
-                                    <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
-                                  </>
-                                ) : (
-                                  <>
-                                    <Archive className="h-3 w-3" /> Archiver le chantier
-                                  </>
-                                )}
-                              </button>
-
-                              {r.chantier_valide && (
                                 <button
                                   type="button"
-                                  onClick={() => valider.mutate({ id: r.id, valide: false })}
-                                  className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                  onClick={() =>
+                                    setPanel(isVoiriePanel ? null : { id: r.id, tab: "voirie" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isVoiriePanel
+                                      ? "border-primary text-primary"
+                                      : v?.statut === "obtenue"
+                                        ? "border-primary/40 text-primary"
+                                        : v?.statut === "refusee"
+                                          ? "border-destructive/40 text-destructive"
+                                          : "border-border hover:border-primary hover:text-primary"
+                                  }`}
                                 >
-                                  Annuler la validation
+                                  <ShieldCheck className="h-3 w-3" /> Voirie
                                 </button>
-                              )}
-                            </div>
+                                {v?.url && (
+                                  <a
+                                    href={v.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-mono text-[11px] text-primary hover:underline"
+                                  >
+                                    Voir le document
+                                  </a>
+                                )}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isMontantPanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <Euro className="h-3 w-3" /> Montant & facturation
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isAdressePanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <MapPin className="h-3 w-3" /> Adresse & technique
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => archiver.mutate({ id: r.id, archive: !r.archive })}
+                                  disabled={archiver.isPending}
+                                  className="text-mono text-[11px] min-h-[38px] px-3 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {r.archive ? (
+                                    <>
+                                      <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Archive className="h-3 w-3" /> Archiver
+                                    </>
+                                  )}
+                                </button>
+                                {r.chantier_valide && (
+                                  <button
+                                    type="button"
+                                    onClick={() => valider.mutate({ id: r.id, valide: false })}
+                                    className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                  >
+                                    Annuler la validation
+                                  </button>
+                                )}
+                              </div>
+                            )}
+
                             {r.chantier_commentaire && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 Validation : {r.chantier_commentaire}
@@ -1507,7 +1691,7 @@ function PlanningPage() {
               150 km, la journée prévoit une nuitée sur place.
             </p>
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              {[7, 14].map((h) => (
+              {[7, 14, 30].map((h) => (
                 <button
                   key={h}
                   type="button"
@@ -1578,6 +1762,33 @@ function PlanningPage() {
                       </p>
                     )}
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const items = campagne.jours.flatMap((j) =>
+                        j.stops.map((stop, i) => {
+                          const d = new Date();
+                          d.setDate(d.getDate() + j.jour);
+                          d.setHours(8 + i * 3, 0, 0, 0);
+                          return { id: stop.id, date_debut: d.toISOString() };
+                        }),
+                      );
+                      if (!items.length) return;
+                      if (
+                        !window.confirm(
+                          `Appliquer ce programme ? ${items.length} rendez-vous seront replanifiés aux dates proposées.`,
+                        )
+                      )
+                        return;
+                      appliquer.mutate(items);
+                    }}
+                    disabled={appliquer.isPending}
+                    className="mt-3 w-full hero-grad text-primary-foreground text-mono text-[11px] font-bold min-h-[42px] rounded-sm disabled:opacity-60"
+                  >
+                    {appliquer.isPending
+                      ? "Application en cours…"
+                      : "Appliquer ce programme aux rendez-vous"}
+                  </button>
                 </>
               ))}
           </div>

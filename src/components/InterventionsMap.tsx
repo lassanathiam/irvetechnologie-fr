@@ -10,6 +10,8 @@ export type MapMarker = {
   date?: string | null;
   /** Ex. "54 km · 48 min" — trajet routier depuis la base. */
   trajet?: string | null;
+  /** Couleur du partenaire / donneur d'ordre (repère visuel sur la carte). */
+  couleur?: string | null;
 };
 
 const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
@@ -18,6 +20,8 @@ const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
 export const STATUT_COLORS: Record<string, string> = {
   planifie: "#f59e0b",
   confirme: "#0284c7",
+  en_cours: "#7c3aed",
+  termine: "#0d9488",
   realise: "#16a34a",
   annule: "#94a3b8",
 };
@@ -60,6 +64,8 @@ export function InterventionsMap({
   const L = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byId = useRef<Record<string, any>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const moiRef = useRef<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -95,13 +101,13 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function dot(color: string, active: boolean, n?: number) {
-    const size = active ? 40 : 30;
+  function dot(color: string, active: boolean, n?: number, etat?: string) {
+    const size = active ? 44 : 34;
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid #fff;box-shadow:0 0 0 ${active ? 7 : 4}px ${color}33;color:#fff;font:700 ${active ? 15 : 12}px/1 system-ui">${n ?? ""}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid ${etat ?? "#fff"};box-shadow:0 0 0 ${active ? 8 : 5}px ${(etat ?? color)}55;color:#fff;font:700 ${active ? 16 : 13}px/1 system-ui">${n ?? ""}</span>`,
     });
   }
 
@@ -124,9 +130,10 @@ export function InterventionsMap({
       .bindTooltip(`Base · ${BASE.label}`, { direction: "top" });
 
     markers.forEach((m, i) => {
-      const color = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
+      const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
+      const color = m.couleur || etat;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1) })
+        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat) })
         .addTo(layer.current)
         .bindPopup(
           `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
@@ -188,8 +195,42 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeCoords, routeEstime, tourneeCoords]);
 
+  /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
+  function maPosition() {
+    if (!navigator.geolocation || !map.current) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const leaflet = L.current;
+        const p: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        if (moiRef.current) moiRef.current.remove();
+        moiRef.current = leaflet
+          .circleMarker(p, {
+            radius: 8,
+            color: "#fff",
+            weight: 3,
+            fillColor: "#2563eb",
+            fillOpacity: 1,
+          })
+          .addTo(map.current)
+          .bindTooltip("Ma position", { direction: "top" });
+        map.current.setView(p, 11);
+      },
+      () => {
+        // Position refusée ou indisponible : la carte reste inchangée.
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
   return (
-    <div className="rounded-sm overflow-hidden border border-border">
+    <div className="relative rounded-sm overflow-hidden border border-border">
+      <button
+        type="button"
+        onClick={maPosition}
+        className="absolute right-2 top-2 z-[500] text-mono text-[11px] font-bold px-3 py-2 rounded-sm bg-card/95 border border-border shadow hover:border-primary hover:text-primary"
+      >
+        Ma position
+      </button>
       <div ref={el} style={{ height }} className="w-full bg-muted" />
     </div>
   );
