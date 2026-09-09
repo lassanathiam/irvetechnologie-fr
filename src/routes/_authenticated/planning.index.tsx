@@ -230,7 +230,7 @@ function PlanningPage() {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{
     id: string;
-    tab: "chantier" | "voirie" | "montant" | "adresse";
+    tab: "chantier" | "voirie" | "montant" | "adresse" | "date";
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
@@ -1141,6 +1141,7 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
                     const tel = telLien(r.client_telephone);
