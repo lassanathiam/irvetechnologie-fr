@@ -171,11 +171,52 @@
 }
 
 .pro-shell {
+  --background: oklch(0.17 0.028 258);
+  --foreground: oklch(0.96 0.01 250);
+  --card: oklch(0.205 0.032 258);
+  --card-foreground: oklch(0.96 0.01 250);
+  --popover: oklch(0.205 0.032 258);
+  --popover-foreground: oklch(0.96 0.01 250);
+  --primary: oklch(0.79 0.14 205);
+  --primary-foreground: oklch(0.15 0.03 258);
+  --secondary: oklch(0.25 0.04 258);
+  --secondary-foreground: oklch(0.94 0.012 250);
+  --muted: oklch(0.245 0.036 258);
+  --muted-foreground: oklch(0.72 0.035 250);
+  --accent: oklch(0.71 0.18 290);
+  --accent-foreground: oklch(0.98 0.005 250);
+  --border: oklch(0.34 0.055 255);
+  --input: oklch(0.235 0.035 258);
+  --ring: oklch(0.79 0.14 205);
+  --operational: oklch(0.79 0.14 205);
+  --grid-line: oklch(0.79 0.14 205 / 0.055);
+  --glow: oklch(0.79 0.14 205 / 0.25);
   background-color: var(--background);
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
     linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
   background-size: 40px 40px;
+}
+
+.dark .pro-shell {
+  --background: oklch(0.125 0.024 260);
+  --card: oklch(0.17 0.03 260);
+  --popover: oklch(0.17 0.03 260);
+  --muted: oklch(0.215 0.035 258);
+  --border: oklch(0.31 0.055 255);
+  --input: oklch(0.205 0.034 258);
+}
+
+.pro-header {
+  box-shadow: 0 14px 36px -30px color-mix(in oklab, var(--primary) 65%, transparent);
+}
+
+.pro-nav-link {
+  transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease;
+}
+
+.pro-qualifications {
+  box-shadow: inset 0 -1px 0 color-mix(in oklab, var(--primary) 18%, transparent);
 }
 
 .neo-dashboard {
@@ -219,14 +260,6 @@
 .pro-workspace select,
 .pro-workspace textarea {
   min-height: 44px;
-}
-
-.dark .pro-shell {
-  background-image:
-    radial-gradient(circle at 18% 12%, color-mix(in oklab, var(--operational) 13%, transparent), transparent 34%),
-    radial-gradient(circle at 82% 72%, color-mix(in oklab, var(--primary) 11%, transparent), transparent 36%),
-    linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
-    linear-gradient(to bottom, var(--grid-line) 1px, transparent 1px);
 }
 
 @media (prefers-reduced-motion: reduce) {
