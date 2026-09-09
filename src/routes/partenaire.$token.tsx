@@ -56,6 +56,7 @@ function EspacePartenaire() {
   const creer = useServerFn(creerDossierPartenaire);
   const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
   const chargerComptes = useServerFn(comptePhotosPartenaire);
+  const majMateriel = useServerFn(majMaterielPartenaire);
 
   const espace = useQuery({
     queryKey: ["espace-partenaire", token],
@@ -73,27 +74,57 @@ function EspacePartenaire() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [rdvAPrendre, setRdvAPrendre] = useState(true);
-  /** Dossier en cours d'envoi de photos. */
+  /** Envoi de photos en cours, sous la forme « idDossier:catégorie ». */
   const [envoi, setEnvoi] = useState<string | null>(null);
+  /** Dossier dont l'état du matériel est en cours d'enregistrement. */
+  const [materielBusy, setMaterielBusy] = useState<string | null>(null);
 
-  async function ajouterPhotos(rendezvousId: string, fichiers: FileList | null) {
+  async function ajouterPhotos(
+    rendezvousId: string,
+    categorie: (typeof PHOTO_CATEGORIES)[number],
+    fichiers: FileList | null,
+  ) {
     if (!fichiers?.length) return;
     setError(null);
     setNotice(null);
-    setEnvoi(rendezvousId);
+    setEnvoi(`${rendezvousId}:${categorie}`);
     let ok = 0;
     try {
       for (const fichier of Array.from(fichiers).slice(0, 10)) {
         const data_url = await compressImage(fichier, 1280, 0.66);
-        await envoyerPhoto({ data: { token, rendezvous_id: rendezvousId, data_url } });
+        await envoyerPhoto({
+          data: { token, rendezvous_id: rendezvousId, data_url, categorie },
+        });
         ok++;
       }
-      setNotice(`${ok} photo${ok > 1 ? "s" : ""} transmise${ok > 1 ? "s" : ""} à Borne de l'Ouest.`);
+      setNotice(
+        `${ok} photo${ok > 1 ? "s" : ""} « ${PHOTO_CATEGORIES_LABELS[categorie]} » transmise${
+          ok > 1 ? "s" : ""
+        } à Borne de l'Ouest.`,
+      );
       void photos.refetch();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Envoi des photos impossible. Réessayez.");
     } finally {
       setEnvoi(null);
+    }
+  }
+
+  async function changerMateriel(
+    rendezvousId: string,
+    statut: (typeof MATERIEL_STATUTS)[number],
+  ) {
+    setError(null);
+    setNotice(null);
+    setMaterielBusy(rendezvousId);
+    try {
+      await majMateriel({ data: { token, rendezvous_id: rendezvousId, materiel_statut: statut } });
+      setNotice(`${MATERIEL_LABELS[statut]} — enregistré.`);
+      await espace.refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Enregistrement impossible. Réessayez.");
+    } finally {
+      setMaterielBusy(null);
     }
   }
 
@@ -131,6 +162,8 @@ function EspacePartenaire() {
           date_debut: rdvAPrendre ? null : get("date_debut") || null,
           montant_ht: get("montant_ht"),
           notes: get("notes") || null,
+          materiel_statut: (get("materiel_statut") ||
+            "en_cours") as (typeof MATERIEL_STATUTS)[number],
         },
       });
       if (!resultat?.ok) throw new Error("Le dossier n'a pas pu être enregistré.");
@@ -176,6 +209,63 @@ function EspacePartenaire() {
             <CheckCircle2 className="h-4 w-4" /> {notice}
           </p>
         )}
+
+        {(espace.data?.dossiers.length ?? 0) > 0 &&
+          (() => {
+            const tous = espace.data!.dossiers;
+            const dates = tous
+              .filter((d) => !d.date_a_confirmer && !d.termine_at)
+              .sort(
+                (a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime(),
+              )
+              .slice(0, 6);
+            const aPlanifier = tous.filter((d) => d.date_a_confirmer && !d.termine_at).length;
+            return (
+              <section className="bg-card border border-border rounded-xl p-4">
+                <h2 className="text-mono text-xs text-primary uppercase inline-flex items-center gap-1.5">
+                  <CalendarDays className="h-3.5 w-3.5" /> Agenda des interventions
+                </h2>
+                {dates.length === 0 ? (
+                  <p className="text-sm text-muted-foreground mt-2">
+                    Aucune date fixée pour le moment.
+                  </p>
+                ) : (
+                  <ul className="mt-2 grid gap-2">
+                    {dates.map((d) => (
+                      <li
+                        key={d.id}
+                        className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1 text-sm"
+                      >
+                        <span className="font-medium">
+                          {new Date(d.date_debut).toLocaleString("fr-FR", {
+                            weekday: "short",
+                            day: "2-digit",
+                            month: "short",
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <span className="text-muted-foreground text-xs min-w-0">
+                          {d.client_nom} — {d.cp_ville || d.adresse}
+                        </span>
+                        <span className="text-mono text-[11px] text-primary uppercase">
+                          {MATERIEL_LABELS[
+                            (d.materiel_statut ?? "en_cours") as (typeof MATERIEL_STATUTS)[number]
+                          ] ?? ""}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+                {aPlanifier > 0 && (
+                  <p className="text-xs text-muted-foreground mt-3">
+                    {aPlanifier} dossier{aPlanifier > 1 ? "s" : ""} en attente de date — Borne de
+                    l&apos;Ouest vous rappelle pour la planification.
+                  </p>
+                )}
+              </section>
+            );
+          })()}
 
         {!form ? (
           <button
@@ -290,6 +380,17 @@ function EspacePartenaire() {
             )}
 
             <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">Matériel</span>
+              <select name="materiel_statut" defaultValue="en_cours" className={INPUT}>
+                {MATERIEL_STATUTS.map((s) => (
+                  <option key={s} value={s}>
+                    {MATERIEL_LABELS[s]}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <label className="block">
               <span className="text-mono text-xs text-muted-foreground">Informations complémentaires</span>
               <textarea name="notes" rows={3} className={INPUT} placeholder="Accès, étage, contraintes…" />
             </label>
@@ -371,32 +472,87 @@ function EspacePartenaire() {
                             : "Planifié"}
                   </p>
 
-                  <div className="mt-3 border-t border-border pt-3 flex flex-wrap items-center gap-3">
-                    <label className="text-sm font-semibold rounded-sm border border-border px-3 py-2.5 inline-flex items-center gap-2 cursor-pointer hover:border-primary hover:text-primary">
-                      {envoi === d.id ? (
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                      ) : (
-                        <Camera className="h-4 w-4" />
+                  <div className="mt-3 border-t border-border pt-3 space-y-3">
+                    <div>
+                      <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+                        <Package className="h-3.5 w-3.5" /> Matériel
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {MATERIEL_STATUTS.map((s) => {
+                          const actif = (d.materiel_statut ?? "en_cours") === s;
+                          return (
+                            <button
+                              key={s}
+                              type="button"
+                              disabled={materielBusy === d.id}
+                              onClick={() => void changerMateriel(d.id, s)}
+                              className={`text-xs font-semibold rounded-sm px-3 py-2.5 border min-h-11 ${
+                                actif
+                                  ? "border-primary text-primary bg-muted"
+                                  : "border-border text-muted-foreground"
+                              } disabled:opacity-60`}
+                            >
+                              {actif && <CheckCircle2 className="h-3.5 w-3.5 inline mr-1.5" />}
+                              {MATERIEL_LABELS[s]}
+                            </button>
+                          );
+                        })}
+                        {materielBusy === d.id && (
+                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground self-center" />
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+                        <Camera className="h-3.5 w-3.5" /> Photos de l&apos;étude
+                      </p>
+                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
+                        {PHOTO_CATEGORIES.map((cat) => {
+                          const cle = `${d.id}:${cat}`;
+                          const nb = photos.data?.[d.id]?.categories?.[cat] ?? 0;
+                          return (
+                            <label
+                              key={cat}
+                              className="text-sm font-semibold rounded-sm border border-border px-3 py-2.5 min-h-11 inline-flex items-center gap-2 cursor-pointer hover:border-primary hover:text-primary"
+                            >
+                              {envoi === cle ? (
+                                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                              ) : (
+                                <Plus className="h-4 w-4 shrink-0" />
+                              )}
+                              <span className="min-w-0">
+                                {PHOTO_CATEGORIES_LABELS[cat]}
+                                {nb > 0 && (
+                                  <span className="text-mono text-[11px] text-muted-foreground font-normal">
+                                    {" "}
+                                    · {nb}
+                                  </span>
+                                )}
+                              </span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                multiple
+                                disabled={envoi !== null}
+                                onChange={(e) => {
+                                  void ajouterPhotos(d.id, cat, e.target.files);
+                                  e.target.value = "";
+                                }}
+                                className="hidden"
+                              />
+                            </label>
+                          );
+                        })}
+                      </div>
+                      {(photos.data?.[d.id]?.total ?? 0) > 0 && (
+                        <p className="text-mono text-[11px] text-muted-foreground mt-2">
+                          {photos.data![d.id]!.total} photo
+                          {photos.data![d.id]!.total > 1 ? "s" : ""} transmise
+                          {photos.data![d.id]!.total > 1 ? "s" : ""} à Borne de l&apos;Ouest.
+                        </p>
                       )}
-                      {envoi === d.id ? "Envoi en cours…" : "Ajouter des photos"}
-                      <input
-                        type="file"
-                        accept="image/*"
-                        multiple
-                        disabled={envoi === d.id}
-                        onChange={(e) => {
-                          void ajouterPhotos(d.id, e.target.files);
-                          e.target.value = "";
-                        }}
-                        className="hidden"
-                      />
-                    </label>
-                    {(photos.data?.[d.id] ?? 0) > 0 && (
-                      <span className="text-mono text-[11px] text-muted-foreground">
-                        {photos.data![d.id]} photo{photos.data![d.id]! > 1 ? "s" : ""} transmise
-                        {photos.data![d.id]! > 1 ? "s" : ""}
-                      </span>
-                    )}
+                    </div>
                   </div>
 
 
