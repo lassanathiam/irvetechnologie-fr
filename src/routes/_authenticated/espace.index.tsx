@@ -307,29 +307,35 @@ function EspacePage() {
               {!aVenir.length ? (
                 <Empty>Aucun rendez-vous planifié.</Empty>
               ) : (
-                <ul className="divide-y divide-border">
-                  {aVenir.map((r) => (
-                    <li key={r.id}>
-                      <Link
-                        to="/planning"
-                        search={{ rdv: r.id }}
-                        className="py-3.5 flex flex-wrap items-baseline justify-between gap-3 hover:text-primary"
-                      >
-                        <span className="min-w-0">
-                          <span className="block text-base font-semibold truncate">
-                            {r.client_nom}
+                <ul className="divide-y divide-dashboard-line/60">
+                  {aVenir.map((r) => {
+                    const dj = moisJour(r.date_debut);
+                    return (
+                      <li key={r.id}>
+                        <Link
+                          to="/planning"
+                          search={{ rdv: r.id }}
+                          className="flex items-center gap-4 px-1 py-3 transition hover:bg-dashboard-raised/60 rounded-md"
+                        >
+                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-lg border border-dashboard-line bg-dashboard-raised">
+                            <span className="text-[10px] font-bold uppercase leading-none text-dashboard-muted">
+                              {dj.mois}
+                            </span>
+                            <span className="pro-heading text-xl font-bold leading-none text-dashboard-foreground">
+                              {dj.jour}
+                            </span>
                           </span>
-                          <span className="mt-1 block text-sm text-muted-foreground truncate">
-                            <MapPin className="inline h-3.5 w-3.5 mr-1" />
-                            {r.cp_ville || r.adresse}
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{r.client_nom}</span>
+                            <span className="mt-0.5 block truncate text-xs text-dashboard-muted">
+                              {dj.heure} — {r.cp_ville || r.adresse}
+                            </span>
                           </span>
-                        </span>
-                        <span className="text-mono text-sm font-bold text-primary whitespace-nowrap">
-                          {dateTimeFr(r.date_debut)}
-                        </span>
-                      </Link>
-                    </li>
-                  ))}
+                          <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-dashboard-cyan/70" />
+                        </Link>
+                      </li>
+                    );
+                  })}
                 </ul>
               )}
             </Panel>
@@ -343,28 +349,30 @@ function EspacePage() {
               {!nouvelles.length ? (
                 <Empty>Aucune nouvelle demande.</Empty>
               ) : (
-                <ul className="divide-y divide-border">
+                <ul className="space-y-3">
                   {nouvelles.map((d) => (
-                    <li key={d.id} className="py-3 flex flex-wrap items-center justify-between gap-3">
+                    <li
+                      key={d.id}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashboard-line/60 bg-dashboard-raised/60 p-4"
+                    >
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">
+                        <p className="truncate text-sm font-bold">
                           {d.nom}{" "}
-                          <span className="text-mono text-xs font-normal text-muted-foreground">
+                          <span className="font-mono text-xs font-normal text-dashboard-muted">
                             {d.code_postal}
                           </span>
                         </p>
-                        <p className="text-xs text-muted-foreground mt-0.5">
+                        <p className="mt-1 text-xs text-dashboard-muted">
                           Reçue le {dateCourteFr(d.created_at)}
                           {d.formule ? ` · formule ${d.formule}` : ""}
                         </p>
                       </div>
                       <Button
                         type="button"
-                        variant="outline"
                         size="sm"
                         onClick={() => accepter.mutate(d.id)}
                         disabled={accepter.isPending}
-                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-foreground hover:border-dashboard-muted"
+                        className="min-h-11 rounded-md bg-dashboard-cyan font-bold text-dashboard-panel hover:brightness-110"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
                       </Button>
