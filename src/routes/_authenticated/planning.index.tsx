@@ -1158,18 +1158,18 @@ function PlanningPage() {
                                     </>
                                   )}
                                 </button>
+                                {r.chantier_valide && (
+                                  <button
+                                    type="button"
+                                    onClick={() => valider.mutate({ id: r.id, valide: false })}
+                                    className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                  >
+                                    Annuler la validation
+                                  </button>
+                                )}
+                              </div>
+                            )}
 
-
-                              {r.chantier_valide && (
-                                <button
-                                  type="button"
-                                  onClick={() => valider.mutate({ id: r.id, valide: false })}
-                                  className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
-                                >
-                                  Annuler la validation
-                                </button>
-                              )}
-                            </div>
                             {r.chantier_commentaire && (
                               <p className="text-xs text-muted-foreground mt-2">
                                 Validation : {r.chantier_commentaire}
