@@ -1219,7 +1219,19 @@ function PlanningPage() {
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
                                   : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
-                              </span>
+                               </span>
+                              {r.date_a_confirmer && (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setDossier(r.id);
+                                    setPanel({ id: r.id, tab: "date" });
+                                  }}
+                                  className="text-mono text-[11px] rounded-full border border-amber-500/60 text-amber-600 dark:text-amber-400 px-2.5 py-1 inline-flex items-center gap-1 transition hover:bg-amber-500/10"
+                                >
+                                  <CalendarClock className="h-3 w-3" /> Fixer la date
+                                </button>
+                              )}
 
                               <span className="inline-flex items-center gap-1">
                                 <MapPin className="h-3 w-3" /> {r.adresse}
