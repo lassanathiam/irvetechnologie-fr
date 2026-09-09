@@ -73,14 +73,14 @@
 
   --grid-line: oklch(0.55 0.15 158 / 0.07);
   --glow: oklch(0.55 0.15 158 / 0.28);
-  --dashboard: oklch(0.33 0.045 160);
-  --dashboard-panel: oklch(0.38 0.045 160);
-  --dashboard-raised: oklch(0.43 0.045 160);
-  --dashboard-line: oklch(0.50 0.045 158);
-  --dashboard-foreground: oklch(0.97 0.008 155);
-  --dashboard-muted: oklch(0.82 0.03 158);
-  --dashboard-cyan: oklch(0.80 0.13 152);
-  --dashboard-violet: oklch(0.82 0.10 120);
+  --dashboard: oklch(0.45 0.02 250);
+  --dashboard-panel: oklch(0.51 0.02 250);
+  --dashboard-raised: oklch(0.57 0.018 250);
+  --dashboard-line: oklch(0.66 0.015 250);
+  --dashboard-foreground: oklch(0.97 0.005 250);
+  --dashboard-muted: oklch(0.86 0.012 250);
+  --dashboard-cyan: oklch(0.78 0.11 190);
+  --dashboard-violet: oklch(0.80 0.10 290);
 }
 
 .dark {
@@ -109,14 +109,14 @@
   --operational-foreground: oklch(0.16 0.018 165);
   --grid-line: oklch(0.72 0.17 158 / 0.08);
   --glow: oklch(0.72 0.17 158 / 0.32);
-  --dashboard: oklch(0.30 0.045 160);
-  --dashboard-panel: oklch(0.355 0.045 160);
-  --dashboard-raised: oklch(0.41 0.045 160);
-  --dashboard-line: oklch(0.48 0.045 158);
-  --dashboard-foreground: oklch(0.97 0.008 155);
-  --dashboard-muted: oklch(0.82 0.03 158);
-  --dashboard-cyan: oklch(0.80 0.13 152);
-  --dashboard-violet: oklch(0.82 0.10 120);
+  --dashboard: oklch(0.45 0.02 250);
+  --dashboard-panel: oklch(0.51 0.02 250);
+  --dashboard-raised: oklch(0.57 0.018 250);
+  --dashboard-line: oklch(0.66 0.015 250);
+  --dashboard-foreground: oklch(0.97 0.005 250);
+  --dashboard-muted: oklch(0.86 0.012 250);
+  --dashboard-cyan: oklch(0.78 0.11 190);
+  --dashboard-violet: oklch(0.80 0.10 290);
 }
 
 
