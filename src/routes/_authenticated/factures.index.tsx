@@ -38,6 +38,7 @@ function FacturesPage() {
 
   return (
     <ProShell>
+      <div className="pro-workspace">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
@@ -54,6 +55,7 @@ function FacturesPage() {
         >
           <FileText className="h-3.5 w-3.5" /> Devis
         </Link>
+      </div>
       </div>
 
       <div className="mt-8 grid sm:grid-cols-3 gap-4">

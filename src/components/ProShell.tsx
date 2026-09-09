@@ -24,8 +24,8 @@ export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur">
+    <div className="pro-shell min-h-screen bg-background">
+      <header className="sticky top-0 z-30 border-b border-border/70 bg-card/90 backdrop-blur-xl">
         <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <BrandLogo className="h-9 w-9" />
@@ -129,7 +129,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           <span className="text-xs text-muted-foreground">{COMPANY.qualificationsDetail}</span>
         </div>
       </div>
-      <main className="mx-auto max-w-6xl px-6 py-8">{children}</main>
+      <main className="pro-main mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">{children}</main>
     </div>
   );
 }

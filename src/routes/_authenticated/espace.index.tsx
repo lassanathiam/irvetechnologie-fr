@@ -81,15 +81,19 @@ function EspacePage() {
 
   return (
     <ProShell>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div className="pro-workspace">
+      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-5 mb-8">
         <div>
-          <p className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">Espace pro</p>
-          <h1 className="text-3xl font-semibold tracking-tight mt-2">Tableau de bord</h1>
+          <div className="mb-4 inline-flex items-center gap-2 border-l-2 border-operational bg-operational/10 px-3 py-1.5">
+            <span className="h-2 w-2 rounded-full bg-operational animate-pulse" />
+            <span className="pro-kicker">Système actif</span>
+          </div>
+          <h1 className="pro-title text-4xl leading-none sm:text-6xl">Vue d’ensemble<br/><span className="text-muted-foreground">opérationnelle</span></h1>
           <p className="text-sm text-muted-foreground mt-1.5">
             Borne de l'Ouest — marque commerciale d'IRVE Technologie
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
+        <div className="hidden flex-wrap justify-end gap-2 sm:flex">
           <Link
             to="/planning"
             className="hero-grad text-primary-foreground text-mono text-xs font-bold px-4 py-2.5 rounded-full inline-flex items-center gap-2 shadow-sm transition hover:brightness-110"
@@ -172,7 +176,7 @@ function EspacePage() {
             />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-2">
+          <div className="grid gap-6 lg:grid-cols-[1.12fr_.88fr]">
             <Panel
               icon={CalendarClock}
               title="Prochains rendez-vous"
@@ -367,6 +371,7 @@ function EspacePage() {
           </p>
         </>
       )}
+      </div>
     </ProShell>
   );
 }
@@ -396,7 +401,7 @@ function Stat({
     </>
   );
   const cls =
-    "block bg-card border border-border rounded-xl p-6 shadow-sm transition hover:border-primary/60 hover:shadow-md";
+    "group block pro-surface rounded-xl p-6 transition hover:-translate-y-0.5 hover:border-operational/60";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -419,7 +424,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="bg-card border border-border rounded-xl p-5 shadow-sm">
+    <section className="pro-surface rounded-xl p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-bold flex items-center gap-2">
           <Icon className="h-4 w-4 text-primary" /> {title}

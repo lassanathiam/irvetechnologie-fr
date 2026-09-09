@@ -2106,8 +2106,8 @@ function PlanningPage() {
               Répartit les chantiers sur plusieurs journées en suivant les secteurs : au-delà de
               150 km, la journée prévoit une nuitée sur place.
             </p>
-            <div className="flex flex-wrap items-center gap-2 mb-3">
-              {[7, 14, 30].map((h) => (
+            <div className="flex flex-wrap items-end gap-2 mb-3">
+              {[1, 3, 7, 14, 30, 60, 90].map((h) => (
                 <button
                   key={h}
                   type="button"
@@ -2124,6 +2124,27 @@ function PlanningPage() {
                   Sur {h} jours
                 </button>
               ))}
+              <label className="min-w-[150px] flex-1 sm:max-w-[210px]">
+                <span className="mb-1 block text-mono text-[10px] text-muted-foreground">
+                  Durée libre
+                </span>
+                <span className="grid grid-cols-[minmax(0,1fr)_auto] items-center overflow-hidden rounded-sm border border-border bg-background focus-within:border-primary">
+                  <input
+                    type="number"
+                    min={1}
+                    max={365}
+                    value={horizon}
+                    onChange={(e) => {
+                      const valeur = Number(e.target.value);
+                      if (Number.isFinite(valeur)) setHorizon(Math.min(365, Math.max(1, valeur)));
+                    }}
+                    onFocus={() => setCampagneOn(true)}
+                    className="min-h-[42px] min-w-0 bg-transparent px-3 text-sm outline-none"
+                    aria-label="Nombre de jours à planifier"
+                  />
+                  <span className="pr-3 text-mono text-[10px] text-muted-foreground">jours</span>
+                </span>
+              </label>
               <button
                 type="button"
                 onClick={() => setCampagneOn((v) => !v)}
