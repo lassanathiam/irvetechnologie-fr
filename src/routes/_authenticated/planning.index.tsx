@@ -988,87 +988,177 @@ function PlanningPage() {
                             )}
 
 
+                            {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
-                              {r.chantier_valide ? (
+                              {!r.demarre_at && !r.termine_at && (
+                                <button
+                                  type="button"
+                                  onClick={() => demarrer.mutate({ id: r.id, demarre: true })}
+                                  disabled={demarrer.isPending}
+                                  className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-violet-600 text-white inline-flex items-center gap-1.5 disabled:opacity-50"
+                                >
+                                  <Play className="h-3.5 w-3.5" /> Démarrer les travaux
+                                </button>
+                              )}
+                              {r.demarre_at && !r.termine_at && (
+                                <>
+                                  <span className="text-mono text-[11px] text-violet-600 dark:text-violet-300">
+                                    Démarré à{" "}
+                                    {new Date(r.demarre_at).toLocaleTimeString("fr-FR", {
+                                      hour: "2-digit",
+                                      minute: "2-digit",
+                                    })}
+                                  </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      if (
+                                        !window.confirm(
+                                          `Terminer le chantier de ${r.client_nom} ? Un email de fin de chantier sera envoyé.`,
+                                        )
+                                      )
+                                        return;
+                                      terminer.mutate({ id: r.id, notifier: true });
+                                    }}
+                                    disabled={terminer.isPending}
+                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-teal-600 text-white inline-flex items-center gap-1.5 disabled:opacity-50"
+                                  >
+                                    <Flag className="h-3.5 w-3.5" /> Terminer le chantier
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => demarrer.mutate({ id: r.id, demarre: false })}
+                                    className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                                  >
+                                    Annuler le démarrage
+                                  </button>
+                                </>
+                              )}
+                              {r.termine_at && (
+                                <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-teal-500/50 text-teal-700 dark:text-teal-300 inline-flex items-center gap-1">
+                                  <Flag className="h-3 w-3" /> Terminé le{" "}
+                                  {new Date(r.termine_at).toLocaleString("fr-FR")}
+                                  {r.notif_fin_at ? " · client prévenu" : ""}
+                                </span>
+                              )}
+                            </div>
+
+                            {/* Un seul bouton pour gérer tout le dossier */}
+                            <div className="mt-3 flex flex-wrap items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setDossier(dossierOuvert ? null : r.id);
+                                  if (dossierOuvert) setPanel(null);
+                                }}
+                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
+                                  dossierOuvert
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border hover:border-primary hover:text-primary"
+                                }`}
+                              >
+                                <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
+                              </button>
+                              {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
                                   {r.chantier_valide_at
                                     ? ` le ${new Date(r.chantier_valide_at).toLocaleDateString("fr-FR")}`
                                     : ""}
                                 </span>
-                              ) : (
+                              )}
+                              {v && (
+                                <span className="text-mono text-[11px] text-muted-foreground">
+                                  Voirie : {VOIRIE_LABEL[v.statut] ?? v.statut}
+                                </span>
+                              )}
+                            </div>
+
+                            {dossierOuvert && (
+                              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
                                 <button
                                   type="button"
                                   onClick={() =>
                                     setPanel(isChantierPanel ? null : { id: r.id, tab: "chantier" })
                                   }
-                                  className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border hover:border-primary hover:text-primary inline-flex items-center gap-1"
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isChantierPanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
                                 >
-                                  <FileCheck2 className="h-3 w-3" /> Valider le chantier
+                                  <FileCheck2 className="h-3 w-3" /> Validation du chantier
                                 </button>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isVoiriePanel ? null : { id: r.id, tab: "voirie" })
-                                }
-                                className={`text-mono text-[11px] px-2 py-1 rounded-sm border inline-flex items-center gap-1 ${
-                                  v?.statut === "obtenue"
-                                    ? "border-primary/40 text-primary"
-                                    : v?.statut === "refusee"
-                                      ? "border-destructive/40 text-destructive"
-                                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-                                }`}
-                              >
-                                <ShieldCheck className="h-3 w-3" /> Voirie :{" "}
-                                {v ? (VOIRIE_LABEL[v.statut] ?? v.statut) : "à renseigner"}
-                              </button>
-                              {v?.url && (
-                                <a
-                                  href={v.url}
-                                  target="_blank"
-                                  rel="noreferrer"
-                                  className="text-mono text-[11px] text-primary hover:underline"
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isVoiriePanel ? null : { id: r.id, tab: "voirie" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isVoiriePanel
+                                      ? "border-primary text-primary"
+                                      : v?.statut === "obtenue"
+                                        ? "border-primary/40 text-primary"
+                                        : v?.statut === "refusee"
+                                          ? "border-destructive/40 text-destructive"
+                                          : "border-border hover:border-primary hover:text-primary"
+                                  }`}
                                 >
-                                  Voir le document
-                                </a>
-                              )}
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
-                                }
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
-                              >
-                                <Euro className="h-3 w-3" /> Montant & facturation
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
-                                }
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1"
-                              >
-                                <Pencil className="h-3 w-3" /> Modifier l'adresse
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  archiver.mutate({ id: r.id, archive: !r.archive })
-                                }
-                                disabled={archiver.isPending}
-                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
-                              >
-                                {r.archive ? (
-                                  <>
-                                    <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
-                                  </>
-                                ) : (
-                                  <>
-                                    <Archive className="h-3 w-3" /> Archiver le chantier
-                                  </>
+                                  <ShieldCheck className="h-3 w-3" /> Voirie
+                                </button>
+                                {v?.url && (
+                                  <a
+                                    href={v.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-mono text-[11px] text-primary hover:underline"
+                                  >
+                                    Voir le document
+                                  </a>
                                 )}
-                              </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isMontantPanel ? null : { id: r.id, tab: "montant" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isMontantPanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <Euro className="h-3 w-3" /> Montant & facturation
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isAdressePanel
+                                      ? "border-primary text-primary"
+                                      : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <MapPin className="h-3 w-3" /> Adresse & technique
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => archiver.mutate({ id: r.id, archive: !r.archive })}
+                                  disabled={archiver.isPending}
+                                  className="text-mono text-[11px] min-h-[38px] px-3 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
+                                >
+                                  {r.archive ? (
+                                    <>
+                                      <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Archive className="h-3 w-3" /> Archiver
+                                    </>
+                                  )}
+                                </button>
+
 
                               {r.chantier_valide && (
                                 <button
