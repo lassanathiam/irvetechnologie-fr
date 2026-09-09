@@ -143,7 +143,7 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, created_at",
+        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, demarre_at, termine_at, created_at",
       )
       .eq("partenaire_id", partenaire.id)
       .order("created_at", { ascending: false })
