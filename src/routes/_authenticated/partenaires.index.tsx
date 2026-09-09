@@ -168,10 +168,13 @@ function PartenairesAdmin() {
                 <li key={p.id} className="bg-card border border-border rounded-xl p-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
-                      <p className="font-medium">
+                      <p className="font-medium inline-flex items-center gap-2">
+                        <span
+                          className="h-3.5 w-3.5 rounded-full border border-border shrink-0"
+                          style={{ background: p.couleur ?? "#0284c7" }}
+                        />
                         {p.nom}
                         <span className="text-muted-foreground font-normal text-sm">
-                          {" "}
                           — {p.dossiers} dossier{p.dossiers > 1 ? "s" : ""}
                         </span>
                       </p>
@@ -179,7 +182,33 @@ function PartenairesAdmin() {
                       <p className="text-[11px] text-mono mt-2 break-all text-muted-foreground">
                         {lien(p.token)}
                       </p>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {COULEURS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            aria-label={`Couleur ${c} pour ${p.nom}`}
+                            onClick={async () => {
+                              await save({
+                                data: {
+                                  id: p.id,
+                                  nom: p.nom,
+                                  actif: p.actif,
+                                  notes: p.notes,
+                                  couleur: c,
+                                },
+                              });
+                              await list.refetch();
+                            }}
+                            style={{ background: c }}
+                            className={`h-6 w-6 rounded-full border-2 ${
+                              (p.couleur ?? "") === c ? "border-foreground" : "border-transparent"
+                            }`}
+                          />
+                        ))}
+                      </div>
                     </div>
+
                     <div className="flex items-center gap-2 shrink-0">
                       <button
                         type="button"
