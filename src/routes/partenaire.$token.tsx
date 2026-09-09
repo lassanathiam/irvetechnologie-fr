@@ -308,12 +308,17 @@ function EspacePartenaire() {
                     )}
                   </p>
                   <p className="text-[11px] text-mono mt-2 text-primary uppercase">
-                    {d.statut === "realise"
-                      ? "Réalisé"
-                      : d.date_a_confirmer
-                        ? "En attente de planification"
-                        : "Planifié"}
+                    {d.termine_at
+                      ? `Terminé le ${new Date(d.termine_at).toLocaleString("fr-FR")}`
+                      : d.demarre_at
+                        ? "Travaux en cours"
+                        : d.statut === "realise"
+                          ? "Réalisé"
+                          : d.date_a_confirmer
+                            ? "En attente de planification"
+                            : "Planifié"}
                   </p>
+
                 </li>
               ))}
             </ul>
