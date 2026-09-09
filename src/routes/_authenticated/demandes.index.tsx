@@ -202,6 +202,33 @@ function DemandesPage() {
                 </button>
 
                 <div className="border-t border-border px-5 py-3 flex flex-wrap items-center gap-2">
+                  {tel && (
+                    <a
+                      href={tel}
+                      className="text-mono text-[11px] font-bold rounded-full border border-border px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                    >
+                      <Phone className="h-3.5 w-3.5" /> Appeler
+                    </a>
+                  )}
+                  {wa && (
+                    <a
+                      href={wa}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-mono text-[11px] font-bold rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
+                    >
+                      <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                    </a>
+                  )}
+                  {d.email && (
+                    <a
+                      href={`mailto:${d.email}`}
+                      className="text-mono text-[11px] font-bold rounded-full border border-border px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                    >
+                      <Mail className="h-3.5 w-3.5" /> Email
+                    </a>
+                  )}
+                  <span className="w-px h-5 bg-border mx-1 hidden sm:block" />
                   <button
                     type="button"
                     onClick={() => changer.mutate({ id: d.id, status: "accepte" })}
@@ -218,6 +245,26 @@ function DemandesPage() {
                   >
                     <XCircle className="h-3.5 w-3.5" /> Refuser
                   </button>
+                  {(d.status === "refuse" || d.status === "clos") && (
+                    <button
+                      type="button"
+                      onClick={() => changer.mutate({ id: d.id, status: "en_cours" })}
+                      disabled={changer.isPending}
+                      className="text-mono text-[11px] font-bold rounded-full border border-amber-500/50 text-amber-600 dark:text-amber-400 px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:bg-amber-500/10 disabled:opacity-40"
+                    >
+                      <RotateCcw className="h-3.5 w-3.5" /> Relancer (remettre en cours)
+                    </button>
+                  )}
+                  {d.status !== "clos" && d.status !== "accepte" && (
+                    <button
+                      type="button"
+                      onClick={() => changer.mutate({ id: d.id, status: "clos" })}
+                      disabled={changer.isPending}
+                      className="text-mono text-[11px] rounded-full border border-border text-muted-foreground px-3 py-1.5 transition hover:border-primary hover:text-primary disabled:opacity-40"
+                    >
+                      Classer sans suite
+                    </button>
+                  )}
                   {d.status === "accepte" && (
                     <Link
                       to="/devis"
@@ -228,6 +275,7 @@ function DemandesPage() {
                     </Link>
                   )}
                 </div>
+
 
                 {open === d.id && (
                   <div className="border-t border-border p-5 space-y-5">
