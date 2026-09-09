@@ -170,28 +170,36 @@
   letter-spacing: 0;
 }
 
-/* Espace pro : vert-gris intermédiaire, dynamique et lisible (jour / nuit) */
+/* Espace pro : gris-bleu intermédiaire, accent vert pétrole, lisible toute la journée */
 .pro-shell {
-  --background: oklch(0.90 0.028 155);
-  --foreground: oklch(0.26 0.03 160);
-  --card: oklch(0.965 0.012 155);
-  --card-foreground: oklch(0.26 0.03 160);
-  --popover: oklch(0.965 0.012 155);
-  --popover-foreground: oklch(0.26 0.03 160);
-  --primary: oklch(0.50 0.13 152);
-  --primary-foreground: oklch(0.98 0.005 155);
-  --secondary: oklch(0.85 0.03 155);
-  --secondary-foreground: oklch(0.28 0.03 160);
-  --muted: oklch(0.855 0.028 155);
-  --muted-foreground: oklch(0.44 0.028 158);
-  --accent: oklch(0.50 0.13 152);
-  --accent-foreground: oklch(0.98 0.005 155);
-  --border: oklch(0.78 0.03 155);
-  --input: oklch(0.93 0.02 155);
-  --ring: oklch(0.50 0.13 152);
-  --operational: oklch(0.50 0.13 152);
-  --grid-line: oklch(0.40 0.05 155 / 0.06);
-  --glow: oklch(0.50 0.13 152 / 0.25);
+  --background: oklch(0.875 0.018 225);
+  --foreground: oklch(0.27 0.026 230);
+  --card: oklch(0.925 0.014 225);
+  --card-foreground: oklch(0.27 0.026 230);
+  --popover: oklch(0.94 0.012 225);
+  --popover-foreground: oklch(0.27 0.026 230);
+  --primary: oklch(0.48 0.105 175);
+  --primary-foreground: oklch(0.97 0.008 175);
+  --secondary: oklch(0.84 0.02 225);
+  --secondary-foreground: oklch(0.29 0.028 230);
+  --muted: oklch(0.835 0.018 225);
+  --muted-foreground: oklch(0.45 0.025 230);
+  --accent: oklch(0.48 0.105 175);
+  --accent-foreground: oklch(0.97 0.008 175);
+  --border: oklch(0.75 0.022 225);
+  --input: oklch(0.91 0.014 225);
+  --ring: oklch(0.48 0.105 175);
+  --operational: oklch(0.48 0.105 175);
+  --grid-line: oklch(0.38 0.03 225 / 0.035);
+  --glow: oklch(0.48 0.105 175 / 0.18);
+  --dashboard: oklch(0.82 0.022 225);
+  --dashboard-panel: oklch(0.885 0.018 225);
+  --dashboard-raised: oklch(0.85 0.021 225);
+  --dashboard-line: oklch(0.72 0.026 225);
+  --dashboard-foreground: oklch(0.25 0.03 230);
+  --dashboard-muted: oklch(0.45 0.027 230);
+  --dashboard-cyan: oklch(0.45 0.105 175);
+  --dashboard-violet: oklch(0.50 0.075 250);
   background-color: var(--background);
   background-image:
     linear-gradient(to right, var(--grid-line) 1px, transparent 1px),
@@ -200,30 +208,38 @@
 }
 
 .dark .pro-shell {
-  --background: oklch(0.27 0.035 160);
-  --foreground: oklch(0.95 0.01 155);
-  --card: oklch(0.33 0.04 160);
-  --card-foreground: oklch(0.95 0.01 155);
-  --popover: oklch(0.33 0.04 160);
-  --popover-foreground: oklch(0.95 0.01 155);
-  --primary: oklch(0.74 0.15 152);
-  --primary-foreground: oklch(0.20 0.03 160);
-  --secondary: oklch(0.38 0.04 160);
-  --secondary-foreground: oklch(0.94 0.012 155);
-  --muted: oklch(0.375 0.04 160);
-  --muted-foreground: oklch(0.76 0.025 158);
-  --accent: oklch(0.74 0.15 152);
-  --accent-foreground: oklch(0.20 0.03 160);
-  --border: oklch(0.44 0.04 160);
-  --input: oklch(0.37 0.04 160);
-  --ring: oklch(0.74 0.15 152);
-  --operational: oklch(0.74 0.15 152);
-  --grid-line: oklch(0.95 0.01 155 / 0.05);
-  --glow: oklch(0.74 0.15 152 / 0.3);
+  --background: oklch(0.31 0.026 225);
+  --foreground: oklch(0.93 0.012 220);
+  --card: oklch(0.36 0.028 225);
+  --card-foreground: oklch(0.93 0.012 220);
+  --popover: oklch(0.36 0.028 225);
+  --popover-foreground: oklch(0.93 0.012 220);
+  --primary: oklch(0.70 0.105 175);
+  --primary-foreground: oklch(0.22 0.025 225);
+  --secondary: oklch(0.40 0.028 225);
+  --secondary-foreground: oklch(0.92 0.012 220);
+  --muted: oklch(0.395 0.026 225);
+  --muted-foreground: oklch(0.74 0.022 220);
+  --accent: oklch(0.70 0.105 175);
+  --accent-foreground: oklch(0.22 0.025 225);
+  --border: oklch(0.47 0.03 225);
+  --input: oklch(0.40 0.028 225);
+  --ring: oklch(0.70 0.105 175);
+  --operational: oklch(0.70 0.105 175);
+  --grid-line: oklch(0.90 0.01 220 / 0.035);
+  --glow: oklch(0.70 0.105 175 / 0.2);
+  --dashboard: oklch(0.335 0.028 225);
+  --dashboard-panel: oklch(0.385 0.03 225);
+  --dashboard-raised: oklch(0.425 0.032 225);
+  --dashboard-line: oklch(0.49 0.032 225);
+  --dashboard-foreground: oklch(0.94 0.012 220);
+  --dashboard-muted: oklch(0.75 0.024 220);
+  --dashboard-cyan: oklch(0.72 0.105 175);
+  --dashboard-violet: oklch(0.72 0.075 250);
 }
 
 .pro-header {
-  box-shadow: 0 14px 36px -30px color-mix(in oklab, var(--primary) 65%, transparent);
+  box-shadow: 0 12px 30px -26px color-mix(in oklab, var(--foreground) 35%, transparent);
 }
 
 .pro-nav-link {
