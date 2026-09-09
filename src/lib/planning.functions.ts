@@ -12,10 +12,21 @@ const num = (min: number, max: number, def: number) =>
   }, z.number().min(min).max(max)).default(def);
 
 
+/** États possibles d'un chantier, du programmé au terminé. */
+export const STATUTS_CHANTIER = [
+  "planifie",
+  "confirme",
+  "en_cours",
+  "termine",
+  "realise",
+  "annule",
+] as const;
+
 const rdvSchema = z.object({
   titre: z.string().trim().min(1).max(160),
   type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
-  statut: z.enum(["planifie", "confirme", "realise", "annule"]).default("planifie"),
+  statut: z.enum(STATUTS_CHANTIER).default("planifie"),
+
   client_nom: z.string().trim().min(1).max(160),
   client_telephone: z.string().trim().max(40).optional().nullable(),
   client_email: z.string().trim().max(255).optional().nullable(),
