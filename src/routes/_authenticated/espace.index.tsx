@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
@@ -54,6 +55,23 @@ const STATUT_DEMANDE: Record<string, { label: string; cls: string }> = {
   accepte: { label: "Acceptée", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
   refuse: { label: "Refusée", cls: "bg-destructive/15 text-destructive" },
   clos: { label: "Clôturée", cls: "bg-muted text-muted-foreground" },
+};
+
+const DEVIS_BADGE: Record<string, { label: string; cls: string }> = {
+  brouillon: { label: "Brouillon", cls: "bg-slate-500/15 text-dashboard-muted border-dashboard-line" },
+  envoye: { label: "Envoyé", cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" },
+  accepte: { label: "Accepté", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
+  signe: { label: "Signé", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
+  refuse: { label: "Refusé", cls: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25" },
+};
+
+const moisJour = (iso: string) => {
+  const d = new Date(iso);
+  return {
+    mois: d.toLocaleDateString("fr-FR", { month: "short" }).replace(".", ""),
+    jour: d.toLocaleDateString("fr-FR", { day: "2-digit" }),
+    heure: d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" }),
+  };
 };
 
 function EspacePage() {
