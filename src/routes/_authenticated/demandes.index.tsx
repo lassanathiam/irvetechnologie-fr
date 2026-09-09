@@ -43,13 +43,47 @@ const KIND_LABEL: Record<string, string> = {
   borne: "Emplacement borne",
 };
 
-const STATUT: Record<string, { label: string; cls: string }> = {
-  nouveau: { label: "Nouvelle", cls: "bg-primary/15 text-primary" },
-  en_cours: { label: "En cours", cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400" },
-  accepte: { label: "Acceptée", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400" },
-  refuse: { label: "Refusée", cls: "bg-destructive/15 text-destructive" },
-  clos: { label: "Clôturée", cls: "bg-muted text-muted-foreground" },
+const STATUT: Record<string, { label: string; cls: string; barre: string; point: string }> = {
+  nouveau: {
+    label: "Nouvelle",
+    cls: "bg-primary/15 text-primary",
+    barre: "before:bg-primary",
+    point: "bg-primary",
+  },
+  en_cours: {
+    label: "En cours",
+    cls: "bg-amber-500/15 text-amber-600 dark:text-amber-400",
+    barre: "before:bg-amber-500",
+    point: "bg-amber-500",
+  },
+  accepte: {
+    label: "Acceptée",
+    cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400",
+    barre: "before:bg-emerald-500",
+    point: "bg-emerald-500",
+  },
+  refuse: {
+    label: "Refusée",
+    cls: "bg-destructive/15 text-destructive",
+    barre: "before:bg-destructive",
+    point: "bg-destructive",
+  },
+  clos: {
+    label: "Clôturée",
+    cls: "bg-muted text-muted-foreground",
+    barre: "before:bg-muted-foreground",
+    point: "bg-muted-foreground",
+  },
 };
+
+const FILTRES = [
+  { v: "tous", l: "Toutes" },
+  { v: "nouveau", l: "Nouvelles" },
+  { v: "en_cours", l: "En cours" },
+  { v: "accepte", l: "Acceptées" },
+  { v: "refuse", l: "Refusées" },
+  { v: "clos", l: "Clôturées" },
+] as const;
 
 function DemandesPage() {
   const fetchDemandes = useServerFn(listDemandes);
@@ -57,6 +91,7 @@ function DemandesPage() {
   const qc = useQueryClient();
   const demandes = useQuery({ queryKey: ["demandes"], queryFn: () => fetchDemandes() });
   const [open, setOpen] = useState<string | null>(null);
+  const [filtre, setFiltre] = useState<string>("tous");
 
   const changer = useMutation({
     mutationFn: (v: { id: string; status: string }) => setStatutFn({ data: v }),
@@ -66,9 +101,12 @@ function DemandesPage() {
     },
   });
 
+  const toutes = demandes.data ?? [];
+  const visibles = toutes.filter((d) => filtre === "tous" || d.status === filtre);
+
   return (
     <ProShell>
-      <div className="mb-8">
+      <div className="mb-6">
         <p className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
           Boîte de réception
         </p>
@@ -76,23 +114,60 @@ function DemandesPage() {
           <Inbox className="h-6 w-6 text-primary" /> Demandes clients
         </h1>
         <p className="text-sm text-muted-foreground mt-1.5">
-          Acceptez une demande pour créer son devis avec les coordonnées du client déjà remplies.
+          Acceptez une demande pour créer son devis avec les coordonnées du client déjà remplies. Une
+          demande refusée reste consultable : vous pouvez la relancer et la remettre en cours à tout
+          moment.
         </p>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 mb-6">
+        {FILTRES.map((f) => {
+          const nb =
+            f.v === "tous" ? toutes.length : toutes.filter((d) => d.status === f.v).length;
+          const on = filtre === f.v;
+          return (
+            <button
+              key={f.v}
+              type="button"
+              onClick={() => setFiltre(f.v)}
+              className={`text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                on
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/60"
+              }`}
+            >
+              <span
+                className={`h-2 w-2 rounded-full ${
+                  f.v === "tous" ? "bg-muted-foreground" : (STATUT[f.v]?.point ?? "bg-primary")
+                }`}
+              />
+              {f.l} ({nb})
+            </button>
+          );
+        })}
       </div>
 
       <div className="space-y-4">
         {demandes.isLoading ? (
           <Loader2 className="h-5 w-5 animate-spin text-primary" />
-        ) : !demandes.data?.length ? (
-          <p className="text-sm text-muted-foreground">Aucune demande pour le moment.</p>
+        ) : !visibles.length ? (
+          <p className="text-sm text-muted-foreground">
+            {toutes.length ? "Aucune demande dans cet état." : "Aucune demande pour le moment."}
+          </p>
         ) : (
-          demandes.data.map((d) => {
-            const st = STATUT[d.status] ?? STATUT.nouveau;
+          visibles.map((d) => {
+            const st = STATUT[d.status] ?? STATUT.nouveau!;
+            const tel = telLien(d.telephone);
+            const wa = whatsappLien(
+              d.telephone,
+              `Bonjour ${d.nom}, Borne de l'Ouest au sujet de votre demande d'installation de borne de recharge.`,
+            );
             return (
               <article
                 key={d.id}
-                className="bg-card border border-border rounded-xl shadow-sm transition hover:border-primary/40"
+                className={`relative overflow-hidden bg-card border border-border rounded-xl shadow-sm transition hover:border-primary/40 before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre}`}
               >
+
                 <button
                   type="button"
                   onClick={() => setOpen(open === d.id ? null : d.id)}
