@@ -202,7 +202,12 @@ export const getDashboard = createServerFn({ method: "GET" })
       s.from("rapports").select("id, numero, type, client_nom, date_intervention")
         .order("created_at", { ascending: false })
         .limit(5),
-      s.from("rendezvous").select("*").order("date_debut", { ascending: true }).limit(200),
+      s
+        .from("rendezvous")
+        .select("*")
+        .eq("archive", false)
+        .order("date_debut", { ascending: true })
+        .limit(200),
       s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, paid_at")
         .order("created_at", { ascending: false })
         .limit(50),
