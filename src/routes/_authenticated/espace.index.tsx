@@ -86,8 +86,8 @@ function EspacePage() {
       <div className="pro-workspace neo-dashboard overflow-hidden rounded-lg p-4 sm:p-7">
       <div className="grid gap-5 border-b border-dashboard-line pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="min-w-0">
-          <div className="mb-3 flex items-center gap-2 text-dashboard-cyan">
-            <span className="h-2 w-2 rounded-full bg-dashboard-cyan animate-pulse" />
+          <div className="mb-3 flex items-center gap-2 text-dashboard-foreground">
+            <span className="h-2 w-2 rounded-full bg-dashboard-raised animate-pulse" />
             <span className="text-mono text-[11px]">Pilotage en direct</span>
           </div>
           <h1 className="pro-title text-3xl leading-tight sm:text-5xl">Tableau de bord</h1>
@@ -98,13 +98,13 @@ function EspacePage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/planning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-dashboard-cyan px-4 py-2.5 text-xs font-bold text-dashboard transition hover:brightness-110"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-raised px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-muted"
           >
             <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
           </Link>
           <Link
             to="/devis"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-violet"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-muted"
           >
             <FileText className="h-3.5 w-3.5" /> Nouveau devis
           </Link>
@@ -116,8 +116,8 @@ function EspacePage() {
       ) : (
         <>
           {enCours.length > 0 && (
-            <div className="neo-dashboard-panel mt-6 rounded-md border-l-4 border-l-dashboard-violet p-5">
-              <p className="text-mono text-xs font-bold text-dashboard-violet">
+            <div className="neo-dashboard-panel mt-6 rounded-md border-l-4 border-l-dashboard-line p-5">
+              <p className="text-mono text-xs font-bold text-dashboard-muted">
                 Travaux en cours
               </p>
               <ul className="mt-3 grid gap-2">
@@ -126,13 +126,13 @@ function EspacePage() {
                     <Link
                       to="/planning"
                       search={{ rdv: r.id }}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-dashboard-raised px-4 py-3 text-base font-semibold hover:text-dashboard-cyan"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-dashboard-raised px-4 py-3 text-base font-semibold hover:text-dashboard-foreground"
                     >
                       <span className="truncate">
                         {r.client_nom}
                         <span className="neo-dashboard-muted font-normal"> · {r.cp_ville || r.adresse}</span>
                       </span>
-                      <span className="text-mono text-sm text-dashboard-violet">
+                      <span className="text-mono text-sm text-dashboard-muted">
                         Démarré à{" "}
                         {new Date(r.demarre_at!).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
@@ -183,10 +183,10 @@ function EspacePage() {
             <section className="neo-dashboard-panel overflow-hidden rounded-md lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashboard-line px-5 py-4">
                 <div>
-                  <p className="text-mono text-[10px] text-dashboard-cyan">Flux financier</p>
+                  <p className="text-mono text-[10px] text-dashboard-foreground">Flux financier</p>
                   <h2 className="mt-1 text-lg font-bold">Derniers devis et factures</h2>
                 </div>
-                <Link to="/factures" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-dashboard-cyan">
+                <Link to="/factures" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-dashboard-foreground">
                   Tout afficher <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -198,15 +198,15 @@ function EspacePage() {
                   <tbody className="divide-y divide-dashboard-line">
                     {(q.data?.factures ?? []).slice(0, 4).map((f) => (
                       <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs text-dashboard-cyan">{f.numero}</Link></td>
+                        <td className="px-5 py-3.5"><Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs text-dashboard-foreground">{f.numero}</Link></td>
                         <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
-                        <td className="px-4 py-3.5"><span className={f.statut === "payee" ? "text-dashboard-cyan" : "text-dashboard-violet"}>{f.statut === "payee" ? "Payée" : "En attente"}</span></td>
+                        <td className="px-4 py-3.5"><span className={f.statut === "payee" ? "text-dashboard-foreground" : "text-dashboard-muted"}>{f.statut === "payee" ? "Payée" : "En attente"}</span></td>
                         <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(f.total_ttc))}</td>
                       </tr>
                     ))}
                     {(q.data?.devis ?? []).slice(0, 3).map((d) => (
                       <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs text-dashboard-violet">{d.numero}</Link></td>
+                        <td className="px-5 py-3.5"><Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs text-dashboard-muted">{d.numero}</Link></td>
                         <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
                         <td className="px-4 py-3.5 neo-dashboard-muted">Devis · {d.statut}</td>
                         <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(d.total_ttc))}</td>
@@ -282,7 +282,7 @@ function EspacePage() {
                         size="sm"
                         onClick={() => accepter.mutate(d.id)}
                         disabled={accepter.isPending}
-                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-cyan hover:bg-dashboard-cyan hover:text-dashboard"
+                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-foreground hover:border-dashboard-muted"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
                       </Button>
@@ -438,14 +438,14 @@ function Stat({
   const contenu = (
     <>
       <p className="neo-dashboard-muted flex items-center gap-2 text-mono text-[10px]">
-        <Icon className={`h-4 w-4 ${accent === "violet" ? "text-dashboard-violet" : "text-dashboard-cyan"}`} /> {label}
+        <Icon className={`h-4 w-4 ${accent === "violet" ? "text-dashboard-muted" : "text-dashboard-foreground"}`} /> {label}
       </p>
-      <p className={`mt-4 font-mono text-2xl font-bold sm:text-3xl ${accent === "violet" ? "text-dashboard-violet" : accent === "cyan" ? "text-dashboard-cyan" : "text-dashboard-foreground"}`}>{value}</p>
+      <p className={`mt-4 font-mono text-2xl font-bold sm:text-3xl ${accent === "violet" ? "text-dashboard-muted" : accent === "cyan" ? "text-dashboard-foreground" : "text-dashboard-foreground"}`}>{value}</p>
       {hint && <p className="neo-dashboard-muted mt-2 text-xs">{hint}</p>}
     </>
   );
   const cls =
-    "group block neo-dashboard-kpi rounded-md p-5 transition hover:-translate-y-0.5 hover:border-dashboard-cyan";
+    "group block neo-dashboard-kpi rounded-md p-5 transition hover:-translate-y-0.5 hover:border-dashboard-muted";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -471,12 +471,12 @@ function Panel({
     <section className="neo-dashboard-panel rounded-md p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-bold flex items-center gap-2">
-          <Icon className="h-4 w-4 text-dashboard-cyan" /> {title}
+          <Icon className="h-4 w-4 text-dashboard-foreground" /> {title}
         </h2>
         {action && (
           <Link
             to={action.to}
-            className="text-mono text-[10px] font-bold text-dashboard-cyan hover:underline whitespace-nowrap"
+            className="text-mono text-[10px] font-bold text-dashboard-foreground hover:underline whitespace-nowrap"
           >
             {action.label}
           </Link>
