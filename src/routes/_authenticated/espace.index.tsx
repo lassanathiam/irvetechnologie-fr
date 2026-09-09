@@ -98,7 +98,7 @@ function EspacePage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/planning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-dashboard-raised px-4 py-2.5 text-xs font-bold text-dashboard transition hover:brightness-110"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-raised px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-muted"
           >
             <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
           </Link>
