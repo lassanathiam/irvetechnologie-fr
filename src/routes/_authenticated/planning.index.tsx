@@ -216,6 +216,8 @@ function PlanningPage() {
     tab: "chantier" | "voirie" | "montant" | "adresse";
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
+  /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
+  const [dossier, setDossier] = useState<string | null>(null);
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -852,6 +854,7 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
                     const tel = telLien(r.client_telephone);
                     const wa = whatsappLien(
@@ -862,7 +865,7 @@ function PlanningPage() {
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`relative overflow-hidden bg-card border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${
+                        className={`relative overflow-hidden border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${st.fond} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
                             : "border-border"
@@ -964,13 +967,19 @@ function PlanningPage() {
                                     : "border-primary/40 text-primary"
                                 }`}
                               >
+                                {r.partenaire && couleurPartenaire(r.partenaire) && (
+                                  <span
+                                    className="inline-block h-2.5 w-2.5 rounded-full mr-1.5 align-middle"
+                                    style={{ background: couleurPartenaire(r.partenaire)! }}
+                                  />
+                                )}
                                 {r.origine === "sous_traitance"
                                   ? `Sous-traitance${r.partenaire ? ` · ${r.partenaire}` : ""}`
                                   : "Client direct"}
                               </span>
                               <span className="text-muted-foreground">
-                                {eurosFr(Number(r.montant_ht ?? 0))} HT ·{" "}
-                                {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
+                                {montantsVisibles ? `${eurosFr(Number(r.montant_ht ?? 0))} HT` : "montant masqué"}{" "}
+                                · {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
 
