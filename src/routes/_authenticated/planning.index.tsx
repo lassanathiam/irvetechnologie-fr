@@ -981,6 +981,25 @@ function PlanningPage() {
                               >
                                 <Pencil className="h-3 w-3" /> Modifier l'adresse
                               </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  archiver.mutate({ id: r.id, archive: !r.archive })
+                                }
+                                disabled={archiver.isPending}
+                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {r.archive ? (
+                                  <>
+                                    <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
+                                  </>
+                                ) : (
+                                  <>
+                                    <Archive className="h-3 w-3" /> Archiver le chantier
+                                  </>
+                                )}
+                              </button>
+
                               {r.chantier_valide && (
                                 <button
                                   type="button"
