@@ -9,7 +9,11 @@ import {
   CheckCircle2,
   FileCheck2,
   Euro,
+  Eye,
+  EyeOff,
+  Flag,
   Fuel,
+  Play,
   Loader2,
   MapPin,
   MessageCircle,
@@ -22,8 +26,11 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  appliquerProgramme,
   archiverRendezVous,
   createRendezVous,
+  demarrerChantier,
+  terminerChantier,
   deleteRendezVous,
   listRendezVous,
   updateStatutRendezVous,
@@ -39,6 +46,7 @@ import {
   VOIRIE_STATUTS,
   type VoirieInput,
 } from "@/lib/voirie.functions";
+import { listPartenaires } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
@@ -298,6 +306,45 @@ function PlanningPage() {
     mutationFn: (p: { id: string; archive: boolean }) => archiveFn({ data: p }),
     onSuccess: refresh,
   });
+  const demarrerFn = useServerFn(demarrerChantier);
+  const demarrer = useMutation({
+    mutationFn: (p: { id: string; demarre: boolean }) => demarrerFn({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Démarrage du chantier impossible."),
+  });
+  const terminerFn = useServerFn(terminerChantier);
+  const terminer = useMutation({
+    mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Clôture du chantier impossible."),
+  });
+  const programmeFn = useServerFn(appliquerProgramme);
+  const appliquer = useMutation({
+    mutationFn: (items: Array<{ id: string; date_debut: string }>) =>
+      programmeFn({ data: { items } }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Application du programme impossible."),
+  });
+
+  /** Couleur d'identification de chaque partenaire (carte + fiches). */
+  const fetchPartenaires = useServerFn(listPartenaires);
+  const partenaires = useQuery({
+    queryKey: ["partenaires"],
+    queryFn: () => fetchPartenaires(),
+  });
+  const couleurPartenaire = (nom?: string | null) => {
+    if (!nom?.trim()) return null;
+    const cible = nom.trim().toLowerCase();
+    return (
+      partenaires.data?.find((p) => p.nom.trim().toLowerCase() === cible)?.couleur ?? null
+    );
+  };
+
+  /** Confidentialité : les montants peuvent être masqués à l'écran (chantier, clients présents). */
+  const [montantsVisibles, setMontantsVisibles] = useState(true);
 
   /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
   const [vueArchives, setVueArchives] = useState(false);
@@ -346,13 +393,15 @@ function PlanningPage() {
           label: r.client_nom,
           sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           statut: r.statut,
+          couleur: couleurPartenaire(r.partenaire),
           date: dateTimeFr(r.date_debut),
           trajet:
             r.distance_km != null
               ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
               : null,
         })),
-    [rows],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [rows, partenaires.data],
   );
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
@@ -1528,7 +1577,7 @@ function PlanningPage() {
               150 km, la journée prévoit une nuitée sur place.
             </p>
             <div className="flex flex-wrap items-center gap-2 mb-3">
-              {[7, 14].map((h) => (
+              {[7, 14, 30].map((h) => (
                 <button
                   key={h}
                   type="button"
