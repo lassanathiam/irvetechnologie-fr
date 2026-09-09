@@ -478,6 +478,7 @@ export type Database = {
           actif: boolean
           couleur: string
           created_at: string
+          email: string | null
           id: string
           nom: string
           notes: string | null
@@ -489,6 +490,7 @@ export type Database = {
           actif?: boolean
           couleur?: string
           created_at?: string
+          email?: string | null
           id?: string
           nom: string
           notes?: string | null
@@ -500,6 +502,7 @@ export type Database = {
           actif?: boolean
           couleur?: string
           created_at?: string
+          email?: string | null
           id?: string
           nom?: string
           notes?: string | null
@@ -721,6 +724,7 @@ export type Database = {
           metrage_m: number | null
           montant_ht: number
           notes: string | null
+          notif_archive_at: string | null
           notif_fin_at: string | null
           origine: string
           partenaire: string | null
@@ -766,6 +770,7 @@ export type Database = {
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
+          notif_archive_at?: string | null
           notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
@@ -811,6 +816,7 @@ export type Database = {
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
+          notif_archive_at?: string | null
           notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
