@@ -61,21 +61,38 @@ export const listPartenaires = createServerFn({ method: "GET" })
 
 export const savePartenaire = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id?: string | null; nom: string; actif?: boolean; notes?: string | null }) =>
-    z
-      .object({
-        id: z.string().uuid().optional().nullable(),
-        nom: z.string().trim().min(2).max(160),
-        actif: z.boolean().default(true),
-        notes: z.string().trim().max(1000).optional().nullable(),
-      })
-      .parse(raw),
+  .inputValidator(
+    (raw: {
+      id?: string | null;
+      nom: string;
+      actif?: boolean;
+      notes?: string | null;
+      couleur?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid().optional().nullable(),
+          nom: z.string().trim().min(2).max(160),
+          actif: z.boolean().default(true),
+          notes: z.string().trim().max(1000).optional().nullable(),
+          couleur: z
+            .string()
+            .trim()
+            .regex(/^#[0-9a-fA-F]{6}$/, "Couleur invalide")
+            .default("#0284c7"),
+        })
+        .parse(raw),
   )
   .handler(async ({ data, context }) => {
     if (data.id) {
       const { error } = await context.supabase
         .from("partenaires")
-        .update({ nom: data.nom, actif: data.actif, notes: data.notes ?? null })
+        .update({
+          nom: data.nom,
+          actif: data.actif,
+          notes: data.notes ?? null,
+          couleur: data.couleur,
+        })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
       return { id: data.id };
@@ -86,6 +103,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
         nom: data.nom,
         actif: data.actif,
         notes: data.notes ?? null,
+        couleur: data.couleur,
         owner_user_id: context.userId,
       })
       .select("id")
@@ -93,6 +111,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { id: row.id };
   });
+
 
 export const deletePartenaire = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
