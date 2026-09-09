@@ -13,6 +13,7 @@ import {
   MessageCircle,
   Phone,
   RotateCcw,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
