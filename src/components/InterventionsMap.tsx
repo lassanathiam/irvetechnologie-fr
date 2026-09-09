@@ -20,6 +20,8 @@ const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
 export const STATUT_COLORS: Record<string, string> = {
   planifie: "#f59e0b",
   confirme: "#0284c7",
+  en_cours: "#7c3aed",
+  termine: "#0d9488",
   realise: "#16a34a",
   annule: "#94a3b8",
 };
@@ -62,6 +64,8 @@ export function InterventionsMap({
   const L = useRef<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const byId = useRef<Record<string, any>>({});
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const moiRef = useRef<any>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -191,8 +195,42 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [routeCoords, routeEstime, tourneeCoords]);
 
+  /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
+  function maPosition() {
+    if (!navigator.geolocation || !map.current) return;
+    navigator.geolocation.getCurrentPosition(
+      (pos) => {
+        const leaflet = L.current;
+        const p: [number, number] = [pos.coords.latitude, pos.coords.longitude];
+        if (moiRef.current) moiRef.current.remove();
+        moiRef.current = leaflet
+          .circleMarker(p, {
+            radius: 8,
+            color: "#fff",
+            weight: 3,
+            fillColor: "#2563eb",
+            fillOpacity: 1,
+          })
+          .addTo(map.current)
+          .bindTooltip("Ma position", { direction: "top" });
+        map.current.setView(p, 11);
+      },
+      () => {
+        // Position refusée ou indisponible : la carte reste inchangée.
+      },
+      { enableHighAccuracy: true, timeout: 8000 },
+    );
+  }
+
   return (
-    <div className="rounded-sm overflow-hidden border border-border">
+    <div className="relative rounded-sm overflow-hidden border border-border">
+      <button
+        type="button"
+        onClick={maPosition}
+        className="absolute right-2 top-2 z-[500] text-mono text-[11px] font-bold px-3 py-2 rounded-sm bg-card/95 border border-border shadow hover:border-primary hover:text-primary"
+      >
+        Ma position
+      </button>
       <div ref={el} style={{ height }} className="w-full bg-muted" />
     </div>
   );
