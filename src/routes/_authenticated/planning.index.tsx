@@ -1375,6 +1375,20 @@ function PlanningPage() {
                                   Voirie : {VOIRIE_LABEL[v.statut] ?? v.statut}
                                 </span>
                               )}
+                              {r.origine === "sous_traitance" && (
+                                <span
+                                  className={`text-mono text-[11px] px-2 py-0.5 rounded-sm border ${
+                                    r.materiel_statut === "en_cours"
+                                      ? "border-border text-muted-foreground"
+                                      : "border-primary/40 text-primary"
+                                  }`}
+                                >
+                                  {MATERIEL_LABELS[
+                                    (r.materiel_statut ??
+                                      "en_cours") as keyof typeof MATERIEL_LABELS
+                                  ] ?? "Matériel en cours"}
+                                </span>
+                              )}
                             </div>
 
                             {dossierOuvert && (photosDossier.data?.length ?? 0) > 0 && (
@@ -1384,17 +1398,29 @@ function PlanningPage() {
                                   {photosDossier.data!.length})
                                 </p>
                                 <div className="mt-2 flex gap-2 overflow-x-auto">
-                                  {photosDossier.data!.map((p) =>
-                                    p.url ? (
-                                      <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                                  {photosDossier.data!.map((p) => {
+                                    const cat = (p.categorie ?? "autre") as keyof typeof PHOTO_CATEGORIES_LABELS;
+                                    const libelle = PHOTO_CATEGORIES_LABELS[cat] ?? "Autre";
+                                    return p.url ? (
+                                      <a
+                                        key={p.id}
+                                        href={p.url}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="shrink-0 w-24"
+                                        title={libelle}
+                                      >
                                         <img
                                           src={p.url}
-                                          alt={p.legende ?? "Photo du chantier"}
-                                          className="h-20 w-20 rounded-sm border border-border object-cover"
+                                          alt={p.legende ?? libelle}
+                                          className="h-20 w-24 rounded-sm border border-border object-cover"
                                         />
+                                        <span className="block text-mono text-[10px] text-muted-foreground mt-1 leading-tight">
+                                          {libelle}
+                                        </span>
                                       </a>
-                                    ) : null,
-                                  )}
+                                    ) : null;
+                                  })}
                                 </div>
                               </div>
                             )}
