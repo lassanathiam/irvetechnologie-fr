@@ -238,6 +238,8 @@
   color: var(--dashboard-foreground);
   background-color: var(--dashboard);
   border: 1px solid var(--dashboard-line);
+  --muted-foreground: var(--dashboard-muted);
+  --border: var(--dashboard-line);
 }
 
 .neo-dashboard-panel {
