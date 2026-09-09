@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ArrowRight,
+  ArrowUpRight,
   CalendarClock,
   CheckCircle2,
   Euro,
@@ -18,6 +19,7 @@ import { getDashboard } from "@/lib/planning.functions";
 import { updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
+import { Button } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
   head: () => ({
@@ -81,28 +83,28 @@ function EspacePage() {
 
   return (
     <ProShell>
-      <div className="pro-workspace">
-      <div className="grid grid-cols-[minmax(0,1fr)_auto] items-end gap-5 mb-8">
-        <div>
-          <div className="mb-4 inline-flex items-center gap-2 border-l-2 border-operational bg-operational/10 px-3 py-1.5">
-            <span className="h-2 w-2 rounded-full bg-operational animate-pulse" />
-            <span className="pro-kicker">Système actif</span>
+      <div className="pro-workspace neo-dashboard overflow-hidden rounded-lg p-4 sm:p-7">
+      <div className="grid gap-5 border-b border-dashboard-line pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+        <div className="min-w-0">
+          <div className="mb-3 flex items-center gap-2 text-dashboard-cyan">
+            <span className="h-2 w-2 rounded-full bg-dashboard-cyan animate-pulse" />
+            <span className="text-mono text-[11px]">Pilotage en direct</span>
           </div>
-          <h1 className="pro-title text-4xl leading-none sm:text-6xl">Vue d’ensemble<br/><span className="text-muted-foreground">opérationnelle</span></h1>
-          <p className="text-sm text-muted-foreground mt-1.5">
-            Borne de l'Ouest — marque commerciale d'IRVE Technologie
+          <h1 className="pro-title text-3xl leading-tight sm:text-5xl">Tableau de bord</h1>
+          <p className="neo-dashboard-muted mt-2 text-sm">
+            Activité, chiffre d'affaires et interventions en un coup d'œil
           </p>
         </div>
-        <div className="hidden flex-wrap justify-end gap-2 sm:flex">
+        <div className="flex flex-wrap gap-2">
           <Link
             to="/planning"
-            className="hero-grad text-primary-foreground text-mono text-xs font-bold px-4 py-2.5 rounded-full inline-flex items-center gap-2 shadow-sm transition hover:brightness-110"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-dashboard-cyan px-4 py-2.5 text-xs font-bold text-dashboard transition hover:brightness-110"
           >
             <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
           </Link>
           <Link
             to="/devis"
-            className="text-mono text-xs font-bold border border-border rounded-full px-4 py-2.5 inline-flex items-center gap-2 hover:border-primary hover:text-primary transition"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-violet"
           >
             <FileText className="h-3.5 w-3.5" /> Nouveau devis
           </Link>
@@ -114,8 +116,8 @@ function EspacePage() {
       ) : (
         <>
           {enCours.length > 0 && (
-            <div className="mb-6 rounded-xl border border-violet-400/60 bg-violet-50 dark:bg-violet-500/10 p-5">
-              <p className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
+            <div className="neo-dashboard-panel mt-6 rounded-md border-l-4 border-l-dashboard-violet p-5">
+              <p className="text-mono text-xs font-bold text-dashboard-violet">
                 Travaux en cours
               </p>
               <ul className="mt-3 grid gap-2">
@@ -124,13 +126,13 @@ function EspacePage() {
                     <Link
                       to="/planning"
                       search={{ rdv: r.id }}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card/70 px-4 py-3 text-base font-semibold hover:text-primary"
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-md bg-dashboard-raised px-4 py-3 text-base font-semibold hover:text-dashboard-cyan"
                     >
                       <span className="truncate">
                         {r.client_nom}
-                        <span className="font-normal text-muted-foreground"> · {r.cp_ville || r.adresse}</span>
+                        <span className="neo-dashboard-muted font-normal"> · {r.cp_ville || r.adresse}</span>
                       </span>
-                      <span className="text-mono text-sm text-violet-700 dark:text-violet-300">
+                      <span className="text-mono text-sm text-dashboard-violet">
                         Démarré à{" "}
                         {new Date(r.demarre_at!).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
@@ -144,39 +146,77 @@ function EspacePage() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
+          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat
+              icon={Euro}
+              label="Encaissé"
+              value={euro(q.data?.stats.caEncaisse ?? 0)}
+              hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
+              to="/factures"
+              accent="cyan"
+            />
+            <Stat
+              icon={Receipt}
+              label="À encaisser"
+              value={euro(q.data?.stats.caEnAttente ?? 0)}
+              hint="Factures en attente"
+              to="/factures"
+              accent="violet"
+            />
+            <Stat
+              icon={FileText}
+              label="Devis établis"
+              value={euro(q.data?.stats.caDevis ?? 0)}
+              hint={`${q.data?.devis.length ?? 0} devis récents`}
+              to="/devis"
+            />
             <Stat
               icon={CalendarClock}
-              label="Rendez-vous à venir"
+              label="Rendez-vous"
               value={String(q.data?.stats.rdvAVenir ?? 0)}
               hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
               to="/planning"
             />
-            <Stat
-              icon={Wrench}
-              label="Travaux réalisés"
-              value={String(q.data?.stats.installations ?? 0)}
-              hint={`${q.data?.stats.chantiersValides ?? 0} chantiers validés`}
-              to="/planning"
-              search={{ vue: "realises" }}
-            />
-            <Stat
-              icon={Euro}
-              label="Chiffre d'affaires encaissé"
-              value={euro(q.data?.stats.caEncaisse ?? 0)}
-              hint={`${euro(q.data?.stats.caEnAttente ?? 0)} en attente de paiement`}
-              to="/factures"
-            />
-            <Stat
-              icon={Inbox}
-              label="Demandes clients"
-              value={String(q.data?.stats.demandesTotal ?? 0)}
-              hint={`${q.data?.stats.demandesNouvelles ?? 0} nouvelles · ${q.data?.stats.demandesAcceptees ?? 0} acceptées`}
-              to="/demandes"
-            />
           </div>
 
-          <div className="grid gap-6 lg:grid-cols-[1.12fr_.88fr]">
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
+            <section className="neo-dashboard-panel overflow-hidden rounded-md lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashboard-line px-5 py-4">
+                <div>
+                  <p className="text-mono text-[10px] text-dashboard-cyan">Flux financier</p>
+                  <h2 className="mt-1 text-lg font-bold">Derniers devis et factures</h2>
+                </div>
+                <Link to="/factures" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-dashboard-cyan">
+                  Tout afficher <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[620px] text-left text-sm">
+                  <thead className="neo-dashboard-muted bg-dashboard-raised text-mono text-[10px]">
+                    <tr><th className="px-5 py-3">Document</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">État</th><th className="px-5 py-3 text-right">Montant TTC</th></tr>
+                  </thead>
+                  <tbody className="divide-y divide-dashboard-line">
+                    {(q.data?.factures ?? []).slice(0, 4).map((f) => (
+                      <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised">
+                        <td className="px-5 py-3.5"><Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs text-dashboard-cyan">{f.numero}</Link></td>
+                        <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
+                        <td className="px-4 py-3.5"><span className={f.statut === "payee" ? "text-dashboard-cyan" : "text-dashboard-violet"}>{f.statut === "payee" ? "Payée" : "En attente"}</span></td>
+                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(f.total_ttc))}</td>
+                      </tr>
+                    ))}
+                    {(q.data?.devis ?? []).slice(0, 3).map((d) => (
+                      <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised">
+                        <td className="px-5 py-3.5"><Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs text-dashboard-violet">{d.numero}</Link></td>
+                        <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
+                        <td className="px-4 py-3.5 neo-dashboard-muted">Devis · {d.statut}</td>
+                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(d.total_ttc))}</td>
+                      </tr>
+                    ))}
+                    {!q.data?.factures.length && !q.data?.devis.length && <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucun document financier.</td></tr>}
+                  </tbody>
+                </table>
+              </div>
+            </section>
             <Panel
               icon={CalendarClock}
               title="Prochains rendez-vous"
@@ -236,14 +276,16 @@ function EspacePage() {
                           {d.formule ? ` · formule ${d.formule}` : ""}
                         </p>
                       </div>
-                      <button
+                      <Button
                         type="button"
+                        variant="outline"
+                        size="sm"
                         onClick={() => accepter.mutate(d.id)}
                         disabled={accepter.isPending}
-                        className="text-mono text-[11px] font-bold rounded-full border border-primary/50 text-primary px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-cyan hover:bg-dashboard-cyan hover:text-dashboard"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
-                      </button>
+                      </Button>
                     </li>
                   ))}
                 </ul>
@@ -365,7 +407,7 @@ function EspacePage() {
             </Panel>
           </div>
 
-          <p className="text-mono text-[11px] text-muted-foreground mt-6">
+          <p className="neo-dashboard-muted mt-6 text-mono text-[10px]">
             Chiffre d'affaires du mois en cours : {euro(q.data?.stats.caMois ?? 0)} · la carte des
             interventions se trouve dans l'onglet Planning.
           </p>
@@ -383,6 +425,7 @@ function Stat({
   hint,
   to,
   search,
+  accent,
 }: {
   icon: typeof Euro;
   label: string;
@@ -390,18 +433,19 @@ function Stat({
   hint?: string;
   to?: string;
   search?: Record<string, string>;
+  accent?: "cyan" | "violet";
 }) {
   const contenu = (
     <>
-      <p className="text-mono text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground flex items-center gap-2">
-        <Icon className="h-4 w-4 text-primary" /> {label}
+      <p className="neo-dashboard-muted flex items-center gap-2 text-mono text-[10px]">
+        <Icon className={`h-4 w-4 ${accent === "violet" ? "text-dashboard-violet" : "text-dashboard-cyan"}`} /> {label}
       </p>
-      <p className="text-4xl font-bold tracking-tight mt-4">{value}</p>
-      {hint && <p className="text-sm text-muted-foreground mt-2">{hint}</p>}
+      <p className={`mt-4 font-mono text-2xl font-bold sm:text-3xl ${accent === "violet" ? "text-dashboard-violet" : accent === "cyan" ? "text-dashboard-cyan" : "text-dashboard-foreground"}`}>{value}</p>
+      {hint && <p className="neo-dashboard-muted mt-2 text-xs">{hint}</p>}
     </>
   );
   const cls =
-    "group block pro-surface rounded-xl p-6 transition hover:-translate-y-0.5 hover:border-operational/60";
+    "group block neo-dashboard-kpi rounded-md p-5 transition hover:-translate-y-0.5 hover:border-dashboard-cyan";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -424,15 +468,15 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="pro-surface rounded-xl p-5">
+    <section className="neo-dashboard-panel rounded-md p-5">
       <div className="flex items-center justify-between gap-3 mb-3">
         <h2 className="text-sm font-bold flex items-center gap-2">
-          <Icon className="h-4 w-4 text-primary" /> {title}
+          <Icon className="h-4 w-4 text-dashboard-cyan" /> {title}
         </h2>
         {action && (
           <Link
             to={action.to}
-            className="text-mono text-[11px] font-bold text-primary hover:underline whitespace-nowrap"
+            className="text-mono text-[10px] font-bold text-dashboard-cyan hover:underline whitespace-nowrap"
           >
             {action.label}
           </Link>
@@ -444,7 +488,7 @@ function Panel({
 }
 
 function Empty({ children }: { children: React.ReactNode }) {
-  return <p className="text-sm text-muted-foreground py-2">{children}</p>;
+  return <p className="neo-dashboard-muted py-2 text-sm">{children}</p>;
 }
 
 export { STATUT_DEMANDE };
