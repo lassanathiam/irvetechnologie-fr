@@ -24,9 +24,9 @@ export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
 
   return (
-    <div className="pro-shell min-h-screen bg-background">
-      <header className="sticky top-0 z-30 border-b border-border/70 bg-card/90 backdrop-blur-xl">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6 h-16 flex items-center justify-between gap-3">
+    <div className="pro-shell min-h-screen bg-background text-foreground">
+      <header className="pro-header sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-xl">
+        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
           <Link to="/" className="flex items-center gap-2.5 shrink-0">
             <BrandLogo className="h-9 w-9" />
             <span className="hidden sm:block leading-tight">
@@ -38,19 +38,6 @@ export function ProShell({ children }: { children: React.ReactNode }) {
               </span>
             </span>
           </Link>
-
-          <nav className="hidden md:flex items-center gap-1 overflow-x-auto">
-            {LINKS.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                className="text-mono text-xs font-semibold px-3 py-2 rounded-sm text-muted-foreground hover:text-primary hover:bg-muted/60 inline-flex items-center gap-1.5 whitespace-nowrap"
-                activeProps={{ className: "text-primary bg-muted font-bold" }}
-              >
-                <Icon className="h-3.5 w-3.5" /> {label}
-              </Link>
-            ))}
-          </nav>
 
           <div className="flex items-center gap-2 shrink-0">
             <Link
@@ -88,8 +75,21 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </div>
         </div>
 
+        <nav className="mx-auto hidden min-h-12 max-w-7xl items-stretch gap-1 overflow-x-auto px-4 md:flex sm:px-6" aria-label="Navigation de l'espace professionnel">
+          {LINKS.map(({ to, label, icon: Icon }) => (
+            <Link
+              key={to}
+              to={to}
+              className="pro-nav-link inline-flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 text-xs font-bold text-muted-foreground hover:bg-muted hover:text-primary"
+              activeProps={{ className: "border-primary bg-muted text-primary" }}
+            >
+              <Icon className="h-4 w-4 shrink-0" /> {label}
+            </Link>
+          ))}
+        </nav>
+
         {menuOuvert && (
-          <nav className="md:hidden border-t border-border bg-card px-4 py-3 grid grid-cols-2 gap-2">
+          <nav className="grid grid-cols-2 gap-2 border-t border-border bg-card px-4 py-3 md:hidden" aria-label="Navigation mobile de l'espace professionnel">
             {LINKS.map(({ to, label, icon: Icon }) => (
               <Link
                 key={to}
@@ -122,14 +122,14 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </nav>
         )}
       </header>
-      <div className="border-b border-border bg-muted/40">
-        <div className="mx-auto max-w-6xl px-6 py-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+      <div className="pro-qualifications border-b border-border bg-muted/70">
+        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-6">
           <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
           <span className="text-mono text-xs font-bold text-primary">{COMPANY.qualifications}</span>
           <span className="text-xs text-muted-foreground">{COMPANY.qualificationsDetail}</span>
         </div>
       </div>
-      <main className="pro-main mx-auto max-w-6xl px-4 py-7 sm:px-6 sm:py-10">{children}</main>
+      <main className="pro-main mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }
