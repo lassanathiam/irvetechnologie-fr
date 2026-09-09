@@ -38,6 +38,22 @@ export const Route = createFileRoute("/_authenticated/demandes/")({
   component: DemandesPage,
 });
 
+/** Nature de la demande, affichée en évidence sur chaque fiche. */
+const TYPE_DEMANDE_LABELS: Record<string, string> = {
+  raccordement: "Demande de raccordement",
+  intervention: "Demande d'intervention",
+  maintenance: "Demande de maintenance",
+  souscription: "Souscription formule",
+};
+
+const FORMULE_LABELS: Record<string, string> = {
+  serenite: "Sérénité",
+  premium: "Sérénité+",
+  pro: "Pro / Flotte",
+  essentiel: "Essentiel",
+  confort: "Confort",
+};
+
 const KIND_LABEL: Record<string, string> = {
   tableau: "Tableau électrique",
   cheminement: "Cheminement",
