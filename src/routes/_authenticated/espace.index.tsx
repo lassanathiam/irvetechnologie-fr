@@ -282,7 +282,7 @@ function EspacePage() {
                         size="sm"
                         onClick={() => accepter.mutate(d.id)}
                         disabled={accepter.isPending}
-                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-foreground hover:bg-dashboard-raised hover:text-dashboard"
+                        className="min-h-11 border-dashboard-line bg-dashboard-raised text-dashboard-foreground hover:border-dashboard-muted"
                       >
                         <CheckCircle2 className="h-3.5 w-3.5" /> Accepter
                       </Button>
