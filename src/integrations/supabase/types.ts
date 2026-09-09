@@ -692,6 +692,8 @@ export type Database = {
       rendezvous: {
         Row: {
           adresse: string
+          archive: boolean
+          archive_at: string | null
           chantier_commentaire: string | null
           chantier_valide: boolean
           chantier_valide_at: string | null
@@ -732,6 +734,8 @@ export type Database = {
         }
         Insert: {
           adresse: string
+          archive?: boolean
+          archive_at?: string | null
           chantier_commentaire?: string | null
           chantier_valide?: boolean
           chantier_valide_at?: string | null
@@ -772,6 +776,8 @@ export type Database = {
         }
         Update: {
           adresse?: string
+          archive?: boolean
+          archive_at?: string | null
           chantier_commentaire?: string | null
           chantier_valide?: boolean
           chantier_valide_at?: string | null

@@ -3,6 +3,8 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
+  Archive,
+  ArchiveRestore,
   CalendarClock,
   CheckCircle2,
   FileCheck2,
@@ -10,7 +12,9 @@ import {
   Fuel,
   Loader2,
   MapPin,
+  MessageCircle,
   Pencil,
+  Phone,
   Plus,
   Route as RouteIcon,
   ShieldCheck,
@@ -18,6 +22,7 @@ import {
   Upload,
 } from "lucide-react";
 import {
+  archiverRendezVous,
   createRendezVous,
   deleteRendezVous,
   listRendezVous,
@@ -39,8 +44,10 @@ import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/In
 import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
+import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
+
 
 export const Route = createFileRoute("/_authenticated/planning/")({
   head: () => ({
@@ -71,6 +78,41 @@ const STATUTS = [
   { v: "realise", l: "Réalisé" },
   { v: "annule", l: "Annulé" },
 ] as const;
+
+/** Code couleur unique pour l'état d'un chantier (badge + liseré de la fiche). */
+const STATUT_STYLE: Record<
+  string,
+  { label: string; badge: string; barre: string; point: string }
+> = {
+  planifie: {
+    label: "Planifié",
+    badge: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40",
+    barre: "before:bg-amber-500",
+    point: "bg-amber-500",
+  },
+  confirme: {
+    label: "Confirmé",
+    badge: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/40",
+    barre: "before:bg-sky-500",
+    point: "bg-sky-500",
+  },
+  realise: {
+    label: "Réalisé",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40",
+    barre: "before:bg-emerald-500",
+    point: "bg-emerald-500",
+  },
+  annule: {
+    label: "Annulé",
+    badge: "bg-destructive/15 text-destructive border-destructive/40",
+    barre: "before:bg-destructive",
+    point: "bg-destructive",
+  },
+};
+
+const styleStatut = (s?: string | null) => STATUT_STYLE[s ?? "planifie"] ?? STATUT_STYLE.planifie!;
+
+
 
 const VOIRIE_LABEL = Object.fromEntries(VOIRIE_STATUTS.map((s) => [s.v, s.l])) as Record<
   string,
@@ -230,8 +272,29 @@ function PlanningPage() {
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
     onSuccess: refresh,
   });
+  const archiveFn = useServerFn(archiverRendezVous);
+  const archiver = useMutation({
+    mutationFn: (p: { id: string; archive: boolean }) => archiveFn({ data: p }),
+    onSuccess: refresh,
+  });
 
-  const rows = list.data ?? [];
+  /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
+  const [vueArchives, setVueArchives] = useState(false);
+  /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
+  const [filtreStatut, setFiltreStatut] = useState<string>("tous");
+
+  const toutes = list.data ?? [];
+  const nbArchives = toutes.filter((r) => r.archive).length;
+  const rows = useMemo(
+    () =>
+      toutes
+        .filter((r) => Boolean(r.archive) === vueArchives)
+        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [list.data, vueArchives, filtreStatut],
+  );
+
+
   /** Technicien dont on calcule les trajets (son domicile est le point de départ). */
   const [departId, setDepartId] = useState(TECHNICIENS[0]!.id);
   const depart = TECHNICIENS.find((t) => t.id === departId) ?? TECHNICIENS[0]!;
@@ -649,17 +712,65 @@ function PlanningPage() {
         </section>
 
         <section className="order-3 lg:col-span-2 space-y-6">
-          <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
-            <CalendarClock className="h-4 w-4 text-primary" /> Rendez-vous programmés
-          </h2>
+          <div className="flex flex-wrap items-center gap-3">
+            <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
+              <CalendarClock className="h-4 w-4 text-primary" />
+              {vueArchives ? "Chantiers archivés" : "Rendez-vous programmés"}
+            </h2>
+            <button
+              type="button"
+              onClick={() => setVueArchives((v) => !v)}
+              className={`ml-auto text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                vueArchives
+                  ? "border-primary text-primary"
+                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+              }`}
+            >
+              <Archive className="h-3.5 w-3.5" />
+              {vueArchives ? "Revenir aux chantiers actifs" : `Archives (${nbArchives})`}
+            </button>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { v: "tous", l: "Tous", point: "bg-muted-foreground" },
+              ...STATUTS.map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
+            ].map((f) => {
+              const nb =
+                f.v === "tous"
+                  ? toutes.filter((r) => Boolean(r.archive) === vueArchives).length
+                  : toutes.filter((r) => Boolean(r.archive) === vueArchives && r.statut === f.v)
+                      .length;
+              const on = filtreStatut === f.v;
+              return (
+                <button
+                  key={f.v}
+                  type="button"
+                  onClick={() => setFiltreStatut(f.v)}
+                  className={`text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                    on
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:border-primary/60"
+                  }`}
+                >
+                  <span className={`h-2 w-2 rounded-full ${f.point}`} /> {f.l} ({nb})
+                </button>
+              );
+            })}
+          </div>
 
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
             <p className="text-sm text-muted-foreground">
-              Aucun rendez-vous. Créez le premier avec « Nouveau rendez-vous ».
+              {vueArchives
+                ? "Aucun chantier archivé pour le moment."
+                : filtreStatut !== "tous"
+                  ? "Aucun chantier dans cet état."
+                  : "Aucun rendez-vous. Créez le premier avec « Nouveau rendez-vous »."}
             </p>
           ) : (
+
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
@@ -671,26 +782,75 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const st = styleStatut(r.statut);
+                    const tel = telLien(r.client_telephone);
+                    const wa = whatsappLien(
+                      r.client_telephone,
+                      `Bonjour ${r.client_nom}, Borne de l'Ouest au sujet de votre installation de borne de recharge.`,
+                    );
                     return (
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`bg-card border rounded-xl p-4 h-fit transition-all duration-200 hover:shadow-md ${
+                        className={`relative overflow-hidden bg-card border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
                             : "border-border"
-                        }`}
-
+                        } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="font-medium">
-                              {r.client_nom}
-                              <span className="text-muted-foreground font-normal"> — {r.titre}</span>
+                            <p className="font-medium flex flex-wrap items-center gap-2">
+                              <span>
+                                {r.client_nom}
+                                <span className="text-muted-foreground font-normal">
+                                  {" "}
+                                  — {r.titre}
+                                </span>
+                              </span>
+                              <span
+                                className={`text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${st.badge}`}
+                              >
+                                {st.label}
+                              </span>
+                              {r.archive && (
+                                <span className="text-mono text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
+                                  Archivé
+                                </span>
+                              )}
                             </p>
                             {r.designation && (
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
+
+                            {(tel || wa || r.client_email) && (
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                {tel && (
+                                  <a
+                                    href={tel}
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                                  >
+                                    <Phone className="h-3.5 w-3.5" /> Appeler
+                                  </a>
+                                )}
+                                {wa && (
+                                  <a
+                                    href={wa}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
+                                  >
+                                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                                  </a>
+                                )}
+                                {r.client_telephone && (
+                                  <span className="text-mono text-[11px] text-muted-foreground">
+                                    {r.client_telephone}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
 
                             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="inline-flex items-center gap-1">
@@ -821,6 +981,25 @@ function PlanningPage() {
                               >
                                 <Pencil className="h-3 w-3" /> Modifier l'adresse
                               </button>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  archiver.mutate({ id: r.id, archive: !r.archive })
+                                }
+                                disabled={archiver.isPending}
+                                className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1 disabled:opacity-50"
+                              >
+                                {r.archive ? (
+                                  <>
+                                    <ArchiveRestore className="h-3 w-3" /> Remettre dans le planning
+                                  </>
+                                ) : (
+                                  <>
+                                    <Archive className="h-3 w-3" /> Archiver le chantier
+                                  </>
+                                )}
+                              </button>
+
                               {r.chantier_valide && (
                                 <button
                                   type="button"

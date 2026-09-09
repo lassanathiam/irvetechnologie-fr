@@ -158,6 +158,24 @@ export const updateAdresseRendezVous = createServerFn({ method: "POST" })
     return { ok: true, geocode: Boolean(geo) };
   });
 
+/** Archive (ou sort des archives) un chantier clôturé, sans le supprimer. */
+export const archiverRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; archive: boolean }) =>
+    z.object({ id: z.string().uuid(), archive: z.boolean() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        archive: data.archive,
+        archive_at: data.archive ? new Date().toISOString() : null,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const deleteRendezVous = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
@@ -166,6 +184,7 @@ export const deleteRendezVous = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 export const getDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -183,7 +202,12 @@ export const getDashboard = createServerFn({ method: "GET" })
       s.from("rapports").select("id, numero, type, client_nom, date_intervention")
         .order("created_at", { ascending: false })
         .limit(5),
-      s.from("rendezvous").select("*").order("date_debut", { ascending: true }).limit(200),
+      s
+        .from("rendezvous")
+        .select("*")
+        .eq("archive", false)
+        .order("date_debut", { ascending: true })
+        .limit(200),
       s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, paid_at")
         .order("created_at", { ascending: false })
         .limit(50),
