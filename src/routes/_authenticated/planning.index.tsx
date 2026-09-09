@@ -1658,6 +1658,61 @@ function PlanningPage() {
                           </form>
                         )}
 
+                        {isDatePanel && (
+                          <form
+                            key={`date-${r.id}`}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const val = String(f.get("date_debut") ?? "");
+                              const d = new Date(val);
+                              if (Number.isNaN(d.getTime())) {
+                                setError("Date de rendez-vous invalide.");
+                                return;
+                              }
+                              appliquer.mutate([{ id: r.id, date_debut: d.toISOString() }]);
+                              setPanel(null);
+                            }}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
+                          >
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Date et heure du rendez-vous
+                              </span>
+                              <input
+                                type="datetime-local"
+                                name="date_debut"
+                                required
+                                defaultValue={
+                                  r.date_a_confirmer
+                                    ? ""
+                                    : new Date(
+                                        new Date(r.date_debut).getTime() -
+                                          new Date(r.date_debut).getTimezoneOffset() * 60000,
+                                      )
+                                        .toISOString()
+                                        .slice(0, 16)
+                                }
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <div className="sm:col-span-2 flex flex-wrap items-center gap-4">
+                              <button
+                                type="submit"
+                                disabled={appliquer.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 w-fit disabled:opacity-60"
+                              >
+                                {appliquer.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Enregistrer la date
+                              </button>
+                              <p className="text-[11px] text-muted-foreground">
+                                La date apparaît aussitôt dans l&apos;agenda du partenaire et du
+                                client.
+                              </p>
+                            </div>
+                          </form>
+                        )}
+
                         {isMontantPanel && (
                           <form
                             onSubmit={(e) => {
