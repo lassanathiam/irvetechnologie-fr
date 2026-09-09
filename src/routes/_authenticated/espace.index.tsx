@@ -199,39 +199,102 @@ function EspacePage() {
           </div>
 
           <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
-            <section className="neo-dashboard-panel overflow-hidden rounded-md lg:col-span-2">
-              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-dashboard-line px-5 py-4">
-                <div>
-                  <p className="text-mono text-[10px] text-dashboard-foreground">Flux financier</p>
-                  <h2 className="mt-1 text-lg font-bold">Derniers devis et factures</h2>
+            <section className="neo-dashboard-panel overflow-hidden lg:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
+                <div className="flex items-center gap-6">
+                  <button
+                    type="button"
+                    onClick={() => setDocTab("devis")}
+                    className={`pro-heading border-b-2 px-1 pb-3 text-lg font-bold transition ${
+                      docTab === "devis"
+                        ? "border-dashboard-cyan text-dashboard-foreground"
+                        : "border-transparent text-dashboard-muted hover:text-dashboard-foreground"
+                    }`}
+                  >
+                    Devis récents
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setDocTab("factures")}
+                    className={`pro-heading border-b-2 px-1 pb-3 text-lg font-bold transition ${
+                      docTab === "factures"
+                        ? "border-dashboard-cyan text-dashboard-foreground"
+                        : "border-transparent text-dashboard-muted hover:text-dashboard-foreground"
+                    }`}
+                  >
+                    Factures
+                  </button>
                 </div>
-                <Link to="/factures" className="inline-flex min-h-11 items-center gap-1 text-xs font-bold text-dashboard-foreground">
+                <Link
+                  to={docTab === "devis" ? "/devis" : "/factures"}
+                  className="inline-flex min-h-11 items-center gap-1 pb-3 text-xs font-semibold text-dashboard-cyan hover:underline"
+                >
                   Tout afficher <ArrowUpRight className="h-4 w-4" />
                 </Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[620px] text-left text-sm">
-                  <thead className="neo-dashboard-muted bg-dashboard-raised text-mono text-[10px]">
-                    <tr><th className="px-5 py-3">Document</th><th className="px-4 py-3">Client</th><th className="px-4 py-3">État</th><th className="px-5 py-3 text-right">Montant TTC</th></tr>
+                  <thead className="border-y border-dashboard-line bg-dashboard-raised text-[11px] font-bold uppercase tracking-wider text-dashboard-muted">
+                    <tr>
+                      <th className="px-5 py-3">Référence</th>
+                      <th className="px-4 py-3">Client</th>
+                      <th className="px-4 py-3">Statut</th>
+                      <th className="px-5 py-3 text-right">Montant TTC</th>
+                    </tr>
                   </thead>
-                  <tbody className="divide-y divide-dashboard-line">
-                    {(q.data?.factures ?? []).slice(0, 4).map((f) => (
-                      <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs text-dashboard-foreground">{f.numero}</Link></td>
-                        <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
-                        <td className="px-4 py-3.5"><span className={f.statut === "payee" ? "text-dashboard-foreground" : "text-dashboard-muted"}>{f.statut === "payee" ? "Payée" : "En attente"}</span></td>
-                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(f.total_ttc))}</td>
-                      </tr>
-                    ))}
-                    {(q.data?.devis ?? []).slice(0, 3).map((d) => (
-                      <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised">
-                        <td className="px-5 py-3.5"><Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs text-dashboard-muted">{d.numero}</Link></td>
-                        <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
-                        <td className="px-4 py-3.5 neo-dashboard-muted">Devis · {d.statut}</td>
-                        <td className="px-5 py-3.5 text-right font-mono font-bold">{euro(Number(d.total_ttc))}</td>
-                      </tr>
-                    ))}
-                    {!q.data?.factures.length && !q.data?.devis.length && <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucun document financier.</td></tr>}
+                  <tbody className="divide-y divide-dashboard-line/60">
+                    {docTab === "devis" &&
+                      (q.data?.devis ?? []).slice(0, 6).map((d) => {
+                        const badge = DEVIS_BADGE[d.statut] ?? DEVIS_BADGE.brouillon;
+                        return (
+                          <tr key={`devis-${d.id}`} className="transition hover:bg-dashboard-raised/60">
+                            <td className="px-5 py-3.5">
+                              <Link to="/devis/$id" params={{ id: d.id }} className="font-mono text-xs font-medium text-dashboard-cyan">
+                                {d.numero}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold">{d.client_nom}</td>
+                            <td className="px-4 py-3.5">
+                              <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${badge.cls}`}>
+                                {badge.label}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold tabular-nums">{euro(Number(d.total_ttc))}</td>
+                          </tr>
+                        );
+                      })}
+                    {docTab === "factures" &&
+                      (q.data?.factures ?? []).slice(0, 6).map((f) => {
+                        const payee = f.statut === "payee";
+                        return (
+                          <tr key={`facture-${f.id}`} className="transition hover:bg-dashboard-raised/60">
+                            <td className="px-5 py-3.5">
+                              <Link to="/factures/$id" params={{ id: f.id }} className="font-mono text-xs font-medium text-dashboard-cyan">
+                                {f.numero}
+                              </Link>
+                            </td>
+                            <td className="px-4 py-3.5 font-semibold">{f.client_nom}</td>
+                            <td className="px-4 py-3.5">
+                              <span
+                                className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${
+                                  payee
+                                    ? "border-dashboard-cyan/30 bg-dashboard-cyan/10 text-dashboard-cyan"
+                                    : "border-amber-500/25 bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                                }`}
+                              >
+                                {payee ? "Payée" : "En attente"}
+                              </span>
+                            </td>
+                            <td className="px-5 py-3.5 text-right font-mono font-bold tabular-nums">{euro(Number(f.total_ttc))}</td>
+                          </tr>
+                        );
+                      })}
+                    {docTab === "devis" && !q.data?.devis.length && (
+                      <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucun devis.</td></tr>
+                    )}
+                    {docTab === "factures" && !q.data?.factures.length && (
+                      <tr><td colSpan={4} className="neo-dashboard-muted px-5 py-8 text-center">Aucune facture.</td></tr>
+                    )}
                   </tbody>
                 </table>
               </div>
