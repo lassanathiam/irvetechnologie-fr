@@ -845,6 +845,41 @@ export type Database = {
           },
         ]
       }
+      rendezvous_photos: {
+        Row: {
+          created_at: string
+          id: string
+          legende: string | null
+          path: string
+          rendezvous_id: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          legende?: string | null
+          path: string
+          rendezvous_id: string
+          source?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          legende?: string | null
+          path?: string
+          rendezvous_id?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendezvous_photos_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       voirie_autorisations: {
         Row: {
           autorite: string | null

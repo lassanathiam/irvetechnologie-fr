@@ -66,16 +66,18 @@ function EspacePage() {
   });
 
   const rdv = q.data?.rendezvous ?? [];
+  const enCours = rdv.filter((r) => r.demarre_at && !r.termine_at);
   const aVenir = rdv
     .filter((r) => new Date(r.date_debut).getTime() >= Date.now() - 36e5 && r.statut !== "annule")
     .slice(0, 6);
   const realises = rdv
-    .filter((r) => r.statut === "realise")
+    .filter((r) => r.statut === "realise" || r.statut === "termine")
     .sort((a, b) => new Date(b.date_debut).getTime() - new Date(a.date_debut).getTime())
     .slice(0, 5);
   const demandes = q.data?.demandes ?? [];
   const nouvelles = demandes.filter((d) => d.status === "nouveau" || d.status === "en_cours").slice(0, 6);
   const acceptees = demandes.filter((d) => d.status === "accepte").slice(0, 6);
+
 
   return (
     <ProShell>
@@ -107,30 +109,66 @@ function EspacePage() {
         <Loader2 className="h-5 w-5 animate-spin text-primary" />
       ) : (
         <>
+          {enCours.length > 0 && (
+            <div className="mb-6 rounded-xl border border-violet-400/60 bg-violet-50 dark:bg-violet-500/10 p-5">
+              <p className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
+                Travaux en cours
+              </p>
+              <ul className="mt-3 grid gap-2">
+                {enCours.map((r) => (
+                  <li key={r.id}>
+                    <Link
+                      to="/planning"
+                      search={{ rdv: r.id }}
+                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-card/70 px-4 py-3 text-base font-semibold hover:text-primary"
+                    >
+                      <span className="truncate">
+                        {r.client_nom}
+                        <span className="font-normal text-muted-foreground"> · {r.cp_ville || r.adresse}</span>
+                      </span>
+                      <span className="text-mono text-sm text-violet-700 dark:text-violet-300">
+                        Démarré à{" "}
+                        {new Date(r.demarre_at!).toLocaleTimeString("fr-FR", {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </span>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 mb-6">
             <Stat
               icon={CalendarClock}
               label="Rendez-vous à venir"
               value={String(q.data?.stats.rdvAVenir ?? 0)}
               hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
+              to="/planning"
             />
             <Stat
               icon={Wrench}
               label="Travaux réalisés"
               value={String(q.data?.stats.installations ?? 0)}
               hint={`${q.data?.stats.chantiersValides ?? 0} chantiers validés`}
+              to="/planning"
+              search={{ vue: "realises" }}
             />
             <Stat
               icon={Euro}
               label="Chiffre d'affaires encaissé"
               value={euro(q.data?.stats.caEncaisse ?? 0)}
               hint={`${euro(q.data?.stats.caEnAttente ?? 0)} en attente de paiement`}
+              to="/factures"
             />
             <Stat
               icon={Inbox}
               label="Demandes clients"
               value={String(q.data?.stats.demandesTotal ?? 0)}
               hint={`${q.data?.stats.demandesNouvelles ?? 0} nouvelles · ${q.data?.stats.demandesAcceptees ?? 0} acceptées`}
+              to="/demandes"
             />
           </div>
 
@@ -145,21 +183,31 @@ function EspacePage() {
               ) : (
                 <ul className="divide-y divide-border">
                   {aVenir.map((r) => (
-                    <li key={r.id} className="py-3 flex items-baseline justify-between gap-4">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate">{r.client_nom}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1.5">
-                          <MapPin className="h-3 w-3" /> {r.cp_ville || r.adresse}
-                        </p>
-                      </div>
-                      <span className="text-mono text-xs font-bold text-primary whitespace-nowrap">
-                        {dateTimeFr(r.date_debut)}
-                      </span>
+                    <li key={r.id}>
+                      <Link
+                        to="/planning"
+                        search={{ rdv: r.id }}
+                        className="py-3.5 flex flex-wrap items-baseline justify-between gap-3 hover:text-primary"
+                      >
+                        <span className="min-w-0">
+                          <span className="block text-base font-semibold truncate">
+                            {r.client_nom}
+                          </span>
+                          <span className="mt-1 block text-sm text-muted-foreground truncate">
+                            <MapPin className="inline h-3.5 w-3.5 mr-1" />
+                            {r.cp_ville || r.adresse}
+                          </span>
+                        </span>
+                        <span className="text-mono text-sm font-bold text-primary whitespace-nowrap">
+                          {dateTimeFr(r.date_debut)}
+                        </span>
+                      </Link>
                     </li>
                   ))}
                 </ul>
               )}
             </Panel>
+
 
             <Panel
               icon={Inbox}
@@ -328,22 +376,36 @@ function Stat({
   label,
   value,
   hint,
+  to,
+  search,
 }: {
   icon: typeof Euro;
   label: string;
   value: string;
   hint?: string;
+  to?: string;
+  search?: Record<string, string>;
 }) {
-  return (
-    <div className="bg-card border border-border rounded-xl p-5 shadow-sm transition hover:border-primary/50 hover:shadow-md">
-      <p className="text-mono text-[11px] font-bold uppercase tracking-[0.12em] text-muted-foreground flex items-center gap-2">
+  const contenu = (
+    <>
+      <p className="text-mono text-xs font-bold uppercase tracking-[0.12em] text-muted-foreground flex items-center gap-2">
         <Icon className="h-4 w-4 text-primary" /> {label}
       </p>
-      <p className="text-3xl font-bold tracking-tight mt-3">{value}</p>
-      {hint && <p className="text-xs text-muted-foreground mt-1.5">{hint}</p>}
-    </div>
+      <p className="text-4xl font-bold tracking-tight mt-4">{value}</p>
+      {hint && <p className="text-sm text-muted-foreground mt-2">{hint}</p>}
+    </>
+  );
+  const cls =
+    "block bg-card border border-border rounded-xl p-6 shadow-sm transition hover:border-primary/60 hover:shadow-md";
+  if (!to) return <div className={cls}>{contenu}</div>;
+  return (
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    <Link to={to as any} search={search as any} className={cls}>
+      {contenu}
+    </Link>
   );
 }
+
 
 function Panel({
   icon: Icon,

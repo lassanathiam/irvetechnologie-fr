@@ -21,6 +21,9 @@ import {
   Phone,
   Plus,
   Route as RouteIcon,
+  ListChecks,
+  Trophy,
+  Camera,
   ShieldCheck,
   Trash2,
   Upload,
@@ -32,13 +35,17 @@ import {
   demarrerChantier,
   terminerChantier,
   deleteRendezVous,
+  listChantiersRealises,
+  listPhotosChantier,
   listRendezVous,
+  programmerEnsemble,
   updateStatutRendezVous,
   updateAdresseRendezVous,
   validerChantier,
   updateFacturationRdv,
   type RendezVousInput,
 } from "@/lib/planning.functions";
+
 import {
   deleteVoirie,
   listVoirie,
@@ -58,6 +65,10 @@ import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagn
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
+  validateSearch: (search: Record<string, unknown>): { rdv?: string; vue?: string } => ({
+    rdv: typeof search.rdv === "string" ? search.rdv : undefined,
+    vue: search.vue === "realises" ? "realises" : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Planning des interventions — Espace pro Borne de l'Ouest" },
@@ -71,6 +82,7 @@ export const Route = createFileRoute("/_authenticated/planning/")({
   }),
   component: PlanningPage,
 });
+
 
 const TYPES = [
   { v: "visite", l: "Visite technique" },
@@ -208,7 +220,8 @@ function PlanningPage() {
 
   const list = useQuery({ queryKey: ["rendezvous"], queryFn: () => fetchList() });
   const voirie = useQuery({ queryKey: ["voirie"], queryFn: () => fetchVoirie() });
-  const [active, setActive] = useState<string | null>(null);
+  const recherche = Route.useSearch();
+  const [active, setActive] = useState<string | null>(recherche.rdv ?? null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{
@@ -217,7 +230,16 @@ function PlanningPage() {
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
-  const [dossier, setDossier] = useState<string | null>(null);
+  const [dossier, setDossier] = useState<string | null>(recherche.rdv ?? null);
+  /** Vue « Nos chantiers réalisés » (bilan du mois), ouverte depuis le tableau de bord. */
+  const [vueBilan, setVueBilan] = useState(recherche.vue === "realises");
+  /** Mois du bilan (AAAA-MM) ; vide = les 12 derniers mois. */
+  const [moisBilan, setMoisBilan] = useState(() => new Date().toISOString().slice(0, 7));
+  /** Sélection de plusieurs chantiers à programmer ensemble. */
+  const [selection, setSelection] = useState<string[]>([]);
+  const [modeSelection, setModeSelection] = useState(false);
+  const [dateGroupee, setDateGroupee] = useState("");
+
 
   const refresh = () => {
     qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -363,6 +385,57 @@ function PlanningPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [list.data, vueArchives, filtreStatut],
   );
+  /** Chantiers en cours : toujours remontés en tête de page. */
+  const enCours = useMemo(
+    () => toutes.filter((r) => r.demarre_at && !r.termine_at && !r.archive),
+    [toutes],
+  );
+  /** Chantiers clôturés (validés) qui peuvent être rangés pour libérer la liste. */
+  const aRanger = useMemo(
+    () =>
+      toutes.filter(
+        (r) => !r.archive && (r.statut === "termine" || r.statut === "realise"),
+      ),
+    [toutes],
+  );
+
+  /** Bilan « Nos chantiers réalisés » (mois choisi). */
+  const fetchBilan = useServerFn(listChantiersRealises);
+  const bilan = useQuery({
+    queryKey: ["chantiers-realises", moisBilan],
+    queryFn: () => fetchBilan({ data: { mois: moisBilan } }),
+    enabled: vueBilan,
+  });
+
+  /** Photos déposées par les partenaires sur le dossier ouvert. */
+  const fetchPhotos = useServerFn(listPhotosChantier);
+  const photosDossier = useQuery({
+    queryKey: ["photos-chantier", dossier],
+    queryFn: () => fetchPhotos({ data: { rendezvous_id: dossier! } }),
+    enabled: Boolean(dossier),
+  });
+
+  /** Programmation groupée de plusieurs chantiers sélectionnés. */
+  const groupeFn = useServerFn(programmerEnsemble);
+  const programmerGroupe = useMutation({
+    mutationFn: (p: { ids: string[]; date_debut: string; nuitee: boolean }) =>
+      groupeFn({ data: p }),
+    onSuccess: () => {
+      setSelection([]);
+      setModeSelection(false);
+      setDateGroupee("");
+      refresh();
+    },
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Programmation groupée impossible."),
+  });
+
+  const basculerSelection = (id: string) =>
+    setSelection((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length >= 6 ? prev : [...prev, id],
+    );
+
+
 
 
   /** Technicien dont on calcule les trajets (son domicile est le point de départ). */
@@ -602,14 +675,209 @@ function PlanningPage() {
             autorisation de voirie.
           </p>
         </div>
-        <button
-          type="button"
-          onClick={() => setOpen((o) => !o)}
-          className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" /> {open ? "Fermer" : "Nouveau rendez-vous"}
-        </button>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setVueBilan((v) => !v)}
+            className={`text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 border ${
+              vueBilan ? "border-primary text-primary" : "border-border hover:border-primary"
+            }`}
+          >
+            <Trophy className="h-4 w-4" /> Nos chantiers réalisés
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setModeSelection((m) => !m);
+              setSelection([]);
+            }}
+            className={`text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 border ${
+              modeSelection ? "border-primary text-primary" : "border-border hover:border-primary"
+            }`}
+          >
+            <ListChecks className="h-4 w-4" /> Programmer ensemble
+          </button>
+          <button
+            type="button"
+            onClick={() => setOpen((o) => !o)}
+            className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" /> {open ? "Fermer" : "Nouveau rendez-vous"}
+          </button>
+        </div>
       </div>
+
+      {enCours.length > 0 && (
+        <div className="mb-6 rounded-xl border border-violet-400/60 bg-violet-50 dark:bg-violet-500/10 p-4">
+          <p className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
+            Travaux en cours
+          </p>
+          <ul className="mt-2 grid gap-2">
+            {enCours.map((r) => (
+              <li key={r.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActive(r.id);
+                    setDossier(r.id);
+                  }}
+                  className="w-full text-left rounded-lg bg-card/70 px-3 py-3 text-base font-semibold hover:text-primary"
+                >
+                  {r.client_nom}
+                  <span className="font-normal text-muted-foreground">
+                    {" "}
+                    · {r.cp_ville || r.adresse}
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {vueBilan && (
+        <div className="mb-8 bg-card border border-border rounded-xl p-5 shadow-sm">
+          <div className="flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-mono text-xs text-primary uppercase tracking-[0.14em]">
+                Nos chantiers réalisés
+              </p>
+              <h2 className="text-lg font-bold mt-1">Bilan du mois</h2>
+            </div>
+            <input
+              type="month"
+              value={moisBilan}
+              onChange={(e) => setMoisBilan(e.target.value)}
+              className="bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+            />
+          </div>
+          {bilan.isLoading ? (
+            <Loader2 className="h-5 w-5 animate-spin text-primary mt-4" />
+          ) : (
+            <>
+              <div className="grid gap-3 sm:grid-cols-4 mt-4">
+                <Bilan label="Chantiers" valeur={String(bilan.data?.bilan.nb ?? 0)} />
+                <Bilan label="Validés" valeur={String(bilan.data?.bilan.valides ?? 0)} />
+                <Bilan
+                  label="Montant HT"
+                  valeur={montantsVisibles ? eurosFr(bilan.data?.bilan.montant_ht ?? 0) : "•••"}
+                />
+                <Bilan label="Kilomètres" valeur={`${Math.round(bilan.data?.bilan.km ?? 0)} km`} />
+              </div>
+              <ul className="divide-y divide-border mt-4">
+                {(bilan.data?.chantiers ?? []).map((c) => (
+                  <li
+                    key={c.id}
+                    className="py-3 flex flex-wrap items-baseline justify-between gap-3 text-sm"
+                  >
+                    <span className="font-semibold">
+                      {c.client_nom}
+                      <span className="font-normal text-muted-foreground">
+                        {" "}
+                        · {c.cp_ville || c.adresse}
+                      </span>
+                    </span>
+                    <span className="text-mono text-xs text-muted-foreground">
+                      {dateTimeFr(c.date_debut)}
+                    </span>
+                  </li>
+                ))}
+                {!bilan.data?.chantiers.length && (
+                  <li className="py-3 text-sm text-muted-foreground">
+                    Aucun chantier réalisé sur ce mois.
+                  </li>
+                )}
+              </ul>
+            </>
+          )}
+        </div>
+      )}
+
+      {modeSelection && (
+        <div className="mb-8 bg-card border border-primary/50 rounded-xl p-5 shadow-sm">
+          <p className="text-mono text-xs text-primary uppercase tracking-[0.14em]">
+            Programmation groupée
+          </p>
+          <p className="text-sm text-muted-foreground mt-2">
+            Cochez jusqu'à 6 chantiers dans la liste, choisissez la date du premier rendez-vous :
+            les suivants sont placés à la suite (même journée) ou le lendemain si vous prévoyez une
+            nuitée.
+          </p>
+          <div className="flex flex-wrap items-end gap-3 mt-4">
+            <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">
+                Date du premier chantier
+              </span>
+              <input
+                type="datetime-local"
+                value={dateGroupee}
+                onChange={(e) => setDateGroupee(e.target.value)}
+                className="mt-2 bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+              />
+            </label>
+            <button
+              type="button"
+              disabled={selection.length < 2 || !dateGroupee || programmerGroupe.isPending}
+              onClick={() => {
+                const d = new Date(dateGroupee);
+                if (Number.isNaN(d.getTime())) {
+                  setError("Merci d'indiquer une date valide.");
+                  return;
+                }
+                programmerGroupe.mutate({
+                  ids: selection,
+                  date_debut: d.toISOString(),
+                  nuitee: false,
+                });
+              }}
+              className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm disabled:opacity-40"
+            >
+              Programmer le même jour ({selection.length})
+            </button>
+            <button
+              type="button"
+              disabled={selection.length < 2 || !dateGroupee || programmerGroupe.isPending}
+              onClick={() => {
+                const d = new Date(dateGroupee);
+                if (Number.isNaN(d.getTime())) {
+                  setError("Merci d'indiquer une date valide.");
+                  return;
+                }
+                programmerGroupe.mutate({
+                  ids: selection,
+                  date_debut: d.toISOString(),
+                  nuitee: true,
+                });
+              }}
+              className="text-mono text-xs px-4 py-2.5 rounded-sm border border-border hover:border-primary disabled:opacity-40"
+            >
+              Étaler sur plusieurs jours (nuitée)
+            </button>
+          </div>
+        </div>
+      )}
+
+      {aRanger.length > 0 && !vueArchives && (
+        <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
+          <p className="text-sm">
+            <strong>{aRanger.length}</strong> chantier{aRanger.length > 1 ? "s" : ""} terminé
+            {aRanger.length > 1 ? "s" : ""} peu{aRanger.length > 1 ? "vent" : "t"} être rangé
+            {aRanger.length > 1 ? "s" : ""} dans les archives.
+          </p>
+          <button
+            type="button"
+            onClick={() => {
+              if (!window.confirm(`Ranger ${aRanger.length} chantier(s) terminé(s) ?`)) return;
+              for (const r of aRanger) archiver.mutate({ id: r.id, archive: true });
+            }}
+            className="text-mono text-xs px-4 py-2.5 rounded-sm border border-border hover:border-primary inline-flex items-center gap-2"
+          >
+            <Archive className="h-4 w-4" /> Tout ranger
+          </button>
+        </div>
+      )}
+
+
 
       {open && (
         <form
@@ -1069,6 +1337,17 @@ function PlanningPage() {
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
+                              {modeSelection && (
+                                <label className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border border-border inline-flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={selection.includes(r.id)}
+                                    onChange={() => basculerSelection(r.id)}
+                                    className="h-4 w-4"
+                                  />
+                                  Programmer
+                                </label>
+                              )}
                               <button
                                 type="button"
                                 onClick={() => {
@@ -1098,7 +1377,30 @@ function PlanningPage() {
                               )}
                             </div>
 
+                            {dossierOuvert && (photosDossier.data?.length ?? 0) > 0 && (
+                              <div className="mt-2 border-t border-border pt-2">
+                                <p className="text-mono text-[11px] text-muted-foreground inline-flex items-center gap-1">
+                                  <Camera className="h-3 w-3" /> Photos déposées (
+                                  {photosDossier.data!.length})
+                                </p>
+                                <div className="mt-2 flex gap-2 overflow-x-auto">
+                                  {photosDossier.data!.map((p) =>
+                                    p.url ? (
+                                      <a key={p.id} href={p.url} target="_blank" rel="noreferrer">
+                                        <img
+                                          src={p.url}
+                                          alt={p.legende ?? "Photo du chantier"}
+                                          className="h-20 w-20 rounded-sm border border-border object-cover"
+                                        />
+                                      </a>
+                                    ) : null,
+                                  )}
+                                </div>
+                              </div>
+                            )}
+
                             {dossierOuvert && (
+
                               <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
                                 <button
                                   type="button"
@@ -1819,7 +2121,19 @@ function PlanningPage() {
   );
 }
 
+function Bilan({ label, valeur }: { label: string; valeur: string }) {
+  return (
+    <div className="rounded-lg border border-border bg-background p-4">
+      <p className="text-mono text-[11px] uppercase tracking-[0.12em] text-muted-foreground">
+        {label}
+      </p>
+      <p className="text-2xl font-bold mt-2">{valeur}</p>
+    </div>
+  );
+}
+
 function Legende({ color, label }: { color: string; label: string }) {
+
   return (
     <span className="inline-flex items-center gap-1.5">
       <span className="h-2.5 w-2.5 rounded-full" style={{ background: color }} />

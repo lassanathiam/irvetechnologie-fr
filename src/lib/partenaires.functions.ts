@@ -224,3 +224,89 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, id: dossier.id, geocode: Boolean(geo) };
   });
+
+/* --------------------- Photos déposées par le partenaire -------------------- */
+
+const photoSchema = tokenSchema.extend({
+  rendezvous_id: z.string().uuid(),
+  /** data:image/jpeg;base64,… — compressée dans le navigateur. */
+  data_url: z.string().max(4_500_000),
+  legende: z.string().trim().max(160).optional().nullable(),
+});
+
+const MAX_PHOTOS_PAR_DOSSIER = 20;
+
+function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; contentType: string } {
+  const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!match) throw new Error("Format d'image non supporté.");
+  const contentType = match[1]!;
+  const binary = atob(match[2]!);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  if (bytes.length > 3_500_000) throw new Error("Photo trop lourde.");
+  return { bytes, contentType };
+}
+
+/** Le partenaire dépose une photo sur l'un de SES dossiers (jeton vérifié). */
+export const uploadPhotoPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => photoSchema.parse(raw))
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+
+    const { data: dossier } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id")
+      .eq("id", data.rendezvous_id)
+      .eq("partenaire_id", partenaire.id)
+      .maybeSingle();
+    if (!dossier) throw new Error("Dossier introuvable.");
+
+    const { count } = await supabaseAdmin
+      .from("rendezvous_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("rendezvous_id", data.rendezvous_id);
+    if ((count ?? 0) >= MAX_PHOTOS_PAR_DOSSIER) {
+      throw new Error("Nombre de photos maximum atteint pour ce dossier.");
+    }
+
+    const { bytes, contentType } = decodeDataUrl(data.data_url);
+    const ext = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    const path = `${data.rendezvous_id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+    const { error: upErr } = await supabaseAdmin.storage
+      .from("chantier-photos")
+      .upload(path, bytes, { contentType, upsert: false });
+    if (upErr) throw new Error("Envoi de la photo impossible.");
+
+    const { error: insErr } = await supabaseAdmin.from("rendezvous_photos").insert({
+      rendezvous_id: data.rendezvous_id,
+      path,
+      source: "partenaire",
+      legende: data.legende ?? null,
+    });
+    if (insErr) throw new Error("Enregistrement de la photo impossible.");
+
+    return { ok: true as const, path };
+  });
+
+/** Nombre de photos déjà déposées par dossier (affichage côté partenaire). */
+export const comptePhotosPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: { token: string }) => tokenSchema.parse(raw))
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { data: dossiers } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id")
+      .eq("partenaire_id", partenaire.id)
+      .limit(200);
+    const ids = (dossiers ?? []).map((d) => d.id);
+    if (!ids.length) return {} as Record<string, number>;
+    const { data: photos } = await supabaseAdmin
+      .from("rendezvous_photos")
+      .select("rendezvous_id")
+      .in("rendezvous_id", ids)
+      .limit(2000);
+    const compte: Record<string, number> = {};
+    for (const p of photos ?? []) compte[p.rendezvous_id] = (compte[p.rendezvous_id] ?? 0) + 1;
+    return compte;
+  });
