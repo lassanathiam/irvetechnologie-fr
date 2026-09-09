@@ -79,6 +79,7 @@ function EspacePage() {
   const setStatut = useServerFn(updateStatutDemande);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
+  const [docTab, setDocTab] = useState<"devis" | "factures">("devis");
 
   const accepter = useMutation({
     mutationFn: (id: string) => setStatut({ data: { id, status: "accepte" } }),
