@@ -121,7 +121,27 @@ function PartenairesAdmin() {
               placeholder="Contact, conditions tarifaires…"
             />
           </label>
+          <div className="sm:col-span-2">
+            <span className="text-mono text-xs text-muted-foreground">
+              Couleur du partenaire (repère sur la carte et le planning)
+            </span>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {COULEURS.map((c) => (
+                <button
+                  key={c}
+                  type="button"
+                  aria-label={`Couleur ${c}`}
+                  onClick={() => setCouleur(c)}
+                  style={{ background: c }}
+                  className={`h-9 w-9 rounded-full border-2 transition ${
+                    couleur === c ? "border-foreground scale-110" : "border-transparent"
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
           <div className="sm:col-span-2 flex items-center gap-3">
+
             <button
               type="button"
               onClick={ajouter}
