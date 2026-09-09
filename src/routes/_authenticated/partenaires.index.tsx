@@ -29,6 +29,18 @@ export const Route = createFileRoute("/_authenticated/partenaires/")({
 const INPUT =
   "mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary";
 
+/** Couleurs d'identification : chaque partenaire est reconnaissable sur la carte et le planning. */
+const COULEURS = [
+  "#0284c7",
+  "#7c3aed",
+  "#db2777",
+  "#ea580c",
+  "#ca8a04",
+  "#059669",
+  "#0f766e",
+  "#475569",
+];
+
 function PartenairesAdmin() {
   const fetchAll = useServerFn(listPartenaires);
   const save = useServerFn(savePartenaire);
@@ -37,9 +49,11 @@ function PartenairesAdmin() {
 
   const [nom, setNom] = useState("");
   const [notes, setNotes] = useState("");
+  const [couleur, setCouleur] = useState(COULEURS[0]!);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copie, setCopie] = useState<string | null>(null);
+
 
   /**
    * Les liens partenaires pointent vers le site publié (accessible à tous).
