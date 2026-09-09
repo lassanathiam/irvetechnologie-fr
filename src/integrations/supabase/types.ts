@@ -73,6 +73,7 @@ export type Database = {
           email: string
           formule: string | null
           id: string
+          nb_bornes: number | null
           nom: string
           notes: string | null
           phase: string | null
@@ -81,6 +82,7 @@ export type Database = {
           telephone: string
           type_bien: string | null
           type_compteur: string | null
+          type_demande: string
           type_installation: string | null
           updated_at: string
         }
@@ -92,6 +94,7 @@ export type Database = {
           email: string
           formule?: string | null
           id?: string
+          nb_bornes?: number | null
           nom: string
           notes?: string | null
           phase?: string | null
@@ -100,6 +103,7 @@ export type Database = {
           telephone: string
           type_bien?: string | null
           type_compteur?: string | null
+          type_demande?: string
           type_installation?: string | null
           updated_at?: string
         }
@@ -111,6 +115,7 @@ export type Database = {
           email?: string
           formule?: string | null
           id?: string
+          nb_bornes?: number | null
           nom?: string
           notes?: string | null
           phase?: string | null
@@ -119,6 +124,7 @@ export type Database = {
           telephone?: string
           type_bien?: string | null
           type_compteur?: string | null
+          type_demande?: string
           type_installation?: string | null
           updated_at?: string
         }
