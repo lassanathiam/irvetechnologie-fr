@@ -464,3 +464,124 @@ export const appliquerProgramme = createServerFn({ method: "POST" })
     }
     return { ok: true, nb: data.items.length };
   });
+
+/* ------------------------------------------------------------------ */
+/* Bilan : chantiers réalisés (archives incluses) + photos de chantier */
+/* ------------------------------------------------------------------ */
+
+/**
+ * Chantiers terminés / réalisés d'un mois donné (archivés compris) :
+ * sert la vue « Nos chantiers réalisés » avec son bilan.
+ * `mois` au format AAAA-MM ; vide = les 12 derniers mois.
+ */
+export const listChantiersRealises = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { mois?: string | null }) =>
+    z
+      .object({
+        mois: z
+          .string()
+          .regex(/^\d{4}-\d{2}$/)
+          .optional()
+          .nullable(),
+      })
+      .parse(raw ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    let debut: Date;
+    let fin: Date;
+    if (data.mois) {
+      const [y, m] = data.mois.split("-").map(Number) as [number, number];
+      debut = new Date(Date.UTC(y, m - 1, 1));
+      fin = new Date(Date.UTC(y, m, 1));
+    } else {
+      fin = new Date();
+      fin.setUTCMonth(fin.getUTCMonth() + 1, 1);
+      debut = new Date(fin);
+      debut.setUTCMonth(debut.getUTCMonth() - 12);
+    }
+
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select("*")
+      .in("statut", ["termine", "realise"])
+      .gte("date_debut", debut.toISOString())
+      .lt("date_debut", fin.toISOString())
+      .order("date_debut", { ascending: false })
+      .limit(500);
+    if (error) throw new Error(error.message);
+
+    const list = rows ?? [];
+    return {
+      chantiers: list,
+      bilan: {
+        nb: list.length,
+        montant_ht: list.reduce((t, r) => t + Number(r.montant_ht ?? 0), 0),
+        km: Math.round(list.reduce((t, r) => t + Number(r.distance_km ?? 0) * 2, 0)),
+        valides: list.filter((r) => r.chantier_valide).length,
+      },
+    };
+  });
+
+/**
+ * Programme plusieurs chantiers ensemble : le premier à la date choisie,
+ * les suivants enchaînés (même journée) ou au lendemain matin en cas de nuitée.
+ */
+export const programmerEnsemble = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { ids: string[]; date_debut: string; nuitee?: boolean }) =>
+    z
+      .object({
+        ids: z.array(z.string().uuid()).min(1).max(6),
+        date_debut: z.string().min(10).max(40),
+        nuitee: z.boolean().default(false),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const depart = new Date(data.date_debut);
+    if (Number.isNaN(depart.getTime())) throw new Error("Date de départ invalide.");
+
+    for (let i = 0; i < data.ids.length; i++) {
+      const d = new Date(depart);
+      if (i > 0) {
+        if (data.nuitee) {
+          d.setDate(d.getDate() + i);
+          d.setHours(8, 30, 0, 0);
+        } else {
+          d.setHours(d.getHours() + i * 3);
+        }
+      }
+      const { error } = await context.supabase
+        .from("rendezvous")
+        .update({ date_debut: d.toISOString(), date_a_confirmer: false, statut: "confirme" })
+        .eq("id", data.ids[i]!);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true, nb: data.ids.length, nuitee: data.nuitee };
+  });
+
+/** Photos d'un chantier (déposées par l'équipe ou par le partenaire) : URLs signées. */
+export const listPhotosChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { rendezvous_id: string }) =>
+    z.object({ rendezvous_id: z.string().uuid() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous_photos")
+      .select("id, path, source, legende, created_at")
+      .eq("rendezvous_id", data.rendezvous_id)
+      .order("created_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    const list = rows ?? [];
+    if (!list.length) return [];
+    const { data: signed } = await context.supabase.storage
+      .from("chantier-photos")
+      .createSignedUrls(
+        list.map((p) => p.path),
+        60 * 60,
+      );
+    return list.map((p, i) => ({ ...p, url: signed?.[i]?.signedUrl ?? null }));
+  });

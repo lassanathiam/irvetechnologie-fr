@@ -2,10 +2,17 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { CalendarClock, CheckCircle2, Loader2, MapPin, Plus } from "lucide-react";
+import { CalendarClock, CheckCircle2, Camera, Loader2, MapPin, Plus } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AdresseFields } from "@/components/AdresseFields";
-import { creerDossierPartenaire, getEspacePartenaire } from "@/lib/partenaires.functions";
+import { compressImage } from "@/lib/image-compress";
+import {
+  comptePhotosPartenaire,
+  creerDossierPartenaire,
+  getEspacePartenaire,
+  uploadPhotoPartenaire,
+} from "@/lib/partenaires.functions";
+
 
 export const Route = createFileRoute("/partenaire/$token")({
   ssr: false,
@@ -33,11 +40,18 @@ function EspacePartenaire() {
   const { token } = Route.useParams();
   const charger = useServerFn(getEspacePartenaire);
   const creer = useServerFn(creerDossierPartenaire);
+  const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
+  const chargerComptes = useServerFn(comptePhotosPartenaire);
 
   const espace = useQuery({
     queryKey: ["espace-partenaire", token],
     queryFn: () => charger({ data: { token } }),
     retry: 2,
+  });
+  const photos = useQuery({
+    queryKey: ["photos-partenaire", token],
+    queryFn: () => chargerComptes({ data: { token } }),
+    retry: 1,
   });
 
   const [form, setForm] = useState(false);
@@ -45,6 +59,30 @@ function EspacePartenaire() {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [rdvAPrendre, setRdvAPrendre] = useState(true);
+  /** Dossier en cours d'envoi de photos. */
+  const [envoi, setEnvoi] = useState<string | null>(null);
+
+  async function ajouterPhotos(rendezvousId: string, fichiers: FileList | null) {
+    if (!fichiers?.length) return;
+    setError(null);
+    setNotice(null);
+    setEnvoi(rendezvousId);
+    let ok = 0;
+    try {
+      for (const fichier of Array.from(fichiers).slice(0, 10)) {
+        const data_url = await compressImage(fichier, 1280, 0.66);
+        await envoyerPhoto({ data: { token, rendezvous_id: rendezvousId, data_url } });
+        ok++;
+      }
+      setNotice(`${ok} photo${ok > 1 ? "s" : ""} transmise${ok > 1 ? "s" : ""} à Borne de l'Ouest.`);
+      void photos.refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Envoi des photos impossible. Réessayez.");
+    } finally {
+      setEnvoi(null);
+    }
+  }
+
 
   async function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -318,6 +356,36 @@ function EspacePartenaire() {
                             ? "En attente de planification"
                             : "Planifié"}
                   </p>
+
+                  <div className="mt-3 border-t border-border pt-3 flex flex-wrap items-center gap-3">
+                    <label className="text-sm font-semibold rounded-sm border border-border px-3 py-2.5 inline-flex items-center gap-2 cursor-pointer hover:border-primary hover:text-primary">
+                      {envoi === d.id ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <Camera className="h-4 w-4" />
+                      )}
+                      {envoi === d.id ? "Envoi en cours…" : "Ajouter des photos"}
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        disabled={envoi === d.id}
+                        onChange={(e) => {
+                          void ajouterPhotos(d.id, e.target.files);
+                          e.target.value = "";
+                        }}
+                        className="hidden"
+                      />
+                    </label>
+                    {(photos.data?.[d.id] ?? 0) > 0 && (
+                      <span className="text-mono text-[11px] text-muted-foreground">
+                        {photos.data![d.id]} photo{photos.data![d.id]! > 1 ? "s" : ""} transmise
+                        {photos.data![d.id]! > 1 ? "s" : ""}
+                      </span>
+                    )}
+                  </div>
+
+
 
                 </li>
               ))}

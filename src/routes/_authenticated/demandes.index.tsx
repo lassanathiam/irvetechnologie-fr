@@ -13,10 +13,11 @@ import {
   MessageCircle,
   Phone,
   RotateCcw,
+  Trash2,
   XCircle,
 } from "lucide-react";
 import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
-import { updateStatutDemande } from "@/lib/demandes-admin.functions";
+import { supprimerDemande, updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
 import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dateFr } from "@/lib/company";
@@ -88,18 +89,27 @@ const FILTRES = [
 function DemandesPage() {
   const fetchDemandes = useServerFn(listDemandes);
   const setStatutFn = useServerFn(updateStatutDemande);
+  const supprimerFn = useServerFn(supprimerDemande);
   const qc = useQueryClient();
   const demandes = useQuery({ queryKey: ["demandes"], queryFn: () => fetchDemandes() });
   const [open, setOpen] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<string>("tous");
 
+  const rafraichir = () => {
+    qc.invalidateQueries({ queryKey: ["demandes"] });
+    qc.invalidateQueries({ queryKey: ["dashboard"] });
+  };
+
   const changer = useMutation({
     mutationFn: (v: { id: string; status: string }) => setStatutFn({ data: v }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ["demandes"] });
-      qc.invalidateQueries({ queryKey: ["dashboard"] });
-    },
+    onSuccess: rafraichir,
   });
+
+  const supprimer = useMutation({
+    mutationFn: (id: string) => supprimerFn({ data: { id } }),
+    onSuccess: rafraichir,
+  });
+
 
   const toutes = demandes.data ?? [];
   const visibles = toutes.filter((d) => filtre === "tous" || d.status === filtre);
@@ -255,6 +265,25 @@ function DemandesPage() {
                       <RotateCcw className="h-3.5 w-3.5" /> Relancer (remettre en cours)
                     </button>
                   )}
+                  {(d.status === "refuse" || d.status === "clos") && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (
+                          !window.confirm(
+                            `Supprimer définitivement la demande de ${d.nom} ? Cette action est irréversible.`,
+                          )
+                        )
+                          return;
+                        supprimer.mutate(d.id);
+                      }}
+                      disabled={supprimer.isPending}
+                      className="text-mono text-[11px] font-bold rounded-full border border-destructive/50 text-destructive px-3 py-1.5 inline-flex items-center gap-1.5 transition hover:bg-destructive/10 disabled:opacity-40"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" /> Supprimer définitivement
+                    </button>
+                  )}
+
                   {d.status !== "clos" && d.status !== "accepte" && (
                     <button
                       type="button"
