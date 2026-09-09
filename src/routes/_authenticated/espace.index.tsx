@@ -441,60 +441,6 @@ function EspacePage() {
               )}
             </Panel>
 
-            <Panel icon={FileText} title="Devis récents" action={{ to: "/devis", label: "Gérer les devis" }}>
-              {!q.data?.devis.length ? (
-                <Empty>Aucun devis.</Empty>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {q.data.devis.slice(0, 6).map((d) => (
-                    <li key={d.id} className="py-3 flex items-baseline justify-between gap-4">
-                      <Link
-                        to="/devis/$id"
-                        params={{ id: d.id }}
-                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
-                      >
-                        <span className="text-mono text-xs text-primary">{d.numero}</span> {d.client_nom}
-                      </Link>
-                      <span className="text-mono text-xs font-bold whitespace-nowrap">
-                        {euro(Number(d.total_ttc))}
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
-
-            <Panel icon={Receipt} title="Factures" action={{ to: "/factures", label: "Gérer les factures" }}>
-              {!q.data?.factures.length ? (
-                <Empty>Aucune facture.</Empty>
-              ) : (
-                <ul className="divide-y divide-border">
-                  {q.data.factures.map((f) => (
-                    <li key={f.id} className="py-3 flex items-baseline justify-between gap-4">
-                      <Link
-                        to="/factures/$id"
-                        params={{ id: f.id }}
-                        className="min-w-0 truncate text-sm font-semibold hover:text-primary"
-                      >
-                        <span className="text-mono text-xs text-primary">{f.numero}</span> {f.client_nom}
-                      </Link>
-                      <span className="text-mono text-xs font-bold whitespace-nowrap">
-                        {euro(Number(f.total_ttc))}
-                        <span
-                          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] ${
-                            f.statut === "payee"
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
-                              : "bg-muted text-muted-foreground"
-                          }`}
-                        >
-                          {f.statut === "payee" ? "Payée" : "En attente"}
-                        </span>
-                      </span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </Panel>
           </div>
 
           <p className="neo-dashboard-muted mt-6 text-mono text-[10px]">
