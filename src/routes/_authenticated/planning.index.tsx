@@ -75,42 +75,63 @@ const TYPES = [
 const STATUTS = [
   { v: "planifie", l: "Planifié" },
   { v: "confirme", l: "Confirmé" },
+  { v: "en_cours", l: "Travaux en cours" },
+  { v: "termine", l: "Terminé" },
   { v: "realise", l: "Réalisé" },
   { v: "annule", l: "Annulé" },
 ] as const;
 
-/** Code couleur unique pour l'état d'un chantier (badge + liseré de la fiche). */
+/** Code couleur unique pour l'état d'un chantier (badge + liseré + fond de la fiche). */
 const STATUT_STYLE: Record<
   string,
-  { label: string; badge: string; barre: string; point: string }
+  { label: string; badge: string; barre: string; point: string; fond: string }
 > = {
   planifie: {
     label: "Planifié",
-    badge: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40",
+    badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/50",
     barre: "before:bg-amber-500",
     point: "bg-amber-500",
+    fond: "bg-amber-50 dark:bg-amber-500/10 border-amber-300/70 dark:border-amber-500/30",
   },
   confirme: {
     label: "Confirmé",
-    badge: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/40",
+    badge: "bg-sky-500/20 text-sky-700 dark:text-sky-300 border-sky-500/50",
     barre: "before:bg-sky-500",
     point: "bg-sky-500",
+    fond: "bg-sky-50 dark:bg-sky-500/10 border-sky-300/70 dark:border-sky-500/30",
+  },
+  en_cours: {
+    label: "Travaux en cours",
+    badge: "bg-violet-500/20 text-violet-700 dark:text-violet-300 border-violet-500/50",
+    barre: "before:bg-violet-500",
+    point: "bg-violet-500",
+    fond: "bg-violet-50 dark:bg-violet-500/10 border-violet-300/70 dark:border-violet-500/30",
+  },
+  termine: {
+    label: "Terminé",
+    badge: "bg-teal-500/20 text-teal-700 dark:text-teal-300 border-teal-500/50",
+    barre: "before:bg-teal-500",
+    point: "bg-teal-500",
+    fond: "bg-teal-50 dark:bg-teal-500/10 border-teal-300/70 dark:border-teal-500/30",
   },
   realise: {
     label: "Réalisé",
-    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40",
+    badge: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300 border-emerald-500/50",
     barre: "before:bg-emerald-500",
     point: "bg-emerald-500",
+    fond: "bg-emerald-50 dark:bg-emerald-500/10 border-emerald-300/70 dark:border-emerald-500/30",
   },
   annule: {
     label: "Annulé",
-    badge: "bg-destructive/15 text-destructive border-destructive/40",
+    badge: "bg-destructive/20 text-destructive border-destructive/50",
     barre: "before:bg-destructive",
     point: "bg-destructive",
+    fond: "bg-destructive/10 border-destructive/30",
   },
 };
 
 const styleStatut = (s?: string | null) => STATUT_STYLE[s ?? "planifie"] ?? STATUT_STYLE.planifie!;
+
 
 
 
