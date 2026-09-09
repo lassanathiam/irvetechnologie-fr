@@ -272,8 +272,23 @@ function PlanningPage() {
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
     onSuccess: refresh,
   });
+  const archiveFn = useServerFn(archiverRendezVous);
+  const archiver = useMutation({
+    mutationFn: (p: { id: string; archive: boolean }) => archiveFn({ data: p }),
+    onSuccess: refresh,
+  });
 
-  const rows = list.data ?? [];
+  /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
+  const [vueArchives, setVueArchives] = useState(false);
+  /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
+  const [filtreStatut, setFiltreStatut] = useState<string>("tous");
+
+  const toutes = list.data ?? [];
+  const nbArchives = toutes.filter((r) => r.archive).length;
+  const rows = toutes
+    .filter((r) => Boolean(r.archive) === vueArchives)
+    .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut);
+
   /** Technicien dont on calcule les trajets (son domicile est le point de départ). */
   const [departId, setDepartId] = useState(TECHNICIENS[0]!.id);
   const depart = TECHNICIENS.find((t) => t.id === departId) ?? TECHNICIENS[0]!;
