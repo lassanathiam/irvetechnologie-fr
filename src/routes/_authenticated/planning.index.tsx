@@ -782,26 +782,75 @@ function PlanningPage() {
                     const isVoiriePanel = panel?.id === r.id && panel.tab === "voirie";
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
+                    const st = styleStatut(r.statut);
+                    const tel = telLien(r.client_telephone);
+                    const wa = whatsappLien(
+                      r.client_telephone,
+                      `Bonjour ${r.client_nom}, Borne de l'Ouest au sujet de votre installation de borne de recharge.`,
+                    );
                     return (
                       <li
                         key={r.id}
                         onMouseEnter={() => setActive(r.id)}
-                        className={`bg-card border rounded-xl p-4 h-fit transition-all duration-200 hover:shadow-md ${
+                        className={`relative overflow-hidden bg-card border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
                             : "border-border"
-                        }`}
-
+                        } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="font-medium">
-                              {r.client_nom}
-                              <span className="text-muted-foreground font-normal"> — {r.titre}</span>
+                            <p className="font-medium flex flex-wrap items-center gap-2">
+                              <span>
+                                {r.client_nom}
+                                <span className="text-muted-foreground font-normal">
+                                  {" "}
+                                  — {r.titre}
+                                </span>
+                              </span>
+                              <span
+                                className={`text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${st.badge}`}
+                              >
+                                {st.label}
+                              </span>
+                              {r.archive && (
+                                <span className="text-mono text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
+                                  Archivé
+                                </span>
+                              )}
                             </p>
                             {r.designation && (
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
+
+                            {(tel || wa || r.client_email) && (
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                {tel && (
+                                  <a
+                                    href={tel}
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                                  >
+                                    <Phone className="h-3.5 w-3.5" /> Appeler
+                                  </a>
+                                )}
+                                {wa && (
+                                  <a
+                                    href={wa}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
+                                  >
+                                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                                  </a>
+                                )}
+                                {r.client_telephone && (
+                                  <span className="text-mono text-[11px] text-muted-foreground">
+                                    {r.client_telephone}
+                                  </span>
+                                )}
+                              </div>
+                            )}
+
 
                             <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
                               <span className="inline-flex items-center gap-1">
