@@ -2,7 +2,16 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
-import { CalendarClock, CheckCircle2, Camera, Loader2, MapPin, Plus } from "lucide-react";
+import {
+  CalendarClock,
+  CalendarDays,
+  CheckCircle2,
+  Camera,
+  Loader2,
+  MapPin,
+  Package,
+  Plus,
+} from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AdresseFields } from "@/components/AdresseFields";
 import { compressImage } from "@/lib/image-compress";
@@ -10,7 +19,12 @@ import {
   comptePhotosPartenaire,
   creerDossierPartenaire,
   getEspacePartenaire,
+  majMaterielPartenaire,
   uploadPhotoPartenaire,
+  MATERIEL_LABELS,
+  MATERIEL_STATUTS,
+  PHOTO_CATEGORIES,
+  PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
 
 
