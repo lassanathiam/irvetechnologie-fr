@@ -79,6 +79,41 @@ const STATUTS = [
   { v: "annule", l: "Annulé" },
 ] as const;
 
+/** Code couleur unique pour l'état d'un chantier (badge + liseré de la fiche). */
+const STATUT_STYLE: Record<
+  string,
+  { label: string; badge: string; barre: string; point: string }
+> = {
+  planifie: {
+    label: "Planifié",
+    badge: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/40",
+    barre: "before:bg-amber-500",
+    point: "bg-amber-500",
+  },
+  confirme: {
+    label: "Confirmé",
+    badge: "bg-sky-500/15 text-sky-600 dark:text-sky-400 border-sky-500/40",
+    barre: "before:bg-sky-500",
+    point: "bg-sky-500",
+  },
+  realise: {
+    label: "Réalisé",
+    badge: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/40",
+    barre: "before:bg-emerald-500",
+    point: "bg-emerald-500",
+  },
+  annule: {
+    label: "Annulé",
+    badge: "bg-destructive/15 text-destructive border-destructive/40",
+    barre: "before:bg-destructive",
+    point: "bg-destructive",
+  },
+};
+
+const styleStatut = (s?: string | null) => STATUT_STYLE[s ?? "planifie"] ?? STATUT_STYLE.planifie!;
+
+
+
 const VOIRIE_LABEL = Object.fromEntries(VOIRIE_STATUTS.map((s) => [s.v, s.l])) as Record<
   string,
   string
