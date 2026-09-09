@@ -40,7 +40,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, token, actif, notes, created_at")
+      .select("id, nom, token, actif, notes, couleur, created_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
