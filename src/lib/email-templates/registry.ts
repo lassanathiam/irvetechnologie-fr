@@ -25,5 +25,7 @@ export interface TemplateEntry {
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'devis-client': devisClientTemplate,
   'devis-signe': devisSigneTemplate,
+  'chantier-termine': chantierTermineTemplate,
 }
+
 
