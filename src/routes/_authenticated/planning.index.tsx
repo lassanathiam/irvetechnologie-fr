@@ -2107,6 +2107,24 @@ function PlanningPage() {
               150 km, la journée prévoit une nuitée sur place.
             </p>
             <div className="flex flex-wrap items-end gap-2 mb-3">
+              <div className="flex items-center gap-2 bg-muted/30 px-2 py-1.5 rounded-sm border border-border mr-2">
+                <span className="text-mono text-[10px] text-muted-foreground uppercase font-bold">Horizon</span>
+                <input
+                  type="number"
+                  min="1"
+                  max="365"
+                  value={horizon}
+                  onChange={(e) => {
+                    const v = parseInt(e.target.value, 10);
+                    if (!isNaN(v)) {
+                      setHorizon(Math.min(365, Math.max(1, v)));
+                      setCampagneOn(true);
+                    }
+                  }}
+                  className="w-12 bg-transparent border-none text-xs text-mono text-primary font-bold focus:ring-0 p-0 text-center"
+                />
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Jours</span>
+              </div>
               {[1, 3, 7, 14, 30, 60, 90].map((h) => (
                 <button
                   key={h}
