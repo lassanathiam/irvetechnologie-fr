@@ -10,6 +10,8 @@ export type MapMarker = {
   date?: string | null;
   /** Ex. "54 km · 48 min" — trajet routier depuis la base. */
   trajet?: string | null;
+  /** Couleur du partenaire / donneur d'ordre (repère visuel sur la carte). */
+  couleur?: string | null;
 };
 
 const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
@@ -95,13 +97,13 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function dot(color: string, active: boolean, n?: number) {
-    const size = active ? 40 : 30;
+  function dot(color: string, active: boolean, n?: number, etat?: string) {
+    const size = active ? 44 : 34;
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid #fff;box-shadow:0 0 0 ${active ? 7 : 4}px ${color}33;color:#fff;font:700 ${active ? 15 : 12}px/1 system-ui">${n ?? ""}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid ${etat ?? "#fff"};box-shadow:0 0 0 ${active ? 8 : 5}px ${(etat ?? color)}55;color:#fff;font:700 ${active ? 16 : 13}px/1 system-ui">${n ?? ""}</span>`,
     });
   }
 
@@ -124,9 +126,10 @@ export function InterventionsMap({
       .bindTooltip(`Base · ${BASE.label}`, { direction: "top" });
 
     markers.forEach((m, i) => {
-      const color = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
+      const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
+      const color = m.couleur || etat;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1) })
+        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat) })
         .addTo(layer.current)
         .bindPopup(
           `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
