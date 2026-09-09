@@ -285,9 +285,15 @@ function PlanningPage() {
 
   const toutes = list.data ?? [];
   const nbArchives = toutes.filter((r) => r.archive).length;
-  const rows = toutes
-    .filter((r) => Boolean(r.archive) === vueArchives)
-    .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut);
+  const rows = useMemo(
+    () =>
+      toutes
+        .filter((r) => Boolean(r.archive) === vueArchives)
+        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [list.data, vueArchives, filtreStatut],
+  );
+
 
   /** Technicien dont on calcule les trajets (son domicile est le point de départ). */
   const [departId, setDepartId] = useState(TECHNICIENS[0]!.id);
