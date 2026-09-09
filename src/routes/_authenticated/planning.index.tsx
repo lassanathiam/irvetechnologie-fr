@@ -1489,6 +1489,22 @@ function PlanningPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
+                                    setPanel(isDatePanel ? null : { id: r.id, tab: "date" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isDatePanel
+                                      ? "border-primary text-primary"
+                                      : r.date_a_confirmer
+                                        ? "border-amber-500/60 text-amber-600 dark:text-amber-400"
+                                        : "border-border hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  <CalendarClock className="h-3 w-3" />{" "}
+                                  {r.date_a_confirmer ? "Fixer la date" : "Modifier la date"}
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
                                     setPanel(isAdressePanel ? null : { id: r.id, tab: "adresse" })
                                   }
                                   className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
