@@ -152,13 +152,22 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, demarre_at, termine_at, created_at",
+        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, materiel_statut, materiel_maj_at, demarre_at, termine_at, created_at",
       )
       .eq("partenaire_id", partenaire.id)
       .order("created_at", { ascending: false })
       .limit(200);
     return { nom: partenaire.nom, dossiers: dossiers ?? [] };
   });
+
+/** Suivi du matériel côté partenaire. */
+export const MATERIEL_STATUTS = ["en_cours", "envoye", "sur_place"] as const;
+
+export const MATERIEL_LABELS: Record<(typeof MATERIEL_STATUTS)[number], string> = {
+  en_cours: "Matériel en cours",
+  envoye: "Matériel envoyé",
+  sur_place: "Matériel sur place",
+};
 
 const dossierSchema = tokenSchema.extend({
   client_nom: z.string().trim().min(2).max(160),
@@ -185,6 +194,7 @@ const dossierSchema = tokenSchema.extend({
     }, z.number().min(0).max(1_000_000))
     .default(0),
   notes: z.string().trim().max(2000).optional().nullable(),
+  materiel_statut: z.enum(MATERIEL_STATUTS).default("en_cours"),
 });
 
 export const creerDossierPartenaire = createServerFn({ method: "POST" })
@@ -224,6 +234,8 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
       duree_min: 120,
       montant_ht: data.montant_ht,
       statut_facturation: "a_facturer",
+      materiel_statut: data.materiel_statut,
+      materiel_maj_at: new Date().toISOString(),
       notes: data.notes ?? null,
       lat: geo?.lat ?? null,
       lng: geo?.lng ?? null,
@@ -307,6 +319,7 @@ export const uploadPhotoPartenaire = createServerFn({ method: "POST" })
       rendezvous_id: data.rendezvous_id,
       path,
       source: "partenaire",
+      categorie: data.categorie,
       legende: data.legende ?? null,
     });
     if (insErr) throw new Error("Enregistrement de la photo impossible.");
