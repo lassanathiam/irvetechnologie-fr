@@ -354,3 +354,113 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/* ------------------------------------------------------------------ */
+/* Suivi en direct du chantier : démarrage, fin, notification         */
+/* ------------------------------------------------------------------ */
+
+/** Démarrage des travaux : le chantier passe « en cours » avec l'heure d'arrivée. */
+export const demarrerChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; demarre: boolean }) =>
+    z.object({ id: z.string().uuid(), demarre: z.boolean() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update(
+        data.demarre
+          ? { demarre_at: new Date().toISOString(), termine_at: null, statut: "en_cours" }
+          : { demarre_at: null, statut: "confirme" },
+      )
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Fin de chantier : enregistre l'heure de fin, passe le chantier en « terminé »
+ * et prévient par email le client (ou le partenaire donneur d'ordre).
+ */
+export const terminerChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; notifier?: boolean }) =>
+    z.object({ id: z.string().uuid(), notifier: z.boolean().default(true) }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select(
+        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, demarre_at",
+      )
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+
+    const fin = new Date();
+    const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
+    const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
+
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        termine_at: fin.toISOString(),
+        statut: "termine",
+        chantier_valide: true,
+        chantier_valide_at: fin.toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    let notifie = false;
+    if (data.notifier) {
+      try {
+        const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+        const { COMPANY } = await import("@/lib/company");
+        const destinataire = rdv.client_email?.trim() || COMPANY.email;
+        const res = await sendTemplateEmail("chantier-termine", destinataire, {
+          templateData: {
+            client_nom: rdv.client_nom,
+            adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
+            objet: rdv.designation || rdv.titre,
+            partenaire: rdv.partenaire,
+            termine_at: fin.toISOString(),
+            duree_min: dureeMin,
+          },
+          idempotencyKey: `chantier-termine-${data.id}`,
+        });
+        notifie = res.sent;
+      } catch {
+        notifie = false;
+      }
+      await context.supabase
+        .from("rendezvous")
+        .update({ notif_fin_at: notifie ? fin.toISOString() : null })
+        .eq("id", data.id);
+    }
+    return { ok: true, notifie, duree_min: dureeMin };
+  });
+
+/** Applique un programme de tournées : enregistre les nouvelles dates de passage. */
+export const appliquerProgramme = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { items: Array<{ id: string; date_debut: string }> }) =>
+    z
+      .object({
+        items: z
+          .array(z.object({ id: z.string().uuid(), date_debut: z.string().min(10).max(40) }))
+          .min(1)
+          .max(60),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    for (const item of data.items) {
+      const { error } = await context.supabase
+        .from("rendezvous")
+        .update({ date_debut: new Date(item.date_debut).toISOString(), date_a_confirmer: false })
+        .eq("id", item.id);
+      if (error) throw new Error(error.message);
+    }
+    return { ok: true, nb: data.items.length };
+  });
