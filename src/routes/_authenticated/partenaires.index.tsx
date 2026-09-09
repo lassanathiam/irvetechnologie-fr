@@ -69,9 +69,13 @@ function PartenairesAdmin() {
     }
     setBusy(true);
     try {
-      await save({ data: { nom: nom.trim(), actif: true, notes: notes.trim() || null } });
+      await save({
+        data: { nom: nom.trim(), actif: true, notes: notes.trim() || null, couleur },
+      });
       setNom("");
       setNotes("");
+      setCouleur(COULEURS[(list.data?.length ?? 0) % COULEURS.length]!);
+
       await list.refetch();
     } catch (e) {
       setError(e instanceof Error ? e.message : "Enregistrement impossible.");
