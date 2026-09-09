@@ -236,11 +236,27 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
 
 /* --------------------- Photos déposées par le partenaire -------------------- */
 
+/** Catégories d'étude déposées par le partenaire. */
+export const PHOTO_CATEGORIES = [
+  "emplacement_borne",
+  "cheminement_cable",
+  "emplacement_tableau",
+  "autre",
+] as const;
+
+export const PHOTO_CATEGORIES_LABELS: Record<(typeof PHOTO_CATEGORIES)[number], string> = {
+  emplacement_borne: "Emplacement de la borne",
+  cheminement_cable: "Cheminement du câble",
+  emplacement_tableau: "Emplacement du tableau",
+  autre: "Autre",
+};
+
 const photoSchema = tokenSchema.extend({
   rendezvous_id: z.string().uuid(),
   /** data:image/jpeg;base64,… — compressée dans le navigateur. */
   data_url: z.string().max(4_500_000),
   legende: z.string().trim().max(160).optional().nullable(),
+  categorie: z.enum(PHOTO_CATEGORIES).default("autre"),
 });
 
 const MAX_PHOTOS_PAR_DOSSIER = 20;
@@ -309,13 +325,51 @@ export const comptePhotosPartenaire = createServerFn({ method: "POST" })
       .eq("partenaire_id", partenaire.id)
       .limit(200);
     const ids = (dossiers ?? []).map((d) => d.id);
-    if (!ids.length) return {} as Record<string, number>;
+    const vide: Record<string, ComptePhotos> = {};
+    if (!ids.length) return vide;
     const { data: photos } = await supabaseAdmin
       .from("rendezvous_photos")
-      .select("rendezvous_id")
+      .select("rendezvous_id, categorie")
       .in("rendezvous_id", ids)
       .limit(2000);
-    const compte: Record<string, number> = {};
-    for (const p of photos ?? []) compte[p.rendezvous_id] = (compte[p.rendezvous_id] ?? 0) + 1;
+    const compte: Record<string, ComptePhotos> = {};
+    for (const p of photos ?? []) {
+      const entree = (compte[p.rendezvous_id] ??= { total: 0, categories: {} });
+      entree.total += 1;
+      const cat = p.categorie ?? "autre";
+      entree.categories[cat] = (entree.categories[cat] ?? 0) + 1;
+    }
     return compte;
+  });
+
+export type ComptePhotos = { total: number; categories: Record<string, number> };
+
+/** Le partenaire indique si le matériel est déjà envoyé ou encore en cours. */
+export const majMaterielPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    tokenSchema
+      .extend({
+        rendezvous_id: z.string().uuid(),
+        materiel_statut: z.enum(MATERIEL_STATUTS),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { data: dossier } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id")
+      .eq("id", data.rendezvous_id)
+      .eq("partenaire_id", partenaire.id)
+      .maybeSingle();
+    if (!dossier) throw new Error("Dossier introuvable.");
+    const { error } = await supabaseAdmin
+      .from("rendezvous")
+      .update({
+        materiel_statut: data.materiel_statut,
+        materiel_maj_at: new Date().toISOString(),
+      })
+      .eq("id", data.rendezvous_id);
+    if (error) throw new Error("Mise à jour impossible.");
+    return { ok: true as const, materiel_statut: data.materiel_statut };
   });
