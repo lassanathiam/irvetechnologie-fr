@@ -115,7 +115,7 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
     z
       .object({
         id: z.string().uuid(),
-        statut: z.enum(["planifie", "confirme", "realise", "annule"]),
+        statut: z.enum(STATUTS_CHANTIER),
       })
       .parse(raw),
   )
