@@ -721,6 +721,8 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          materiel_maj_at: string | null
+          materiel_statut: string
           metrage_m: number | null
           montant_ht: number
           notes: string | null
@@ -767,6 +769,8 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          materiel_maj_at?: string | null
+          materiel_statut?: string
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
@@ -813,6 +817,8 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          materiel_maj_at?: string | null
+          materiel_statut?: string
           metrage_m?: number | null
           montant_ht?: number
           notes?: string | null
@@ -853,6 +859,7 @@ export type Database = {
       }
       rendezvous_photos: {
         Row: {
+          categorie: string
           created_at: string
           id: string
           legende: string | null
@@ -861,6 +868,7 @@ export type Database = {
           source: string
         }
         Insert: {
+          categorie?: string
           created_at?: string
           id?: string
           legende?: string | null
@@ -869,6 +877,7 @@ export type Database = {
           source?: string
         }
         Update: {
+          categorie?: string
           created_at?: string
           id?: string
           legende?: string | null
