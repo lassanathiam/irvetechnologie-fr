@@ -222,7 +222,7 @@ function EspacePage() {
                           {euro(Number(d.total_ttc))}
                         </span>
                         <span
-                          className="block w-full rounded-t-md bg-primary/75 transition group-hover:bg-primary"
+                          className="block w-full rounded-t-md bg-primary/80 shadow-[0_0_14px_-2px_var(--neon)] transition group-hover:bg-primary"
                           style={{ height: `${hauteur}%` }}
                         />
                         <span className="truncate pb-2 text-center text-[10px] font-semibold text-dashboard-muted">
@@ -253,9 +253,9 @@ function EspacePage() {
                           search={{ rdv: r.id }}
                           className="flex items-center gap-4 rounded-md px-1 py-3 transition hover:bg-dashboard-raised/60"
                         >
-                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-primary/10 text-primary">
-                            <span className="text-[10px] font-bold uppercase leading-none">{dj.mois}</span>
-                            <span className="pro-heading text-xl font-bold leading-none">{dj.jour}</span>
+                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-neon-magenta/15 text-neon-magenta">
+                            <span className="text-xl font-bold leading-none">{dj.jour}</span>
+                            <span className="text-[9px] font-bold uppercase leading-none">{dj.mois}</span>
                           </span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-semibold">{r.client_nom}</span>
@@ -485,6 +485,13 @@ function EspacePage() {
   );
 }
 
+const ACCENTS = {
+  neon: "text-neon",
+  yellow: "text-neon-yellow",
+  magenta: "text-neon-magenta",
+  cyan: "text-neon-cyan",
+} as const;
+
 function Stat({
   icon: Icon,
   label,
@@ -492,7 +499,8 @@ function Stat({
   hint,
   to,
   search,
-  accent,
+  accent = "neon",
+  pct = 0.6,
 }: {
   icon: typeof Euro;
   label: string;
@@ -500,19 +508,47 @@ function Stat({
   hint?: string;
   to?: string;
   search?: Record<string, string>;
-  accent?: "cyan" | "violet";
+  accent?: keyof typeof ACCENTS;
+  /** Part de l'anneau remplie, entre 0 et 1 */
+  pct?: number;
 }) {
+  const R = 32;
+  const CIRC = 2 * Math.PI * R;
+  const rempli = Math.max(0.06, Math.min(1, pct));
+  const couleur = ACCENTS[accent];
   const contenu = (
-    <>
-      <p className="neo-dashboard-muted flex items-center gap-2 text-mono text-[10px]">
-        <Icon className={`h-4 w-4 ${accent === "violet" ? "text-dashboard-muted" : "text-dashboard-foreground"}`} /> {label}
-      </p>
-      <p className={`mt-4 font-mono text-2xl font-bold sm:text-3xl ${accent === "violet" ? "text-dashboard-muted" : accent === "cyan" ? "text-dashboard-foreground" : "text-dashboard-foreground"}`}>{value}</p>
-      {hint && <p className="neo-dashboard-muted mt-2 text-xs">{hint}</p>}
-    </>
+    <div className="flex items-center justify-between gap-4">
+      <div className="min-w-0 space-y-2">
+        <p className="neo-dashboard-muted flex items-center gap-2 text-mono text-[10px]">
+          <Icon className="h-4 w-4" /> {label}
+        </p>
+        <p className="truncate font-mono text-2xl font-bold text-dashboard-foreground sm:text-[1.7rem]">{value}</p>
+        {hint && <p className={`text-[10px] font-bold uppercase tracking-wider ${couleur}`}>{hint}</p>}
+      </div>
+      <span className={`relative flex h-20 w-20 shrink-0 items-center justify-center ${couleur}`}>
+        <svg viewBox="0 0 80 80" className="h-full w-full -rotate-90">
+          <circle cx="40" cy="40" r={R} strokeWidth="8" fill="none" className="stroke-dashboard-raised" />
+          <circle
+            cx="40"
+            cy="40"
+            r={R}
+            strokeWidth="8"
+            fill="none"
+            strokeLinecap="round"
+            stroke="currentColor"
+            strokeDasharray={CIRC}
+            strokeDashoffset={CIRC * (1 - rempli)}
+            className="neo-ring"
+          />
+        </svg>
+        <span className="absolute text-xs font-bold text-dashboard-foreground">
+          {Math.round(rempli * 100)}%
+        </span>
+      </span>
+    </div>
   );
   const cls =
-    "group block neo-dashboard-kpi rounded-lg p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary";
+    "group block neo-dashboard-kpi p-6 transition hover:-translate-y-0.5 hover:border-primary/40";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
