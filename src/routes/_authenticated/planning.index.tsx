@@ -60,7 +60,12 @@ import {
 } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
-import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
+import {
+  comparerDeuxChantiers,
+  itineraireDepuisBase,
+  tourneeReelle,
+} from "@/lib/routing.functions";
+
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien } from "@/lib/contact-client";
