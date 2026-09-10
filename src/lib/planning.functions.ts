@@ -1185,12 +1185,24 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
     const montantHt = Number(rdv.montant_ht ?? 0);
     if (montantHt <= 0) throw new Error("Renseignez d'abord le montant HT du chantier.");
 
-    let partenaire: { nom: string; email: string | null; delai_paiement_jours: number | null } | null =
-      null;
+    let partenaire: {
+      nom: string;
+      email: string | null;
+      delai_paiement_jours: number | null;
+      raison_sociale: string | null;
+      adresse: string | null;
+      cp_ville: string | null;
+      pays: string | null;
+      siret: string | null;
+      tva_intracom: string | null;
+      telephone: string | null;
+    } | null = null;
     if (rdv.partenaire_id) {
       const { data: p } = await context.supabase
         .from("partenaires")
-        .select("nom, email, delai_paiement_jours")
+        .select(
+          "nom, email, delai_paiement_jours, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, telephone",
+        )
         .eq("id", rdv.partenaire_id)
         .maybeSingle();
       partenaire = p ?? null;
@@ -1198,8 +1210,13 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
     const sousTraitance = rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
 
     const destinataireNom = sousTraitance
-      ? (partenaire?.nom ?? rdv.partenaire ?? "Partenaire")
+      ? (partenaire?.raison_sociale || partenaire?.nom || rdv.partenaire || "Partenaire")
       : rdv.client_nom;
+    if (sousTraitance && !partenaire?.adresse) {
+      throw new Error(
+        "Complétez d'abord la fiche du partenaire (adresse de siège) pour émettre une facture conforme.",
+      );
+    }
     const destinataireEmail = sousTraitance ? (partenaire?.email ?? null) : rdv.client_email;
 
     const today = new Date();
@@ -1237,13 +1254,26 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
         date_echeance: echeance.toISOString().slice(0, 10),
         client_nom: destinataireNom,
         client_email: destinataireEmail,
-        client_telephone: sousTraitance ? null : rdv.client_telephone,
-        client_adresse: sousTraitance ? null : rdv.adresse,
-        client_cp_ville: sousTraitance ? null : rdv.cp_ville,
+        client_telephone: sousTraitance ? (partenaire?.telephone ?? null) : rdv.client_telephone,
+        client_adresse: sousTraitance ? partenaire?.adresse : rdv.adresse,
+        client_cp_ville: sousTraitance
+          ? [partenaire?.cp_ville, partenaire?.pays && partenaire.pays !== "France" ? partenaire.pays : null]
+              .filter(Boolean)
+              .join(" — ") || null
+          : rdv.cp_ville,
         objet,
         remise_pct: 0,
         acompte_pct: 0,
         conditions_paiement: `Règlement à ${delai} jours`,
+        notes: sousTraitance
+          ? [
+              partenaire?.siret ? `SIRET client : ${partenaire.siret}` : null,
+              partenaire?.tva_intracom ? `TVA intracommunautaire : ${partenaire.tva_intracom}` : null,
+              chantierLieu ? `Chantier réalisé : ${chantierLieu}` : null,
+            ]
+              .filter(Boolean)
+              .join(" · ") || null
+          : null,
         statut: "brouillon",
         total_ht_brut: montantHt,
         total_remise: 0,
