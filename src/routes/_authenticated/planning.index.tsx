@@ -1663,7 +1663,14 @@ function PlanningPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => demarrer.mutate({ id: r.id, demarre: false })}
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          "Annuler le démarrage des travaux ? Le chantier repasse en « confirmé ».",
+                                        )
+                                      )
+                                        demarrer.mutate({ id: r.id, demarre: false });
+                                    }}
                                     className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
                                   >
                                     Annuler le démarrage
