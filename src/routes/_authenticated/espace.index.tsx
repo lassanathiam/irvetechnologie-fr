@@ -162,7 +162,8 @@ function EspacePage() {
               value={euro(q.data?.stats.caEncaisse ?? 0)}
               hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
               to="/factures"
-              accent="cyan"
+              accent="neon"
+              pct={Math.min(1, (q.data?.stats.caMois ?? 0) / Math.max(q.data?.stats.caEncaisse ?? 1, 1))}
             />
             <Stat
               icon={Receipt}
@@ -170,7 +171,8 @@ function EspacePage() {
               value={euro(q.data?.stats.caEnAttente ?? 0)}
               hint="Factures en attente"
               to="/factures"
-              accent="violet"
+              accent="yellow"
+              pct={Math.min(1, (q.data?.stats.caEnAttente ?? 0) / Math.max((q.data?.stats.caEnAttente ?? 0) + (q.data?.stats.caEncaisse ?? 0), 1))}
             />
             <Stat
               icon={FileText}
@@ -178,6 +180,8 @@ function EspacePage() {
               value={euro(q.data?.stats.caDevis ?? 0)}
               hint={`${q.data?.devis.length ?? 0} devis récents`}
               to="/devis"
+              accent="magenta"
+              pct={Math.min(1, (q.data?.devis.length ?? 0) / 20)}
             />
             <Stat
               icon={CalendarClock}
@@ -185,6 +189,8 @@ function EspacePage() {
               value={String(q.data?.stats.rdvAVenir ?? 0)}
               hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
               to="/planning"
+              accent="cyan"
+              pct={Math.min(1, (q.data?.stats.rdvAVenir ?? 0) / 15)}
             />
           </div>
 

@@ -52,7 +52,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
       >
         <div className="flex h-20 items-center justify-between gap-2 border-b border-sidebar-line px-4">
           <Link to="/" className="flex min-w-0 items-center gap-3" onClick={() => setMenuOuvert(false)}>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent shadow-[0_0_16px_-4px_var(--sidebar-accent)]">
               <BrandLogo className="h-8 w-8" />
             </span>
             {!reduit && (
@@ -81,8 +81,8 @@ export function ProShell({ children }: { children: React.ReactNode }) {
               to={to}
               onClick={() => setMenuOuvert(false)}
               title={reduit ? label : undefined}
-              className={`flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
-              activeProps={{ className: "bg-sidebar-active text-sidebar-title" }}
+              className={`pro-nav-link flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
+              activeProps={{ className: "pro-nav-active" }}
             >
               <Icon className="h-5 w-5 shrink-0" />
               {!reduit && <span>{label}</span>}
@@ -92,7 +92,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
 
         <div className="border-t border-sidebar-line p-3">
           {!reduit && (
-            <div className="mb-3 rounded-md bg-sidebar-hover p-3">
+            <div className="mb-3 rounded-2xl border border-sidebar-line bg-sidebar-hover p-3">
               <div className="flex items-center gap-2 text-sidebar-accent">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-bold">{COMPANY.qualifications}</span>
