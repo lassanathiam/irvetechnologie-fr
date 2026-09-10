@@ -465,15 +465,8 @@ function PartenairesAdmin() {
                             : `Réactiver le lien de ${p.nom} ?`;
                           if (!window.confirm(msg)) return;
                           await save({
-                            data: {
-                              id: p.id,
-                              nom: p.nom,
-                              actif: !p.actif,
-                              notes: p.notes,
-                              couleur: p.couleur ?? "#0284c7",
-                              email: p.email,
-                              delai_paiement_jours: p.delai_paiement_jours ?? 30,
-                            },
+                            data: { ...base(p), actif: !p.actif },
+
                           });
 
                           await list.refetch();
