@@ -504,7 +504,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage",
+        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
       )
       .eq("id", data.id)
       .single();
@@ -529,6 +529,20 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
     const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
 
+    // Délai de paiement : celui du chantier, sinon celui convenu avec le partenaire, sinon 30 jours.
+    let delai = rdv.delai_paiement_jours == null ? null : Number(rdv.delai_paiement_jours);
+    if (delai == null && rdv.partenaire_id) {
+      const { data: part } = await context.supabase
+        .from("partenaires")
+        .select("delai_paiement_jours")
+        .eq("id", rdv.partenaire_id)
+        .maybeSingle();
+      if (part?.delai_paiement_jours != null) delai = Number(part.delai_paiement_jours);
+    }
+    if (delai == null) delai = 30;
+    const echeance = new Date(fin);
+    echeance.setDate(echeance.getDate() + delai);
+
     const { error } = await context.supabase
       .from("rendezvous")
       .update({
@@ -536,6 +550,9 @@ export const terminerChantier = createServerFn({ method: "POST" })
         statut: "termine",
         chantier_valide: true,
         chantier_valide_at: fin.toISOString(),
+        delai_paiement_jours: delai,
+        echeance_paiement: echeance.toISOString().slice(0, 10),
+        statut_facturation: "a_facturer",
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
