@@ -1306,7 +1306,7 @@ function PlanningPage() {
               markers={points}
               activeId={active}
               onSelect={setActive}
-              height={620}
+              height={isMobile ? 360 : 620}
               scrollWheelZoom
               selectionMode={modeSelection}
               selectedIds={selection}
@@ -2274,27 +2274,40 @@ function PlanningPage() {
         </div>
 
         <aside className="space-y-6">
-          <AgendaMois
-            events={rows.map((r) => ({
-              id: r.id,
-              date_debut: r.date_debut,
-              duree_min: r.duree_min,
-              client_nom: r.client_nom,
-              titre: r.titre,
-              cp_ville: r.cp_ville,
-              statut: r.statut,
-              distance_km: r.distance_km,
-            }))}
-            activeId={active}
-            onSelectEvent={setActive}
-            onPickDay={(iso) => {
-              setPrefillDate(iso);
-              setOpen(true);
-            }}
+          <MobileSectionTrigger
+            label="Agenda"
+            count={rows.length}
+            open={!modeIntervention || mobileSections.agenda}
+            onToggle={() => toggleMobileSection("agenda")}
           />
+          <div className={modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}>
+            <AgendaMois
+              events={rows.map((r) => ({
+                id: r.id,
+                date_debut: r.date_debut,
+                duree_min: r.duree_min,
+                client_nom: r.client_nom,
+                titre: r.titre,
+                cp_ville: r.cp_ville,
+                statut: r.statut,
+                distance_km: r.distance_km,
+              }))}
+              activeId={active}
+              onSelectEvent={setActive}
+              onPickDay={(iso) => {
+                setPrefillDate(iso);
+                setOpen(true);
+              }}
+            />
+          </div>
 
-
-          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <MobileSectionTrigger
+            label={tourneeAff.etapes.length > 1 ? "Tournée du jour" : "Trajet du jour"}
+            count={tourneeAff.etapes.length}
+            open={!modeIntervention || mobileSections.trajet}
+            onToggle={() => toggleMobileSection("trajet")}
+          />
+          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
               {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
@@ -2399,7 +2412,12 @@ function PlanningPage() {
             )}
           </div>
 
-          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+          <MobileSectionTrigger
+            label="Programme des tournées"
+            open={!modeIntervention || mobileSections.programme}
+            onToggle={() => toggleMobileSection("programme")}
+          />
+          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
             </h2>
@@ -2550,7 +2568,14 @@ function PlanningPage() {
           </div>
 
           {grappes.length > 0 && (
-            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+            <>
+            <MobileSectionTrigger
+              label="Chantiers proches"
+              count={grappes.length}
+              open={!modeIntervention || mobileSections.proches}
+              onToggle={() => toggleMobileSection("proches")}
+            />
+            <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
@@ -2567,11 +2592,41 @@ function PlanningPage() {
                 ))}
               </ul>
             </div>
+            </>
           )}
         </aside>
       </div>
 
     </ProShell>
+  );
+}
+
+function MobileSectionTrigger({
+  label,
+  count,
+  open,
+  onToggle,
+}: {
+  label: string;
+  count?: number;
+  open: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      className="grid min-h-12 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden"
+      aria-expanded={open}
+    >
+      <span className="min-w-0 truncate font-bold">{label}</span>
+      {typeof count === "number" && (
+        <span className="rounded-full bg-primary/15 px-2 py-0.5 text-xs font-bold text-primary">
+          {count}
+        </span>
+      )}
+      <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
+    </button>
   );
 }
 
