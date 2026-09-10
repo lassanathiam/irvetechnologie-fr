@@ -56,6 +56,7 @@ const FORMULE_LABELS: Record<string, string> = {
 
 const KIND_LABEL: Record<string, string> = {
   tableau: "Tableau électrique",
+  linky: "Compteur Linky",
   cheminement: "Cheminement",
   borne: "Emplacement borne",
 };
