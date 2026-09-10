@@ -10,7 +10,11 @@ import { trajetDepuisBase } from "@/lib/geo";
  * Aucune authentification : le jeton du partenaire fait office de clé.
  */
 
-const tokenSchema = z.object({ token: z.string().uuid() });
+const tokenSchema = z.object({
+  token: z.string().uuid(),
+  /** Session ouverte après saisie du code à 6 chiffres. */
+  session: z.string().uuid().optional().nullable(),
+});
 
 /** Champ texte facultatif : chaîne vide enregistrée comme absente. */
 const texteOptionnel = (max: number) =>
@@ -49,7 +53,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at")
+      .select("id, nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at, pin_defini_at, dernier_acces_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -187,24 +191,219 @@ export const deletePartenaire = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/* ----------------------------- Côté partenaire ---------------------------- */
+/* ------------------------- Code d'accès à 6 chiffres ------------------------ */
 
-async function loadPartenaire(token: string) {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("partenaires")
-    .select("id, nom, actif, owner_user_id, delai_paiement_jours")
-    .eq("token", token)
-    .maybeSingle();
-  if (error) throw new Error(error.message);
-  if (!data || !data.actif) throw new Error("Ce lien de saisie n'est plus valide.");
-  return { partenaire: data, supabaseAdmin };
+const PBKDF2_ITERATIONS = 150_000;
+const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
+const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
+
+async function derive(pin: string, salt: Uint8Array): Promise<string> {
+  const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, [
+    "deriveBits",
+  ]);
+  const bits = await crypto.subtle.deriveBits(
+    { name: "PBKDF2", hash: "SHA-256", salt: salt as unknown as BufferSource, iterations: PBKDF2_ITERATIONS },
+    key,
+    256,
+  );
+  return b64(new Uint8Array(bits));
 }
 
-export const getEspacePartenaire = createServerFn({ method: "GET" })
-  .inputValidator((data: { token: string }) => tokenSchema.parse(data))
+async function hashPin(pin: string): Promise<string> {
+  const salt = crypto.getRandomValues(new Uint8Array(16));
+  return `pbkdf2$${PBKDF2_ITERATIONS}$${b64(salt)}$${await derive(pin, salt)}`;
+}
+
+async function verifyPin(pin: string, stored: string): Promise<boolean> {
+  const parts = stored.split("$");
+  if (parts.length !== 4 || parts[0] !== "pbkdf2") return false;
+  const attendu = parts[3]!;
+  const obtenu = await derive(pin, fromB64(parts[2]!));
+  if (obtenu.length !== attendu.length) return false;
+  let diff = 0;
+  for (let i = 0; i < obtenu.length; i++) diff |= obtenu.charCodeAt(i) ^ attendu.charCodeAt(i);
+  return diff === 0;
+}
+
+const pinSchema = z.object({
+  token: z.string().uuid(),
+  pin: z
+    .string()
+    .trim()
+    .regex(/^\d{6}$/, "Le code doit contenir exactement 6 chiffres."),
+});
+
+/* ----------------------------- Côté partenaire ---------------------------- */
+
+/**
+ * Charge le partenaire à partir de son lien.
+ * Dès qu'un code à 6 chiffres est défini, une session valide est exigée.
+ */
+async function loadPartenaire(data: { token: string; session?: string | null }) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { data: partenaire, error } = await supabaseAdmin
+    .from("partenaires")
+    .select("id, nom, actif, owner_user_id, delai_paiement_jours, pin_hash")
+    .eq("token", data.token)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!partenaire || !partenaire.actif) throw new Error("Ce lien de saisie n'est plus valide.");
+
+  if (partenaire.pin_hash) {
+    if (!data.session) throw new Error("Code d'accès requis.");
+    const { data: sess } = await supabaseAdmin
+      .from("partenaire_sessions")
+      .select("id, expires_at")
+      .eq("token", data.session)
+      .eq("partenaire_id", partenaire.id)
+      .maybeSingle();
+    if (!sess || new Date(sess.expires_at).getTime() < Date.now()) {
+      throw new Error("Code d'accès requis.");
+    }
+  }
+  return { partenaire, supabaseAdmin };
+}
+
+async function ouvrirSession(partenaireId: string) {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin
+    .from("partenaire_sessions")
+    .delete()
+    .lt("expires_at", new Date().toISOString());
+  const { data, error } = await supabaseAdmin
+    .from("partenaire_sessions")
+    .insert({ partenaire_id: partenaireId })
+    .select("token, expires_at")
+    .single();
+  if (error) throw new Error(error.message);
+  await supabaseAdmin
+    .from("partenaires")
+    .update({ dernier_acces_at: new Date().toISOString() })
+    .eq("id", partenaireId);
+  return { session: data.token as string, expires_at: data.expires_at as string };
+}
+
+/** État du lien : le code est-il déjà créé, la session est-elle encore valide ? */
+export const getAccesPartenaire = createServerFn({ method: "GET" })
+  .inputValidator((raw: { token: string; session?: string | null }) => tokenSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: partenaire } = await supabaseAdmin
+      .from("partenaires")
+      .select("id, nom, actif, pin_hash")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!partenaire || !partenaire.actif) throw new Error("Ce lien de saisie n'est plus valide.");
+
+    let session_valide = false;
+    if (data.session) {
+      const { data: sess } = await supabaseAdmin
+        .from("partenaire_sessions")
+        .select("expires_at")
+        .eq("token", data.session)
+        .eq("partenaire_id", partenaire.id)
+        .maybeSingle();
+      session_valide = Boolean(sess && new Date(sess.expires_at).getTime() > Date.now());
+    }
+    return {
+      nom: partenaire.nom,
+      pin_defini: Boolean(partenaire.pin_hash),
+      session_valide,
+    };
+  });
+
+/** Première visite : le partenaire choisit lui-même son code à 6 chiffres. */
+export const definirPinPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => pinSchema.parse(raw))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: partenaire } = await supabaseAdmin
+      .from("partenaires")
+      .select("id, actif, pin_hash")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!partenaire || !partenaire.actif) throw new Error("Ce lien de saisie n'est plus valide.");
+    if (partenaire.pin_hash) {
+      throw new Error("Un code est déjà défini pour cet accès. Saisissez-le ou demandez une réinitialisation.");
+    }
+    if (/^(\d)\1{5}$/.test(data.pin) || data.pin === "123456") {
+      throw new Error("Choisissez un code moins évident.");
+    }
+    const { error } = await supabaseAdmin
+      .from("partenaires")
+      .update({ pin_hash: await hashPin(data.pin), pin_defini_at: new Date().toISOString() })
+      .eq("id", partenaire.id);
+    if (error) throw new Error(error.message);
+    return await ouvrirSession(partenaire.id);
+  });
+
+/** Visites suivantes : saisie du code à 6 chiffres. */
+export const connexionPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => pinSchema.parse(raw))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: partenaire } = await supabaseAdmin
+      .from("partenaires")
+      .select("id, actif, pin_hash")
+      .eq("token", data.token)
+      .maybeSingle();
+    if (!partenaire || !partenaire.actif) throw new Error("Ce lien de saisie n'est plus valide.");
+    if (!partenaire.pin_hash) throw new Error("Aucun code défini : créez votre code d'accès.");
+    if (!(await verifyPin(data.pin, partenaire.pin_hash))) {
+      throw new Error("Code incorrect.");
+    }
+    return await ouvrirSession(partenaire.id);
+  });
+
+/** Déconnexion depuis l'appareil du partenaire. */
+export const deconnexionPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: { session: string }) =>
+    z.object({ session: z.string().uuid() }).parse(raw),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("partenaire_sessions").delete().eq("token", data.session);
+    return { ok: true as const };
+  });
+
+/* --------- Côté équipe : réinitialisation du code et rotation du lien -------- */
+
+/** Le partenaire a oublié son code : il en recrée un à sa prochaine visite. */
+export const reinitialiserPinPartenaire = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("partenaires")
+      .update({ pin_hash: null, pin_defini_at: null })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    await supabaseAdmin.from("partenaire_sessions").delete().eq("partenaire_id", data.id);
+    return { ok: true as const };
+  });
+
+/** Fuite ou départ : nouveau lien, l'ancien devient inutilisable. */
+export const regenererLienPartenaire = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: row, error } = await context.supabase
+      .from("partenaires")
+      .update({ token: crypto.randomUUID(), pin_hash: null, pin_defini_at: null })
+      .eq("id", data.id)
+      .select("token")
+      .single();
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("partenaire_sessions").delete().eq("partenaire_id", data.id);
+    return { token: row.token as string };
+  });
+
+export const getEspacePartenaire = createServerFn({ method: "GET" })
+  .inputValidator((data: { token: string; session?: string | null }) => tokenSchema.parse(data))
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
@@ -260,7 +459,7 @@ const dossierSchema = tokenSchema.extend({
 export const creerDossierPartenaire = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => dossierSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
     if (!partenaire.owner_user_id) {
       throw new Error("Ce lien n'est pas encore configuré. Contactez Borne de l'Ouest.");
     }
@@ -348,7 +547,7 @@ function decodeDataUrl(dataUrl: string): { bytes: Uint8Array; contentType: strin
 export const uploadPhotoPartenaire = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => photoSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
 
     const { data: dossier } = await supabaseAdmin
       .from("rendezvous")
@@ -389,9 +588,9 @@ export const uploadPhotoPartenaire = createServerFn({ method: "POST" })
 
 /** Nombre de photos déjà déposées par dossier (affichage côté partenaire). */
 export const comptePhotosPartenaire = createServerFn({ method: "POST" })
-  .inputValidator((raw: { token: string }) => tokenSchema.parse(raw))
+  .inputValidator((raw: { token: string; session?: string | null }) => tokenSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select("id")
@@ -428,7 +627,7 @@ export const majMaterielPartenaire = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
     const { data: dossier } = await supabaseAdmin
       .from("rendezvous")
       .select("id")
@@ -466,7 +665,7 @@ const montantSchema = tokenSchema.extend({
 export const proposerMontantPartenaire = createServerFn({ method: "POST" })
   .inputValidator((raw: unknown) => montantSchema.parse(raw))
   .handler(async ({ data }) => {
-    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
 
     const { data: dossier } = await supabaseAdmin
       .from("rendezvous")

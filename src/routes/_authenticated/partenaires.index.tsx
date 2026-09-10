@@ -8,6 +8,8 @@ import { COMPANY } from "@/lib/company";
 import {
   deletePartenaire,
   listPartenaires,
+  regenererLienPartenaire,
+  reinitialiserPinPartenaire,
   savePartenaire,
 } from "@/lib/partenaires.functions";
 
@@ -45,6 +47,8 @@ function PartenairesAdmin() {
   const fetchAll = useServerFn(listPartenaires);
   const save = useServerFn(savePartenaire);
   const remove = useServerFn(deletePartenaire);
+  const resetPin = useServerFn(reinitialiserPinPartenaire);
+  const nouveauLien = useServerFn(regenererLienPartenaire);
   const list = useQuery({ queryKey: ["partenaires"], queryFn: () => fetchAll() });
 
   const [nom, setNom] = useState("");
@@ -415,6 +419,55 @@ function PartenairesAdmin() {
                       <p className="text-[11px] text-mono mt-2 break-all text-muted-foreground">
                         {lien(p.token)}
                       </p>
+                      <p className="text-[11px] text-mono mt-1">
+                        {p.pin_defini_at ? (
+                          <span className="text-primary">
+                            Code à 6 chiffres actif
+                            {p.dernier_acces_at
+                              ? ` · dernier accès ${new Date(p.dernier_acces_at).toLocaleDateString("fr-FR")}`
+                              : ""}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">
+                            Code non créé — le partenaire le choisira à sa première visite
+                          </span>
+                        )}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (
+                              !window.confirm(
+                                `Réinitialiser le code de ${p.nom} ? Il choisira un nouveau code à sa prochaine visite (le lien ne change pas).`,
+                              )
+                            )
+                              return;
+                            await resetPin({ data: { id: p.id } });
+                            await list.refetch();
+                          }}
+                          className="text-mono text-xs font-semibold px-3 py-2 rounded-sm border border-border text-muted-foreground hover:border-primary hover:text-primary"
+                        >
+                          Réinitialiser le code
+                        </button>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (
+                              !window.confirm(
+                                `Générer un nouveau lien pour ${p.nom} ? L'ancien lien et son code cessent immédiatement de fonctionner.`,
+                              )
+                            )
+                              return;
+                            await nouveauLien({ data: { id: p.id } });
+                            await list.refetch();
+                          }}
+                          className="text-mono text-xs font-semibold px-3 py-2 rounded-sm border border-border text-muted-foreground hover:border-destructive hover:text-destructive"
+                        >
+                          Nouveau lien
+                        </button>
+                      </div>
+
                       <div className="mt-2 flex flex-wrap gap-1.5">
                         {COULEURS.map((c) => (
                           <button
