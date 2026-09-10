@@ -11,6 +11,7 @@ import {
   MapPin,
   Package,
   Plus,
+  Euro,
 } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 import { AdresseFields } from "@/components/AdresseFields";
@@ -23,6 +24,7 @@ import {
   uploadPhotoPartenaire,
   MATERIEL_LABELS,
   MATERIEL_STATUTS,
+  proposerMontantPartenaire,
   PHOTO_CATEGORIES,
   PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
@@ -57,6 +59,7 @@ function EspacePartenaire() {
   const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
   const chargerComptes = useServerFn(comptePhotosPartenaire);
   const majMateriel = useServerFn(majMaterielPartenaire);
+  const proposerMontant = useServerFn(proposerMontantPartenaire);
 
   const espace = useQuery({
     queryKey: ["espace-partenaire", token],
@@ -78,6 +81,38 @@ function EspacePartenaire() {
   const [envoi, setEnvoi] = useState<string | null>(null);
   /** Dossier dont l'état du matériel est en cours d'enregistrement. */
   const [materielBusy, setMaterielBusy] = useState<string | null>(null);
+  /** Dossier dont le montant valorisé est en cours d'envoi. */
+  const [montantBusy, setMontantBusy] = useState<string | null>(null);
+
+  async function envoyerValorisation(rendezvousId: string, e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    const formEl = e.currentTarget;
+    const fd = new FormData(formEl);
+    const montant = String(fd.get("montant_ht") ?? "").trim();
+    if (!montant) {
+      setError("Indiquez le montant valorisé HT.");
+      return;
+    }
+    setError(null);
+    setNotice(null);
+    setMontantBusy(rendezvousId);
+    try {
+      await proposerMontant({
+        data: {
+          token,
+          rendezvous_id: rendezvousId,
+          montant_ht: montant,
+          note: String(fd.get("note") ?? "").trim() || null,
+        },
+      });
+      setNotice("Montant valorisé transmis à IRVE Technologie pour validation.");
+      await espace.refetch();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Envoi impossible. Réessayez.");
+    } finally {
+      setMontantBusy(null);
+    }
+  }
 
   async function ajouterPhotos(
     rendezvousId: string,
@@ -473,6 +508,78 @@ function EspacePartenaire() {
                   </p>
 
                   <div className="mt-3 border-t border-border pt-3 space-y-3">
+                    {(d.termine_at || d.statut === "termine" || d.statut === "realise") && (
+                      <div>
+                        <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+                          <Euro className="h-3.5 w-3.5" /> Valorisation des travaux
+                        </p>
+                        {(d.metrage_reel_m != null || d.metrage_inclus_m != null) && (
+                          <p className="text-xs text-muted-foreground mt-2">
+                            Métrage posé : {Number(d.metrage_reel_m ?? d.metrage_m ?? 0)} m
+                            {" · "}inclus : {Number(d.metrage_inclus_m ?? 5)} m
+                            {Math.max(
+                              0,
+                              Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                            ) > 0 && (
+                              <span className="text-primary">
+                                {" · "}
+                                {Math.max(
+                                  0,
+                                  Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                                )}{" "}
+                                m supplémentaires
+                              </span>
+                            )}
+                          </p>
+                        )}
+                        {d.montant_propose_ht != null ? (
+                          <p className="text-xs mt-2">
+                            <span className="text-mono">
+                              {eurosFr(Number(d.montant_propose_ht))} HT proposé
+                            </span>{" "}
+                            —{" "}
+                            {d.montant_valide_at ? (
+                              <span className="text-primary">validé par IRVE Technologie</span>
+                            ) : (
+                              <span className="text-muted-foreground">en attente de validation</span>
+                            )}
+                          </p>
+                        ) : null}
+                        <form
+                          onSubmit={(e) => void envoyerValorisation(d.id, e)}
+                          className="mt-2 grid gap-2 sm:grid-cols-[130px_1fr_auto] sm:items-end"
+                        >
+                          <label className="text-xs text-muted-foreground">
+                            Montant HT (€)
+                            <input
+                              name="montant_ht"
+                              inputMode="decimal"
+                              defaultValue={
+                                d.montant_propose_ht != null
+                                  ? String(d.montant_propose_ht)
+                                  : Number(d.montant_ht ?? 0) > 0
+                                    ? String(d.montant_ht)
+                                    : ""
+                              }
+                              className={INPUT}
+                              placeholder="620"
+                            />
+                          </label>
+                          <label className="text-xs text-muted-foreground">
+                            Précision (plus-value, métrage…)
+                            <input name="note" className={INPUT} placeholder="+ 12 m de câble" />
+                          </label>
+                          <button
+                            type="submit"
+                            disabled={montantBusy === d.id}
+                            className="bg-primary text-primary-foreground rounded-sm px-4 py-2.5 text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-60 min-h-11"
+                          >
+                            {montantBusy === d.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                            Transmettre
+                          </button>
+                        </form>
+                      </div>
+                    )}
                     <div>
                       <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
                         <Package className="h-3.5 w-3.5" /> Matériel
