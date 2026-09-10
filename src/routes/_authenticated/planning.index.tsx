@@ -550,6 +550,32 @@ function PlanningPage() {
 
   const economie = economieCarburant(Math.max(tournee.kmDirect - tournee.kmTotal, 0));
 
+  /** Deux premiers chantiers cochés : comparaison « même journée » / « deux déplacements ». */
+  const selRows = selection
+    .map((id) => rows.find((r) => r.id === id))
+    .filter((r): r is (typeof rows)[number] => !!r && r.lat != null && r.lng != null);
+  const paireA = selRows[0];
+  const paireB = selRows[1];
+  const comparerFn = useServerFn(comparerDeuxChantiers);
+  const comparaison = useQuery({
+    queryKey: ["comparaison-2", paireA?.id, paireB?.id, depart.id],
+    enabled: Boolean(paireA && paireB),
+    staleTime: 30 * 60_000,
+    queryFn: () =>
+      comparerFn({
+        data: {
+          a: { lat: Number(paireA!.lat), lng: Number(paireA!.lng) },
+          b: { lat: Number(paireB!.lat), lng: Number(paireB!.lng) },
+          base: { lat: depart.lat, lng: depart.lng },
+        },
+      }),
+  });
+  const kmEconomises = comparaison.data
+    ? Math.max(comparaison.data.kmSepares - comparaison.data.kmEnsemble, 0)
+    : 0;
+  const economieDeux = economieCarburant(kmEconomises);
+
+
   /** Itinéraire routier réel base → chantier sélectionné. */
   const routeFn = useServerFn(itineraireDepuisBase);
   const activeRow = rows.find((r) => r.id === active && r.lat != null && r.lng != null);
