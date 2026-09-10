@@ -113,13 +113,23 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function dot(color: string, active: boolean, n?: number, etat?: string) {
-    const size = active ? 44 : 34;
+  function dot(
+    color: string,
+    active: boolean,
+    n?: number,
+    etat?: string,
+    rang?: number | null,
+  ) {
+    const coche = rang != null;
+    const size = coche ? 48 : active ? 44 : 34;
+    const anneau = coche
+      ? `box-shadow:0 0 0 6px #2563eb;`
+      : `box-shadow:0 0 0 ${active ? 8 : 5}px ${etat ?? color}55;`;
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid ${etat ?? "#fff"};box-shadow:0 0 0 ${active ? 8 : 5}px ${(etat ?? color)}55;color:#fff;font:700 ${active ? 16 : 13}px/1 system-ui">${n ?? ""}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${coche ? rang : (n ?? "")}</span>`,
     });
   }
 
@@ -144,8 +154,10 @@ export function InterventionsMap({
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
       const color = m.couleur || etat;
+      const idx = selectedIds.indexOf(m.id);
+      const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat) })
+        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
         .addTo(layer.current)
         .bindPopup(
           `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
@@ -154,11 +166,21 @@ export function InterventionsMap({
             m.trajet
               ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
               : ""
+          }${
+            selectionMode
+              ? `<br/><span style="font-weight:700;color:#2563eb">${
+                  rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
+                }</span>`
+              : ""
           }`,
         );
-      mk.on("click", () => onSelect?.(m.id));
+      mk.on("click", () => {
+        if (selectionMode) onToggleSelect?.(m.id);
+        onSelect?.(m.id);
+      });
       byId.current[m.id] = mk;
     });
+
 
     if (markers.length) {
       const bounds = leaflet.latLngBounds([
