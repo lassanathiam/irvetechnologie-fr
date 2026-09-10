@@ -3,3 +3,4 @@
 - [x] Harmoniser demandes, factures et rapports avec le nouveau langage visuel
 - [x] Vérifier les parcours principaux et les affichages mobile/ordinateur
 - [x] Unifier visuellement tout l’espace professionnel et sa navigation avec le tableau sombre
+- [ ] Appliquer le tableau de bord blanc et bleu avec menu latéral choisi

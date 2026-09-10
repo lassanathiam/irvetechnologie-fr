@@ -1,6 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { CalendarClock, ClipboardCheck, Download, FileText, Handshake, Images, Inbox, LayoutDashboard, LogOut, Menu, Receipt, ShieldCheck, X } from "lucide-react";
+import {
+  CalendarClock,
+  ChevronLeft,
+  ChevronRight,
+  ClipboardCheck,
+  Download,
+  FileText,
+  Handshake,
+  Images,
+  Inbox,
+  LayoutDashboard,
+  LogOut,
+  Menu,
+  Receipt,
+  ShieldCheck,
+  X,
+} from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
@@ -18,118 +34,138 @@ const LINKS = [
   { to: "/realisations", label: "Photos", icon: Images },
 ] as const;
 
-
-
 export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
+  const [reduit, setReduit] = useState(false);
+
+  const quitter = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/";
+  };
 
   return (
-    <div className="pro-shell min-h-screen bg-background text-foreground">
-      <header className="pro-header sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
-          <Link to="/" className="flex items-center gap-2.5 shrink-0">
-            <BrandLogo className="h-9 w-9" />
-            <span className="hidden sm:block leading-tight">
-              <span className="block font-extrabold tracking-tight text-sm">
-                Borne<span className="text-muted-foreground"> de l'Ouest</span>
-              </span>
-              <span className="block text-[10px] text-mono font-semibold text-primary uppercase tracking-[0.14em]">
-                IRVE Technologie · Espace pro
-              </span>
+    <div className="pro-shell flex min-h-screen w-full bg-background text-foreground">
+      <aside
+        className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-line bg-sidebar text-sidebar-foreground transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+          menuOuvert ? "translate-x-0" : "-translate-x-full"
+        } ${reduit ? "md:w-[4.5rem]" : "md:w-64"}`}
+      >
+        <div className="flex h-20 items-center justify-between gap-2 border-b border-sidebar-line px-4">
+          <Link to="/" className="flex min-w-0 items-center gap-3" onClick={() => setMenuOuvert(false)}>
+            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
+              <BrandLogo className="h-8 w-8" />
             </span>
+            {!reduit && (
+              <span className="min-w-0 leading-tight">
+                <span className="block truncate font-display text-base font-bold text-sidebar-title">Borne de l’Ouest</span>
+                <span className="block truncate text-[9px] font-bold uppercase text-sidebar-accent">IRVE Technologie</span>
+              </span>
+            )}
           </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-title md:hidden"
+            aria-label="Fermer le menu"
+            onClick={() => setMenuOuvert(false)}
+          >
+            <X />
+          </Button>
+        </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6" aria-label="Navigation de l’espace professionnel">
+          {LINKS.map(({ to, label, icon: Icon }) => (
             <Link
-              to="/installer"
-              aria-label="Installer l'application"
-              title="Installer l'application"
-              className="inline-flex h-9 w-9 items-center justify-center rounded-sm text-muted-foreground hover:bg-muted hover:text-primary"
+              key={to}
+              to={to}
+              onClick={() => setMenuOuvert(false)}
+              title={reduit ? label : undefined}
+              className={`flex min-h-11 items-center rounded-md px-3 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
+              activeProps={{ className: "bg-sidebar-active text-sidebar-title" }}
             >
-              <Download className="h-4 w-4" />
+              <Icon className="h-5 w-5 shrink-0" />
+              {!reduit && <span>{label}</span>}
             </Link>
-            <ThemeToggle />
+          ))}
+        </nav>
+
+        <div className="border-t border-sidebar-line p-3">
+          {!reduit && (
+            <div className="mb-3 rounded-md bg-sidebar-hover p-3">
+              <div className="flex items-center gap-2 text-sidebar-accent">
+                <ShieldCheck className="h-4 w-4 shrink-0" />
+                <span className="text-xs font-bold">{COMPANY.qualifications}</span>
+              </div>
+              <p className="mt-1.5 text-xs leading-relaxed text-sidebar-muted">Installateur qualifié IRVE</p>
+            </div>
+          )}
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={quitter}
+            className={`w-full text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "px-0" : "justify-start"}`}
+            aria-label="Se déconnecter"
+            title={reduit ? "Se déconnecter" : undefined}
+          >
+            <LogOut className="h-4 w-4" /> {!reduit && "Se déconnecter"}
+          </Button>
+        </div>
+      </aside>
+
+      {menuOuvert && (
+        <button
+          type="button"
+          aria-label="Fermer le menu"
+          className="fixed inset-0 z-40 bg-overlay md:hidden"
+          onClick={() => setMenuOuvert(false)}
+        />
+      )}
+
+      <div className="min-w-0 flex-1">
+        <header className="pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-xl sm:px-6">
+          <div className="flex items-center gap-2">
             <Button
               type="button"
               variant="ghost"
               size="icon"
               className="md:hidden"
-              aria-label={menuOuvert ? "Fermer le menu" : "Ouvrir le menu"}
-              aria-expanded={menuOuvert}
-              onClick={() => setMenuOuvert((ouvert) => !ouvert)}
+              aria-label="Ouvrir le menu"
+              onClick={() => setMenuOuvert(true)}
             >
-              {menuOuvert ? <X /> : <Menu />}
+              <Menu />
             </Button>
             <Button
               type="button"
               variant="ghost"
-              size="sm"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = "/";
-              }}
-              className="hidden md:inline-flex text-mono text-xs text-muted-foreground hover:text-destructive"
+              size="icon"
+              className="hidden md:inline-flex"
+              aria-label={reduit ? "Déplier le menu" : "Réduire le menu"}
+              title={reduit ? "Déplier le menu" : "Réduire le menu"}
+              onClick={() => setReduit((valeur) => !valeur)}
             >
-              <LogOut /> Quitter
+              {reduit ? <ChevronRight /> : <ChevronLeft />}
             </Button>
+            <span className="hidden text-sm font-semibold text-muted-foreground sm:block">Espace professionnel</span>
           </div>
-        </div>
-
-        <nav className="mx-auto hidden min-h-12 max-w-7xl items-stretch gap-1 overflow-x-auto px-4 md:flex sm:px-6" aria-label="Navigation de l'espace professionnel">
-          {LINKS.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              className="pro-nav-link inline-flex min-h-11 flex-1 items-center justify-center gap-2 whitespace-nowrap border-b-2 border-transparent px-3 text-xs font-bold text-muted-foreground hover:bg-muted hover:text-primary"
-              activeProps={{ className: "border-primary bg-muted text-primary" }}
-            >
-              <Icon className="h-4 w-4 shrink-0" /> {label}
-            </Link>
-          ))}
-        </nav>
-
-        {menuOuvert && (
-          <nav className="grid grid-cols-2 gap-2 border-t border-border bg-card px-4 py-3 md:hidden" aria-label="Navigation mobile de l'espace professionnel">
-            {LINKS.map(({ to, label, icon: Icon }) => (
-              <Link
-                key={to}
-                to={to}
-                onClick={() => setMenuOuvert(false)}
-                className="min-h-11 rounded-sm border border-border px-3 py-2 text-sm font-semibold text-foreground inline-flex items-center gap-2"
-                activeProps={{ className: "border-primary bg-muted text-primary" }}
-              >
-                <Icon className="h-4 w-4" /> {label}
-              </Link>
-            ))}
+          <div className="flex items-center gap-1.5">
             <Link
               to="/installer"
-              onClick={() => setMenuOuvert(false)}
-              className="col-span-2 min-h-11 rounded-sm border border-border px-3 py-2 text-sm font-semibold text-foreground inline-flex items-center gap-2"
+              aria-label="Installer l’application"
+              title="Installer l’application"
+              className="inline-flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-primary"
             >
-              <Download className="h-4 w-4" /> Installer sur ce téléphone
+              <Download className="h-4 w-4" />
             </Link>
-            <Button
-              type="button"
-              variant="ghost"
-              onClick={async () => {
-                await supabase.auth.signOut();
-                window.location.href = "/";
-              }}
-              className="col-span-2 justify-start text-destructive"
-            >
-              <LogOut /> Quitter
-            </Button>
-          </nav>
-        )}
-      </header>
-      <div className="pro-qualifications border-b border-border bg-muted/70">
-        <div className="mx-auto flex max-w-7xl flex-wrap items-center gap-x-3 gap-y-1 px-4 py-2 sm:px-6">
-          <ShieldCheck className="h-3.5 w-3.5 text-primary shrink-0" />
-          <span className="text-mono text-xs font-bold text-primary">{COMPANY.qualifications}</span>
-          <span className="text-xs text-muted-foreground">{COMPANY.qualificationsDetail}</span>
-        </div>
+            <ThemeToggle />
+            <span className="hidden border-l border-border pl-4 text-right sm:block">
+              <span className="block text-xs font-bold text-foreground">IRVE Technologie</span>
+              <span className="block text-[11px] text-muted-foreground">Administrateur</span>
+            </span>
+          </div>
+        </header>
+        <main className="pro-main p-4 sm:p-6 lg:p-8">{children}</main>
       </div>
-      <main className="pro-main mx-auto max-w-7xl px-4 py-6 sm:px-6 sm:py-8">{children}</main>
     </div>
   );
 }
