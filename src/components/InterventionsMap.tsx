@@ -182,7 +182,9 @@ export function InterventionsMap({
     });
 
 
-    if (markers.length) {
+    const cle = markers.map((m) => m.id).join("|");
+    if (markers.length && fitRef.current !== cle) {
+      fitRef.current = cle;
       const bounds = leaflet.latLngBounds([
         [BASE.lat, BASE.lng],
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
@@ -212,12 +214,22 @@ export function InterventionsMap({
         .polyline(routeCoords, { color: "#16a34a", weight: 3, opacity: 0.95 })
         .addTo(routeLayer.current);
     }
+
+    // Trajet d'un chantier coché au suivant (programmation groupée)
+    if (lienCoords && lienCoords.length > 1) {
+      leaflet
+        .polyline(lienCoords, { color: "#2563eb", weight: 7, opacity: 0.2 })
+        .addTo(routeLayer.current);
+      leaflet
+        .polyline(lienCoords, { color: "#2563eb", weight: 4, opacity: 0.95, dashArray: "10 8" })
+        .addTo(routeLayer.current);
+    }
   }
 
   useEffect(() => {
     drawMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers]);
+  }, [markers, selectedIds, selectionMode]);
 
   useEffect(() => {
     const mk = activeId ? byId.current[activeId] : null;
@@ -227,7 +239,8 @@ export function InterventionsMap({
   useEffect(() => {
     drawRoutes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeCoords, routeEstime, tourneeCoords]);
+  }, [routeCoords, routeEstime, tourneeCoords, lienCoords]);
+
 
   /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
   function maPosition() {
