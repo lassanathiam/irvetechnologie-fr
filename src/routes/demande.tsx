@@ -117,7 +117,7 @@ function Demande() {
   function clearSingle(
     setter: (v: string | null) => void,
     current: string | null,
-    slot: "tableau" | "borne",
+    slot: "tableau" | "linky" | "borne",
   ) {
     return () => {
       if (current) URL.revokeObjectURL(current);
