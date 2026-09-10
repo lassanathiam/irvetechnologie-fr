@@ -193,16 +193,16 @@ export const deletePartenaire = createServerFn({ method: "POST" })
 
 /* ------------------------- Code d'accès à 6 chiffres ------------------------ */
 
-const PBKDF2_ITERATIONS = 150_000;
+const PBKDF2_ITERATIONS = 90_000;
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
-async function derive(pin: string, salt: Uint8Array): Promise<string> {
+async function derive(pin: string, salt: Uint8Array, iterations = PBKDF2_ITERATIONS): Promise<string> {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, [
     "deriveBits",
   ]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: salt as unknown as BufferSource, iterations: PBKDF2_ITERATIONS },
+    { name: "PBKDF2", hash: "SHA-256", salt: salt as unknown as BufferSource, iterations },
     key,
     256,
   );
@@ -217,8 +217,10 @@ async function hashPin(pin: string): Promise<string> {
 async function verifyPin(pin: string, stored: string): Promise<boolean> {
   const parts = stored.split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2") return false;
+  const iterations = Number.parseInt(parts[1]!, 10);
+  if (!Number.isFinite(iterations) || iterations < 1 || iterations > 100_000) return false;
   const attendu = parts[3]!;
-  const obtenu = await derive(pin, fromB64(parts[2]!));
+  const obtenu = await derive(pin, fromB64(parts[2]!), iterations);
   if (obtenu.length !== attendu.length) return false;
   let diff = 0;
   for (let i = 0; i < obtenu.length; i++) diff |= obtenu.charCodeAt(i) ^ attendu.charCodeAt(i);
