@@ -12,6 +12,15 @@ import { trajetDepuisBase } from "@/lib/geo";
 
 const tokenSchema = z.object({ token: z.string().uuid() });
 
+/** Champ texte facultatif : chaîne vide enregistrée comme absente. */
+const texteOptionnel = (max: number) =>
+  z
+    .preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+      z.string().trim().max(max).nullable(),
+    )
+    .default(null);
+
 async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 3500);
@@ -40,7 +49,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, token, actif, notes, couleur, email, delai_paiement_jours, created_at")
+      .select("id, nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -70,6 +79,14 @@ export const savePartenaire = createServerFn({ method: "POST" })
       couleur?: string | null;
       email?: string | null;
       delai_paiement_jours?: number | string | null;
+      raison_sociale?: string | null;
+      adresse?: string | null;
+      cp_ville?: string | null;
+      pays?: string | null;
+      siret?: string | null;
+      tva_intracom?: string | null;
+      contact_nom?: string | null;
+      telephone?: string | null;
     }) =>
       z
         .object({
@@ -95,6 +112,19 @@ export const savePartenaire = createServerFn({ method: "POST" })
               return Number.isFinite(n) ? Math.round(n) : 30;
             }, z.number().int().min(0).max(365))
             .default(30),
+          raison_sociale: texteOptionnel(200),
+          adresse: texteOptionnel(240),
+          cp_ville: texteOptionnel(120),
+          pays: z
+            .preprocess(
+              (v) => (typeof v === "string" && v.trim() === "" ? "France" : v),
+              z.string().trim().max(80),
+            )
+            .default("France"),
+          siret: texteOptionnel(30),
+          tva_intracom: texteOptionnel(30),
+          contact_nom: texteOptionnel(160),
+          telephone: texteOptionnel(40),
         })
         .parse(raw),
   )
@@ -109,6 +139,14 @@ export const savePartenaire = createServerFn({ method: "POST" })
           couleur: data.couleur,
           email: data.email ?? null,
           delai_paiement_jours: data.delai_paiement_jours,
+          raison_sociale: data.raison_sociale ?? null,
+          adresse: data.adresse ?? null,
+          cp_ville: data.cp_ville ?? null,
+          pays: data.pays,
+          siret: data.siret ?? null,
+          tva_intracom: data.tva_intracom ?? null,
+          contact_nom: data.contact_nom ?? null,
+          telephone: data.telephone ?? null,
         })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -123,6 +161,14 @@ export const savePartenaire = createServerFn({ method: "POST" })
         couleur: data.couleur,
         email: data.email ?? null,
         delai_paiement_jours: data.delai_paiement_jours,
+        raison_sociale: data.raison_sociale ?? null,
+        adresse: data.adresse ?? null,
+        cp_ville: data.cp_ville ?? null,
+        pays: data.pays,
+        siret: data.siret ?? null,
+        tva_intracom: data.tva_intracom ?? null,
+        contact_nom: data.contact_nom ?? null,
+        telephone: data.telephone ?? null,
         owner_user_id: context.userId,
       })
       .select("id")
