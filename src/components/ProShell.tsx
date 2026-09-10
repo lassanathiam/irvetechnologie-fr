@@ -6,6 +6,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   Download,
+  Euro,
   FileText,
   Handshake,
   Images,

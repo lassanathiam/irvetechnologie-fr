@@ -350,6 +350,7 @@ function PartenairesAdmin() {
                               notes: p.notes,
                               couleur: p.couleur ?? "#0284c7",
                               email: p.email,
+                              delai_paiement_jours: p.delai_paiement_jours ?? 30,
                             },
                           });
 
