@@ -1053,7 +1053,14 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
         .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: Record<string, unknown> = {};
+    const patch: {
+      montant_ht?: number;
+      delai_paiement_jours?: number;
+      echeance_paiement?: string | null;
+      statut_facturation?: string;
+      facture_envoyee_at?: string | null;
+      paye_at?: string | null;
+    } = {};
     if (data.montant_ht !== undefined) patch.montant_ht = data.montant_ht;
     if (data.delai_paiement_jours !== undefined) patch.delai_paiement_jours = data.delai_paiement_jours;
     if (data.echeance_paiement !== undefined) patch.echeance_paiement = data.echeance_paiement;
@@ -1103,7 +1110,14 @@ export const validerMontantPropose = createServerFn({ method: "POST" })
     if (readErr) throw new Error(readErr.message);
     if (rdv.montant_propose_ht == null) throw new Error("Aucun montant proposé sur ce chantier.");
 
-    const patch: Record<string, unknown> = data.accepter
+    const patch: {
+      montant_ht?: number;
+      montant_valide_at?: string | null;
+      montant_propose_ht?: number | null;
+      montant_propose_note?: string | null;
+      montant_propose_at?: string | null;
+      montant_propose_par?: string | null;
+    } = data.accepter
       ? {
           montant_ht: Number(rdv.montant_propose_ht),
           montant_valide_at: new Date().toISOString(),
