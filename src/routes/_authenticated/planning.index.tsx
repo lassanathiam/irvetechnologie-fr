@@ -29,6 +29,7 @@ import {
   Trash2,
   Upload,
   Smartphone,
+  ClipboardCheck,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -74,6 +75,7 @@ import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 import { useIsMobile } from "@/hooks/use-mobile";
+import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -361,6 +363,7 @@ function PlanningPage() {
     onError: (e: unknown) =>
       setError(e instanceof Error ? e.message : "Démarrage du chantier impossible."),
   });
+  const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
   const terminerFn = useServerFn(terminerChantier);
   const terminer = useMutation({
     mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
@@ -867,6 +870,15 @@ function PlanningPage() {
                             className="col-span-2 min-h-11 rounded-lg bg-violet-600 px-3 text-sm font-bold text-white disabled:opacity-50"
                           >
                             <span className="inline-flex items-center gap-2"><Play className="h-4 w-4" /> Démarrer les travaux</span>
+                          </button>
+                        )}
+                        {r.demarre_at && !r.termine_at && (
+                          <button
+                            type="button"
+                            onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}
+                            className="col-span-2 min-h-11 rounded-lg border-2 border-amber-500 px-3 text-sm font-bold text-amber-600 dark:text-amber-400"
+                          >
+                            <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Retour de travaux (photos + métrage)</span>
                           </button>
                         )}
                         {r.demarre_at && !r.termine_at && (
@@ -1609,6 +1621,13 @@ function PlanningPage() {
                                       minute: "2-digit",
                                     })}
                                   </span>
+                                  <button
+                                    type="button"
+                                    onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}
+                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border-2 border-amber-500 text-amber-600 dark:text-amber-400 inline-flex items-center gap-1.5"
+                                  >
+                                    <ClipboardCheck className="h-3.5 w-3.5" /> Retour de travaux
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => {
