@@ -891,6 +891,23 @@ function PlanningPage() {
                             <span className="inline-flex items-center gap-2"><Flag className="h-4 w-4" /> Terminer le chantier</span>
                           </button>
                         )}
+                        {r.demarre_at && !r.termine_at && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (
+                                window.confirm(
+                                  "Annuler le démarrage des travaux ? Le chantier repasse en « confirmé » et l'heure d'arrivée est effacée.",
+                                )
+                              )
+                                demarrer.mutate({ id: r.id, demarre: false });
+                            }}
+                            disabled={demarrer.isPending}
+                            className="col-span-2 min-h-11 rounded-lg border border-destructive/50 px-3 text-sm font-semibold text-destructive disabled:opacity-50"
+                          >
+                            Annuler le démarrage (erreur de déclenchement)
+                          </button>
+                        )}
                       </div>
                     </li>
                   );
@@ -1646,7 +1663,14 @@ function PlanningPage() {
                                   </button>
                                   <button
                                     type="button"
-                                    onClick={() => demarrer.mutate({ id: r.id, demarre: false })}
+                                    onClick={() => {
+                                      if (
+                                        window.confirm(
+                                          "Annuler le démarrage des travaux ? Le chantier repasse en « confirmé ».",
+                                        )
+                                      )
+                                        demarrer.mutate({ id: r.id, demarre: false });
+                                    }}
                                     className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
                                   >
                                     Annuler le démarrage
