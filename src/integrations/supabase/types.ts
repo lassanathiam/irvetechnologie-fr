@@ -479,6 +479,41 @@ export type Database = {
           },
         ]
       }
+      partenaire_sessions: {
+        Row: {
+          created_at: string
+          expires_at: string
+          id: string
+          partenaire_id: string
+          token: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          partenaire_id: string
+          token?: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          expires_at?: string
+          id?: string
+          partenaire_id?: string
+          token?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partenaire_sessions_partenaire_id_fkey"
+            columns: ["partenaire_id"]
+            isOneToOne: false
+            referencedRelation: "partenaires"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       partenaires: {
         Row: {
           actif: boolean
@@ -488,12 +523,15 @@ export type Database = {
           cp_ville: string | null
           created_at: string
           delai_paiement_jours: number
+          dernier_acces_at: string | null
           email: string | null
           id: string
           nom: string
           notes: string | null
           owner_user_id: string | null
           pays: string
+          pin_defini_at: string | null
+          pin_hash: string | null
           raison_sociale: string | null
           siret: string | null
           telephone: string | null
@@ -509,12 +547,15 @@ export type Database = {
           cp_ville?: string | null
           created_at?: string
           delai_paiement_jours?: number
+          dernier_acces_at?: string | null
           email?: string | null
           id?: string
           nom: string
           notes?: string | null
           owner_user_id?: string | null
           pays?: string
+          pin_defini_at?: string | null
+          pin_hash?: string | null
           raison_sociale?: string | null
           siret?: string | null
           telephone?: string | null
@@ -530,12 +571,15 @@ export type Database = {
           cp_ville?: string | null
           created_at?: string
           delai_paiement_jours?: number
+          dernier_acces_at?: string | null
           email?: string | null
           id?: string
           nom?: string
           notes?: string | null
           owner_user_id?: string | null
           pays?: string
+          pin_defini_at?: string | null
+          pin_hash?: string | null
           raison_sociale?: string | null
           siret?: string | null
           telephone?: string | null

@@ -1,13 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarClock,
   CalendarDays,
   CheckCircle2,
   Camera,
+  Download,
   Loader2,
+  Lock,
+  LogOut,
   MapPin,
   Package,
   Plus,
@@ -18,7 +21,11 @@ import { AdresseFields } from "@/components/AdresseFields";
 import { compressImage } from "@/lib/image-compress";
 import {
   comptePhotosPartenaire,
+  connexionPartenaire,
   creerDossierPartenaire,
+  deconnexionPartenaire,
+  definirPinPartenaire,
+  getAccesPartenaire,
   getEspacePartenaire,
   majMaterielPartenaire,
   uploadPhotoPartenaire,
@@ -43,7 +50,7 @@ export const Route = createFileRoute("/partenaire/$token")({
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
-  component: EspacePartenaire,
+  component: PagePartenaire,
 });
 
 const INPUT =
@@ -52,23 +59,245 @@ const INPUT =
 const eurosFr = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 
-function EspacePartenaire() {
+const cleSession = (token: string) => `partenaire-session:${token}`;
+
+/* --------------------- Installation de l'application --------------------- */
+
+function InstallerApp() {
+  const [prompt, setPrompt] = useState<{ prompt: () => Promise<void> } | null>(null);
+  const [installee, setInstallee] = useState(false);
+  const [aide, setAide] = useState(false);
+
+  useEffect(() => {
+    setInstallee(window.matchMedia("(display-mode: standalone)").matches);
+    const handler = (e: Event) => {
+      e.preventDefault();
+      setPrompt(e as unknown as { prompt: () => Promise<void> });
+    };
+    window.addEventListener("beforeinstallprompt", handler);
+    return () => window.removeEventListener("beforeinstallprompt", handler);
+  }, []);
+
+  if (installee) return null;
+
+  return (
+    <section className="bg-card border border-border rounded-xl p-4">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold inline-flex items-center gap-2">
+            <Download className="h-4 w-4 text-primary" /> Installer l&apos;application
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Ajoutez cet espace sur votre téléphone ou votre ordinateur : plus besoin de retrouver le
+            lien, votre code à 6 chiffres suffit.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => {
+            if (prompt) void prompt.prompt();
+            else setAide((v) => !v);
+          }}
+          className="bg-primary text-primary-foreground rounded-sm px-4 py-2.5 text-sm font-semibold min-h-11"
+        >
+          Installer
+        </button>
+      </div>
+      {aide && !prompt && (
+        <p className="text-xs text-muted-foreground mt-3">
+          Sur iPhone/iPad : bouton « Partager » puis « Sur l&apos;écran d&apos;accueil ». Sur
+          ordinateur : icône d&apos;installation dans la barre d&apos;adresse, ou menu du navigateur
+          puis « Installer ».
+        </p>
+      )}
+    </section>
+  );
+}
+
+/* ------------------------- Accès par code à 6 chiffres ------------------------ */
+
+function PagePartenaire() {
   const { token } = Route.useParams();
+  const chargerAcces = useServerFn(getAccesPartenaire);
+  const definirPin = useServerFn(definirPinPartenaire);
+  const connexion = useServerFn(connexionPartenaire);
+
+  const [session, setSession] = useState<string | null>(null);
+  const [pret, setPret] = useState(false);
+  const [pin, setPin] = useState("");
+  const [pin2, setPin2] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [erreur, setErreur] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSession(localStorage.getItem(cleSession(token)));
+    setPret(true);
+  }, [token]);
+
+  const acces = useQuery({
+    queryKey: ["acces-partenaire", token, session],
+    queryFn: () => chargerAcces({ data: { token, session } }),
+    enabled: pret,
+    retry: 1,
+  });
+
+  function ouvrir(s: string) {
+    localStorage.setItem(cleSession(token), s);
+    setSession(s);
+    setPin("");
+    setPin2("");
+  }
+
+  async function valider(e: React.FormEvent) {
+    e.preventDefault();
+    setErreur(null);
+    if (!/^\d{6}$/.test(pin)) {
+      setErreur("Le code doit contenir 6 chiffres.");
+      return;
+    }
+    setBusy(true);
+    try {
+      if (acces.data?.pin_defini) {
+        const r = await connexion({ data: { token, pin } });
+        ouvrir(r.session);
+      } else {
+        if (pin !== pin2) {
+          setErreur("Les deux codes ne sont pas identiques.");
+          return;
+        }
+        const r = await definirPin({ data: { token, pin } });
+        ouvrir(r.session);
+      }
+    } catch (err) {
+      setErreur(err instanceof Error ? err.message : "Connexion impossible.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (acces.isError) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center px-6">
+        <p className="text-sm text-destructive text-center">
+          Ce lien de saisie n&apos;est plus valide. Contactez IRVE Technologie.
+        </p>
+      </main>
+    );
+  }
+
+  if (!pret || acces.isLoading) {
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+      </main>
+    );
+  }
+
+  if (!acces.data?.session_valide) {
+    const premiereFois = !acces.data?.pin_defini;
+    return (
+      <main className="min-h-screen bg-background flex items-center justify-center px-5 py-10">
+        <form onSubmit={valider} className="w-full max-w-sm bg-card border border-border rounded-xl p-6 grid gap-4">
+          <div className="flex items-center gap-3">
+            <BrandLogo className="h-9 w-9" />
+            <div className="leading-tight">
+              <p className="font-extrabold tracking-tight text-sm">Espace partenaire</p>
+              <p className="text-mono text-[11px] text-primary uppercase tracking-[0.14em]">
+                {acces.data?.nom ?? "…"} · IRVE Technologie
+              </p>
+            </div>
+          </div>
+
+          <p className="text-sm text-muted-foreground inline-flex items-start gap-2">
+            <Lock className="h-4 w-4 mt-0.5 shrink-0 text-primary" />
+            {premiereFois
+              ? "Première connexion : choisissez votre code à 6 chiffres. Il protégera vos dossiers et vos informations de facturation."
+              : "Saisissez votre code à 6 chiffres pour accéder à vos dossiers."}
+          </p>
+
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Code à 6 chiffres</span>
+            <input
+              value={pin}
+              onChange={(e) => setPin(e.target.value.replace(/\D/g, "").slice(0, 6))}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              maxLength={6}
+              className={`${INPUT} text-center text-2xl tracking-[0.5em]`}
+              placeholder="••••••"
+            />
+          </label>
+
+          {premiereFois && (
+            <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">Confirmez le code</span>
+              <input
+                value={pin2}
+                onChange={(e) => setPin2(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                inputMode="numeric"
+                maxLength={6}
+                className={`${INPUT} text-center text-2xl tracking-[0.5em]`}
+                placeholder="••••••"
+              />
+            </label>
+          )}
+
+          {erreur && <p className="text-sm text-destructive">{erreur}</p>}
+
+          <button
+            type="submit"
+            disabled={busy}
+            className="bg-primary text-primary-foreground rounded-sm px-4 py-3 text-sm font-semibold inline-flex items-center justify-center gap-2 disabled:opacity-60 min-h-11"
+          >
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}
+            {premiereFois ? "Créer mon code" : "Entrer"}
+          </button>
+
+          <p className="text-xs text-muted-foreground">
+            Code oublié ? Demandez sa réinitialisation à IRVE Technologie au 06 33 65 78 40.
+          </p>
+        </form>
+      </main>
+    );
+  }
+
+  return (
+    <EspacePartenaire
+      token={token}
+      session={session!}
+      onDeconnexion={() => {
+        localStorage.removeItem(cleSession(token));
+        setSession(null);
+      }}
+    />
+  );
+}
+
+function EspacePartenaire({
+  token,
+  session,
+  onDeconnexion,
+}: {
+  token: string;
+  session: string;
+  onDeconnexion: () => void;
+}) {
   const charger = useServerFn(getEspacePartenaire);
   const creer = useServerFn(creerDossierPartenaire);
   const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
   const chargerComptes = useServerFn(comptePhotosPartenaire);
   const majMateriel = useServerFn(majMaterielPartenaire);
   const proposerMontant = useServerFn(proposerMontantPartenaire);
+  const deconnecter = useServerFn(deconnexionPartenaire);
 
   const espace = useQuery({
     queryKey: ["espace-partenaire", token],
-    queryFn: () => charger({ data: { token } }),
+    queryFn: () => charger({ data: { token, session } }),
     retry: 2,
   });
   const photos = useQuery({
     queryKey: ["photos-partenaire", token],
-    queryFn: () => chargerComptes({ data: { token } }),
+    queryFn: () => chargerComptes({ data: { token, session } }),
     retry: 1,
   });
 
@@ -100,6 +329,7 @@ function EspacePartenaire() {
       await proposerMontant({
         data: {
           token,
+          session,
           rendezvous_id: rendezvousId,
           montant_ht: montant,
           note: String(fd.get("note") ?? "").trim() || null,
@@ -128,7 +358,7 @@ function EspacePartenaire() {
       for (const fichier of Array.from(fichiers).slice(0, 10)) {
         const data_url = await compressImage(fichier, 1280, 0.66);
         await envoyerPhoto({
-          data: { token, rendezvous_id: rendezvousId, data_url, categorie },
+          data: { token, session, rendezvous_id: rendezvousId, data_url, categorie },
         });
         ok++;
       }
@@ -153,7 +383,7 @@ function EspacePartenaire() {
     setNotice(null);
     setMaterielBusy(rendezvousId);
     try {
-      await majMateriel({ data: { token, rendezvous_id: rendezvousId, materiel_statut: statut } });
+      await majMateriel({ data: { token, session, rendezvous_id: rendezvousId, materiel_statut: statut } });
       setNotice(`${MATERIEL_LABELS[statut]} — enregistré.`);
       await espace.refetch();
     } catch (err) {
@@ -184,6 +414,7 @@ function EspacePartenaire() {
       const resultat = await creer({
         data: {
           token,
+          session,
           client_nom: get("client_nom"),
           client_telephone: get("client_telephone") || null,
           client_email: get("client_email") || null,
@@ -229,12 +460,22 @@ function EspacePartenaire() {
       <header className="border-b border-border bg-card">
         <div className="mx-auto max-w-3xl px-5 py-4 flex items-center gap-3">
           <BrandLogo className="h-9 w-9" />
-          <div className="leading-tight">
+          <div className="leading-tight min-w-0">
             <p className="font-extrabold tracking-tight text-sm">Espace partenaire</p>
             <p className="text-mono text-[11px] text-primary uppercase tracking-[0.14em]">
               {espace.data?.nom ?? "…"} · IRVE Technologie
             </p>
           </div>
+          <button
+            type="button"
+            onClick={() => {
+              void deconnecter({ data: { session } });
+              onDeconnexion();
+            }}
+            className="ml-auto text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5 min-h-11 px-2"
+          >
+            <LogOut className="h-4 w-4" /> Quitter
+          </button>
         </div>
       </header>
 
@@ -244,6 +485,9 @@ function EspacePartenaire() {
             <CheckCircle2 className="h-4 w-4" /> {notice}
           </p>
         )}
+
+        <InstallerApp />
+
 
         {(espace.data?.dossiers.length ?? 0) > 0 &&
           (() => {
