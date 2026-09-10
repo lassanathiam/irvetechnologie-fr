@@ -146,8 +146,9 @@ function Demande() {
 
   /** Compresse puis envoie chaque photo vers le stockage privé de l'entreprise. */
   async function uploadPhotos(demandeId: string) {
-    const jobs: { kind: "tableau" | "cheminement" | "borne"; file: File }[] = [];
+    const jobs: { kind: "tableau" | "linky" | "cheminement" | "borne"; file: File }[] = [];
     if (files.current.tableau) jobs.push({ kind: "tableau", file: files.current.tableau });
+    if (files.current.linky) jobs.push({ kind: "linky", file: files.current.linky });
     if (files.current.borne) jobs.push({ kind: "borne", file: files.current.borne });
     for (const f of files.current.cheminement) jobs.push({ kind: "cheminement", file: f });
     if (!jobs.length) return;
