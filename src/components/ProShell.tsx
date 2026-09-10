@@ -46,7 +46,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="pro-shell flex min-h-screen w-full bg-background text-foreground">
       <aside
-        className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-line bg-sidebar text-sidebar-foreground transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+        className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-sidebar-line bg-sidebar text-sidebar-foreground transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           menuOuvert ? "translate-x-0" : "-translate-x-full"
         } ${reduit ? "md:w-[4.5rem]" : "md:w-64"}`}
       >
