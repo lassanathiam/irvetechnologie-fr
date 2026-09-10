@@ -40,6 +40,10 @@
   --color-dashboard-muted: var(--dashboard-muted);
   --color-dashboard-cyan: var(--dashboard-cyan);
   --color-dashboard-violet: var(--dashboard-violet);
+  --color-neon: var(--neon);
+  --color-neon-yellow: var(--neon-yellow);
+  --color-neon-magenta: var(--neon-magenta);
+  --color-neon-cyan: var(--neon-cyan);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-title: var(--sidebar-title);
@@ -90,6 +94,10 @@
   --dashboard-muted: oklch(0.86 0.012 250);
   --dashboard-cyan: oklch(0.78 0.11 190);
   --dashboard-violet: oklch(0.80 0.10 290);
+  --neon: oklch(0.92 0.26 128);
+  --neon-yellow: oklch(0.93 0.20 105);
+  --neon-magenta: oklch(0.66 0.30 335);
+  --neon-cyan: oklch(0.80 0.13 200);
 }
 
 .dark {
@@ -126,6 +134,10 @@
   --dashboard-muted: oklch(0.86 0.012 250);
   --dashboard-cyan: oklch(0.78 0.11 190);
   --dashboard-violet: oklch(0.80 0.10 290);
+  --neon: oklch(0.92 0.26 128);
+  --neon-yellow: oklch(0.93 0.20 105);
+  --neon-magenta: oklch(0.66 0.30 335);
+  --neon-cyan: oklch(0.80 0.13 200);
 }
 
 
