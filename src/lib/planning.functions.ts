@@ -674,6 +674,165 @@ export const programmerEnsemble = createServerFn({ method: "POST" })
     return { ok: true, nb: data.ids.length, nuitee: data.nuitee };
   });
 
+/* ------------------------------------------------------------------ *
+ * Retour de travaux : photos essentielles + métrage réellement posé
+ * ------------------------------------------------------------------ */
+
+/** Photos exigées avant de pouvoir terminer un chantier. */
+export const RETOUR_CATEGORIES_OBLIGATOIRES = [
+  "borne_posee",
+  "raccordement_borne",
+  "mise_en_service",
+  "tableau_electrique",
+  "compteur_linky",
+] as const;
+
+/** Photos utiles mais facultatives. */
+export const RETOUR_CATEGORIES_OPTIONNELLES = [
+  "cheminement_cable",
+  "boite_derivation",
+  "armoire",
+  "vue_ensemble",
+  "plaque_serie",
+  "autre",
+] as const;
+
+export const RETOUR_CATEGORIES = [
+  ...RETOUR_CATEGORIES_OBLIGATOIRES,
+  ...RETOUR_CATEGORIES_OPTIONNELLES,
+] as const;
+
+export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
+
+export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
+  borne_posee: "Borne posée / emplacement final",
+  raccordement_borne: "Raccordement de la borne",
+  mise_en_service: "Mise en service et essai",
+  tableau_electrique: "Tableau électrique / protections",
+  compteur_linky: "Compteur Linky (délestage)",
+  cheminement_cable: "Cheminement du câble",
+  boite_derivation: "Boîte de dérivation",
+  armoire: "Armoire",
+  vue_ensemble: "Vue d'ensemble",
+  plaque_serie: "Plaque / numéro de série",
+  autre: "Autre",
+  emplacement_borne: "Emplacement de la borne",
+  emplacement_tableau: "Emplacement du tableau",
+};
+
+const MAX_PHOTOS_CHANTIER = 40;
+
+function decodePhoto(dataUrl: string): { bytes: Uint8Array; contentType: string } {
+  const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
+  if (!match) throw new Error("Format d'image non supporté.");
+  const contentType = match[1]!;
+  const binary = atob(match[2]!);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  if (bytes.length > 3_500_000) throw new Error("Photo trop lourde.");
+  return { bytes, contentType };
+}
+
+/** L'équipe dépose une photo de retour de travaux sur un chantier. */
+export const uploadPhotoChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { rendezvous_id: string; categorie: string; data_url: string; legende?: string | null }) =>
+    z
+      .object({
+        rendezvous_id: z.string().uuid(),
+        categorie: z.enum(RETOUR_CATEGORIES),
+        data_url: z.string().max(4_500_000),
+        legende: z.string().trim().max(160).optional().nullable(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { count } = await context.supabase
+      .from("rendezvous_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("rendezvous_id", data.rendezvous_id);
+    if ((count ?? 0) >= MAX_PHOTOS_CHANTIER) throw new Error("Nombre de photos maximum atteint pour ce chantier.");
+
+    const { bytes, contentType } = decodePhoto(data.data_url);
+    const ext = contentType === "image/png" ? "png" : contentType === "image/webp" ? "webp" : "jpg";
+    const path = `${data.rendezvous_id}/${data.categorie}-${Date.now()}-${Math.random()
+      .toString(36)
+      .slice(2, 8)}.${ext}`;
+
+    const { error: upErr } = await context.supabase.storage
+      .from("chantier-photos")
+      .upload(path, bytes, { contentType, upsert: false });
+    if (upErr) throw new Error("Envoi de la photo impossible.");
+
+    const { error } = await context.supabase.from("rendezvous_photos").insert({
+      rendezvous_id: data.rendezvous_id,
+      path,
+      source: "equipe",
+      categorie: data.categorie,
+      legende: data.legende ?? null,
+    });
+    if (error) throw new Error(error.message);
+    return { ok: true as const, path };
+  });
+
+/** Supprime une photo de chantier (fichier + fiche). */
+export const supprimerPhotoChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: row } = await context.supabase
+      .from("rendezvous_photos")
+      .select("id, path")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (!row) return { ok: true as const };
+    await context.supabase.storage.from("chantier-photos").remove([row.path]);
+    const { error } = await context.supabase.from("rendezvous_photos").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Enregistre le métrage réellement posé et les observations de fin d'intervention. */
+export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (raw: {
+      id: string;
+      metrage_inclus_m?: number | string | null;
+      metrage_reel_m?: number | string | null;
+      retour_observations?: string | null;
+      retour_delestage?: boolean;
+      type_pose?: string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          metrage_inclus_m: num(0, 10000, 5),
+          metrage_reel_m: num(0, 10000, 0),
+          retour_observations: z.string().trim().max(4000).optional().nullable(),
+          retour_delestage: z.boolean().default(false),
+          type_pose: z.string().trim().max(80).optional().nullable(),
+        })
+        .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        metrage_inclus_m: data.metrage_inclus_m,
+        metrage_reel_m: data.metrage_reel_m,
+        metrage_m: data.metrage_reel_m || undefined,
+        retour_observations: data.retour_observations ?? null,
+        retour_delestage: data.retour_delestage,
+        retour_complete_at: new Date().toISOString(),
+        ...(data.type_pose ? { type_pose: data.type_pose } : {}),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    const supplement = Math.max(0, (data.metrage_reel_m || 0) - (data.metrage_inclus_m || 0));
+    return { ok: true as const, supplement_m: supplement };
+  });
+
 /** Photos d'un chantier (déposées par l'équipe ou par le partenaire) : URLs signées. */
 export const listPhotosChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
