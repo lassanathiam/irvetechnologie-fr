@@ -52,6 +52,16 @@ function PartenairesAdmin() {
   const [email, setEmail] = useState("");
   const [couleur, setCouleur] = useState(COULEURS[0]!);
   const [delai, setDelai] = useState("30");
+  const [fiche, setFiche] = useState({
+    raison_sociale: "",
+    adresse: "",
+    cp_ville: "",
+    siret: "",
+    tva_intracom: "",
+    contact_nom: "",
+    telephone: "",
+  });
+  const [editionId, setEditionId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copie, setCopie] = useState<string | null>(null);
@@ -62,6 +72,26 @@ function PartenairesAdmin() {
    * L'aperçu de travail est protégé : un partenaire y verrait une page d'erreur.
    */
   const lien = (token: string) => `${COMPANY.siteUrl}/partenaire/${token}`;
+
+  type Partenaire = NonNullable<typeof list.data>[number];
+  /** Reprend tous les champs existants d'un partenaire pour ne rien effacer. */
+  const base = (p: Partenaire) => ({
+    id: p.id,
+    nom: p.nom,
+    actif: p.actif,
+    notes: p.notes,
+    couleur: p.couleur ?? "#0284c7",
+    email: p.email,
+    delai_paiement_jours: p.delai_paiement_jours ?? 30,
+    raison_sociale: p.raison_sociale,
+    adresse: p.adresse,
+    cp_ville: p.cp_ville,
+    pays: p.pays ?? "France",
+    siret: p.siret,
+    tva_intracom: p.tva_intracom,
+    contact_nom: p.contact_nom,
+    telephone: p.telephone,
+  });
 
   async function ajouter() {
     setError(null);
@@ -79,12 +109,22 @@ function PartenairesAdmin() {
           couleur,
           email: email.trim() || null,
           delai_paiement_jours: delai || 30,
+          ...fiche,
         },
       });
       setNom("");
       setNotes("");
       setEmail("");
       setDelai("30");
+      setFiche({
+        raison_sociale: "",
+        adresse: "",
+        cp_ville: "",
+        siret: "",
+        tva_intracom: "",
+        contact_nom: "",
+        telephone: "",
+      });
       setCouleur(COULEURS[(list.data?.length ?? 0) % COULEURS.length]!);
 
       await list.refetch();
@@ -156,6 +196,34 @@ function PartenairesAdmin() {
               placeholder="45"
             />
           </label>
+          <div className="sm:col-span-2 border-t border-border pt-4">
+            <p className="text-sm font-semibold">Fiche de facturation</p>
+            <p className="text-xs text-muted-foreground mt-1">
+              À compléter avant d&apos;envoyer le lien : ces informations figurent sur les factures de
+              sous-traitance (destinataire, adresse de siège, TVA).
+            </p>
+          </div>
+          {(
+            [
+              ["raison_sociale", "Raison sociale (nom sur la facture)", "PURE ÉNERGIE SAS"],
+              ["adresse", "Adresse du siège", "12 rue des Lilas"],
+              ["cp_ville", "Code postal et ville", "44000 Nantes"],
+              ["siret", "SIRET", "123 456 789 00012"],
+              ["tva_intracom", "Numéro de TVA", "FR12345678900"],
+              ["contact_nom", "Personne de contact", "Marie Dupont"],
+              ["telephone", "Téléphone", "02 40 00 00 00"],
+            ] as const
+          ).map(([cle, label, ph]) => (
+            <label className="block" key={cle}>
+              <span className="text-mono text-xs text-muted-foreground">{label}</span>
+              <input
+                value={fiche[cle]}
+                onChange={(e) => setFiche((f) => ({ ...f, [cle]: e.target.value }))}
+                className={INPUT}
+                placeholder={ph}
+              />
+            </label>
+          ))}
           <div className="sm:col-span-2">
             <span className="text-mono text-xs text-muted-foreground">
               Couleur du partenaire (repère sur la carte et le planning)
@@ -226,15 +294,7 @@ function PartenairesAdmin() {
                             if (saisie === null) return;
                             try {
                               await save({
-                                data: {
-                                  id: p.id,
-                                  nom: p.nom,
-                                  actif: p.actif,
-                                  notes: p.notes,
-                                  couleur: p.couleur ?? "#0284c7",
-                                  email: saisie.trim() || null,
-                                  delai_paiement_jours: p.delai_paiement_jours ?? 30,
-                                },
+                                data: { ...base(p), email: saisie.trim() || null },
                               });
                               await list.refetch();
                             } catch (e) {
@@ -260,15 +320,7 @@ function PartenairesAdmin() {
                             if (saisie === null) return;
                             try {
                               await save({
-                                data: {
-                                  id: p.id,
-                                  nom: p.nom,
-                                  actif: p.actif,
-                                  notes: p.notes,
-                                  couleur: p.couleur ?? "#0284c7",
-                                  email: p.email,
-                                  delai_paiement_jours: saisie.trim() || 30,
-                                },
+                                data: { ...base(p), delai_paiement_jours: saisie.trim() || 30 },
                               });
                               await list.refetch();
                             } catch (e) {
@@ -282,6 +334,84 @@ function PartenairesAdmin() {
                           modifier
                         </button>
                       </p>
+                      <p className="text-xs mt-1">
+                        {p.adresse ? (
+                          <span className="text-muted-foreground">
+                            {p.raison_sociale || p.nom} · {p.adresse} {p.cp_ville ?? ""}
+                            {p.tva_intracom ? ` · TVA ${p.tva_intracom}` : ""}
+                            {p.siret ? ` · SIRET ${p.siret}` : ""}
+                          </span>
+                        ) : (
+                          <span className="text-destructive">
+                            Fiche de facturation incomplète — adresse de siège manquante
+                          </span>
+                        )}{" "}
+                        <button
+                          type="button"
+                          onClick={() => setEditionId(editionId === p.id ? null : p.id)}
+                          className="underline hover:text-primary text-muted-foreground"
+                        >
+                          {editionId === p.id ? "fermer" : "modifier la fiche"}
+                        </button>
+                      </p>
+
+                      {editionId === p.id && (
+                        <form
+                          onSubmit={async (e) => {
+                            e.preventDefault();
+                            const fd = new FormData(e.currentTarget);
+                            try {
+                              await save({
+                                data: {
+                                  ...base(p),
+                                  raison_sociale: String(fd.get("raison_sociale") ?? ""),
+                                  adresse: String(fd.get("adresse") ?? ""),
+                                  cp_ville: String(fd.get("cp_ville") ?? ""),
+                                  siret: String(fd.get("siret") ?? ""),
+                                  tva_intracom: String(fd.get("tva_intracom") ?? ""),
+                                  contact_nom: String(fd.get("contact_nom") ?? ""),
+                                  telephone: String(fd.get("telephone") ?? ""),
+                                },
+                              });
+                              setEditionId(null);
+                              await list.refetch();
+                            } catch (err) {
+                              window.alert(
+                                err instanceof Error ? err.message : "Enregistrement impossible.",
+                              );
+                            }
+                          }}
+                          className="mt-3 grid gap-2 sm:grid-cols-2 border-t border-border pt-3"
+                        >
+                          {(
+                            [
+                              ["raison_sociale", "Raison sociale", p.raison_sociale],
+                              ["adresse", "Adresse du siège", p.adresse],
+                              ["cp_ville", "Code postal et ville", p.cp_ville],
+                              ["siret", "SIRET", p.siret],
+                              ["tva_intracom", "Numéro de TVA", p.tva_intracom],
+                              ["contact_nom", "Personne de contact", p.contact_nom],
+                              ["telephone", "Téléphone", p.telephone],
+                            ] as const
+                          ).map(([cle, label, valeur]) => (
+                            <label className="block" key={cle}>
+                              <span className="text-mono text-[11px] text-muted-foreground">
+                                {label}
+                              </span>
+                              <input name={cle} defaultValue={valeur ?? ""} className={INPUT} />
+                            </label>
+                          ))}
+                          <div className="sm:col-span-2">
+                            <button
+                              type="submit"
+                              className="bg-primary text-primary-foreground rounded-sm px-3 py-2 text-xs font-semibold min-h-10"
+                            >
+                              Enregistrer la fiche
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
                       <p className="text-[11px] text-mono mt-2 break-all text-muted-foreground">
                         {lien(p.token)}
                       </p>
@@ -293,15 +423,7 @@ function PartenairesAdmin() {
                             aria-label={`Couleur ${c} pour ${p.nom}`}
                             onClick={async () => {
                               await save({
-                                data: {
-                                  id: p.id,
-                                  nom: p.nom,
-                                  actif: p.actif,
-                                  notes: p.notes,
-                                  couleur: c,
-                                  email: p.email,
-                                  delai_paiement_jours: p.delai_paiement_jours ?? 30,
-                                },
+                                data: { ...base(p), couleur: c },
                               });
                               await list.refetch();
                             }}
@@ -343,15 +465,8 @@ function PartenairesAdmin() {
                             : `Réactiver le lien de ${p.nom} ?`;
                           if (!window.confirm(msg)) return;
                           await save({
-                            data: {
-                              id: p.id,
-                              nom: p.nom,
-                              actif: !p.actif,
-                              notes: p.notes,
-                              couleur: p.couleur ?? "#0284c7",
-                              email: p.email,
-                              delai_paiement_jours: p.delai_paiement_jours ?? 30,
-                            },
+                            data: { ...base(p), actif: !p.actif },
+
                           });
 
                           await list.refetch();

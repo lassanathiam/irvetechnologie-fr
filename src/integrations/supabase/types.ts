@@ -482,7 +482,10 @@ export type Database = {
       partenaires: {
         Row: {
           actif: boolean
+          adresse: string | null
+          contact_nom: string | null
           couleur: string
+          cp_ville: string | null
           created_at: string
           delai_paiement_jours: number
           email: string | null
@@ -490,12 +493,20 @@ export type Database = {
           nom: string
           notes: string | null
           owner_user_id: string | null
+          pays: string
+          raison_sociale: string | null
+          siret: string | null
+          telephone: string | null
           token: string
+          tva_intracom: string | null
           updated_at: string
         }
         Insert: {
           actif?: boolean
+          adresse?: string | null
+          contact_nom?: string | null
           couleur?: string
+          cp_ville?: string | null
           created_at?: string
           delai_paiement_jours?: number
           email?: string | null
@@ -503,12 +514,20 @@ export type Database = {
           nom: string
           notes?: string | null
           owner_user_id?: string | null
+          pays?: string
+          raison_sociale?: string | null
+          siret?: string | null
+          telephone?: string | null
           token?: string
+          tva_intracom?: string | null
           updated_at?: string
         }
         Update: {
           actif?: boolean
+          adresse?: string | null
+          contact_nom?: string | null
           couleur?: string
+          cp_ville?: string | null
           created_at?: string
           delai_paiement_jours?: number
           email?: string | null
@@ -516,7 +535,12 @@ export type Database = {
           nom?: string
           notes?: string | null
           owner_user_id?: string | null
+          pays?: string
+          raison_sociale?: string | null
+          siret?: string | null
+          telephone?: string | null
           token?: string
+          tva_intracom?: string | null
           updated_at?: string
         }
         Relationships: []

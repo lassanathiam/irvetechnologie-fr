@@ -261,7 +261,17 @@ function FacturationChantiers() {
                         )}
                       </p>
                       <p className="text-xs mt-1 flex flex-wrap gap-x-3 gap-y-1">
-                        <span className="text-mono">{eurosFr(Number(c.montant_ht ?? 0))} HT</span>
+                        <span className="text-mono">
+                          {eurosFr(Number(c.montant_ht ?? 0))} HT
+                          <span className="text-muted-foreground">
+                            {" "}
+                            · TVA {Number(c.tva_pct ?? 20)}% ·{" "}
+                            {eurosFr(
+                              Number(c.montant_ht ?? 0) * (1 + Number(c.tva_pct ?? 20) / 100),
+                            )}{" "}
+                            TTC
+                          </span>
+                        </span>
                         {c.metrage_reel_m != null && (
                           <span className="text-muted-foreground">
                             {Number(c.metrage_reel_m)} m posés
