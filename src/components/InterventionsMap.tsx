@@ -40,6 +40,10 @@ export function InterventionsMap({
   routeEstime = false,
   tourneeCoords,
   scrollWheelZoom = false,
+  selectionMode = false,
+  selectedIds = [],
+  onToggleSelect,
+  lienCoords,
 }: {
   markers: MapMarker[];
   activeId?: string | null;
@@ -52,7 +56,15 @@ export function InterventionsMap({
   /** Tracé routier réel de la tournée complète. */
   tourneeCoords?: [number, number][] | null;
   scrollWheelZoom?: boolean;
+  /** Mode « programmer ensemble » : un clic sur un repère coche le chantier. */
+  selectionMode?: boolean;
+  /** Chantiers cochés, dans l'ordre de sélection. */
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  /** Tracé routier d'un chantier coché au suivant. */
+  lienCoords?: [number, number][] | null;
 }) {
+
   const el = useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const map = useRef<any>(null);
