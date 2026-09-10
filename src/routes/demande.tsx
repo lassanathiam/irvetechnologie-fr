@@ -369,6 +369,14 @@ function Demande() {
                 onClear={clearSingle(setTableau, tableau, "tableau")}
               />
               <SinglePhoto
+                label="Compteur Linky"
+                hint="Photo de l'écran du compteur Linky, avec le numéro lisible."
+                icon={Gauge}
+                value={linky}
+                onChange={setSingle(setLinky, linky, "linky")}
+                onClear={clearSingle(setLinky, linky, "linky")}
+              />
+              <SinglePhoto
                 label="Emplacement de la borne"
                 hint="Mur ou poteau où la borne sera installée, avec recul si possible."
                 icon={Zap}
