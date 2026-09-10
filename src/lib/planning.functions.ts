@@ -949,7 +949,7 @@ export const getSuiviFacturation = createServerFn({ method: "POST" })
     const { data: rows, error } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, adresse, cp_ville, partenaire, partenaire_id, origine, date_debut, termine_at, montant_ht, tva_pct, statut, statut_facturation, delai_paiement_jours, echeance_paiement, facture_envoyee_at, paye_at, metrage_inclus_m, metrage_reel_m, metrage_m, puissance_borne, montant_propose_ht, montant_propose_note, montant_propose_at, montant_propose_par, montant_valide_at",
+        "id, titre, designation, client_nom, client_email, client_telephone, adresse, cp_ville, partenaire, partenaire_id, origine, date_debut, termine_at, montant_ht, tva_pct, statut, statut_facturation, delai_paiement_jours, echeance_paiement, facture_envoyee_at, paye_at, metrage_inclus_m, metrage_reel_m, metrage_m, puissance_borne, montant_propose_ht, montant_propose_note, montant_propose_at, montant_propose_par, montant_valide_at",
       )
       .in("statut", ["termine", "realise"])
       .order("echeance_paiement", { ascending: true, nullsFirst: false })
@@ -958,6 +958,17 @@ export const getSuiviFacturation = createServerFn({ method: "POST" })
 
     const list = rows ?? [];
     const aujourdhui = now.toISOString().slice(0, 10);
+
+    // Sous-traitance : la facture part au partenaire. Chantier direct : au client final.
+    const partenaireIds = [...new Set(list.map((r) => r.partenaire_id).filter(Boolean))] as string[];
+    const partenairesMap = new Map<string, { nom: string; email: string | null }>();
+    if (partenaireIds.length > 0) {
+      const { data: parts } = await context.supabase
+        .from("partenaires")
+        .select("id, nom, email")
+        .in("id", partenaireIds);
+      for (const p of parts ?? []) partenairesMap.set(p.id, { nom: p.nom, email: p.email });
+    }
 
     const enrichis = list.map((r) => {
       const echeance = r.echeance_paiement ?? null;
@@ -972,11 +983,16 @@ export const getSuiviFacturation = createServerFn({ method: "POST" })
         : null;
       const inclus = Number(r.metrage_inclus_m ?? 5);
       const reel = r.metrage_reel_m == null ? null : Number(r.metrage_reel_m);
+      const part = r.partenaire_id ? partenairesMap.get(r.partenaire_id) : undefined;
+      const sousTraitance = r.origine === "sous_traitance" || Boolean(r.partenaire_id);
       return {
         ...r,
         en_retard: enRetard,
         jours_restants: joursRestants,
         supplement_m: reel == null ? null : Math.max(0, reel - inclus),
+        facturer_a: (sousTraitance ? "partenaire" : "client") as "partenaire" | "client",
+        destinataire_nom: sousTraitance ? (part?.nom ?? r.partenaire ?? null) : r.client_nom,
+        destinataire_email: sousTraitance ? (part?.email ?? null) : (r.client_email ?? null),
       };
     });
 
@@ -1132,4 +1148,139 @@ export const validerMontantPropose = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const, accepte: data.accepter };
+  });
+
+/** Numérotation séquentielle des factures (F-AAAA-NNNN). */
+async function nextFactureNumero(supabase: { from: (t: string) => any }, prefix: string) {
+  const { data } = await supabase
+    .from("factures")
+    .select("numero")
+    .like("numero", `${prefix}%`)
+    .order("numero", { ascending: false })
+    .limit(1);
+  const last = data?.[0]?.numero ? Number(String(data[0].numero).slice(prefix.length)) : 0;
+  return `${prefix}${String((Number.isFinite(last) ? last : 0) + 1).padStart(4, "0")}`;
+}
+
+/**
+ * Crée la facture d'un chantier terminé vers le bon destinataire :
+ * le partenaire quand le chantier vient de la sous-traitance,
+ * le client final quand nous l'avons obtenu nous-mêmes.
+ */
+export const creerFactureChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error } = await context.supabase
+      .from("rendezvous")
+      .select(
+        "id, titre, designation, client_nom, client_email, client_telephone, adresse, cp_ville, partenaire, partenaire_id, origine, montant_ht, tva_pct, delai_paiement_jours, metrage_inclus_m, metrage_reel_m, puissance_borne, statut, statut_facturation, termine_at",
+      )
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    if (rdv.statut !== "termine" && rdv.statut !== "realise") {
+      throw new Error("Le chantier doit être terminé avant d'être facturé.");
+    }
+    const montantHt = Number(rdv.montant_ht ?? 0);
+    if (montantHt <= 0) throw new Error("Renseignez d'abord le montant HT du chantier.");
+
+    let partenaire: { nom: string; email: string | null; delai_paiement_jours: number | null } | null =
+      null;
+    if (rdv.partenaire_id) {
+      const { data: p } = await context.supabase
+        .from("partenaires")
+        .select("nom, email, delai_paiement_jours")
+        .eq("id", rdv.partenaire_id)
+        .maybeSingle();
+      partenaire = p ?? null;
+    }
+    const sousTraitance = rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
+
+    const destinataireNom = sousTraitance
+      ? (partenaire?.nom ?? rdv.partenaire ?? "Partenaire")
+      : rdv.client_nom;
+    const destinataireEmail = sousTraitance ? (partenaire?.email ?? null) : rdv.client_email;
+
+    const today = new Date();
+    const delai = Number(rdv.delai_paiement_jours ?? partenaire?.delai_paiement_jours ?? 30);
+    const echeance = new Date(today);
+    echeance.setDate(echeance.getDate() + delai);
+    const numero = await nextFactureNumero(context.supabase as any, `F-${today.getFullYear()}-`);
+
+    const tva = Number(rdv.tva_pct ?? 20);
+    const totalTva = Math.round(montantHt * (tva / 100) * 100) / 100;
+    const chantierLieu = [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", ");
+    const objet = sousTraitance
+      ? `Sous-traitance IRVE — ${rdv.designation || rdv.titre || "intervention"}${
+          rdv.client_nom ? ` (client final : ${rdv.client_nom})` : ""
+        }`
+      : rdv.designation || rdv.titre || "Installation borne de recharge";
+
+    const inclus = Number(rdv.metrage_inclus_m ?? 5);
+    const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
+    const supplement = reel == null ? 0 : Math.max(0, reel - inclus);
+    const description = [
+      chantierLieu ? `Chantier : ${chantierLieu}` : null,
+      rdv.puissance_borne ? `Borne ${rdv.puissance_borne}` : null,
+      reel == null ? null : `Câble posé ${reel} m (forfait ${inclus} m${supplement > 0 ? `, +${supplement} m` : ""})`,
+      rdv.termine_at ? `Travaux terminés le ${new Date(rdv.termine_at).toLocaleDateString("fr-FR")}` : null,
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+    const { data: facture, error: insertError } = await context.supabase
+      .from("factures")
+      .insert({
+        numero,
+        date_emission: today.toISOString().slice(0, 10),
+        date_echeance: echeance.toISOString().slice(0, 10),
+        client_nom: destinataireNom,
+        client_email: destinataireEmail,
+        client_telephone: sousTraitance ? null : rdv.client_telephone,
+        client_adresse: sousTraitance ? null : rdv.adresse,
+        client_cp_ville: sousTraitance ? null : rdv.cp_ville,
+        objet,
+        remise_pct: 0,
+        acompte_pct: 0,
+        conditions_paiement: `Règlement à ${delai} jours`,
+        statut: "brouillon",
+        total_ht_brut: montantHt,
+        total_remise: 0,
+        total_ht: montantHt,
+        total_tva: totalTva,
+        total_ttc: Math.round((montantHt + totalTva) * 100) / 100,
+        created_by: context.userId,
+      })
+      .select("id, numero")
+      .single();
+    if (insertError) throw new Error(insertError.message);
+
+    const { error: itemError } = await context.supabase.from("facture_items").insert({
+      facture_id: facture.id,
+      libelle: objet,
+      description: description || null,
+      quantite: 1,
+      prix_unitaire: montantHt,
+      tva,
+      ordre: 1,
+    });
+    if (itemError) throw new Error(itemError.message);
+
+    await context.supabase
+      .from("rendezvous")
+      .update({
+        statut_facturation: "facture",
+        facture_envoyee_at: today.toISOString(),
+        echeance_paiement: echeance.toISOString().slice(0, 10),
+        delai_paiement_jours: delai,
+      })
+      .eq("id", rdv.id);
+
+    return {
+      id: facture.id as string,
+      numero: facture.numero as string,
+      destinataire: destinataireNom,
+      facturer_a: (sousTraitance ? "partenaire" : "client") as "partenaire" | "client",
+    };
   });
