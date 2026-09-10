@@ -197,12 +197,12 @@ const PBKDF2_ITERATIONS = 90_000;
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
-async function derive(pin: string, salt: Uint8Array): Promise<string> {
+async function derive(pin: string, salt: Uint8Array, iterations = PBKDF2_ITERATIONS): Promise<string> {
   const key = await crypto.subtle.importKey("raw", new TextEncoder().encode(pin), "PBKDF2", false, [
     "deriveBits",
   ]);
   const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", hash: "SHA-256", salt: salt as unknown as BufferSource, iterations: PBKDF2_ITERATIONS },
+    { name: "PBKDF2", hash: "SHA-256", salt: salt as unknown as BufferSource, iterations },
     key,
     256,
   );
