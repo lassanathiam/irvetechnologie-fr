@@ -1187,7 +1187,7 @@ function PlanningPage() {
           </div>
         </section>
 
-        <section className="order-3 lg:col-span-2 space-y-6">
+        <section className="space-y-6">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
