@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, type ChangeEvent } from "react";
-import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { ArrowRight, Camera, Check, Upload, X, Zap, CableCar, PanelTop, Plus, ChevronLeft, ChevronRight, Loader2, Gauge } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { submitDemande } from "@/lib/demande.functions";
@@ -78,6 +78,7 @@ function Demande() {
     formule ? "souscription" : "raccordement",
   );
   const [tableau, setTableau] = useState<string | null>(null);
+  const [linky, setLinky] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
@@ -87,8 +88,14 @@ function Demande() {
   const submitDemandeFn = useServerFn(submitDemande);
   const uploadPhotoFn = useServerFn(uploadDemandePhoto);
   const mountedAt = useRef<number>(Date.now());
-  const files = useRef<{ tableau: File | null; borne: File | null; cheminement: File[] }>({
+  const files = useRef<{
+    tableau: File | null;
+    linky: File | null;
+    borne: File | null;
+    cheminement: File[];
+  }>({
     tableau: null,
+    linky: null,
     borne: null,
     cheminement: [],
   });
@@ -96,7 +103,7 @@ function Demande() {
   function setSingle(
     setter: (v: string | null) => void,
     current: string | null,
-    slot: "tableau" | "borne",
+    slot: "tableau" | "linky" | "borne",
   ) {
     return (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
@@ -110,7 +117,7 @@ function Demande() {
   function clearSingle(
     setter: (v: string | null) => void,
     current: string | null,
-    slot: "tableau" | "borne",
+    slot: "tableau" | "linky" | "borne",
   ) {
     return () => {
       if (current) URL.revokeObjectURL(current);
@@ -139,8 +146,9 @@ function Demande() {
 
   /** Compresse puis envoie chaque photo vers le stockage privé de l'entreprise. */
   async function uploadPhotos(demandeId: string) {
-    const jobs: { kind: "tableau" | "cheminement" | "borne"; file: File }[] = [];
+    const jobs: { kind: "tableau" | "linky" | "cheminement" | "borne"; file: File }[] = [];
     if (files.current.tableau) jobs.push({ kind: "tableau", file: files.current.tableau });
+    if (files.current.linky) jobs.push({ kind: "linky", file: files.current.linky });
     if (files.current.borne) jobs.push({ kind: "borne", file: files.current.borne });
     for (const f of files.current.cheminement) jobs.push({ kind: "cheminement", file: f });
     if (!jobs.length) return;
@@ -359,6 +367,14 @@ function Demande() {
                 value={tableau}
                 onChange={setSingle(setTableau, tableau, "tableau")}
                 onClear={clearSingle(setTableau, tableau, "tableau")}
+              />
+              <SinglePhoto
+                label="Compteur Linky"
+                hint="Photo de l'écran du compteur Linky, avec le numéro lisible."
+                icon={Gauge}
+                value={linky}
+                onChange={setSingle(setLinky, linky, "linky")}
+                onClear={clearSingle(setLinky, linky, "linky")}
               />
               <SinglePhoto
                 label="Emplacement de la borne"
