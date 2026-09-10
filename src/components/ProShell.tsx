@@ -29,6 +29,7 @@ const LINKS = [
   { to: "/demandes", label: "Demandes", icon: Inbox },
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/factures", label: "Factures", icon: Receipt },
+  { to: "/facturation", label: "À facturer", icon: Euro },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
   { to: "/realisations", label: "Photos", icon: Images },
