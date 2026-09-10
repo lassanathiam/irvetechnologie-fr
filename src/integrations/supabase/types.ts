@@ -729,7 +729,9 @@ export type Database = {
           lng: number | null
           materiel_maj_at: string | null
           materiel_statut: string
+          metrage_inclus_m: number
           metrage_m: number | null
+          metrage_reel_m: number | null
           montant_ht: number
           notes: string | null
           notif_archive_at: string | null
@@ -739,6 +741,9 @@ export type Database = {
           partenaire_id: string | null
           phase_installation: string | null
           puissance_borne: string | null
+          retour_complete_at: string | null
+          retour_delestage: boolean
+          retour_observations: string | null
           statut: string
           statut_facturation: string
           technicien: string | null
@@ -777,7 +782,9 @@ export type Database = {
           lng?: number | null
           materiel_maj_at?: string | null
           materiel_statut?: string
+          metrage_inclus_m?: number
           metrage_m?: number | null
+          metrage_reel_m?: number | null
           montant_ht?: number
           notes?: string | null
           notif_archive_at?: string | null
@@ -787,6 +794,9 @@ export type Database = {
           partenaire_id?: string | null
           phase_installation?: string | null
           puissance_borne?: string | null
+          retour_complete_at?: string | null
+          retour_delestage?: boolean
+          retour_observations?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
@@ -825,7 +835,9 @@ export type Database = {
           lng?: number | null
           materiel_maj_at?: string | null
           materiel_statut?: string
+          metrage_inclus_m?: number
           metrage_m?: number | null
+          metrage_reel_m?: number | null
           montant_ht?: number
           notes?: string | null
           notif_archive_at?: string | null
@@ -835,6 +847,9 @@ export type Database = {
           partenaire_id?: string | null
           phase_installation?: string | null
           puissance_borne?: string | null
+          retour_complete_at?: string | null
+          retour_delestage?: boolean
+          retour_observations?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
