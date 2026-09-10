@@ -5,6 +5,7 @@ import { useState } from "react";
 import {
   ArrowRight,
   ArrowUpRight,
+  BarChart3,
   CalendarClock,
   CheckCircle2,
   Euro,
@@ -89,18 +90,16 @@ function EspacePage() {
   const demandes = q.data?.demandes ?? [];
   const nouvelles = demandes.filter((d) => d.status === "nouveau" || d.status === "en_cours").slice(0, 6);
   const acceptees = demandes.filter((d) => d.status === "accepte").slice(0, 6);
+  const activite = (q.data?.devis ?? []).slice(0, 7).reverse();
+  const activiteMax = Math.max(...activite.map((d) => Number(d.total_ttc)), 1);
 
 
   return (
     <ProShell>
-      <div className="pro-workspace neo-dashboard overflow-hidden rounded-lg p-4 sm:p-7">
-      <div className="grid gap-5 border-b border-dashboard-line pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div className="pro-workspace neo-dashboard">
+      <div className="grid gap-5 pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
         <div className="min-w-0">
-          <div className="mb-3 flex items-center gap-2 text-dashboard-foreground">
-            <span className="h-2 w-2 rounded-full bg-dashboard-raised animate-pulse" />
-            <span className="text-mono text-[11px]">Pilotage en direct</span>
-          </div>
-          <h1 className="pro-title text-3xl leading-tight sm:text-5xl">Tableau de bord</h1>
+          <h1 className="pro-heading text-3xl font-bold leading-tight sm:text-4xl">Tableau de bord</h1>
           <p className="neo-dashboard-muted mt-2 text-sm">
             Activité, chiffre d'affaires et interventions en un coup d'œil
           </p>
@@ -108,13 +107,13 @@ function EspacePage() {
         <div className="flex flex-wrap gap-2">
           <Link
             to="/planning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-raised px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-muted"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground shadow-sm transition hover:border-primary hover:text-primary"
           >
             <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
           </Link>
           <Link
             to="/devis"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground transition hover:border-dashboard-muted"
+            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
           >
             <FileText className="h-3.5 w-3.5" /> Nouveau devis
           </Link>
@@ -126,7 +125,7 @@ function EspacePage() {
       ) : (
         <>
           {enCours.length > 0 && (
-            <div className="neo-dashboard-panel mt-6 rounded-md border-l-4 border-l-dashboard-line p-5">
+            <div className="neo-dashboard-panel mt-2 rounded-md border-l-4 border-l-primary p-5">
               <p className="text-mono text-xs font-bold text-dashboard-muted">
                 Travaux en cours
               </p>
@@ -144,7 +143,7 @@ function EspacePage() {
                       </span>
                       <span className="text-mono text-sm text-dashboard-muted">
                         Démarré à{" "}
-                        {new Date(r.demarre_at!).toLocaleTimeString("fr-FR", {
+                        {new Date(r.demarre_at ?? r.date_debut).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
                           minute: "2-digit",
                         })}
@@ -156,7 +155,7 @@ function EspacePage() {
             </div>
           )}
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
               icon={Euro}
               label="Encaissé"
@@ -189,7 +188,84 @@ function EspacePage() {
             />
           </div>
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-[1.25fr_.75fr]">
+          <div className="mt-6 grid gap-5 lg:grid-cols-3">
+            <section className="neo-dashboard-panel p-5 lg:col-span-2">
+              <div className="mb-6 flex items-center justify-between gap-3">
+                <h2 className="pro-heading flex items-center gap-2 font-bold">
+                  <BarChart3 className="h-4 w-4 text-primary" /> Activité récente
+                </h2>
+                <span className="rounded-md bg-dashboard-raised px-2.5 py-1 text-xs font-medium text-dashboard-muted">
+                  7 derniers devis
+                </span>
+              </div>
+              {!activite.length ? (
+                <Empty>Aucune activité à afficher.</Empty>
+              ) : (
+                <div className="flex h-52 items-end gap-3 border-b border-dashboard-line px-2 pt-5">
+                  {activite.map((d) => {
+                    const hauteur = Math.max(14, (Number(d.total_ttc) / activiteMax) * 100);
+                    return (
+                      <Link
+                        key={d.id}
+                        to="/devis/$id"
+                        params={{ id: d.id }}
+                        title={`${d.numero} — ${euro(Number(d.total_ttc))}`}
+                        className="group flex h-full min-w-0 flex-1 flex-col justify-end gap-2"
+                      >
+                        <span className="mx-auto hidden text-[10px] font-semibold text-dashboard-muted group-hover:text-primary sm:block">
+                          {euro(Number(d.total_ttc))}
+                        </span>
+                        <span
+                          className="block w-full rounded-t-md bg-primary/75 transition group-hover:bg-primary"
+                          style={{ height: `${hauteur}%` }}
+                        />
+                        <span className="truncate pb-2 text-center text-[10px] font-semibold text-dashboard-muted">
+                          {d.numero.replace(/^D-/, "")}
+                        </span>
+                      </Link>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+
+            <Panel
+              icon={CalendarClock}
+              title="Prochains rendez-vous"
+              action={{ to: "/planning", label: "Voir le planning" }}
+            >
+              {!aVenir.length ? (
+                <Empty>Aucun rendez-vous planifié.</Empty>
+              ) : (
+                <ul className="divide-y divide-dashboard-line/60">
+                  {aVenir.slice(0, 4).map((r) => {
+                    const dj = moisJour(r.date_debut);
+                    return (
+                      <li key={r.id}>
+                        <Link
+                          to="/planning"
+                          search={{ rdv: r.id }}
+                          className="flex items-center gap-4 rounded-md px-1 py-3 transition hover:bg-dashboard-raised/60"
+                        >
+                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-lg bg-primary/10 text-primary">
+                            <span className="text-[10px] font-bold uppercase leading-none">{dj.mois}</span>
+                            <span className="pro-heading text-xl font-bold leading-none">{dj.jour}</span>
+                          </span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-semibold">{r.client_nom}</span>
+                            <span className="mt-0.5 block truncate text-xs text-dashboard-muted">
+                              {dj.heure} — {r.cp_ville || r.adresse}
+                            </span>
+                          </span>
+                          <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-primary" />
+                        </Link>
+                      </li>
+                    );
+                  })}
+                </ul>
+              )}
+            </Panel>
+
             <section className="neo-dashboard-panel overflow-hidden lg:col-span-2">
               <div className="flex flex-wrap items-center justify-between gap-3 px-5 pt-5">
                 <div className="flex items-center gap-6">
@@ -290,48 +366,6 @@ function EspacePage() {
                 </table>
               </div>
             </section>
-            <Panel
-              icon={CalendarClock}
-              title="Prochains rendez-vous"
-              action={{ to: "/planning", label: "Voir le planning" }}
-            >
-              {!aVenir.length ? (
-                <Empty>Aucun rendez-vous planifié.</Empty>
-              ) : (
-                <ul className="divide-y divide-dashboard-line/60">
-                  {aVenir.map((r) => {
-                    const dj = moisJour(r.date_debut);
-                    return (
-                      <li key={r.id}>
-                        <Link
-                          to="/planning"
-                          search={{ rdv: r.id }}
-                          className="flex items-center gap-4 px-1 py-3 transition hover:bg-dashboard-raised/60 rounded-md"
-                        >
-                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-lg border border-dashboard-line bg-dashboard-raised">
-                            <span className="text-[10px] font-bold uppercase leading-none text-dashboard-muted">
-                              {dj.mois}
-                            </span>
-                            <span className="pro-heading text-xl font-bold leading-none text-dashboard-foreground">
-                              {dj.jour}
-                            </span>
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-semibold">{r.client_nom}</span>
-                            <span className="mt-0.5 block truncate text-xs text-dashboard-muted">
-                              {dj.heure} — {r.cp_ville || r.adresse}
-                            </span>
-                          </span>
-                          <ArrowUpRight className="h-4 w-4 flex-shrink-0 text-dashboard-cyan/70" />
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </Panel>
-
-
             <Panel
               icon={Inbox}
               title="Demandes qui viennent d'arriver"
@@ -472,7 +506,7 @@ function Stat({
     </>
   );
   const cls =
-    "group block neo-dashboard-kpi rounded-md p-5 transition hover:-translate-y-0.5 hover:border-dashboard-muted";
+    "group block neo-dashboard-kpi rounded-lg p-5 shadow-sm transition hover:-translate-y-0.5 hover:border-primary";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
