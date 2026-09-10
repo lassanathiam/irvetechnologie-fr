@@ -2616,6 +2616,9 @@ function PlanningPage() {
         </aside>
       </div>
 
+      {retourRdv && (
+        <RetourTravauxSheet rdv={retourRdv} onClose={() => setRetourRdv(null)} />
+      )}
     </ProShell>
   );
 }
