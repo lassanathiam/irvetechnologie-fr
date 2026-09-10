@@ -193,7 +193,7 @@ export const deletePartenaire = createServerFn({ method: "POST" })
 
 /* ------------------------- Code d'accès à 6 chiffres ------------------------ */
 
-const PBKDF2_ITERATIONS = 150_000;
+const PBKDF2_ITERATIONS = 90_000;
 const b64 = (bytes: Uint8Array) => btoa(String.fromCharCode(...bytes));
 const fromB64 = (s: string) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 
