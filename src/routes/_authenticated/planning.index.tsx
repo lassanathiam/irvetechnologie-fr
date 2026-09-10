@@ -772,8 +772,125 @@ function PlanningPage() {
         </div>
       </div>
 
+      <section className="mb-5 md:hidden">
+        <button
+          type="button"
+          onClick={() => setModeIntervention((value) => !value)}
+          className={`grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border px-4 text-left ${
+            modeIntervention
+              ? "border-primary bg-primary/10 text-primary"
+              : "border-border bg-card text-foreground"
+          }`}
+          aria-pressed={modeIntervention}
+        >
+          <Smartphone className="h-5 w-5 shrink-0" />
+          <span className="min-w-0">
+            <span className="block font-bold">Mode intervention</span>
+            <span className="block truncate text-xs font-normal text-muted-foreground">
+              {modeIntervention ? "Chantiers du jour en priorité" : "Planning complet affiché"}
+            </span>
+          </span>
+          <span className="text-mono text-[10px] font-bold">
+            {modeIntervention ? "ACTIF" : "INACTIF"}
+          </span>
+        </button>
+
+        {modeIntervention && (
+          <div className="mt-3 rounded-xl border border-primary/40 bg-card p-3 shadow-sm">
+            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border pb-3">
+              <div className="min-w-0">
+                <p className="text-mono text-[11px] font-bold text-primary">INTERVENTIONS DU JOUR</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  {chantiersDuJour.length} chantier{chantiersDuJour.length > 1 ? "s" : ""} prévu{chantiersDuJour.length > 1 ? "s" : ""}
+                </p>
+              </div>
+              <span className="grid h-9 min-w-9 shrink-0 place-items-center rounded-full bg-primary/15 px-2 font-bold text-primary">
+                {chantiersDuJour.length}
+              </span>
+            </div>
+            {chantiersDuJour.length === 0 ? (
+              <p className="py-4 text-sm text-muted-foreground">Aucun chantier prévu aujourd’hui.</p>
+            ) : (
+              <ul className="divide-y divide-border">
+                {chantiersDuJour.map((r) => {
+                  const tel = telLien(r.client_telephone);
+                  const wa = whatsappLien(
+                    r.client_telephone,
+                    `Bonjour ${r.client_nom}, Borne de l'Ouest au sujet de votre installation de borne de recharge.`,
+                  );
+                  return (
+                    <li key={r.id} className="py-3 first:pt-3 last:pb-0">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setActive(r.id);
+                          setDossier(r.id);
+                          setMobileSections((current) => ({ ...current, rendezvous: true }));
+                        }}
+                        className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-start gap-3 text-left"
+                      >
+                        <span className="rounded-lg bg-primary/15 px-2 py-1 text-sm font-bold text-primary">
+                          {new Date(r.date_debut).toLocaleTimeString("fr-FR", {
+                            hour: "2-digit",
+                            minute: "2-digit",
+                          })}
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block truncate font-bold">{r.client_nom}</span>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}
+                          </span>
+                          <span className="mt-1 block text-xs text-muted-foreground">
+                            {dureeFr(r.duree_min)}
+                            {r.distance_km != null
+                              ? ` · ${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
+                              : ""}
+                          </span>
+                        </span>
+                      </button>
+                      <div className="mt-3 grid grid-cols-2 gap-2">
+                        {tel && (
+                          <a href={tel} className="grid min-h-11 place-items-center rounded-lg border border-border text-sm font-semibold">
+                            <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4" /> Appeler</span>
+                          </a>
+                        )}
+                        {wa && (
+                          <a href={wa} target="_blank" rel="noreferrer" className="grid min-h-11 place-items-center rounded-lg border border-emerald-500/50 text-sm font-semibold text-emerald-400">
+                            <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4" /> WhatsApp</span>
+                          </a>
+                        )}
+                        {!r.demarre_at && !r.termine_at && (
+                          <button
+                            type="button"
+                            onClick={() => demarrer.mutate({ id: r.id, demarre: true })}
+                            disabled={demarrer.isPending}
+                            className="col-span-2 min-h-11 rounded-lg bg-violet-600 px-3 text-sm font-bold text-white disabled:opacity-50"
+                          >
+                            <span className="inline-flex items-center gap-2"><Play className="h-4 w-4" /> Démarrer les travaux</span>
+                          </button>
+                        )}
+                        {r.demarre_at && !r.termine_at && (
+                          <button
+                            type="button"
+                            onClick={() => terminer.mutate({ id: r.id, notifier: true })}
+                            disabled={terminer.isPending}
+                            className="col-span-2 min-h-11 rounded-lg bg-teal-600 px-3 text-sm font-bold text-white disabled:opacity-50"
+                          >
+                            <span className="inline-flex items-center gap-2"><Flag className="h-4 w-4" /> Terminer le chantier</span>
+                          </button>
+                        )}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+      </section>
+
       {enCours.length > 0 && (
-        <div className="mb-6 rounded-xl border border-violet-400/60 bg-violet-50 dark:bg-violet-500/10 p-4">
+        <div className={`mb-6 rounded-xl border border-violet-400/60 bg-violet-50 p-4 dark:bg-violet-500/10 ${modeIntervention ? "hidden md:block" : ""}`}>
           <p className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-violet-700 dark:text-violet-300">
             Travaux en cours
           </p>
@@ -1159,8 +1276,14 @@ function PlanningPage() {
       <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
         {/* Colonne gauche : carte puis liste des rendez-vous, sans espace vide */}
         <div className="space-y-6 min-w-0">
+        <MobileSectionTrigger
+          label="Carte des interventions"
+          count={points.length}
+          open={!modeIntervention || mobileSections.carte}
+          onToggle={() => toggleMobileSection("carte")}
+        />
         {/* CARTE — en haut à gauche */}
-        <section className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <section className={`bg-card border border-border rounded-xl overflow-hidden shadow-sm ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
           <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
@@ -1217,7 +1340,13 @@ function PlanningPage() {
           </div>
         </section>
 
-        <section className="space-y-6">
+        <MobileSectionTrigger
+          label="Tous les rendez-vous"
+          count={rows.length}
+          open={!modeIntervention || mobileSections.rendezvous}
+          onToggle={() => toggleMobileSection("rendezvous")}
+        />
+        <section className={`space-y-6 ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
