@@ -1127,8 +1127,10 @@ function PlanningPage() {
       )}
 
       <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
+        {/* Colonne gauche : carte puis liste des rendez-vous, sans espace vide */}
+        <div className="space-y-6 min-w-0">
         {/* CARTE — en haut à gauche */}
-        <section className="order-1 bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+        <section className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
           <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
@@ -1185,7 +1187,7 @@ function PlanningPage() {
           </div>
         </section>
 
-        <section className="order-3 lg:col-span-2 space-y-6">
+        <section className="space-y-6">
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
@@ -2110,8 +2112,9 @@ function PlanningPage() {
             ))
           )}
         </section>
+        </div>
 
-        <aside className="order-2 space-y-6">
+        <aside className="space-y-6">
           <AgendaMois
             events={rows.map((r) => ({
               id: r.id,
