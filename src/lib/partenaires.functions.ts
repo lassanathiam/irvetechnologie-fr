@@ -217,8 +217,10 @@ async function hashPin(pin: string): Promise<string> {
 async function verifyPin(pin: string, stored: string): Promise<boolean> {
   const parts = stored.split("$");
   if (parts.length !== 4 || parts[0] !== "pbkdf2") return false;
+  const iterations = Number.parseInt(parts[1]!, 10);
+  if (!Number.isFinite(iterations) || iterations < 1 || iterations > 100_000) return false;
   const attendu = parts[3]!;
-  const obtenu = await derive(pin, fromB64(parts[2]!));
+  const obtenu = await derive(pin, fromB64(parts[2]!), iterations);
   if (obtenu.length !== attendu.length) return false;
   let diff = 0;
   for (let i = 0; i < obtenu.length; i++) diff |= obtenu.charCodeAt(i) ^ attendu.charCodeAt(i);
