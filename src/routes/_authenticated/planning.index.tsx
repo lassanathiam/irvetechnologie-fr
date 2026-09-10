@@ -1485,16 +1485,25 @@ function PlanningPage() {
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {modeSelection && (
-                                <label className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border border-border inline-flex items-center gap-2 cursor-pointer">
+                                <label
+                                  className={`text-mono text-xs font-bold min-h-[44px] px-4 rounded-sm border-2 inline-flex items-center gap-2 cursor-pointer ${
+                                    selection.includes(r.id)
+                                      ? "border-blue-600 bg-blue-600 text-white"
+                                      : "border-blue-500/60 text-blue-700 dark:text-blue-300"
+                                  }`}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={selection.includes(r.id)}
                                     onChange={() => basculerSelection(r.id)}
-                                    className="h-4 w-4"
+                                    className="h-5 w-5"
                                   />
-                                  Programmer
+                                  {selection.includes(r.id)
+                                    ? `Coché n°${selection.indexOf(r.id) + 1}`
+                                    : "Faire ensemble"}
                                 </label>
                               )}
+
                               <button
                                 type="button"
                                 onClick={() => {
