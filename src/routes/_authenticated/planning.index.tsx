@@ -6,6 +6,7 @@ import {
   Archive,
   ArchiveRestore,
   CalendarClock,
+  ChevronDown,
   CheckCircle2,
   FileCheck2,
   Euro,
@@ -27,6 +28,7 @@ import {
   ShieldCheck,
   Trash2,
   Upload,
+  Smartphone,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -71,6 +73,7 @@ import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -217,6 +220,7 @@ const eurosFr = (n: number) =>
     .format(n);
 
 function PlanningPage() {
+  const isMobile = useIsMobile();
   const qc = useQueryClient();
   const fetchList = useServerFn(listRendezVous);
   const createFn = useServerFn(createRendezVous);
@@ -248,6 +252,17 @@ function PlanningPage() {
   const [selection, setSelection] = useState<string[]>([]);
   const [modeSelection, setModeSelection] = useState(false);
   const [dateGroupee, setDateGroupee] = useState("");
+  const [modeIntervention, setModeIntervention] = useState(true);
+  const [mobileSections, setMobileSections] = useState({
+    carte: false,
+    rendezvous: false,
+    agenda: false,
+    trajet: false,
+    programme: false,
+    proches: false,
+  });
+  const toggleMobileSection = (section: keyof typeof mobileSections) =>
+    setMobileSections((current) => ({ ...current, [section]: !current[section] }));
 
 
   const refresh = () => {
@@ -407,6 +422,21 @@ function PlanningPage() {
       ),
     [toutes],
   );
+  const chantiersDuJour = useMemo(() => {
+    const maintenant = new Date();
+    return toutes
+      .filter((r) => {
+        const date = new Date(r.date_debut);
+        return (
+          !r.archive &&
+          r.statut !== "annule" &&
+          date.getFullYear() === maintenant.getFullYear() &&
+          date.getMonth() === maintenant.getMonth() &&
+          date.getDate() === maintenant.getDate()
+        );
+      })
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  }, [toutes]);
 
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
