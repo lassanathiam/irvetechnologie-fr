@@ -504,11 +504,26 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, demarre_at",
+        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage",
       )
       .eq("id", data.id)
       .single();
     if (readErr) throw new Error(readErr.message);
+
+    // Retour de travaux : les photos essentielles doivent être présentes.
+    const { data: photosRows } = await context.supabase
+      .from("rendezvous_photos")
+      .select("categorie, path")
+      .eq("rendezvous_id", data.id);
+    const presentes = new Set((photosRows ?? []).map((p) => p.categorie));
+    const manquantes = RETOUR_CATEGORIES_OBLIGATOIRES.filter((c) => !presentes.has(c));
+    if (manquantes.length) {
+      throw new Error(
+        `Retour de travaux incomplet — photos manquantes : ${manquantes
+          .map((c) => RETOUR_CATEGORIES_LABELS[c] ?? c)
+          .join(", ")}.`,
+      );
+    }
 
     const fin = new Date();
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
@@ -531,6 +546,23 @@ export const terminerChantier = createServerFn({ method: "POST" })
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         const { COMPANY } = await import("@/lib/company");
         const destinataire = rdv.client_email?.trim() || COMPANY.email;
+        // Photos du retour de travaux, en liens signés 7 jours.
+        const chemins = (photosRows ?? []).map((p) => p.path).slice(0, 8);
+        let photos: { url: string; libelle: string }[] = [];
+        if (chemins.length) {
+          const { data: signed } = await context.supabase.storage
+            .from("chantier-photos")
+            .createSignedUrls(chemins, 60 * 60 * 24 * 7);
+          photos = (signed ?? [])
+            .map((sg, i) => ({
+              url: sg?.signedUrl ?? "",
+              libelle:
+                RETOUR_CATEGORIES_LABELS[(photosRows ?? [])[i]?.categorie ?? ""] ?? "Photo de chantier",
+            }))
+            .filter((p) => p.url);
+        }
+        const inclus = Number(rdv.metrage_inclus_m ?? 5);
+        const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
         const res = await sendTemplateEmail("chantier-termine", destinataire, {
           templateData: {
             client_nom: rdv.client_nom,
@@ -539,6 +571,12 @@ export const terminerChantier = createServerFn({ method: "POST" })
             partenaire: rdv.partenaire,
             termine_at: fin.toISOString(),
             duree_min: dureeMin,
+            metrage_inclus_m: inclus,
+            metrage_reel_m: reel,
+            supplement_m: reel == null ? null : Math.max(0, reel - inclus),
+            observations: rdv.retour_observations,
+            delestage: rdv.retour_delestage,
+            photos,
           },
           idempotencyKey: `chantier-termine-${data.id}`,
         });
