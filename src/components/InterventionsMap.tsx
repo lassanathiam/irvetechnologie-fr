@@ -78,6 +78,9 @@ export function InterventionsMap({
   const byId = useRef<Record<string, any>>({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const moiRef = useRef<any>(null);
+  /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
+  const fitRef = useRef<string>("");
+
 
   useEffect(() => {
     let cancelled = false;
