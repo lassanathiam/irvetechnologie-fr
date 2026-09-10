@@ -32,11 +32,11 @@ export const Route = createFileRoute("/partenaire/$token")({
   ssr: false,
   head: () => ({
     meta: [
-      { title: "Espace partenaire — Borne de l'Ouest" },
+      { title: "Espace partenaire — IRVE Technologie" },
       {
         name: "description",
         content:
-          "Saisie des dossiers d'intervention pour les partenaires de Borne de l'Ouest : client, adresse, montant et date de rendez-vous.",
+          "Saisie des dossiers d'intervention pour les partenaires de IRVE Technologie : client, adresse, montant et date de rendez-vous.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
@@ -100,7 +100,7 @@ function EspacePartenaire() {
       setNotice(
         `${ok} photo${ok > 1 ? "s" : ""} « ${PHOTO_CATEGORIES_LABELS[categorie]} » transmise${
           ok > 1 ? "s" : ""
-        } à Borne de l'Ouest.`,
+        } à IRVE Technologie.`,
       );
       void photos.refetch();
     } catch (err) {
@@ -167,7 +167,7 @@ function EspacePartenaire() {
         },
       });
       if (!resultat?.ok) throw new Error("Le dossier n'a pas pu être enregistré.");
-      setNotice("Dossier transmis à Borne de l'Ouest.");
+      setNotice("Dossier transmis à IRVE Technologie.");
       setForm(false);
       setRdvAPrendre(true);
       formElement.reset();
@@ -183,7 +183,7 @@ function EspacePartenaire() {
     return (
       <main className="min-h-screen bg-background flex items-center justify-center px-6">
         <p className="text-sm text-destructive text-center">
-          Ce lien de saisie n'est plus valide. Contactez Borne de l'Ouest.
+          Ce lien de saisie n'est plus valide. Contactez IRVE Technologie.
         </p>
       </main>
     );
@@ -197,7 +197,7 @@ function EspacePartenaire() {
           <div className="leading-tight">
             <p className="font-extrabold tracking-tight text-sm">Espace partenaire</p>
             <p className="text-mono text-[11px] text-primary uppercase tracking-[0.14em]">
-              {espace.data?.nom ?? "…"} · Borne de l'Ouest
+              {espace.data?.nom ?? "…"} · IRVE Technologie
             </p>
           </div>
         </div>
