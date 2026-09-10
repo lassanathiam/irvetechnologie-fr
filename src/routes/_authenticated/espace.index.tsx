@@ -3,6 +3,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import {
+  AlertTriangle,
   ArrowRight,
   ArrowUpRight,
   BarChart3,
@@ -14,10 +15,12 @@ import {
   Loader2,
   
   Receipt,
+  Ruler,
   ShieldCheck,
   Wrench,
+  Zap,
 } from "lucide-react";
-import { getDashboard } from "@/lib/planning.functions";
+import { getDashboard, getSuiviFacturation } from "@/lib/planning.functions";
 import { updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
@@ -71,6 +74,11 @@ function EspacePage() {
   const setStatut = useServerFn(updateStatutDemande);
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["dashboard"], queryFn: () => fetchDashboard() });
+  const chargerFacturation = useServerFn(getSuiviFacturation);
+  const facturation = useQuery({
+    queryKey: ["suivi-facturation-dashboard"],
+    queryFn: () => chargerFacturation({ data: {} }),
+  });
   const [docTab, setDocTab] = useState<"devis" | "factures">("devis");
 
   const accepter = useMutation({
@@ -191,6 +199,51 @@ function EspacePage() {
               to="/planning"
               accent="cyan"
               pct={Math.min(1, (q.data?.stats.rdvAVenir ?? 0) / 15)}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat
+              icon={Euro}
+              label="Chantiers à facturer"
+              value={euro(facturation.data?.totaux.a_facturer_ht ?? 0)}
+              hint={`${facturation.data?.totaux.a_facturer_nb ?? 0} chantier(s) terminé(s)`}
+              to="/facturation"
+              accent="neon"
+              pct={Math.min(1, (facturation.data?.totaux.a_facturer_nb ?? 0) / 10)}
+            />
+            <Stat
+              icon={AlertTriangle}
+              label="Règlements en retard"
+              value={euro(facturation.data?.totaux.retard_ht ?? 0)}
+              hint={`${facturation.data?.totaux.retard_nb ?? 0} échéance(s) dépassée(s)`}
+              to="/facturation"
+              accent="magenta"
+              pct={Math.min(1, (facturation.data?.totaux.retard_nb ?? 0) / 10)}
+            />
+            <Stat
+              icon={Ruler}
+              label="Câble posé ce mois"
+              value={`${Math.round(facturation.data?.mois_totaux.metrage_reel_m ?? 0)} m`}
+              hint={`dont ${Math.round(
+                facturation.data?.mois_totaux.metrage_supplement_m ?? 0,
+              )} m hors forfait`}
+              to="/facturation"
+              accent="yellow"
+              pct={Math.min(1, (facturation.data?.mois_totaux.metrage_reel_m ?? 0) / 300)}
+            />
+            <Stat
+              icon={Zap}
+              label="Bornes installées ce mois"
+              value={String(facturation.data?.mois_totaux.bornes ?? 0)}
+              hint={
+                (facturation.data?.totaux.a_valider_nb ?? 0) > 0
+                  ? `${facturation.data?.totaux.a_valider_nb} montant(s) à valider`
+                  : "Montants partenaires à jour"
+              }
+              to="/facturation"
+              accent="cyan"
+              pct={Math.min(1, (facturation.data?.mois_totaux.bornes ?? 0) / 15)}
             />
           </div>
 

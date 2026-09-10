@@ -504,7 +504,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage",
+        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
       )
       .eq("id", data.id)
       .single();
@@ -529,6 +529,20 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
     const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
 
+    // Délai de paiement : celui du chantier, sinon celui convenu avec le partenaire, sinon 30 jours.
+    let delai = rdv.delai_paiement_jours == null ? null : Number(rdv.delai_paiement_jours);
+    if (delai == null && rdv.partenaire_id) {
+      const { data: part } = await context.supabase
+        .from("partenaires")
+        .select("delai_paiement_jours")
+        .eq("id", rdv.partenaire_id)
+        .maybeSingle();
+      if (part?.delai_paiement_jours != null) delai = Number(part.delai_paiement_jours);
+    }
+    if (delai == null) delai = 30;
+    const echeance = new Date(fin);
+    echeance.setDate(echeance.getDate() + delai);
+
     const { error } = await context.supabase
       .from("rendezvous")
       .update({
@@ -536,6 +550,9 @@ export const terminerChantier = createServerFn({ method: "POST" })
         statut: "termine",
         chantier_valide: true,
         chantier_valide_at: fin.toISOString(),
+        delai_paiement_jours: delai,
+        echeance_paiement: echeance.toISOString().slice(0, 10),
+        statut_facturation: "a_facturer",
       })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -894,4 +911,225 @@ export const listPhotosChantier = createServerFn({ method: "POST" })
         60 * 60,
       );
     return list.map((p, i) => ({ ...p, url: signed?.[i]?.signedUrl ?? null }));
+  });
+
+/* ------------------------------------------------------------------ *
+ * Facturation des chantiers terminés : échéances, retards, métrages
+ * ------------------------------------------------------------------ */
+
+/** Statuts de suivi de règlement d'un chantier. */
+export const FACTU_STATUTS = ["a_facturer", "facture", "paye"] as const;
+
+/**
+ * Tableau « Chantiers terminés à facturer » :
+ * chantiers terminés/réalisés avec leur échéance de règlement, le retard
+ * éventuel, le métrage de câble posé et le nombre de bornes du mois.
+ */
+export const getSuiviFacturation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { mois?: string | null }) =>
+    z
+      .object({
+        mois: z
+          .string()
+          .regex(/^\d{4}-\d{2}$/)
+          .optional()
+          .nullable(),
+      })
+      .parse(raw ?? {}),
+  )
+  .handler(async ({ data, context }) => {
+    const now = new Date();
+    const mois = data.mois ?? now.toISOString().slice(0, 7);
+    const [y, m] = mois.split("-").map(Number) as [number, number];
+    const debutMois = new Date(Date.UTC(y, m - 1, 1));
+    const finMois = new Date(Date.UTC(y, m, 1));
+
+    // Tous les chantiers terminés non encore payés (toutes périodes) + ceux du mois.
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select(
+        "id, titre, designation, client_nom, adresse, cp_ville, partenaire, partenaire_id, origine, date_debut, termine_at, montant_ht, tva_pct, statut, statut_facturation, delai_paiement_jours, echeance_paiement, facture_envoyee_at, paye_at, metrage_inclus_m, metrage_reel_m, metrage_m, puissance_borne, montant_propose_ht, montant_propose_note, montant_propose_at, montant_propose_par, montant_valide_at",
+      )
+      .in("statut", ["termine", "realise"])
+      .order("echeance_paiement", { ascending: true, nullsFirst: false })
+      .limit(600);
+    if (error) throw new Error(error.message);
+
+    const list = rows ?? [];
+    const aujourdhui = now.toISOString().slice(0, 10);
+
+    const enrichis = list.map((r) => {
+      const echeance = r.echeance_paiement ?? null;
+      const enRetard =
+        r.statut_facturation !== "paye" && Boolean(echeance) && echeance! < aujourdhui;
+      const joursRestants = echeance
+        ? Math.round(
+            (new Date(`${echeance}T00:00:00Z`).getTime() -
+              new Date(`${aujourdhui}T00:00:00Z`).getTime()) /
+              86_400_000,
+          )
+        : null;
+      const inclus = Number(r.metrage_inclus_m ?? 5);
+      const reel = r.metrage_reel_m == null ? null : Number(r.metrage_reel_m);
+      return {
+        ...r,
+        en_retard: enRetard,
+        jours_restants: joursRestants,
+        supplement_m: reel == null ? null : Math.max(0, reel - inclus),
+      };
+    });
+
+    const encours = enrichis.filter((r) => r.statut_facturation !== "paye");
+    const duMois = enrichis.filter((r) => {
+      const ref = r.termine_at ?? r.date_debut;
+      return ref >= debutMois.toISOString() && ref < finMois.toISOString();
+    });
+
+    const somme = (arr: typeof enrichis, f: (r: (typeof enrichis)[number]) => number) =>
+      arr.reduce((t, r) => t + f(r), 0);
+
+    return {
+      mois,
+      chantiers: enrichis,
+      totaux: {
+        a_facturer_nb: encours.filter((r) => r.statut_facturation === "a_facturer").length,
+        a_facturer_ht: somme(
+          encours.filter((r) => r.statut_facturation === "a_facturer"),
+          (r) => Number(r.montant_ht ?? 0),
+        ),
+        facture_nb: encours.filter((r) => r.statut_facturation === "facture").length,
+        facture_ht: somme(
+          encours.filter((r) => r.statut_facturation === "facture"),
+          (r) => Number(r.montant_ht ?? 0),
+        ),
+        retard_nb: encours.filter((r) => r.en_retard).length,
+        retard_ht: somme(
+          encours.filter((r) => r.en_retard),
+          (r) => Number(r.montant_ht ?? 0),
+        ),
+        a_valider_nb: enrichis.filter(
+          (r) => r.montant_propose_ht != null && r.montant_valide_at == null,
+        ).length,
+      },
+      mois_totaux: {
+        nb: duMois.length,
+        ht: somme(duMois, (r) => Number(r.montant_ht ?? 0)),
+        paye_ht: somme(
+          duMois.filter((r) => r.statut_facturation === "paye"),
+          (r) => Number(r.montant_ht ?? 0),
+        ),
+        metrage_reel_m: somme(duMois, (r) => Number(r.metrage_reel_m ?? r.metrage_m ?? 0)),
+        metrage_supplement_m: somme(duMois, (r) => Number(r.supplement_m ?? 0)),
+        bornes: duMois.length,
+      },
+    };
+  });
+
+/** Met à jour le suivi de règlement d'un chantier (statut, délai, échéance). */
+export const updateSuiviPaiement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (raw: {
+      id: string;
+      statut_facturation?: "a_facturer" | "facture" | "paye";
+      delai_paiement_jours?: number | string | null;
+      echeance_paiement?: string | null;
+      montant_ht?: number | string | null;
+    }) =>
+      z
+        .object({
+          id: z.string().uuid(),
+          statut_facturation: z.enum(FACTU_STATUTS).optional(),
+          delai_paiement_jours: num(0, 365, 30).optional(),
+          echeance_paiement: z
+            .preprocess(
+              (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+              z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+            )
+            .optional(),
+          montant_ht: num(0, 1_000_000, 0).optional(),
+        })
+        .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: {
+      montant_ht?: number;
+      delai_paiement_jours?: number;
+      echeance_paiement?: string | null;
+      statut_facturation?: string;
+      facture_envoyee_at?: string | null;
+      paye_at?: string | null;
+    } = {};
+    if (data.montant_ht !== undefined) patch.montant_ht = data.montant_ht;
+    if (data.delai_paiement_jours !== undefined) patch.delai_paiement_jours = data.delai_paiement_jours;
+    if (data.echeance_paiement !== undefined) patch.echeance_paiement = data.echeance_paiement;
+
+    if (data.statut_facturation) {
+      patch.statut_facturation = data.statut_facturation;
+      const maintenant = new Date();
+      if (data.statut_facturation === "facture") {
+        patch.facture_envoyee_at = maintenant.toISOString();
+        patch.paye_at = null;
+        // L'échéance court à partir de la facture si elle n'est pas fixée à la main.
+        if (data.echeance_paiement === undefined) {
+          const { data: rdv } = await context.supabase
+            .from("rendezvous")
+            .select("delai_paiement_jours, echeance_paiement")
+            .eq("id", data.id)
+            .maybeSingle();
+          const delai = Number(data.delai_paiement_jours ?? rdv?.delai_paiement_jours ?? 30);
+          const ech = new Date(maintenant);
+          ech.setDate(ech.getDate() + delai);
+          patch.echeance_paiement = ech.toISOString().slice(0, 10);
+        }
+      } else if (data.statut_facturation === "paye") {
+        patch.paye_at = maintenant.toISOString();
+      } else {
+        patch.paye_at = null;
+      }
+    }
+
+    const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+/** Accepte ou refuse le montant révisé proposé par le partenaire. */
+export const validerMontantPropose = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; accepter: boolean }) =>
+    z.object({ id: z.string().uuid(), accepter: z.boolean() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select("id, montant_propose_ht")
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+    if (rdv.montant_propose_ht == null) throw new Error("Aucun montant proposé sur ce chantier.");
+
+    const patch: {
+      montant_ht?: number;
+      montant_valide_at?: string | null;
+      montant_propose_ht?: number | null;
+      montant_propose_note?: string | null;
+      montant_propose_at?: string | null;
+      montant_propose_par?: string | null;
+    } = data.accepter
+      ? {
+          montant_ht: Number(rdv.montant_propose_ht),
+          montant_valide_at: new Date().toISOString(),
+        }
+      : {
+          montant_propose_ht: null,
+          montant_propose_note: null,
+          montant_propose_at: null,
+          montant_propose_par: null,
+          montant_valide_at: null,
+        };
+    const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const, accepte: data.accepter };
   });

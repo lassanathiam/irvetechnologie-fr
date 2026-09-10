@@ -484,6 +484,7 @@ export type Database = {
           actif: boolean
           couleur: string
           created_at: string
+          delai_paiement_jours: number
           email: string | null
           id: string
           nom: string
@@ -496,6 +497,7 @@ export type Database = {
           actif?: boolean
           couleur?: string
           created_at?: string
+          delai_paiement_jours?: number
           email?: string | null
           id?: string
           nom: string
@@ -508,6 +510,7 @@ export type Database = {
           actif?: boolean
           couleur?: string
           created_at?: string
+          delai_paiement_jours?: number
           email?: string | null
           id?: string
           nom?: string
@@ -717,13 +720,16 @@ export type Database = {
           created_at: string
           date_a_confirmer: boolean
           date_debut: string
+          delai_paiement_jours: number | null
           demande_id: string | null
           demarre_at: string | null
           designation: string | null
           distance_km: number | null
           duree_min: number
           duree_trajet_min: number | null
+          echeance_paiement: string | null
           etiquettes: string[]
+          facture_envoyee_at: string | null
           id: string
           lat: number | null
           lng: number | null
@@ -733,12 +739,18 @@ export type Database = {
           metrage_m: number | null
           metrage_reel_m: number | null
           montant_ht: number
+          montant_propose_at: string | null
+          montant_propose_ht: number | null
+          montant_propose_note: string | null
+          montant_propose_par: string | null
+          montant_valide_at: string | null
           notes: string | null
           notif_archive_at: string | null
           notif_fin_at: string | null
           origine: string
           partenaire: string | null
           partenaire_id: string | null
+          paye_at: string | null
           phase_installation: string | null
           puissance_borne: string | null
           retour_complete_at: string | null
@@ -770,13 +782,16 @@ export type Database = {
           created_at?: string
           date_a_confirmer?: boolean
           date_debut: string
+          delai_paiement_jours?: number | null
           demande_id?: string | null
           demarre_at?: string | null
           designation?: string | null
           distance_km?: number | null
           duree_min?: number
           duree_trajet_min?: number | null
+          echeance_paiement?: string | null
           etiquettes?: string[]
+          facture_envoyee_at?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -786,12 +801,18 @@ export type Database = {
           metrage_m?: number | null
           metrage_reel_m?: number | null
           montant_ht?: number
+          montant_propose_at?: string | null
+          montant_propose_ht?: number | null
+          montant_propose_note?: string | null
+          montant_propose_par?: string | null
+          montant_valide_at?: string | null
           notes?: string | null
           notif_archive_at?: string | null
           notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
+          paye_at?: string | null
           phase_installation?: string | null
           puissance_borne?: string | null
           retour_complete_at?: string | null
@@ -823,13 +844,16 @@ export type Database = {
           created_at?: string
           date_a_confirmer?: boolean
           date_debut?: string
+          delai_paiement_jours?: number | null
           demande_id?: string | null
           demarre_at?: string | null
           designation?: string | null
           distance_km?: number | null
           duree_min?: number
           duree_trajet_min?: number | null
+          echeance_paiement?: string | null
           etiquettes?: string[]
+          facture_envoyee_at?: string | null
           id?: string
           lat?: number | null
           lng?: number | null
@@ -839,12 +863,18 @@ export type Database = {
           metrage_m?: number | null
           metrage_reel_m?: number | null
           montant_ht?: number
+          montant_propose_at?: string | null
+          montant_propose_ht?: number | null
+          montant_propose_note?: string | null
+          montant_propose_par?: string | null
+          montant_valide_at?: string | null
           notes?: string | null
           notif_archive_at?: string | null
           notif_fin_at?: string | null
           origine?: string
           partenaire?: string | null
           partenaire_id?: string | null
+          paye_at?: string | null
           phase_installation?: string | null
           puissance_borne?: string | null
           retour_complete_at?: string | null

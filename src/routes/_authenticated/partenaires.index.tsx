@@ -51,6 +51,7 @@ function PartenairesAdmin() {
   const [notes, setNotes] = useState("");
   const [email, setEmail] = useState("");
   const [couleur, setCouleur] = useState(COULEURS[0]!);
+  const [delai, setDelai] = useState("30");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [copie, setCopie] = useState<string | null>(null);
@@ -77,11 +78,13 @@ function PartenairesAdmin() {
           notes: notes.trim() || null,
           couleur,
           email: email.trim() || null,
+          delai_paiement_jours: delai || 30,
         },
       });
       setNom("");
       setNotes("");
       setEmail("");
+      setDelai("30");
       setCouleur(COULEURS[(list.data?.length ?? 0) % COULEURS.length]!);
 
       await list.refetch();
@@ -139,6 +142,18 @@ function PartenairesAdmin() {
               onChange={(e) => setEmail(e.target.value)}
               className={INPUT}
               placeholder="contact@pure-energie.fr"
+            />
+          </label>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">
+              Délai de paiement convenu (jours)
+            </span>
+            <input
+              inputMode="numeric"
+              value={delai}
+              onChange={(e) => setDelai(e.target.value)}
+              className={INPUT}
+              placeholder="45"
             />
           </label>
           <div className="sm:col-span-2">
@@ -218,6 +233,41 @@ function PartenairesAdmin() {
                                   notes: p.notes,
                                   couleur: p.couleur ?? "#0284c7",
                                   email: saisie.trim() || null,
+                                  delai_paiement_jours: p.delai_paiement_jours ?? 30,
+                                },
+                              });
+                              await list.refetch();
+                            } catch (e) {
+                              window.alert(
+                                e instanceof Error ? e.message : "Enregistrement impossible.",
+                              );
+                            }
+                          }}
+                          className="underline hover:text-primary"
+                        >
+                          modifier
+                        </button>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Paiement à {p.delai_paiement_jours ?? 30} jours après la fin du chantier{" "}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const saisie = window.prompt(
+                              `Délai de paiement convenu avec ${p.nom} (en jours) :`,
+                              String(p.delai_paiement_jours ?? 30),
+                            );
+                            if (saisie === null) return;
+                            try {
+                              await save({
+                                data: {
+                                  id: p.id,
+                                  nom: p.nom,
+                                  actif: p.actif,
+                                  notes: p.notes,
+                                  couleur: p.couleur ?? "#0284c7",
+                                  email: p.email,
+                                  delai_paiement_jours: saisie.trim() || 30,
                                 },
                               });
                               await list.refetch();
@@ -250,6 +300,7 @@ function PartenairesAdmin() {
                                   notes: p.notes,
                                   couleur: c,
                                   email: p.email,
+                                  delai_paiement_jours: p.delai_paiement_jours ?? 30,
                                 },
                               });
                               await list.refetch();
@@ -299,6 +350,7 @@ function PartenairesAdmin() {
                               notes: p.notes,
                               couleur: p.couleur ?? "#0284c7",
                               email: p.email,
+                              delai_paiement_jours: p.delai_paiement_jours ?? 30,
                             },
                           });
 

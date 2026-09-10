@@ -40,7 +40,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, token, actif, notes, couleur, email, created_at")
+      .select("id, nom, token, actif, notes, couleur, email, delai_paiement_jours, created_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -69,6 +69,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
       notes?: string | null;
       couleur?: string | null;
       email?: string | null;
+      delai_paiement_jours?: number | string | null;
     }) =>
       z
         .object({
@@ -87,6 +88,13 @@ export const savePartenaire = createServerFn({ method: "POST" })
               z.string().trim().email("Adresse email invalide").max(255).nullable(),
             )
             .default(null),
+          delai_paiement_jours: z
+            .preprocess((v) => {
+              if (v === null || v === undefined || v === "") return 30;
+              const n = typeof v === "number" ? v : Number(String(v).replace(",", "."));
+              return Number.isFinite(n) ? Math.round(n) : 30;
+            }, z.number().int().min(0).max(365))
+            .default(30),
         })
         .parse(raw),
   )
@@ -100,6 +108,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
           notes: data.notes ?? null,
           couleur: data.couleur,
           email: data.email ?? null,
+          delai_paiement_jours: data.delai_paiement_jours,
         })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -113,6 +122,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
         notes: data.notes ?? null,
         couleur: data.couleur,
         email: data.email ?? null,
+        delai_paiement_jours: data.delai_paiement_jours,
         owner_user_id: context.userId,
       })
       .select("id")
@@ -137,7 +147,7 @@ async function loadPartenaire(token: string) {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data, error } = await supabaseAdmin
     .from("partenaires")
-    .select("id, nom, actif, owner_user_id")
+    .select("id, nom, actif, owner_user_id, delai_paiement_jours")
     .eq("token", token)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -152,12 +162,16 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, materiel_statut, materiel_maj_at, demarre_at, termine_at, created_at",
+        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, materiel_statut, materiel_maj_at, demarre_at, termine_at, created_at, metrage_inclus_m, metrage_reel_m, retour_delestage, retour_observations, statut_facturation, echeance_paiement, montant_propose_ht, montant_propose_note, montant_propose_at, montant_valide_at",
       )
       .eq("partenaire_id", partenaire.id)
       .order("created_at", { ascending: false })
       .limit(200);
-    return { nom: partenaire.nom, dossiers: dossiers ?? [] };
+    return {
+      nom: partenaire.nom,
+      delai_paiement_jours: partenaire.delai_paiement_jours ?? 30,
+      dossiers: dossiers ?? [],
+    };
   });
 
 /** Suivi du matériel côté partenaire. */
@@ -385,4 +399,47 @@ export const majMaterielPartenaire = createServerFn({ method: "POST" })
       .eq("id", data.rendezvous_id);
     if (error) throw new Error("Mise à jour impossible.");
     return { ok: true as const, materiel_statut: data.materiel_statut };
+  });
+
+/* ------------- Valorisation : le partenaire propose un montant révisé ------------- */
+
+const montantSchema = tokenSchema.extend({
+  rendezvous_id: z.string().uuid(),
+  montant_ht: z.preprocess((v) => {
+    const n = typeof v === "number" ? v : Number(String(v ?? "").replace(",", "."));
+    return Number.isFinite(n) ? n : 0;
+  }, z.number().min(0).max(1_000_000)),
+  note: z.string().trim().max(1000).optional().nullable(),
+  par: z.string().trim().max(160).optional().nullable(),
+});
+
+/**
+ * Après les travaux, le partenaire propose le montant valorisé de l'intervention.
+ * Le montant n'entre dans les chiffres qu'après validation par l'équipe.
+ */
+export const proposerMontantPartenaire = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => montantSchema.parse(raw))
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data.token);
+
+    const { data: dossier } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id, statut")
+      .eq("id", data.rendezvous_id)
+      .eq("partenaire_id", partenaire.id)
+      .maybeSingle();
+    if (!dossier) throw new Error("Dossier introuvable.");
+
+    const { error } = await supabaseAdmin
+      .from("rendezvous")
+      .update({
+        montant_propose_ht: data.montant_ht,
+        montant_propose_note: data.note ?? null,
+        montant_propose_at: new Date().toISOString(),
+        montant_propose_par: data.par?.trim() || partenaire.nom,
+        montant_valide_at: null,
+      })
+      .eq("id", data.rendezvous_id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
   });
