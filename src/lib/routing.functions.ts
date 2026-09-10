@@ -195,3 +195,89 @@ export const tourneeReelle = createServerFn({ method: "POST" })
       estime: false,
     };
   });
+
+export type ComparaisonDeuxChantiers = {
+  /** Départ technicien → chantier A. */
+  aller: { km: number; minutes: number };
+  /** Chantier A → chantier B (la distance « d'un point à l'autre »). */
+  entre: { km: number; minutes: number; coords: [number, number][] };
+  /** Chantier B → retour au départ. */
+  retour: { km: number; minutes: number };
+  /** Total si on enchaîne les deux chantiers dans la même journée. */
+  kmEnsemble: number;
+  minutesEnsemble: number;
+  /** Total si on fait deux allers-retours séparés (deux journées). */
+  kmSepares: number;
+  minutesSepares: number;
+  /** true si la route entre les deux chantiers est trop longue pour la même journée. */
+  nuiteeConseillee: boolean;
+  estime: boolean;
+};
+
+/** Compare « enchaîner deux chantiers le même jour » et « deux déplacements séparés ». */
+export const comparerDeuxChantiers = createServerFn({ method: "POST" })
+  .inputValidator((d) =>
+    z
+      .object({
+        a: z.object({ lat: z.number(), lng: z.number() }),
+        b: z.object({ lat: z.number(), lng: z.number() }),
+        base: baseSchema,
+      })
+      .parse(d),
+  )
+  .handler(async ({ data }): Promise<ComparaisonDeuxChantiers> => {
+    const from = data.base ?? BASE;
+    const leg = async (
+      p: { lat: number; lng: number },
+      q: { lat: number; lng: number },
+    ): Promise<{ km: number; minutes: number; coords: [number, number][]; estime: boolean }> => {
+      const json = await osrm(
+        `/route/v1/driving/${lonlat(p)};${lonlat(q)}?overview=full&geometries=geojson`,
+      );
+      const route = (
+        json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined
+      )?.[0];
+      if (!route) {
+        const km = Math.round(haversineKm(p, q) * 1.18);
+        return {
+          km,
+          minutes: Math.round((km / 80) * 60),
+          coords: [
+            [p.lat, p.lng],
+            [q.lat, q.lng],
+          ],
+          estime: true,
+        };
+      }
+      return {
+        km: Math.round(route.distance / 100) / 10,
+        minutes: Math.round(route.duration / 60),
+        coords: toCoords(route.geometry),
+        estime: false,
+      };
+    };
+
+    const [aller, entre, retour] = await Promise.all([
+      leg(from, data.a),
+      leg(data.a, data.b),
+      leg(data.b, from),
+    ]);
+
+    const kmEnsemble = Math.round((aller.km + entre.km + retour.km) * 10) / 10;
+    const minutesEnsemble = aller.minutes + entre.minutes + retour.minutes;
+    const kmSepares = Math.round((aller.km * 2 + retour.km * 2) * 10) / 10;
+    const minutesSepares = (aller.minutes + retour.minutes) * 2;
+
+    return {
+      aller: { km: aller.km, minutes: aller.minutes },
+      entre: { km: entre.km, minutes: entre.minutes, coords: entre.coords },
+      retour: { km: retour.km, minutes: retour.minutes },
+      kmEnsemble,
+      minutesEnsemble,
+      kmSepares,
+      minutesSepares,
+      // Au-delà d'environ 8 h de route sur la journée, mieux vaut dormir sur place.
+      nuiteeConseillee: minutesEnsemble > 300 || entre.km > 180,
+      estime: aller.estime || entre.estime || retour.estime,
+    };
+  });

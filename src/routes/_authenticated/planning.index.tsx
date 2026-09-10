@@ -60,7 +60,12 @@ import {
 } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
-import { itineraireDepuisBase, tourneeReelle } from "@/lib/routing.functions";
+import {
+  comparerDeuxChantiers,
+  itineraireDepuisBase,
+  tourneeReelle,
+} from "@/lib/routing.functions";
+
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien } from "@/lib/contact-client";
@@ -545,6 +550,32 @@ function PlanningPage() {
 
   const economie = economieCarburant(Math.max(tournee.kmDirect - tournee.kmTotal, 0));
 
+  /** Deux premiers chantiers cochés : comparaison « même journée » / « deux déplacements ». */
+  const selRows = selection
+    .map((id) => rows.find((r) => r.id === id))
+    .filter((r): r is (typeof rows)[number] => !!r && r.lat != null && r.lng != null);
+  const paireA = selRows[0];
+  const paireB = selRows[1];
+  const comparerFn = useServerFn(comparerDeuxChantiers);
+  const comparaison = useQuery({
+    queryKey: ["comparaison-2", paireA?.id, paireB?.id, depart.id],
+    enabled: Boolean(paireA && paireB),
+    staleTime: 30 * 60_000,
+    queryFn: () =>
+      comparerFn({
+        data: {
+          a: { lat: Number(paireA!.lat), lng: Number(paireA!.lng) },
+          b: { lat: Number(paireB!.lat), lng: Number(paireB!.lng) },
+          base: { lat: depart.lat, lng: depart.lng },
+        },
+      }),
+  });
+  const kmEconomises = comparaison.data
+    ? Math.max(comparaison.data.kmSepares - comparaison.data.kmEnsemble, 0)
+    : 0;
+  const economieDeux = economieCarburant(kmEconomises);
+
+
   /** Itinéraire routier réel base → chantier sélectionné. */
   const routeFn = useServerFn(itineraireDepuisBase);
   const activeRow = rows.find((r) => r.id === active && r.lat != null && r.lng != null);
@@ -803,10 +834,98 @@ function PlanningPage() {
             Programmation groupée
           </p>
           <p className="text-sm text-muted-foreground mt-2">
-            Cochez jusqu'à 6 chantiers dans la liste, choisissez la date du premier rendez-vous :
-            les suivants sont placés à la suite (même journée) ou le lendemain si vous prévoyez une
-            nuitée.
+            Cochez jusqu'à 6 chantiers, sur la carte (un clic sur le repère) ou dans la liste, puis
+            choisissez la date du premier rendez-vous : les suivants sont placés à la suite (même
+            journée) ou le lendemain si vous prévoyez une nuitée.
           </p>
+
+          {selRows.length > 0 && (
+            <ul className="mt-4 grid gap-2">
+              {selRows.map((r, i) => (
+                <li
+                  key={r.id}
+                  className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-background/50 px-3 py-2"
+                >
+                  <span className="text-sm font-semibold">
+                    <span className="text-mono text-xs mr-2 inline-grid h-6 w-6 place-items-center rounded-full bg-blue-600 text-white">
+                      {i + 1}
+                    </span>
+                    {r.client_nom}
+                    <span className="font-normal text-muted-foreground">
+                      {" "}
+                      · {r.cp_ville || r.adresse}
+                    </span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => basculerSelection(r.id)}
+                    className="text-mono text-[11px] text-muted-foreground hover:text-destructive"
+                  >
+                    Retirer
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {paireA && paireB && (
+            <div className="mt-4 rounded-lg border border-blue-500/50 bg-blue-500/5 p-4">
+              {comparaison.isFetching || !comparaison.data ? (
+                <p className="text-sm inline-flex items-center gap-2">
+                  <Loader2 className="h-4 w-4 animate-spin text-primary" /> Calcul des distances
+                  d'un chantier à l'autre…
+                </p>
+              ) : (
+                <>
+                  <p className="text-base font-bold">
+                    {paireA.cp_ville || paireA.client_nom} → {paireB.cp_ville || paireB.client_nom} :{" "}
+                    {comparaison.data.entre.km} km · {dureeFr(comparaison.data.entre.minutes)}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2 mt-3 text-sm">
+                    <p>
+                      Les deux le même jour :{" "}
+                      <strong>
+                        {comparaison.data.kmEnsemble} km ·{" "}
+                        {dureeFr(comparaison.data.minutesEnsemble)}
+                      </strong>{" "}
+                      de route
+                    </p>
+                    <p>
+                      En deux déplacements séparés :{" "}
+                      <strong>
+                        {comparaison.data.kmSepares} km ·{" "}
+                        {dureeFr(comparaison.data.minutesSepares)}
+                      </strong>
+                    </p>
+                  </div>
+                  {kmEconomises > 0 && (
+                    <p className="mt-3 text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+                      Économie en groupant : {kmEconomises} km, environ {economieDeux.litres} L de
+                      carburant ({economieDeux.euros} €) et{" "}
+                      {dureeFr(
+                        Math.max(
+                          comparaison.data.minutesSepares - comparaison.data.minutesEnsemble,
+                          0,
+                        ),
+                      )}{" "}
+                      de route en moins.
+                    </p>
+                  )}
+                  <p className="mt-2 text-sm font-semibold">
+                    {comparaison.data.nuiteeConseillee
+                      ? "Trop de route pour une seule journée : nuitée sur place conseillée."
+                      : "Faisable dans la même journée."}
+                  </p>
+                  {comparaison.data.estime && (
+                    <p className="mt-1 text-xs text-muted-foreground">
+                      Distances estimées (réseau routier momentanément indisponible).
+                    </p>
+                  )}
+                </>
+              )}
+            </div>
+          )}
+
           <div className="flex flex-wrap items-end gap-3 mt-4">
             <label className="block">
               <span className="text-mono text-xs text-muted-foreground">
@@ -1022,16 +1141,27 @@ function PlanningPage() {
             </div>
           </div>
           <div className="p-4">
+            {modeSelection && (
+              <p className="mb-3 rounded-lg border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                Cliquez directement les repères sur la carte pour cocher les chantiers à faire
+                ensemble ({selection.length} coché{selection.length > 1 ? "s" : ""}).
+              </p>
+            )}
             <InterventionsMap
               markers={points}
               activeId={active}
               onSelect={setActive}
               height={620}
               scrollWheelZoom
+              selectionMode={modeSelection}
+              selectedIds={selection}
+              onToggleSelect={basculerSelection}
+              lienCoords={comparaison.data?.entre.coords ?? null}
               routeCoords={itineraire.data?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
             />
+
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
               {itineraire.isFetching ? (
                 <span className="inline-flex items-center gap-1.5">
@@ -1355,16 +1485,25 @@ function PlanningPage() {
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {modeSelection && (
-                                <label className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border border-border inline-flex items-center gap-2 cursor-pointer">
+                                <label
+                                  className={`text-mono text-xs font-bold min-h-[44px] px-4 rounded-sm border-2 inline-flex items-center gap-2 cursor-pointer ${
+                                    selection.includes(r.id)
+                                      ? "border-blue-600 bg-blue-600 text-white"
+                                      : "border-blue-500/60 text-blue-700 dark:text-blue-300"
+                                  }`}
+                                >
                                   <input
                                     type="checkbox"
                                     checked={selection.includes(r.id)}
                                     onChange={() => basculerSelection(r.id)}
-                                    className="h-4 w-4"
+                                    className="h-5 w-5"
                                   />
-                                  Programmer
+                                  {selection.includes(r.id)
+                                    ? `Coché n°${selection.indexOf(r.id) + 1}`
+                                    : "Faire ensemble"}
                                 </label>
                               )}
+
                               <button
                                 type="button"
                                 onClick={() => {

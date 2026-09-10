@@ -40,6 +40,10 @@ export function InterventionsMap({
   routeEstime = false,
   tourneeCoords,
   scrollWheelZoom = false,
+  selectionMode = false,
+  selectedIds = [],
+  onToggleSelect,
+  lienCoords,
 }: {
   markers: MapMarker[];
   activeId?: string | null;
@@ -52,7 +56,15 @@ export function InterventionsMap({
   /** Tracé routier réel de la tournée complète. */
   tourneeCoords?: [number, number][] | null;
   scrollWheelZoom?: boolean;
+  /** Mode « programmer ensemble » : un clic sur un repère coche le chantier. */
+  selectionMode?: boolean;
+  /** Chantiers cochés, dans l'ordre de sélection. */
+  selectedIds?: string[];
+  onToggleSelect?: (id: string) => void;
+  /** Tracé routier d'un chantier coché au suivant. */
+  lienCoords?: [number, number][] | null;
 }) {
+
   const el = useRef<HTMLDivElement | null>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const map = useRef<any>(null);
@@ -66,6 +78,9 @@ export function InterventionsMap({
   const byId = useRef<Record<string, any>>({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const moiRef = useRef<any>(null);
+  /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
+  const fitRef = useRef<string>("");
+
 
   useEffect(() => {
     let cancelled = false;
@@ -101,13 +116,23 @@ export function InterventionsMap({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  function dot(color: string, active: boolean, n?: number, etat?: string) {
-    const size = active ? 44 : 34;
+  function dot(
+    color: string,
+    active: boolean,
+    n?: number,
+    etat?: string,
+    rang?: number | null,
+  ) {
+    const coche = rang != null;
+    const size = coche ? 48 : active ? 44 : 34;
+    const anneau = coche
+      ? `box-shadow:0 0 0 6px #2563eb;`
+      : `box-shadow:0 0 0 ${active ? 8 : 5}px ${etat ?? color}55;`;
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${color};border:3px solid ${etat ?? "#fff"};box-shadow:0 0 0 ${active ? 8 : 5}px ${(etat ?? color)}55;color:#fff;font:700 ${active ? 16 : 13}px/1 system-ui">${n ?? ""}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${coche ? rang : (n ?? "")}</span>`,
     });
   }
 
@@ -132,8 +157,10 @@ export function InterventionsMap({
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
       const color = m.couleur || etat;
+      const idx = selectedIds.indexOf(m.id);
+      const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat) })
+        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
         .addTo(layer.current)
         .bindPopup(
           `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
@@ -142,13 +169,25 @@ export function InterventionsMap({
             m.trajet
               ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
               : ""
+          }${
+            selectionMode
+              ? `<br/><span style="font-weight:700;color:#2563eb">${
+                  rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
+                }</span>`
+              : ""
           }`,
         );
-      mk.on("click", () => onSelect?.(m.id));
+      mk.on("click", () => {
+        if (selectionMode) onToggleSelect?.(m.id);
+        onSelect?.(m.id);
+      });
       byId.current[m.id] = mk;
     });
 
-    if (markers.length) {
+
+    const cle = markers.map((m) => m.id).join("|");
+    if (markers.length && fitRef.current !== cle) {
+      fitRef.current = cle;
       const bounds = leaflet.latLngBounds([
         [BASE.lat, BASE.lng],
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
@@ -178,12 +217,22 @@ export function InterventionsMap({
         .polyline(routeCoords, { color: "#16a34a", weight: 3, opacity: 0.95 })
         .addTo(routeLayer.current);
     }
+
+    // Trajet d'un chantier coché au suivant (programmation groupée)
+    if (lienCoords && lienCoords.length > 1) {
+      leaflet
+        .polyline(lienCoords, { color: "#2563eb", weight: 7, opacity: 0.2 })
+        .addTo(routeLayer.current);
+      leaflet
+        .polyline(lienCoords, { color: "#2563eb", weight: 4, opacity: 0.95, dashArray: "10 8" })
+        .addTo(routeLayer.current);
+    }
   }
 
   useEffect(() => {
     drawMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers]);
+  }, [markers, selectedIds, selectionMode]);
 
   useEffect(() => {
     const mk = activeId ? byId.current[activeId] : null;
@@ -193,7 +242,8 @@ export function InterventionsMap({
   useEffect(() => {
     drawRoutes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [routeCoords, routeEstime, tourneeCoords]);
+  }, [routeCoords, routeEstime, tourneeCoords, lienCoords]);
+
 
   /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
   function maPosition() {
