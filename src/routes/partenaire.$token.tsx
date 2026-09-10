@@ -36,7 +36,7 @@ export const Route = createFileRoute("/partenaire/$token")({
       {
         name: "description",
         content:
-          "Saisie des dossiers d'intervention pour les partenaires de IRVE Technologie : client, adresse, montant et date de rendez-vous.",
+          "Saisie des dossiers d'intervention pour les partenaires d'IRVE Technologie : client, adresse, montant et date de rendez-vous.",
       },
       { name: "robots", content: "noindex, nofollow" },
     ],
