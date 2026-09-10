@@ -6,6 +6,7 @@ import {
   Heading,
   Hr,
   Html,
+  Link,
   Preview,
   Section,
   Text,
@@ -20,6 +21,12 @@ export type ChantierTermineData = {
   partenaire?: string | null;
   termine_at: string;
   duree_min?: number | null;
+  metrage_inclus_m?: number | null;
+  metrage_reel_m?: number | null;
+  supplement_m?: number | null;
+  observations?: string | null;
+  delestage?: boolean | null;
+  photos?: { url: string; libelle: string }[] | null;
 };
 
 const dureeFr = (min?: number | null) => {
@@ -61,7 +68,34 @@ function ChantierTermineEmail(data: ChantierTermineData) {
             {duree ? (
               <Text style={{ fontSize: 14, margin: "8px 0" }}>Durée sur site : {duree}</Text>
             ) : null}
+            {data.metrage_reel_m != null ? (
+              <Text style={{ fontSize: 14, margin: "8px 0" }}>
+                Câble posé : {data.metrage_reel_m} m (inclus : {data.metrage_inclus_m ?? 5} m)
+                {data.supplement_m ? ` — soit ${data.supplement_m} m en plus` : ""}
+              </Text>
+            ) : null}
+            {data.delestage ? (
+              <Text style={{ fontSize: 14, margin: "8px 0" }}>Délestage mis en place : oui</Text>
+            ) : null}
+            {data.observations ? (
+              <Text style={{ fontSize: 14, margin: "8px 0" }}>Observations : {data.observations}</Text>
+            ) : null}
           </Section>
+          {data.photos?.length ? (
+            <>
+              <Hr />
+              <Section>
+                <Text style={{ fontSize: 14, fontWeight: "bold", margin: "8px 0" }}>
+                  Photos de fin d&apos;intervention (liens valables 7 jours)
+                </Text>
+                {data.photos.map((p, i) => (
+                  <Text key={i} style={{ fontSize: 13, margin: "4px 0" }}>
+                    {p.libelle} : <Link href={p.url}>voir la photo</Link>
+                  </Text>
+                ))}
+              </Section>
+            </>
+          ) : null}
           <Hr />
           <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>
             Une question ? {COMPANY.telephone} · {COMPANY.telephone2}
@@ -90,5 +124,11 @@ export const template: TemplateEntry = {
     partenaire: "Pure Énergies",
     termine_at: new Date().toISOString(),
     duree_min: 185,
+    metrage_inclus_m: 5,
+    metrage_reel_m: 13,
+    supplement_m: 8,
+    observations: "Délestage paramétré, essais conformes.",
+    delestage: true,
+    photos: [{ url: "https://example.com/photo.jpg", libelle: "Borne posée" }],
   },
 };
