@@ -166,45 +166,6 @@ function EspacePage() {
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
             <Stat
               icon={Euro}
-              label="Encaissé"
-              value={euro(q.data?.stats.caEncaisse ?? 0)}
-              hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
-              to="/factures"
-              accent="neon"
-              pct={Math.min(1, (q.data?.stats.caMois ?? 0) / Math.max(q.data?.stats.caEncaisse ?? 1, 1))}
-            />
-            <Stat
-              icon={Receipt}
-              label="À encaisser"
-              value={euro(q.data?.stats.caEnAttente ?? 0)}
-              hint="Factures en attente"
-              to="/factures"
-              accent="yellow"
-              pct={Math.min(1, (q.data?.stats.caEnAttente ?? 0) / Math.max((q.data?.stats.caEnAttente ?? 0) + (q.data?.stats.caEncaisse ?? 0), 1))}
-            />
-            <Stat
-              icon={FileText}
-              label="Devis établis"
-              value={euro(q.data?.stats.caDevis ?? 0)}
-              hint={`${q.data?.devis.length ?? 0} devis récents`}
-              to="/devis"
-              accent="magenta"
-              pct={Math.min(1, (q.data?.devis.length ?? 0) / 20)}
-            />
-            <Stat
-              icon={CalendarClock}
-              label="Rendez-vous"
-              value={String(q.data?.stats.rdvAVenir ?? 0)}
-              hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
-              to="/planning"
-              accent="cyan"
-              pct={Math.min(1, (q.data?.stats.rdvAVenir ?? 0) / 15)}
-            />
-          </div>
-
-          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <Stat
-              icon={Euro}
               label="Chantiers à facturer"
               value={euro(facturation.data?.totaux.a_facturer_ht ?? 0)}
               hint={`${facturation.data?.totaux.a_facturer_nb ?? 0} chantier(s) terminé(s)`}
@@ -244,6 +205,45 @@ function EspacePage() {
               to="/facturation"
               accent="cyan"
               pct={Math.min(1, (facturation.data?.mois_totaux.bornes ?? 0) / 15)}
+            />
+          </div>
+
+          <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <Stat
+              icon={Euro}
+              label="Encaissé"
+              value={euro(q.data?.stats.caEncaisse ?? 0)}
+              hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
+              to="/factures"
+              accent="neon"
+              pct={Math.min(1, (q.data?.stats.caMois ?? 0) / Math.max(q.data?.stats.caEncaisse ?? 1, 1))}
+            />
+            <Stat
+              icon={Receipt}
+              label="À encaisser"
+              value={euro(q.data?.stats.caEnAttente ?? 0)}
+              hint="Factures en attente"
+              to="/factures"
+              accent="yellow"
+              pct={Math.min(1, (q.data?.stats.caEnAttente ?? 0) / Math.max((q.data?.stats.caEnAttente ?? 0) + (q.data?.stats.caEncaisse ?? 0), 1))}
+            />
+            <Stat
+              icon={FileText}
+              label="Devis établis"
+              value={euro(q.data?.stats.caDevis ?? 0)}
+              hint={`${q.data?.devis.length ?? 0} devis récents`}
+              to="/devis"
+              accent="magenta"
+              pct={Math.min(1, (q.data?.devis.length ?? 0) / 20)}
+            />
+            <Stat
+              icon={CalendarClock}
+              label="Rendez-vous"
+              value={String(q.data?.stats.rdvAVenir ?? 0)}
+              hint={`${q.data?.stats.rdvSemaine ?? 0} dans les 7 jours`}
+              to="/planning"
+              accent="cyan"
+              pct={Math.min(1, (q.data?.stats.rdvAVenir ?? 0) / 15)}
             />
           </div>
 
