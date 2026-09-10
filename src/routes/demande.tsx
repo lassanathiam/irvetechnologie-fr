@@ -88,8 +88,14 @@ function Demande() {
   const submitDemandeFn = useServerFn(submitDemande);
   const uploadPhotoFn = useServerFn(uploadDemandePhoto);
   const mountedAt = useRef<number>(Date.now());
-  const files = useRef<{ tableau: File | null; borne: File | null; cheminement: File[] }>({
+  const files = useRef<{
+    tableau: File | null;
+    linky: File | null;
+    borne: File | null;
+    cheminement: File[];
+  }>({
     tableau: null,
+    linky: null,
     borne: null,
     cheminement: [],
   });
@@ -97,7 +103,7 @@ function Demande() {
   function setSingle(
     setter: (v: string | null) => void,
     current: string | null,
-    slot: "tableau" | "borne",
+    slot: "tableau" | "linky" | "borne",
   ) {
     return (e: ChangeEvent<HTMLInputElement>) => {
       const file = e.target.files?.[0];
