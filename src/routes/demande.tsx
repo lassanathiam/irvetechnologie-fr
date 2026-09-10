@@ -78,6 +78,7 @@ function Demande() {
     formule ? "souscription" : "raccordement",
   );
   const [tableau, setTableau] = useState<string | null>(null);
+  const [linky, setLinky] = useState<string | null>(null);
   const [borne, setBorne] = useState<string | null>(null);
   const [cheminement, setCheminement] = useState<string[]>([]);
   const [submitted, setSubmitted] = useState(false);
