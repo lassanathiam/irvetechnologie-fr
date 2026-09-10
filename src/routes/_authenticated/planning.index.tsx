@@ -1053,16 +1053,27 @@ function PlanningPage() {
             </div>
           </div>
           <div className="p-4">
+            {modeSelection && (
+              <p className="mb-3 rounded-lg border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
+                Cliquez directement les repères sur la carte pour cocher les chantiers à faire
+                ensemble ({selection.length} coché{selection.length > 1 ? "s" : ""}).
+              </p>
+            )}
             <InterventionsMap
               markers={points}
               activeId={active}
               onSelect={setActive}
               height={620}
               scrollWheelZoom
+              selectionMode={modeSelection}
+              selectedIds={selection}
+              onToggleSelect={basculerSelection}
+              lienCoords={comparaison.data?.entre.coords ?? null}
               routeCoords={itineraire.data?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
             />
+
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
               {itineraire.isFetching ? (
                 <span className="inline-flex items-center gap-1.5">
