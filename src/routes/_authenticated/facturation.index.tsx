@@ -8,11 +8,13 @@ import {
   Euro,
   Loader2,
   MapPin,
+  Receipt,
   Ruler,
   Zap,
 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import {
+  creerFactureChantier,
   getSuiviFacturation,
   updateSuiviPaiement,
   validerMontantPropose,
@@ -67,6 +69,8 @@ function FacturationChantiers() {
   const charger = useServerFn(getSuiviFacturation);
   const majPaiement = useServerFn(updateSuiviPaiement);
   const validerMontant = useServerFn(validerMontantPropose);
+  const creerFacture = useServerFn(creerFactureChantier);
+  const [message, setMessage] = useState<string | null>(null);
 
   const [mois, setMois] = useState(() => new Date().toISOString().slice(0, 7));
   const [filtre, setFiltre] = useState<"encours" | "retard" | "a_valider" | "tous">("encours");
@@ -89,6 +93,7 @@ function FacturationChantiers() {
 
   async function action(id: string, fn: () => Promise<unknown>) {
     setErreur(null);
+    setMessage(null);
     setBusy(id);
     try {
       await fn();
@@ -203,6 +208,7 @@ function FacturationChantiers() {
         </div>
 
         {erreur && <p className="text-sm text-destructive">{erreur}</p>}
+        {message && <p className="text-sm text-primary">{message}</p>}
 
         {suivi.isLoading ? (
           <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
@@ -239,7 +245,14 @@ function FacturationChantiers() {
                         </span>
                         {c.partenaire && <span>Pour {c.partenaire}</span>}
                         <span>
-                          {c.origine === "sous_traitance" ? "Sous-traitance" : "Chantier direct"}
+                          {c.facturer_a === "partenaire" ? "Sous-traitance" : "Chantier direct"}
+                        </span>
+                        <span className="text-primary">
+                          Facture à{" "}
+                          {c.facturer_a === "partenaire"
+                            ? `${c.destinataire_nom ?? "partenaire"} (partenaire)`
+                            : `${c.destinataire_nom ?? "client"} (client)`}
+                          {c.destinataire_email ? "" : " — e-mail manquant"}
                         </span>
                         {c.termine_at && (
                           <span>
@@ -396,6 +409,26 @@ function FacturationChantiers() {
                     >
                       {busy === c.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
                       Enregistrer
+                    </button>
+                    <button
+                      type="button"
+                      disabled={busy === c.id}
+                      onClick={() =>
+                        void action(c.id, async () => {
+                          const r = await creerFacture({ data: { id: c.id } });
+                          setMessage(
+                            `Facture ${r.numero} créée au nom de ${r.destinataire} (${
+                              r.facturer_a === "partenaire" ? "partenaire" : "client"
+                            }).`,
+                          );
+                        })
+                      }
+                      className="bg-primary text-primary-foreground rounded-sm px-3 py-2 text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-60 min-h-10"
+                    >
+                      <Receipt className="h-3.5 w-3.5" />
+                      {c.facturer_a === "partenaire"
+                        ? "Facturer le partenaire"
+                        : "Facturer le client"}
                     </button>
                   </form>
                 </li>
