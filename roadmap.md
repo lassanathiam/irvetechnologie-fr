@@ -5,4 +5,4 @@
 - [x] Unifier visuellement tout l’espace professionnel et sa navigation avec le tableau sombre
 - [x] Appliquer le tableau de bord blanc et bleu avec menu latéral choisi
 
-- [ ] Ajouter le mode intervention mobile repliable au planning
+- [x] Ajouter le mode intervention mobile repliable au planning
