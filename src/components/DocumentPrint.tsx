@@ -1,6 +1,7 @@
 import { COMPANY, dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, MENTIONS_DEVIS, MENTIONS_FACTURE } from "@/lib/billing";
 import { BrandLogo } from "@/components/BrandLogo";
+import { CompanySeal } from "@/components/CompanySeal";
 
 export type DocLine = {
   libelle: string;
@@ -244,7 +245,10 @@ export function DocumentPrint({
               <div className="text-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {COMPANY.raisonSociale}
               </div>
-              <div className="mt-1 h-12 text-[10px] text-muted-foreground">Date &amp; signature</div>
+              <div className="mt-1">
+                <CompanySeal className="max-w-[170px]" />
+              </div>
+              <div className="mt-2 text-[10px] text-muted-foreground">Cachet et signature</div>
             </div>
           </div>
         )}
