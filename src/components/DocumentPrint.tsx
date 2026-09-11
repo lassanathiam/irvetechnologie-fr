@@ -39,11 +39,13 @@ export function DocumentPrint({
   doc,
   items,
   signature,
+  accentColor = "#0ea5e9",
 }: {
   type: "devis" | "facture";
   doc: DocHeader;
   items: DocLine[];
   signature?: DocSignature | null;
+  accentColor?: string;
 }) {
   const lines = items.map((i) => ({
     ...i,
@@ -54,11 +56,12 @@ export function DocumentPrint({
   const totals = computeTotals(lines, Number(doc.remise_pct) || 0);
   const isFacture = type === "facture";
   const acompte = acompteAmount(totals.total_ttc, Number(doc.acompte_pct) || 0);
+  const accent = accentColor || "#0ea5e9";
 
   return (
     <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
       {/* En-tête : émetteur à gauche, client en face à droite */}
-      <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2 border-primary/70">
+      <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2" style={{ borderColor: accent }}>
         <div className="flex items-start gap-4">
           <BrandLogo className="h-16 w-16" />
           <div>
@@ -68,7 +71,10 @@ export function DocumentPrint({
             <div className="text-mono text-[11px] font-bold text-primary uppercase tracking-[0.18em]">
               Borne de l&apos;Ouest
             </div>
-            <div className="mt-1.5 inline-block border border-primary/60 rounded-sm px-2 py-1 text-mono text-[10px] font-bold text-primary">
+            <div
+              className="mt-1.5 inline-block border rounded-sm px-2 py-1 text-mono text-[10px] font-bold"
+              style={{ borderColor: accent, color: accent }}
+            >
               {COMPANY.qualifications}
             </div>
             <div className="mt-2 text-[12px] text-muted-foreground space-y-0.5">
@@ -176,7 +182,9 @@ export function DocumentPrint({
             <span className="font-extrabold uppercase text-mono text-[11px] tracking-[0.14em]">
               Total TTC
             </span>
-            <span className="text-xl font-extrabold text-primary">{euro(totals.total_ttc)}</span>
+            <span className="text-xl font-extrabold" style={{ color: accent }}>
+              {euro(totals.total_ttc)}
+            </span>
           </div>
           {!isFacture && acompte > 0 && (
             <div className="pt-1 text-[12px] flex justify-between">
@@ -208,7 +216,10 @@ export function DocumentPrint({
           <ul className="text-[11px] text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-0.5">
             {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
               <li key={m}>
-                <span className="text-primary font-bold">·</span> {m}
+                <span className="font-bold" style={{ color: accent }}>
+                  ·
+                </span>{" "}
+                {m}
               </li>
             ))}
           </ul>
@@ -217,8 +228,8 @@ export function DocumentPrint({
         {/* Signatures côte à côte (horizontal) */}
         {!isFacture && (
           <div className="mt-5 grid grid-cols-2 gap-4">
-            <div className="border-2 border-primary/70 rounded-sm p-3">
-              <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em] text-primary">
+            <div className="border-2 rounded-sm p-3" style={{ borderColor: accent }}>
+              <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: accent }}>
                 {signature?.signature_client ? "Devis signé — bon pour accord" : "Client — bon pour accord"}
               </div>
               {signature?.signature_client ? (
@@ -258,8 +269,8 @@ export function DocumentPrint({
 
 
       {/* Encart de partage */}
-      <div className="mt-5 border border-primary/40 rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed">
-        <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em] text-primary">
+      <div className="mt-5 border rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed" style={{ borderColor: `${accent}66` }}>
+        <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: accent }}>
           Recommandez Borne de l'Ouest
         </div>
         <p className="mt-1.5 text-muted-foreground">

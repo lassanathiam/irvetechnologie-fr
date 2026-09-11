@@ -1,16 +1,18 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
-import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Printer, Receipt } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Plus, Printer, Receipt, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
+import { computeTotals } from "@/lib/billing";
 import {
   convertirEnFacture,
   envoyerDevis,
   getDevis,
   listEnvoisDevis,
+  updateDevis,
   updateStatutDevis,
 } from "@/lib/devis.functions";
 
@@ -34,6 +36,31 @@ const STATUTS = [
   { value: "expire", label: "Expiré" },
 ] as const;
 
+type EditLine = {
+  key: string;
+  libelle: string;
+  description: string;
+  quantite: number;
+  prix_unitaire: number;
+  tva: number;
+};
+
+type EditState = {
+  client_nom: string;
+  client_email: string;
+  client_telephone: string;
+  client_adresse: string;
+  client_cp_ville: string;
+  objet: string;
+  notes: string;
+  date_emission: string;
+  date_expiration: string;
+  remise_pct: number;
+  acompte_pct: number;
+  conditions_paiement: string;
+  lines: EditLine[];
+};
+
 function DevisDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
@@ -41,12 +68,16 @@ function DevisDetail() {
   const fetchDevis = useServerFn(getDevis);
   const sendFn = useServerFn(envoyerDevis);
   const statutFn = useServerFn(updateStatutDevis);
+  const updateFn = useServerFn(updateDevis);
   const convertFn = useServerFn(convertirEnFacture);
   const envoisFn = useServerFn(listEnvoisDevis);
 
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [editOpen, setEditOpen] = useState(false);
+  const [editState, setEditState] = useState<EditState | null>(null);
+  const [accentColor, setAccentColor] = useState("#0ea5e9");
 
   const query = useQuery({
     queryKey: ["devis", id],
@@ -58,6 +89,39 @@ function DevisDetail() {
     queryFn: () => envoisFn({ data: { id } }),
     retry: 1,
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const saved = window.localStorage.getItem(`devis-accent:${id}`);
+    if (saved && /^#[0-9a-fA-F]{6}$/.test(saved)) setAccentColor(saved);
+  }, [id]);
+
+  useEffect(() => {
+    if (!query.data || editState) return;
+    const { devis, items } = query.data;
+    setEditState({
+      client_nom: devis.client_nom ?? "",
+      client_email: devis.client_email ?? "",
+      client_telephone: devis.client_telephone ?? "",
+      client_adresse: devis.client_adresse ?? "",
+      client_cp_ville: devis.client_cp_ville ?? "",
+      objet: devis.objet ?? "",
+      notes: devis.notes ?? "",
+      date_emission: devis.date_emission,
+      date_expiration: devis.date_expiration,
+      remise_pct: Number(devis.remise_pct ?? 0),
+      acompte_pct: Number(devis.acompte_pct ?? 0),
+      conditions_paiement: devis.conditions_paiement ?? "",
+      lines: items.map((line) => ({
+        key: line.id,
+        libelle: line.libelle ?? "",
+        description: line.description ?? "",
+        quantite: Number(line.quantite ?? 1),
+        prix_unitaire: Number(line.prix_unitaire ?? 0),
+        tva: Number(line.tva ?? 20),
+      })),
+    });
+  }, [query.data, editState]);
 
   const send = useMutation({
     mutationFn: () => sendFn({ data: { id, message: message || null } }),
@@ -91,6 +155,46 @@ function DevisDetail() {
     },
   });
 
+  const saveEdit = useMutation({
+    mutationFn: async () => {
+      if (!editState) throw new Error("Aucun changement à enregistrer.");
+      return updateFn({
+        data: {
+          id,
+          client_nom: editState.client_nom,
+          client_email: editState.client_email || null,
+          client_telephone: editState.client_telephone || null,
+          client_adresse: editState.client_adresse || null,
+          client_cp_ville: editState.client_cp_ville || null,
+          objet: editState.objet || null,
+          notes: editState.notes || null,
+          date_emission: editState.date_emission,
+          date_expiration: editState.date_expiration,
+          remise_pct: editState.remise_pct,
+          acompte_pct: editState.acompte_pct,
+          conditions_paiement: editState.conditions_paiement || null,
+          rendezvous_id: query.data?.devis?.rendezvous_id ?? null,
+          items: editState.lines.map((line) => ({
+            libelle: line.libelle,
+            description: line.description || null,
+            quantite: line.quantite,
+            prix_unitaire: line.prix_unitaire,
+            tva: line.tva,
+          })),
+        },
+      });
+    },
+    onSuccess: () => {
+      setError(null);
+      setFeedback("Devis modifié avec succès.");
+      setEditOpen(false);
+      setEditState(null);
+      qc.invalidateQueries({ queryKey: ["devis", id] });
+      qc.invalidateQueries({ queryKey: ["devis"] });
+    },
+    onError: (err) => setError(err instanceof Error ? err.message : "Modification impossible."),
+  });
+
   if (query.isLoading) {
     return (
       <ProShell>
@@ -109,6 +213,19 @@ function DevisDetail() {
   const { devis, items } = query.data;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const lienClient = `${origin}/devis-client/${devis.public_token}`;
+  const editTotals = useMemo(() => {
+    if (!editState) return null;
+    return computeTotals(
+      editState.lines.map((line) => ({
+        libelle: line.libelle,
+        description: line.description || null,
+        quantite: line.quantite,
+        prix_unitaire: line.prix_unitaire,
+        tva: line.tva,
+      })),
+      editState.remise_pct,
+    );
+  }, [editState]);
 
   return (
     <ProShell>
@@ -132,6 +249,28 @@ function DevisDetail() {
               </option>
             ))}
           </select>
+          <label className="inline-flex items-center gap-2 text-mono text-xs border border-border rounded-sm px-2 py-2">
+            Couleur
+            <input
+              type="color"
+              value={accentColor}
+              onChange={(e) => {
+                const value = e.target.value;
+                setAccentColor(value);
+                if (typeof window !== "undefined") {
+                  window.localStorage.setItem(`devis-accent:${id}`, value);
+                }
+              }}
+              className="h-6 w-8 bg-transparent border-0 p-0 cursor-pointer"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={() => setEditOpen((v) => !v)}
+            className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary"
+          >
+            {editOpen ? "Fermer l'édition" : "Modifier le devis"}
+          </button>
           <button
             type="button"
             onClick={() => window.print()}
@@ -159,6 +298,246 @@ function DevisDetail() {
             </button>
           )}
         </div>
+
+        {editOpen && editState && (
+          <section className="border border-border rounded-sm bg-card p-6 space-y-4">
+            <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+              Modifier le devis
+            </h2>
+            <div className="grid sm:grid-cols-2 gap-4">
+              <EditField
+                label="Nom client"
+                value={editState.client_nom}
+                onChange={(v) => setEditState({ ...editState, client_nom: v })}
+              />
+              <EditField
+                label="Objet"
+                value={editState.objet}
+                onChange={(v) => setEditState({ ...editState, objet: v })}
+              />
+              <EditField
+                label="Email"
+                value={editState.client_email}
+                onChange={(v) => setEditState({ ...editState, client_email: v })}
+              />
+              <EditField
+                label="Téléphone"
+                value={editState.client_telephone}
+                onChange={(v) => setEditState({ ...editState, client_telephone: v })}
+              />
+              <EditField
+                label="Adresse"
+                value={editState.client_adresse}
+                onChange={(v) => setEditState({ ...editState, client_adresse: v })}
+              />
+              <EditField
+                label="CP / Ville"
+                value={editState.client_cp_ville}
+                onChange={(v) => setEditState({ ...editState, client_cp_ville: v })}
+              />
+              <EditField
+                label="Date émission"
+                type="date"
+                value={editState.date_emission}
+                onChange={(v) => setEditState({ ...editState, date_emission: v })}
+              />
+              <EditField
+                label="Date expiration"
+                type="date"
+                value={editState.date_expiration}
+                onChange={(v) => setEditState({ ...editState, date_expiration: v })}
+              />
+              <EditField
+                label="Remise (%)"
+                type="number"
+                value={String(editState.remise_pct)}
+                onChange={(v) =>
+                  setEditState({ ...editState, remise_pct: Math.max(0, Math.min(100, Number(v) || 0)) })
+                }
+              />
+              <EditField
+                label="Acompte (%)"
+                type="number"
+                value={String(editState.acompte_pct)}
+                onChange={(v) =>
+                  setEditState({ ...editState, acompte_pct: Math.max(0, Math.min(100, Number(v) || 0)) })
+                }
+              />
+            </div>
+            <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">Conditions de paiement</span>
+              <textarea
+                rows={3}
+                value={editState.conditions_paiement}
+                onChange={(e) => setEditState({ ...editState, conditions_paiement: e.target.value })}
+                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
+              />
+            </label>
+            <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">Notes</span>
+              <textarea
+                rows={3}
+                value={editState.notes}
+                onChange={(e) => setEditState({ ...editState, notes: e.target.value })}
+                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
+              />
+            </label>
+
+            <div className="space-y-3">
+              <div className="flex items-center justify-between gap-3">
+                <h3 className="text-sm font-semibold">Lignes du devis</h3>
+                <button
+                  type="button"
+                  onClick={() =>
+                    setEditState({
+                      ...editState,
+                      lines: [
+                        ...editState.lines,
+                        {
+                          key: crypto.randomUUID(),
+                          libelle: "Ligne libre",
+                          description: "",
+                          quantite: 1,
+                          prix_unitaire: 0,
+                          tva: 20,
+                        },
+                      ],
+                    })
+                  }
+                  className="border border-border rounded-sm px-3 py-2 text-xs inline-flex items-center gap-1.5 hover:border-primary hover:text-primary"
+                >
+                  <Plus className="h-3.5 w-3.5" /> Ajouter une ligne
+                </button>
+              </div>
+              {editState.lines.map((line) => (
+                <div key={line.key} className="border border-border rounded-sm p-3 space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      value={line.libelle}
+                      onChange={(e) =>
+                        setEditState({
+                          ...editState,
+                          lines: editState.lines.map((l) =>
+                            l.key === line.key ? { ...l, libelle: e.target.value } : l,
+                          ),
+                        })
+                      }
+                      className="flex-1 bg-input border border-border rounded-sm px-3 py-2 text-sm"
+                    />
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditState({
+                          ...editState,
+                          lines: editState.lines.filter((l) => l.key !== line.key),
+                        })
+                      }
+                      className="text-muted-foreground hover:text-destructive"
+                      aria-label="Supprimer la ligne"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                  <textarea
+                    rows={2}
+                    value={line.description}
+                    onChange={(e) =>
+                      setEditState({
+                        ...editState,
+                        lines: editState.lines.map((l) =>
+                          l.key === line.key ? { ...l, description: e.target.value } : l,
+                        ),
+                      })
+                    }
+                    className="w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
+                    placeholder="Description (optionnelle)"
+                  />
+                  <div className="grid grid-cols-3 gap-2">
+                    <EditField
+                      label="Qté"
+                      type="number"
+                      value={String(line.quantite)}
+                      onChange={(v) =>
+                        setEditState({
+                          ...editState,
+                          lines: editState.lines.map((l) =>
+                            l.key === line.key ? { ...l, quantite: Math.max(1, Number(v) || 1) } : l,
+                          ),
+                        })
+                      }
+                    />
+                    <EditField
+                      label="PU HT"
+                      type="number"
+                      value={String(line.prix_unitaire)}
+                      onChange={(v) =>
+                        setEditState({
+                          ...editState,
+                          lines: editState.lines.map((l) =>
+                            l.key === line.key ? { ...l, prix_unitaire: Math.max(0, Number(v) || 0) } : l,
+                          ),
+                        })
+                      }
+                    />
+                    <EditField
+                      label="TVA %"
+                      type="number"
+                      value={String(line.tva)}
+                      onChange={(v) =>
+                        setEditState({
+                          ...editState,
+                          lines: editState.lines.map((l) =>
+                            l.key === line.key ? { ...l, tva: Math.max(0, Number(v) || 0) } : l,
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {editTotals && (
+              <p className="text-xs text-muted-foreground">
+                Nouveau total TTC estimé :{" "}
+                <span className="text-mono font-semibold">
+                  {new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(
+                    editTotals.total_ttc,
+                  )}
+                </span>
+              </p>
+            )}
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={
+                  saveEdit.isPending ||
+                  editState.client_nom.trim().length < 2 ||
+                  editState.lines.length === 0
+                }
+                onClick={() => {
+                  setError(null);
+                  setFeedback(null);
+                  saveEdit.mutate();
+                }}
+                className="hero-grad text-primary-foreground text-mono text-xs px-5 py-2.5 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
+              >
+                {saveEdit.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                Enregistrer les modifications
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  setEditOpen(false);
+                  setEditState(null);
+                }}
+                className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary"
+              >
+                Annuler
+              </button>
+            </div>
+          </section>
+        )}
 
         <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
           <div className="border border-border rounded-sm bg-card p-6 space-y-3">
@@ -306,6 +685,7 @@ function DevisDetail() {
       <div className="mt-8 print:mt-0">
         <DocumentPrint
           type="devis"
+          accentColor={accentColor}
           doc={{
             numero: devis.numero,
             date_emission: devis.date_emission,
@@ -341,5 +721,29 @@ function TrackRow({ label, value }: { label: string; value: string | null }) {
         {value ?? "—"}
       </span>
     </div>
+  );
+}
+
+function EditField({
+  label,
+  value,
+  onChange,
+  type = "text",
+}: {
+  label: string;
+  value: string;
+  onChange: (value: string) => void;
+  type?: "text" | "email" | "date" | "number";
+}) {
+  return (
+    <label className="block">
+      <span className="text-mono text-xs text-muted-foreground">{label}</span>
+      <input
+        type={type}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        className="mt-1.5 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm"
+      />
+    </label>
   );
 }
