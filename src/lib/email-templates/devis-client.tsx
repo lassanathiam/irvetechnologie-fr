@@ -104,10 +104,10 @@ export function DevisClientEmail(data: DevisEmailData) {
                   borderRadius: 4,
                 }}
               >
-                {isFacture ? "Voir et télécharger la facture" : "Voir, télécharger et signer le devis"}
+                {isFacture ? "Voir et télécharger la facture" : "Voir et accepter le devis"}
               </a>
               <Text style={{ color: muted, fontSize: 11, margin: "10px 0 0" }}>
-                Lien personnel — consultation, téléchargement PDF et signature en ligne.
+                Lien personnel — consultation, téléchargement PDF et acceptation en ligne.
               </Text>
             </Section>
           )}

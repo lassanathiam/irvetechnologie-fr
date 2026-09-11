@@ -6,7 +6,11 @@ import { CheckCircle2, Loader2, Printer } from "lucide-react";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SignaturePad } from "@/components/SignaturePad";
-import { getDevisPublic, signerDevisPublic } from "@/lib/devis-public.functions";
+import {
+  accepterDevisPublic,
+  getDevisPublic,
+  signerDevisPublic,
+} from "@/lib/devis-public.functions";
 import { COMPANY } from "@/lib/company";
 
 export const Route = createFileRoute("/devis-client/$token")({
@@ -35,10 +39,12 @@ function DevisClientPage() {
   const { token } = Route.useParams();
   const qc = useQueryClient();
   const fetchDevis = useServerFn(getDevisPublic);
+  const acceptFn = useServerFn(accepterDevisPublic);
   const signFn = useServerFn(signerDevisPublic);
 
   const [nom, setNom] = useState("");
   const [signature, setSignature] = useState<string | null>(null);
+  const [acceptationConfirmee, setAcceptationConfirmee] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const query = useQuery({
@@ -56,6 +62,16 @@ function DevisClientPage() {
     },
     onError: (err) =>
       setError(err instanceof Error ? err.message : "Signature impossible pour le moment."),
+  });
+
+  const accept = useMutation({
+    mutationFn: () => acceptFn({ data: { token, signataire_nom: nom.trim() } }),
+    onSuccess: () => {
+      setError(null);
+      qc.invalidateQueries({ queryKey: ["devis-public", token] });
+    },
+    onError: (err) =>
+      setError(err instanceof Error ? err.message : "Acceptation impossible pour le moment."),
   });
 
   if (query.isLoading) {
@@ -147,11 +163,11 @@ function DevisClientPage() {
         {!signe ? (
           <section className="print:hidden border border-border rounded-sm bg-card p-6 space-y-4">
             <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-              Signer le devis en ligne
+              Accepter le devis en ligne
             </h2>
             <p className="text-sm text-muted-foreground">
-              Votre signature vaut acceptation du devis et des conditions générales de vente
-              ci-dessus (bon pour accord).
+              Vous pouvez accepter rapidement le devis, ou ajouter une signature manuscrite
+              (optionnelle) juste en dessous.
             </p>
             <label className="block">
               <span className="text-mono text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
@@ -164,6 +180,35 @@ function DevisClientPage() {
                 placeholder="Ex. Martin Dupont"
               />
             </label>
+            <label className="flex items-start gap-2 text-xs text-muted-foreground">
+              <input
+                type="checkbox"
+                checked={acceptationConfirmee}
+                onChange={(e) => setAcceptationConfirmee(e.target.checked)}
+                className="mt-0.5 h-4 w-4"
+              />
+              <span>
+                Je confirme accepter ce devis et les conditions indiquées (bon pour accord).
+              </span>
+            </label>
+            <button
+              type="button"
+              disabled={nom.trim().length < 2 || !acceptationConfirmee || accept.isPending}
+              onClick={() => accept.mutate()}
+              className="hero-grad text-primary-foreground text-mono text-xs px-6 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
+            >
+              {accept.isPending ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <CheckCircle2 className="h-4 w-4" />
+              )}
+              Accepter le devis
+            </button>
+
+            <div className="border-t border-border pt-4">
+              <p className="text-xs text-muted-foreground mb-3">
+                Option recommandée si vous souhaitez signer à la main :
+              </p>
             <SignaturePad label="Votre signature" value={signature} onChange={setSignature} />
             <button
               type="button"
@@ -176,8 +221,9 @@ function DevisClientPage() {
               ) : (
                 <CheckCircle2 className="h-4 w-4" />
               )}
-              Valider ma signature
+              Accepter avec signature manuscrite
             </button>
+            </div>
             {error ? <p className="text-mono text-xs text-destructive">{error}</p> : null}
           </section>
         ) : null}

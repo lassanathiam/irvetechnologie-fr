@@ -202,7 +202,7 @@ function DevisDetail() {
 
             <div className="pt-4 border-t border-border space-y-2">
               <div className="text-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
-                Lien client (consultation, PDF, signature)
+                Lien client (consultation, PDF, acceptation)
               </div>
               <div className="flex items-center gap-2">
                 <input
