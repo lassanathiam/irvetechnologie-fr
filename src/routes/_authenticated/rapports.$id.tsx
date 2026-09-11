@@ -7,6 +7,7 @@ import { ArrowLeft, Download, Loader2, Printer, Zap } from "lucide-react";
 import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { COMPANY, LOGO_URL, dateFr } from "@/lib/company";
 import { getRapport, getRapportPhotoUrls } from "@/lib/rapports.functions";
+import { CompanySeal } from "@/components/CompanySeal";
 import {
   type CheckState,
   PHOTOS_REQUISES,
@@ -272,6 +273,7 @@ function RapportDetail() {
             <SignatureBlock
               title={`Technicien — ${r.technicien || COMPANY.raisonSociale}`}
               image={r.signature_technicien}
+              withCompanySeal
             />
             <SignatureBlock
               title={`Client — ${r.signataire_client || r.client_nom}`}
@@ -286,6 +288,7 @@ function RapportDetail() {
             </div>
             <div>{COMPANY.qualificationsDetail}</div>
           </footer>
+
         </article>
       </div>
     </div>
@@ -316,13 +319,26 @@ function Info({ label, value }: { label: string; value?: string | null }) {
   );
 }
 
-function SignatureBlock({ title, image }: { title: string; image?: string | null }) {
+function SignatureBlock({
+  title,
+  image,
+  withCompanySeal = false,
+}: {
+  title: string;
+  image?: string | null;
+  withCompanySeal?: boolean;
+}) {
   return (
     <div className="border border-border rounded-sm p-4">
       <div className="text-mono text-xs text-muted-foreground">{title}</div>
       <div className="mt-2 h-24 bg-white rounded-sm border border-border grid place-items-center overflow-hidden">
         {image ? <img src={image} alt="Signature" className="max-h-24 w-auto" /> : null}
       </div>
+      {withCompanySeal && (
+        <div className="mt-2">
+          <CompanySeal className="max-w-[150px]" />
+        </div>
+      )}
       <div className="text-[11px] text-muted-foreground mt-2">Date et signature</div>
     </div>
   );
