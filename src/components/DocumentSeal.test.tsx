@@ -4,10 +4,9 @@ import { CompanySeal } from "./CompanySeal";
 import { DocumentPrint } from "./DocumentPrint";
 
 describe("document seal rendering", () => {
-  it("affiche le cachet et la signature IRVE", () => {
+  it("affiche le visuel numérique combiné cachet + signature", () => {
     const html = renderToStaticMarkup(<CompanySeal />);
-    expect(html).toContain("/cachet-irve.jpg");
-    expect(html).toContain("/signature-irve.jpg");
+    expect(html).toContain("/cachet-signature-irve.svg");
   });
 
   it("injecte le cachet entreprise dans un devis imprimable", () => {
@@ -31,7 +30,7 @@ describe("document seal rendering", () => {
         ]}
       />,
     );
-    expect(html).toContain("/cachet-irve.jpg");
-    expect(html).toContain("Cachet et signature");
+    expect(html).toContain("/cachet-signature-irve.svg");
+    expect(html).toContain("Cachet et signature numériques");
   });
 });

@@ -246,9 +246,9 @@ export function DocumentPrint({
                 {COMPANY.raisonSociale}
               </div>
               <div className="mt-1">
-                <CompanySeal className="max-w-[170px]" />
+                <CompanySeal className="max-w-[150px]" />
               </div>
-              <div className="mt-2 text-[10px] text-muted-foreground">Cachet et signature</div>
+              <div className="mt-1 text-[10px] text-muted-foreground">Cachet et signature numériques</div>
             </div>
           </div>
         )}
