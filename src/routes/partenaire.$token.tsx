@@ -38,6 +38,7 @@ import {
 import {
   splitDossiersByLifecycle,
 } from "@/lib/partenaireDossierBuckets";
+import { dossierCorrespondAuFiltre } from "@/lib/partenaireDossierFilter";
 
 
 export const Route = createFileRoute("/partenaire/$token")({
@@ -464,20 +465,8 @@ function EspacePartenaire({
 
   const dossiers = espace.data?.dossiers ?? [];
   const buckets = splitDossiersByLifecycle(dossiers);
-  const texteFiltre = filtreTexte.trim().toLocaleLowerCase("fr-FR");
   const correspondAuFiltre = (d: (typeof dossiers)[number]) =>
-    texteFiltre.length === 0 ||
-    [
-      d.client_nom,
-      d.adresse,
-      d.cp_ville ?? "",
-      d.designation ?? "",
-      d.client_telephone ?? "",
-      d.client_email ?? "",
-    ]
-      .join(" ")
-      .toLocaleLowerCase("fr-FR")
-      .includes(texteFiltre);
+    dossierCorrespondAuFiltre(d, filtreTexte);
   const dossiersAPlanifier = buckets.aPlanifier.filter(correspondAuFiltre);
   const dossiersPlanifies = buckets.planifies.filter(correspondAuFiltre);
   const dossiersEnCours = buckets.enCours.filter(correspondAuFiltre);
