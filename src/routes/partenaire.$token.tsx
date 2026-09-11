@@ -317,6 +317,8 @@ function EspacePartenaire({
   const [montantBusy, setMontantBusy] = useState<string | null>(null);
   /** Affichage complet d'une section (sinon limité pour éviter les longues pages). */
   const [sectionsEtendues, setSectionsEtendues] = useState<Record<string, boolean>>({});
+  /** Filtre texte rapide pour retrouver un chantier sans scroller toute la page. */
+  const [filtreTexte, setFiltreTexte] = useState("");
 
   async function envoyerValorisation(rendezvousId: string, e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -462,31 +464,43 @@ function EspacePartenaire({
 
   const dossiers = espace.data?.dossiers ?? [];
   const buckets = splitDossiersByLifecycle(dossiers);
-  const dossiersAPlanifier = buckets.aPlanifier;
-  const dossiersPlanifies = buckets.planifies;
-  const dossiersEnCours = buckets.enCours;
-  const dossiersTerminesAFacturer = buckets.terminesAFacturer;
-  const dossiersFactures = buckets.factures;
+  const texteFiltre = filtreTexte.trim().toLocaleLowerCase("fr-FR");
+  const correspondAuFiltre = (d: (typeof dossiers)[number]) =>
+    texteFiltre.length === 0 ||
+    [
+      d.client_nom,
+      d.adresse,
+      d.cp_ville ?? "",
+      d.designation ?? "",
+      d.client_telephone ?? "",
+      d.client_email ?? "",
+    ]
+      .join(" ")
+      .toLocaleLowerCase("fr-FR")
+      .includes(texteFiltre);
+  const dossiersAPlanifier = buckets.aPlanifier.filter(correspondAuFiltre);
+  const dossiersPlanifies = buckets.planifies.filter(correspondAuFiltre);
+  const dossiersEnCours = buckets.enCours.filter(correspondAuFiltre);
+  const dossiersTerminesAFacturer = buckets.terminesAFacturer.filter(correspondAuFiltre);
+  const dossiersFactures = buckets.factures.filter(correspondAuFiltre);
   const totalDossiers = dossiers.length;
+  const totalFiltres =
+    dossiersAPlanifier.length +
+    dossiersPlanifies.length +
+    dossiersEnCours.length +
+    dossiersTerminesAFacturer.length +
+    dossiersFactures.length;
   const dossiersParDefaut = 4;
 
   function renderDossier(d: (typeof dossiers)[number]) {
     return (
-      <li key={d.id} className="bg-card border border-border rounded-xl p-4">
-        <p className="font-medium text-sm">
+      <li key={d.id} className="bg-card border border-border rounded-lg p-3">
+        <p className="font-medium text-sm leading-tight">
           {d.client_nom}
           {d.designation ? (
             <span className="text-muted-foreground font-normal"> — {d.designation}</span>
           ) : null}
         </p>
-        {(d.metrage_m != null || d.puissance_borne || d.phase_installation || d.type_pose) && (
-          <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
-            {d.metrage_m != null && <span>{Number(d.metrage_m)} m</span>}
-            {d.puissance_borne && <span>{d.puissance_borne}</span>}
-            {d.phase_installation && <span>{d.phase_installation}</span>}
-            {d.type_pose && <span>Pose {d.type_pose.toLowerCase()}</span>}
-          </p>
-        )}
         <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
           <span className="inline-flex items-center gap-1">
             <MapPin className="h-3 w-3" /> {d.adresse}
@@ -516,6 +530,14 @@ function EspacePartenaire({
                   ? "En attente de planification"
                   : "Planifié"}
         </p>
+        {(d.metrage_m != null || d.puissance_borne || d.phase_installation || d.type_pose) && (
+          <p className="text-[11px] text-muted-foreground mt-1 flex flex-wrap gap-x-2 gap-y-1">
+            {d.metrage_m != null && <span>{Number(d.metrage_m)} m</span>}
+            {d.puissance_borne && <span>{d.puissance_borne}</span>}
+            {d.phase_installation && <span>{d.phase_installation}</span>}
+            {d.type_pose && <span>Pose {d.type_pose.toLowerCase()}</span>}
+          </p>
+        )}
 
         <details className="mt-3 rounded-lg border border-border/70 bg-muted/20">
           <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-primary">
@@ -922,12 +944,27 @@ function EspacePartenaire({
 
         <section className="space-y-3">
           <h2 className="text-mono text-xs text-primary uppercase">Mes dossiers</h2>
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">
+              Recherche rapide (nom, ville, adresse, téléphone)
+            </span>
+            <input
+              value={filtreTexte}
+              onChange={(e) => setFiltreTexte(e.target.value)}
+              className={INPUT}
+              placeholder="Ex. Dupont, Dakar, 06 12..."
+            />
+          </label>
           {espace.isLoading ? (
             <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
             </p>
           ) : dossiers.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun dossier transmis pour le moment.</p>
+          ) : totalFiltres === 0 ? (
+            <p className="text-sm text-muted-foreground bg-card border border-border rounded-lg px-3 py-2">
+              Aucun dossier ne correspond à votre recherche.
+            </p>
           ) : (
             <div className="space-y-5">
               <div className="grid gap-2 sm:grid-cols-2">
