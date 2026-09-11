@@ -315,6 +315,8 @@ function EspacePartenaire({
   const [materielBusy, setMaterielBusy] = useState<string | null>(null);
   /** Dossier dont le montant valorisé est en cours d'envoi. */
   const [montantBusy, setMontantBusy] = useState<string | null>(null);
+  /** Affichage complet d'une section (sinon limité pour éviter les longues pages). */
+  const [sectionsEtendues, setSectionsEtendues] = useState<Record<string, boolean>>({});
 
   async function envoyerValorisation(rendezvousId: string, e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -460,11 +462,13 @@ function EspacePartenaire({
 
   const dossiers = espace.data?.dossiers ?? [];
   const buckets = splitDossiersByLifecycle(dossiers);
-  const dossiersNouveaux = buckets.nouveaux;
+  const dossiersAPlanifier = buckets.aPlanifier;
+  const dossiersPlanifies = buckets.planifies;
   const dossiersEnCours = buckets.enCours;
   const dossiersTerminesAFacturer = buckets.terminesAFacturer;
   const dossiersFactures = buckets.factures;
   const totalDossiers = dossiers.length;
+  const dossiersParDefaut = 4;
 
   function renderDossier(d: (typeof dossiers)[number]) {
     return (
@@ -513,7 +517,11 @@ function EspacePartenaire({
                   : "Planifié"}
         </p>
 
-        <div className="mt-3 border-t border-border pt-3 space-y-3">
+        <details className="mt-3 rounded-lg border border-border/70 bg-muted/20">
+          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-primary">
+            Actions et détails du chantier
+          </summary>
+          <div className="border-t border-border px-3 py-3 space-y-3">
           {(d.termine_at || d.statut === "termine" || d.statut === "realise") && (
             <div>
               <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
@@ -666,7 +674,8 @@ function EspacePartenaire({
               </p>
             )}
           </div>
-        </div>
+          </div>
+        </details>
       </li>
     );
   }
@@ -924,10 +933,16 @@ function EspacePartenaire({
               <div className="grid gap-2 sm:grid-cols-2">
                 {[
                   {
-                    key: "kpi-nouveaux",
-                    label: "Nouveaux / à planifier",
-                    value: dossiersNouveaux.length,
+                    key: "kpi-a-planifier",
+                    label: "Nouveaux à planifier",
+                    value: dossiersAPlanifier.length,
                     cls: "border-primary/30 bg-primary/5 text-primary",
+                  },
+                  {
+                    key: "kpi-planifies",
+                    label: "Planifiés",
+                    value: dossiersPlanifies.length,
+                    cls: "border-sky-500/30 bg-sky-500/10 text-sky-700 dark:text-sky-300",
                   },
                   {
                     key: "kpi-encours",
@@ -959,11 +974,18 @@ function EspacePartenaire({
               </div>
               {[
                 {
-                  key: "nouveaux",
-                  title: "Nouveaux / à planifier",
-                  hint: "Dossiers transmis en attente de démarrage.",
-                  items: dossiersNouveaux,
+                  key: "a-planifier",
+                  title: "Nouveaux à planifier",
+                  hint: "Le partenaire a transmis le dossier, date à fixer par l'équipe.",
+                  items: dossiersAPlanifier,
                   badgeCls: "bg-primary/10 text-primary",
+                },
+                {
+                  key: "planifies",
+                  title: "Chantiers planifiés",
+                  hint: "Date intégrée, en attente de démarrage du chantier.",
+                  items: dossiersPlanifies,
+                  badgeCls: "bg-sky-500/10 text-sky-700 dark:text-sky-300",
                 },
                 {
                   key: "encours",
@@ -986,7 +1008,13 @@ function EspacePartenaire({
                   items: dossiersFactures,
                   badgeCls: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
                 },
-              ].map((section) => (
+              ].map((section) => {
+                const etendue = sectionsEtendues[section.key] === true;
+                const visibles = etendue
+                  ? section.items
+                  : section.items.slice(0, dossiersParDefaut);
+                const restants = Math.max(0, section.items.length - visibles.length);
+                return (
                 <div key={section.key} className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold">{section.title}</h3>
@@ -1000,10 +1028,25 @@ function EspacePartenaire({
                       Aucun dossier dans cette section.
                     </p>
                   ) : (
-                    <ul className="grid gap-3">{section.items.map((d) => renderDossier(d))}</ul>
+                    <>
+                      <ul className="grid gap-3">{visibles.map((d) => renderDossier(d))}</ul>
+                      {section.items.length > dossiersParDefaut && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setSectionsEtendues((prev) => ({ ...prev, [section.key]: !etendue }))
+                          }
+                          className="text-xs font-semibold rounded-sm border border-border px-3 py-2 hover:border-primary hover:text-primary"
+                        >
+                          {etendue
+                            ? "Réduire la liste"
+                            : `Voir ${restants} chantier${restants > 1 ? "s" : ""} de plus`}
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
-              ))}
+              )})}
             </div>
           )}
         </section>
