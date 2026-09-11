@@ -39,7 +39,7 @@ export function DocumentPrint({
   doc,
   items,
   signature,
-  accentColor = "#0ea5e9",
+  accentColor = "#1459d9",
 }: {
   type: "devis" | "facture";
   doc: DocHeader;
@@ -56,7 +56,7 @@ export function DocumentPrint({
   const totals = computeTotals(lines, Number(doc.remise_pct) || 0);
   const isFacture = type === "facture";
   const acompte = acompteAmount(totals.total_ttc, Number(doc.acompte_pct) || 0);
-  const accent = accentColor || "#0ea5e9";
+  const accent = accentColor || "#1459d9";
 
   return (
     <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">

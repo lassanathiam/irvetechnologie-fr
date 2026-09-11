@@ -61,6 +61,30 @@ type EditState = {
   lines: EditLine[];
 };
 
+type EditPayload = {
+  id: string;
+  client_nom: string;
+  client_email: string | null;
+  client_telephone: string | null;
+  client_adresse: string | null;
+  client_cp_ville: string | null;
+  objet: string | null;
+  notes: string | null;
+  date_emission: string;
+  date_expiration: string;
+  remise_pct: number;
+  acompte_pct: number;
+  conditions_paiement: string | null;
+  rendezvous_id: string | null;
+  items: Array<{
+    libelle: string;
+    description: string | null;
+    quantite: number;
+    prix_unitaire: number;
+    tva: number;
+  }>;
+};
+
 function DevisDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
@@ -77,7 +101,7 @@ function DevisDetail() {
   const [error, setError] = useState<string | null>(null);
   const [editOpen, setEditOpen] = useState(false);
   const [editState, setEditState] = useState<EditState | null>(null);
-  const [accentColor, setAccentColor] = useState("#0ea5e9");
+  const [accentColor, setAccentColor] = useState("#1459d9");
 
   const query = useQuery({
     queryKey: ["devis", id],
@@ -158,39 +182,71 @@ function DevisDetail() {
   const saveEdit = useMutation({
     mutationFn: async () => {
       if (!editState) throw new Error("Aucun changement à enregistrer.");
-      return updateFn({
-        data: {
-          id,
-          client_nom: editState.client_nom,
-          client_email: editState.client_email || null,
-          client_telephone: editState.client_telephone || null,
-          client_adresse: editState.client_adresse || null,
-          client_cp_ville: editState.client_cp_ville || null,
-          objet: editState.objet || null,
-          notes: editState.notes || null,
-          date_emission: editState.date_emission,
-          date_expiration: editState.date_expiration,
-          remise_pct: editState.remise_pct,
-          acompte_pct: editState.acompte_pct,
-          conditions_paiement: editState.conditions_paiement || null,
-          rendezvous_id: query.data?.devis?.rendezvous_id ?? null,
-          items: editState.lines.map((line) => ({
-            libelle: line.libelle,
-            description: line.description || null,
-            quantite: line.quantite,
-            prix_unitaire: line.prix_unitaire,
-            tva: line.tva,
-          })),
-        },
-      });
+      const payload: EditPayload = {
+        id,
+        client_nom: editState.client_nom,
+        client_email: editState.client_email || null,
+        client_telephone: editState.client_telephone || null,
+        client_adresse: editState.client_adresse || null,
+        client_cp_ville: editState.client_cp_ville || null,
+        objet: editState.objet || null,
+        notes: editState.notes || null,
+        date_emission: editState.date_emission,
+        date_expiration: editState.date_expiration,
+        remise_pct: editState.remise_pct,
+        acompte_pct: editState.acompte_pct,
+        conditions_paiement: editState.conditions_paiement || null,
+        rendezvous_id: query.data?.devis?.rendezvous_id ?? null,
+        items: editState.lines.map((line) => ({
+          libelle: line.libelle,
+          description: line.description || null,
+          quantite: line.quantite,
+          prix_unitaire: line.prix_unitaire,
+          tva: line.tva,
+        })),
+      };
+      const result = await updateFn({ data: payload });
+      return { result, payload };
     },
-    onSuccess: () => {
+    onSuccess: async ({ payload }) => {
+      const totals = computeTotals(payload.items, payload.remise_pct);
+      qc.setQueryData(["devis", id], (old: any) => {
+        if (!old?.devis || !Array.isArray(old?.items)) return old;
+        return {
+          ...old,
+          devis: {
+            ...old.devis,
+            client_nom: payload.client_nom,
+            client_email: payload.client_email,
+            client_telephone: payload.client_telephone,
+            client_adresse: payload.client_adresse,
+            client_cp_ville: payload.client_cp_ville,
+            objet: payload.objet,
+            notes: payload.notes,
+            date_emission: payload.date_emission,
+            date_expiration: payload.date_expiration,
+            remise_pct: payload.remise_pct,
+            acompte_pct: payload.acompte_pct,
+            conditions_paiement: payload.conditions_paiement,
+            total_ht_brut: totals.total_ht_brut,
+            total_remise: totals.total_remise,
+            total_ht: totals.total_ht,
+            total_tva: totals.total_tva,
+            total_ttc: totals.total_ttc,
+          },
+          items: payload.items.map((line, idx) => ({
+            id: `${id}-${idx}`,
+            ordre: idx + 1,
+            ...line,
+          })),
+        };
+      });
       setError(null);
       setFeedback("Devis modifié avec succès.");
       setEditOpen(false);
       setEditState(null);
-      qc.invalidateQueries({ queryKey: ["devis", id] });
-      qc.invalidateQueries({ queryKey: ["devis"] });
+      await qc.invalidateQueries({ queryKey: ["devis", id] });
+      await qc.invalidateQueries({ queryKey: ["devis"] });
     },
     onError: (err) => setError(err instanceof Error ? err.message : "Modification impossible."),
   });
