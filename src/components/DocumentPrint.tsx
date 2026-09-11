@@ -166,15 +166,11 @@ export function DocumentPrint({
       <div className="mt-4 flex justify-end">
         <div className="w-full sm:w-80 space-y-1.5">
           <TotalRow label="Total HT" value={euro(totals.total_ht_brut)} />
-          {totals.total_remise > 0 && (
-            <TotalRow
-              label={`Remise ${Number(doc.remise_pct)} %`}
-              value={`- ${euro(totals.total_remise)}`}
-            />
-          )}
-          {totals.total_remise > 0 && (
-            <TotalRow label="Total HT net" value={euro(totals.total_ht)} strong />
-          )}
+          <TotalRow
+            label={`Remise ${Number(doc.remise_pct)} %`}
+            value={`- ${euro(totals.total_remise)}`}
+          />
+          <TotalRow label="Total HT net" value={euro(totals.total_ht)} strong />
           {totals.tva_par_taux.map((t) => (
             <TotalRow key={t.taux} label={`TVA (${t.taux} %)`} value={euro(t.montant)} />
           ))}

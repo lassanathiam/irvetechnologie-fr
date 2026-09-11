@@ -44,27 +44,32 @@ function publicPhotoUrl(path: string) {
 
 /** Galerie publique du site (réalisations publiées uniquement). */
 export const listPublicRealisations = createServerFn({ method: "GET" }).handler(async () => {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  const { data, error } = await supabaseAdmin
-    .from("realisations")
-    .select("id, titre, lieu, description, photo_path")
-    .eq("publie", true)
-    .order("position", { ascending: true })
-    .order("created_at", { ascending: true })
-    .limit(30);
-  if (error) {
-    console.error("realisations publiques", error);
+  try {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data, error } = await supabaseAdmin
+      .from("realisations")
+      .select("id, titre, lieu, description, photo_path")
+      .eq("publie", true)
+      .order("position", { ascending: true })
+      .order("created_at", { ascending: true })
+      .limit(30);
+    if (error) {
+      console.error("realisations publiques", error);
+      return [] as { id: string; titre: string; lieu: string; description: string; url: string }[];
+    }
+    return (data ?? [])
+      .map((r) => ({
+        id: r.id,
+        titre: r.titre,
+        lieu: r.lieu ?? "",
+        description: r.description ?? "",
+        url: r.photo_path ? publicPhotoUrl(r.photo_path) : "",
+      }))
+      .filter((r) => r.url);
+  } catch (error) {
+    console.warn("realisations publiques indisponibles, fallback local activé", error);
     return [] as { id: string; titre: string; lieu: string; description: string; url: string }[];
   }
-  return (data ?? [])
-    .map((r) => ({
-      id: r.id,
-      titre: r.titre,
-      lieu: r.lieu ?? "",
-      description: r.description ?? "",
-      url: r.photo_path ? publicPhotoUrl(r.photo_path) : "",
-    }))
-    .filter((r) => r.url);
 });
 
 

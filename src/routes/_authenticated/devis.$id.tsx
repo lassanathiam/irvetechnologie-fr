@@ -154,7 +154,9 @@ function DevisDetail() {
       setFeedback(
         res.sent
           ? "Devis envoyé au client par email."
-          : "Adresse email bloquée (désinscription) — envoi non effectué.",
+          : res.reason === "email_not_configured"
+            ? "Email non configuré (LOVABLE_API_KEY absente) — envoi non effectué."
+            : "Adresse email bloquée (désinscription) — envoi non effectué.",
       );
       qc.invalidateQueries({ queryKey: ["devis"] });
       qc.invalidateQueries({ queryKey: ["devis-envois", id] });
@@ -182,6 +184,15 @@ function DevisDetail() {
   const saveEdit = useMutation({
     mutationFn: async () => {
       if (!editState) throw new Error("Aucun changement à enregistrer.");
+      if (editState.client_nom.trim().length < 2) {
+        throw new Error("Le nom client doit contenir au moins 2 caractères.");
+      }
+      if (editState.lines.length === 0) {
+        throw new Error("Ajoutez au moins une ligne au devis.");
+      }
+      if (editState.lines.some((line) => line.libelle.trim().length < 1)) {
+        throw new Error("Chaque ligne doit avoir un libellé.");
+      }
       const payload: EditPayload = {
         id,
         client_nom: editState.client_nom,

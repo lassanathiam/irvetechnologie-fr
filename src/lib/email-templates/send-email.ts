@@ -17,6 +17,7 @@ const FROM_DOMAIN = "notify.irvetechnologie.fr"
 export type SendTemplateEmailResult =
   | { sent: true }
   | { sent: false; reason: 'recipient_suppressed' }
+  | { sent: false; reason: 'email_not_configured' }
 
 export interface SendTemplateEmailOptions {
   templateData?: Record<string, any>
@@ -39,7 +40,8 @@ export async function sendTemplateEmail(
 ): Promise<SendTemplateEmailResult> {
   const apiKey = process.env['LOVABLE_API_KEY']
   if (!apiKey) {
-    throw new Error('LOVABLE_API_KEY is not configured')
+    console.warn("Email non envoyé: LOVABLE_API_KEY manquante.");
+    return { sent: false, reason: 'email_not_configured' }
   }
 
   const template = TEMPLATES[templateName]
