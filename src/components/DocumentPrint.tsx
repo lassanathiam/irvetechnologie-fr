@@ -56,7 +56,7 @@ export function DocumentPrint({
   const acompte = acompteAmount(totals.total_ttc, Number(doc.acompte_pct) || 0);
 
   return (
-    <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
+    <div className="print-doc relative bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed pb-28">
       {/* En-tête : émetteur à gauche, client en face à droite */}
       <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2 border-primary/70">
         <div className="flex items-start gap-4">
@@ -246,7 +246,7 @@ export function DocumentPrint({
                 {COMPANY.raisonSociale}
               </div>
               <div className="mt-1">
-                <CompanySeal className="max-w-[150px]" />
+                <CompanySeal className="max-w-[120px] ml-auto" />
               </div>
               <div className="mt-1 text-[10px] text-muted-foreground">Cachet et signature numériques</div>
             </div>
@@ -267,6 +267,11 @@ export function DocumentPrint({
         <p className="mt-1 text-muted-foreground">
           Contact : {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2}
         </p>
+      </div>
+
+      {/* Apposition compacte fixe en bas à droite pour impression PDF/papier. */}
+      <div className="absolute bottom-4 right-4 w-[105px]">
+        <CompanySeal />
       </div>
     </div>
   );

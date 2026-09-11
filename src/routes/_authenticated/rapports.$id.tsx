@@ -122,7 +122,7 @@ function RapportDetail() {
       </div>
 
       <div className="mx-auto max-w-4xl px-6 py-10 print:p-0">
-        <article ref={sheetRef} className="print-sheet bg-card border border-border rounded-sm print:border-0 print:rounded-none">
+        <article ref={sheetRef} className="print-sheet relative bg-card border border-border rounded-sm print:border-0 print:rounded-none pb-28">
           <header className="p-8 border-b border-border flex items-start justify-between gap-6 flex-wrap">
             <div className="flex items-center gap-3">
               {LOGO_URL ? (
@@ -273,7 +273,6 @@ function RapportDetail() {
             <SignatureBlock
               title={`Technicien — ${r.technicien || COMPANY.raisonSociale}`}
               image={r.signature_technicien}
-              withCompanySeal
             />
             <SignatureBlock
               title={`Client — ${r.signataire_client || r.client_nom}`}
@@ -288,6 +287,10 @@ function RapportDetail() {
             </div>
             <div>{COMPANY.qualificationsDetail}</div>
           </footer>
+
+          <div className="absolute bottom-4 right-4 w-[105px]">
+            <CompanySeal />
+          </div>
         </article>
       </div>
     </div>
@@ -321,11 +324,9 @@ function Info({ label, value }: { label: string; value?: string | null }) {
 function SignatureBlock({
   title,
   image,
-  withCompanySeal = false,
 }: {
   title: string;
   image?: string | null;
-  withCompanySeal?: boolean;
 }) {
   return (
     <div className="border border-border rounded-sm p-4">
@@ -333,11 +334,6 @@ function SignatureBlock({
       <div className="mt-2 h-24 bg-white rounded-sm border border-border grid place-items-center overflow-hidden">
         {image ? <img src={image} alt="Signature" className="max-h-24 w-auto" /> : null}
       </div>
-      {withCompanySeal && (
-        <div className="mt-2">
-          <CompanySeal className="max-w-[150px]" />
-        </div>
-      )}
       <div className="text-[11px] text-muted-foreground mt-2">Date et signature</div>
     </div>
   );
