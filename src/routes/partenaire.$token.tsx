@@ -36,10 +36,7 @@ import {
   PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
 import {
-  isDossierEnCours,
-  isDossierFacture,
-  isDossierNouveau,
-  isDossierTermine,
+  splitDossiersByLifecycle,
 } from "@/lib/partenaireDossierBuckets";
 
 
@@ -462,10 +459,12 @@ function EspacePartenaire({
   }
 
   const dossiers = espace.data?.dossiers ?? [];
-  const dossiersNouveaux = dossiers.filter(isDossierNouveau);
-  const dossiersEnCours = dossiers.filter(isDossierEnCours);
-  const dossiersTerminesAFacturer = dossiers.filter((d) => isDossierTermine(d) && !isDossierFacture(d));
-  const dossiersFactures = dossiers.filter(isDossierFacture);
+  const buckets = splitDossiersByLifecycle(dossiers);
+  const dossiersNouveaux = buckets.nouveaux;
+  const dossiersEnCours = buckets.enCours;
+  const dossiersTerminesAFacturer = buckets.terminesAFacturer;
+  const dossiersFactures = buckets.factures;
+  const totalDossiers = dossiers.length;
 
   function renderDossier(d: (typeof dossiers)[number]) {
     return (
@@ -922,36 +921,76 @@ function EspacePartenaire({
             <p className="text-sm text-muted-foreground">Aucun dossier transmis pour le moment.</p>
           ) : (
             <div className="space-y-5">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    key: "kpi-nouveaux",
+                    label: "Nouveaux / à planifier",
+                    value: dossiersNouveaux.length,
+                    cls: "border-primary/30 bg-primary/5 text-primary",
+                  },
+                  {
+                    key: "kpi-encours",
+                    label: "En cours",
+                    value: dossiersEnCours.length,
+                    cls: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                  },
+                  {
+                    key: "kpi-termines",
+                    label: "Terminés à facturer",
+                    value: dossiersTerminesAFacturer.length,
+                    cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                  },
+                  {
+                    key: "kpi-factures",
+                    label: "Facturés",
+                    value: dossiersFactures.length,
+                    cls: "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+                  },
+                ].map((kpi) => (
+                  <div key={kpi.key} className={`rounded-lg border px-3 py-2.5 ${kpi.cls}`}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide">{kpi.label}</p>
+                    <p className="mt-1 text-2xl font-extrabold leading-none">{kpi.value}</p>
+                    <p className="mt-1 text-[11px] opacity-80">
+                      {totalDossiers > 0 ? Math.round((kpi.value / totalDossiers) * 100) : 0}% du total
+                    </p>
+                  </div>
+                ))}
+              </div>
               {[
                 {
                   key: "nouveaux",
                   title: "Nouveaux / à planifier",
                   hint: "Dossiers transmis en attente de démarrage.",
                   items: dossiersNouveaux,
+                  badgeCls: "bg-primary/10 text-primary",
                 },
                 {
                   key: "encours",
                   title: "Chantiers en cours",
                   hint: "Interventions démarrées par l'équipe terrain.",
                   items: dossiersEnCours,
+                  badgeCls: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
                 },
                 {
                   key: "termines",
                   title: "Terminés (à facturer)",
                   hint: "Travaux terminés, en attente de facturation/règlement.",
                   items: dossiersTerminesAFacturer,
+                  badgeCls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
                 },
                 {
                   key: "factures",
                   title: "Facturés",
                   hint: "Chantiers déjà passés en facturation ou payés.",
                   items: dossiersFactures,
+                  badgeCls: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
                 },
               ].map((section) => (
                 <div key={section.key} className="space-y-2">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="text-sm font-semibold">{section.title}</h3>
-                    <span className="text-mono text-[11px] text-primary uppercase">
+                    <span className={`text-mono text-[11px] uppercase rounded-full px-2 py-0.5 ${section.badgeCls}`}>
                       {section.items.length} dossier{section.items.length > 1 ? "s" : ""}
                     </span>
                   </div>

@@ -5,6 +5,13 @@ export type DossierPartenaireBucketInput = {
   statut_facturation?: string | null;
 };
 
+export type DossierLifecycleBuckets<T> = {
+  nouveaux: T[];
+  enCours: T[];
+  terminesAFacturer: T[];
+  factures: T[];
+};
+
 export function isDossierFacture(dossier: DossierPartenaireBucketInput): boolean {
   return dossier.statut_facturation === "facture" || dossier.statut_facturation === "paye";
 }
@@ -19,4 +26,15 @@ export function isDossierEnCours(dossier: DossierPartenaireBucketInput): boolean
 
 export function isDossierNouveau(dossier: DossierPartenaireBucketInput): boolean {
   return !isDossierEnCours(dossier) && !isDossierTermine(dossier) && !isDossierFacture(dossier);
+}
+
+export function splitDossiersByLifecycle<T extends DossierPartenaireBucketInput>(
+  dossiers: T[],
+): DossierLifecycleBuckets<T> {
+  return {
+    nouveaux: dossiers.filter(isDossierNouveau),
+    enCours: dossiers.filter(isDossierEnCours),
+    terminesAFacturer: dossiers.filter((d) => isDossierTermine(d) && !isDossierFacture(d)),
+    factures: dossiers.filter(isDossierFacture),
+  };
 }
