@@ -245,10 +245,12 @@ export function DocumentPrint({
               <div className="text-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {COMPANY.raisonSociale}
               </div>
-              <div className="mt-1">
-                <CompanySeal className="max-w-[150px] ml-auto" />
+              <div className="mt-2">
+                <CompanySeal className="w-full max-w-[280px] mx-auto" />
               </div>
-              <div className="mt-1 text-[10px] text-muted-foreground">Cachet et signature numériques</div>
+              <div className="mt-2 text-[10px] text-muted-foreground text-center">
+                Cachet et signature numériques
+              </div>
             </div>
           </div>
         )}

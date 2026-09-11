@@ -336,7 +336,7 @@ function SignatureBlock({
       </div>
       {withCompanySeal && (
         <div className="mt-2">
-          <CompanySeal className="max-w-[150px]" />
+          <CompanySeal className="w-full max-w-[280px] mx-auto" />
         </div>
       )}
       <div className="text-[11px] text-muted-foreground mt-2">Date et signature</div>
