@@ -6,7 +6,7 @@ import { DocumentPrint } from "./DocumentPrint";
 describe("document seal rendering", () => {
   it("affiche le visuel numérique combiné cachet + signature", () => {
     const html = renderToStaticMarkup(<CompanySeal />);
-    expect(html).toContain("/cachet-signature-irve-round.svg");
+    expect(html).toContain("/cachet-signature-irve.svg");
   });
 
   it("injecte le cachet entreprise dans un devis imprimable", () => {
@@ -30,7 +30,7 @@ describe("document seal rendering", () => {
         ]}
       />,
     );
-    expect(html).toContain("/cachet-signature-irve-round.svg");
+    expect(html).toContain("/cachet-signature-irve.svg");
     expect(html).toContain("Cachet et signature numériques");
   });
 });
