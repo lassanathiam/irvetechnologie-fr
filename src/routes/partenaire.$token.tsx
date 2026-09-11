@@ -35,6 +35,9 @@ import {
   PHOTO_CATEGORIES,
   PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
+import {
+  splitDossiersByLifecycle,
+} from "@/lib/partenaireDossierBuckets";
 
 
 export const Route = createFileRoute("/partenaire/$token")({
@@ -455,6 +458,219 @@ function EspacePartenaire({
     );
   }
 
+  const dossiers = espace.data?.dossiers ?? [];
+  const buckets = splitDossiersByLifecycle(dossiers);
+  const dossiersNouveaux = buckets.nouveaux;
+  const dossiersEnCours = buckets.enCours;
+  const dossiersTerminesAFacturer = buckets.terminesAFacturer;
+  const dossiersFactures = buckets.factures;
+  const totalDossiers = dossiers.length;
+
+  function renderDossier(d: (typeof dossiers)[number]) {
+    return (
+      <li key={d.id} className="bg-card border border-border rounded-xl p-4">
+        <p className="font-medium text-sm">
+          {d.client_nom}
+          {d.designation ? (
+            <span className="text-muted-foreground font-normal"> — {d.designation}</span>
+          ) : null}
+        </p>
+        {(d.metrage_m != null || d.puissance_borne || d.phase_installation || d.type_pose) && (
+          <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+            {d.metrage_m != null && <span>{Number(d.metrage_m)} m</span>}
+            {d.puissance_borne && <span>{d.puissance_borne}</span>}
+            {d.phase_installation && <span>{d.phase_installation}</span>}
+            {d.type_pose && <span>Pose {d.type_pose.toLowerCase()}</span>}
+          </p>
+        )}
+        <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-3 w-3" /> {d.adresse}
+            {d.cp_ville ? `, ${d.cp_ville}` : ""}
+          </span>
+          <span className="inline-flex items-center gap-1">
+            <CalendarClock className="h-3 w-3" />
+            {d.date_a_confirmer
+              ? "Rendez-vous à prendre"
+              : new Date(d.date_debut).toLocaleString("fr-FR", {
+                  dateStyle: "short",
+                  timeStyle: "short",
+                })}
+          </span>
+          {Number(d.montant_ht ?? 0) > 0 && (
+            <span className="text-mono">{eurosFr(Number(d.montant_ht))} HT</span>
+          )}
+        </p>
+        <p className="text-[11px] text-mono mt-2 text-primary uppercase">
+          {d.termine_at
+            ? `Terminé le ${new Date(d.termine_at).toLocaleString("fr-FR")}`
+            : d.demarre_at
+              ? "Travaux en cours"
+              : d.statut === "realise"
+                ? "Réalisé"
+                : d.date_a_confirmer
+                  ? "En attente de planification"
+                  : "Planifié"}
+        </p>
+
+        <div className="mt-3 border-t border-border pt-3 space-y-3">
+          {(d.termine_at || d.statut === "termine" || d.statut === "realise") && (
+            <div>
+              <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+                <Euro className="h-3.5 w-3.5" /> Valorisation des travaux
+              </p>
+              {(d.metrage_reel_m != null || d.metrage_inclus_m != null) && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Métrage posé : {Number(d.metrage_reel_m ?? d.metrage_m ?? 0)} m
+                  {" · "}inclus : {Number(d.metrage_inclus_m ?? 5)} m
+                  {Math.max(
+                    0,
+                    Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                  ) > 0 && (
+                    <span className="text-primary">
+                      {" · "}
+                      {Math.max(
+                        0,
+                        Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                      )}{" "}
+                      m supplémentaires
+                    </span>
+                  )}
+                </p>
+              )}
+              {d.montant_propose_ht != null ? (
+                <p className="text-xs mt-2">
+                  <span className="text-mono">
+                    {eurosFr(Number(d.montant_propose_ht))} HT proposé
+                  </span>{" "}
+                  —{" "}
+                  {d.montant_valide_at ? (
+                    <span className="text-primary">validé par IRVE Technologie</span>
+                  ) : (
+                    <span className="text-muted-foreground">en attente de validation</span>
+                  )}
+                </p>
+              ) : null}
+              <form
+                onSubmit={(e) => void envoyerValorisation(d.id, e)}
+                className="mt-2 grid gap-2 sm:grid-cols-[130px_1fr_auto] sm:items-end"
+              >
+                <label className="text-xs text-muted-foreground">
+                  Montant HT (€)
+                  <input
+                    name="montant_ht"
+                    inputMode="decimal"
+                    defaultValue={
+                      d.montant_propose_ht != null
+                        ? String(d.montant_propose_ht)
+                        : Number(d.montant_ht ?? 0) > 0
+                          ? String(d.montant_ht)
+                          : ""
+                    }
+                    className={INPUT}
+                    placeholder="620"
+                  />
+                </label>
+                <label className="text-xs text-muted-foreground">
+                  Précision (plus-value, métrage…)
+                  <input name="note" className={INPUT} placeholder="+ 12 m de câble" />
+                </label>
+                <button
+                  type="submit"
+                  disabled={montantBusy === d.id}
+                  className="bg-primary text-primary-foreground rounded-sm px-4 py-2.5 text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-60 min-h-11"
+                >
+                  {montantBusy === d.id && <Loader2 className="h-4 w-4 animate-spin" />}
+                  Transmettre
+                </button>
+              </form>
+            </div>
+          )}
+          <div>
+            <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+              <Package className="h-3.5 w-3.5" /> Matériel
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {MATERIEL_STATUTS.map((s) => {
+                const actif = (d.materiel_statut ?? "en_cours") === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    disabled={materielBusy === d.id}
+                    onClick={() => void changerMateriel(d.id, s)}
+                    className={`text-xs font-semibold rounded-sm px-3 py-2.5 border min-h-11 ${
+                      actif
+                        ? "border-primary text-primary bg-muted"
+                        : "border-border text-muted-foreground"
+                    } disabled:opacity-60`}
+                  >
+                    {actif && <CheckCircle2 className="h-3.5 w-3.5 inline mr-1.5" />}
+                    {MATERIEL_LABELS[s]}
+                  </button>
+                );
+              })}
+              {materielBusy === d.id && (
+                <Loader2 className="h-4 w-4 animate-spin text-muted-foreground self-center" />
+              )}
+            </div>
+          </div>
+
+          <div>
+            <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
+              <Camera className="h-3.5 w-3.5" /> Photos de l&apos;étude
+            </p>
+            <div className="mt-2 grid gap-2 sm:grid-cols-2">
+              {PHOTO_CATEGORIES.map((cat) => {
+                const cle = `${d.id}:${cat}`;
+                const nb = photos.data?.[d.id]?.categories?.[cat] ?? 0;
+                return (
+                  <label
+                    key={cat}
+                    className="text-sm font-semibold rounded-sm border border-border px-3 py-2.5 min-h-11 inline-flex items-center gap-2 cursor-pointer hover:border-primary hover:text-primary"
+                  >
+                    {envoi === cle ? (
+                      <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                    ) : (
+                      <Plus className="h-4 w-4 shrink-0" />
+                    )}
+                    <span className="min-w-0">
+                      {PHOTO_CATEGORIES_LABELS[cat]}
+                      {nb > 0 && (
+                        <span className="text-mono text-[11px] text-muted-foreground font-normal">
+                          {" "}
+                          · {nb}
+                        </span>
+                      )}
+                    </span>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      multiple
+                      disabled={envoi !== null}
+                      onChange={(e) => {
+                        void ajouterPhotos(d.id, cat, e.target.files);
+                        e.target.value = "";
+                      }}
+                      className="hidden"
+                    />
+                  </label>
+                );
+              })}
+            </div>
+            {(photos.data?.[d.id]?.total ?? 0) > 0 && (
+              <p className="text-mono text-[11px] text-muted-foreground mt-2">
+                {photos.data![d.id]!.total} photo
+                {photos.data![d.id]!.total > 1 ? "s" : ""} transmise
+                {photos.data![d.id]!.total > 1 ? "s" : ""} à Borne de l&apos;Ouest.
+              </p>
+            )}
+          </div>
+        </div>
+      </li>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <header className="border-b border-border bg-card">
@@ -701,216 +917,94 @@ function EspacePartenaire({
             <p className="text-sm text-muted-foreground inline-flex items-center gap-2">
               <Loader2 className="h-4 w-4 animate-spin" /> Chargement…
             </p>
-          ) : (espace.data?.dossiers.length ?? 0) === 0 ? (
+          ) : dossiers.length === 0 ? (
             <p className="text-sm text-muted-foreground">Aucun dossier transmis pour le moment.</p>
           ) : (
-            <ul className="grid gap-3">
-              {espace.data!.dossiers.map((d) => (
-                <li key={d.id} className="bg-card border border-border rounded-xl p-4">
-                  <p className="font-medium text-sm">
-                    {d.client_nom}
-                    {d.designation ? (
-                      <span className="text-muted-foreground font-normal"> — {d.designation}</span>
-                    ) : null}
-                  </p>
-                  {(d.metrage_m != null || d.puissance_borne || d.phase_installation || d.type_pose) && (
-                    <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
-                      {d.metrage_m != null && <span>{Number(d.metrage_m)} m</span>}
-                      {d.puissance_borne && <span>{d.puissance_borne}</span>}
-                      {d.phase_installation && <span>{d.phase_installation}</span>}
-                      {d.type_pose && <span>Pose {d.type_pose.toLowerCase()}</span>}
+            <div className="space-y-5">
+              <div className="grid gap-2 sm:grid-cols-2">
+                {[
+                  {
+                    key: "kpi-nouveaux",
+                    label: "Nouveaux / à planifier",
+                    value: dossiersNouveaux.length,
+                    cls: "border-primary/30 bg-primary/5 text-primary",
+                  },
+                  {
+                    key: "kpi-encours",
+                    label: "En cours",
+                    value: dossiersEnCours.length,
+                    cls: "border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                  },
+                  {
+                    key: "kpi-termines",
+                    label: "Terminés à facturer",
+                    value: dossiersTerminesAFacturer.length,
+                    cls: "border-emerald-500/30 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                  },
+                  {
+                    key: "kpi-factures",
+                    label: "Facturés",
+                    value: dossiersFactures.length,
+                    cls: "border-violet-500/30 bg-violet-500/10 text-violet-700 dark:text-violet-300",
+                  },
+                ].map((kpi) => (
+                  <div key={kpi.key} className={`rounded-lg border px-3 py-2.5 ${kpi.cls}`}>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide">{kpi.label}</p>
+                    <p className="mt-1 text-2xl font-extrabold leading-none">{kpi.value}</p>
+                    <p className="mt-1 text-[11px] opacity-80">
+                      {totalDossiers > 0 ? Math.round((kpi.value / totalDossiers) * 100) : 0}% du total
                     </p>
-                  )}
-                  <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                    <span className="inline-flex items-center gap-1">
-                      <MapPin className="h-3 w-3" /> {d.adresse}
-                      {d.cp_ville ? `, ${d.cp_ville}` : ""}
-                    </span>
-                    <span className="inline-flex items-center gap-1">
-                      <CalendarClock className="h-3 w-3" />
-                      {d.date_a_confirmer
-                        ? "Rendez-vous à prendre"
-                        : new Date(d.date_debut).toLocaleString("fr-FR", {
-                            dateStyle: "short",
-                            timeStyle: "short",
-                          })}
-                    </span>
-                    {Number(d.montant_ht ?? 0) > 0 && (
-                      <span className="text-mono">{eurosFr(Number(d.montant_ht))} HT</span>
-                    )}
-                  </p>
-                  <p className="text-[11px] text-mono mt-2 text-primary uppercase">
-                    {d.termine_at
-                      ? `Terminé le ${new Date(d.termine_at).toLocaleString("fr-FR")}`
-                      : d.demarre_at
-                        ? "Travaux en cours"
-                        : d.statut === "realise"
-                          ? "Réalisé"
-                          : d.date_a_confirmer
-                            ? "En attente de planification"
-                            : "Planifié"}
-                  </p>
-
-                  <div className="mt-3 border-t border-border pt-3 space-y-3">
-                    {(d.termine_at || d.statut === "termine" || d.statut === "realise") && (
-                      <div>
-                        <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
-                          <Euro className="h-3.5 w-3.5" /> Valorisation des travaux
-                        </p>
-                        {(d.metrage_reel_m != null || d.metrage_inclus_m != null) && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Métrage posé : {Number(d.metrage_reel_m ?? d.metrage_m ?? 0)} m
-                            {" · "}inclus : {Number(d.metrage_inclus_m ?? 5)} m
-                            {Math.max(
-                              0,
-                              Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
-                            ) > 0 && (
-                              <span className="text-primary">
-                                {" · "}
-                                {Math.max(
-                                  0,
-                                  Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
-                                )}{" "}
-                                m supplémentaires
-                              </span>
-                            )}
-                          </p>
-                        )}
-                        {d.montant_propose_ht != null ? (
-                          <p className="text-xs mt-2">
-                            <span className="text-mono">
-                              {eurosFr(Number(d.montant_propose_ht))} HT proposé
-                            </span>{" "}
-                            —{" "}
-                            {d.montant_valide_at ? (
-                              <span className="text-primary">validé par IRVE Technologie</span>
-                            ) : (
-                              <span className="text-muted-foreground">en attente de validation</span>
-                            )}
-                          </p>
-                        ) : null}
-                        <form
-                          onSubmit={(e) => void envoyerValorisation(d.id, e)}
-                          className="mt-2 grid gap-2 sm:grid-cols-[130px_1fr_auto] sm:items-end"
-                        >
-                          <label className="text-xs text-muted-foreground">
-                            Montant HT (€)
-                            <input
-                              name="montant_ht"
-                              inputMode="decimal"
-                              defaultValue={
-                                d.montant_propose_ht != null
-                                  ? String(d.montant_propose_ht)
-                                  : Number(d.montant_ht ?? 0) > 0
-                                    ? String(d.montant_ht)
-                                    : ""
-                              }
-                              className={INPUT}
-                              placeholder="620"
-                            />
-                          </label>
-                          <label className="text-xs text-muted-foreground">
-                            Précision (plus-value, métrage…)
-                            <input name="note" className={INPUT} placeholder="+ 12 m de câble" />
-                          </label>
-                          <button
-                            type="submit"
-                            disabled={montantBusy === d.id}
-                            className="bg-primary text-primary-foreground rounded-sm px-4 py-2.5 text-sm font-semibold inline-flex items-center gap-2 disabled:opacity-60 min-h-11"
-                          >
-                            {montantBusy === d.id && <Loader2 className="h-4 w-4 animate-spin" />}
-                            Transmettre
-                          </button>
-                        </form>
-                      </div>
-                    )}
-                    <div>
-                      <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
-                        <Package className="h-3.5 w-3.5" /> Matériel
-                      </p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        {MATERIEL_STATUTS.map((s) => {
-                          const actif = (d.materiel_statut ?? "en_cours") === s;
-                          return (
-                            <button
-                              key={s}
-                              type="button"
-                              disabled={materielBusy === d.id}
-                              onClick={() => void changerMateriel(d.id, s)}
-                              className={`text-xs font-semibold rounded-sm px-3 py-2.5 border min-h-11 ${
-                                actif
-                                  ? "border-primary text-primary bg-muted"
-                                  : "border-border text-muted-foreground"
-                              } disabled:opacity-60`}
-                            >
-                              {actif && <CheckCircle2 className="h-3.5 w-3.5 inline mr-1.5" />}
-                              {MATERIEL_LABELS[s]}
-                            </button>
-                          );
-                        })}
-                        {materielBusy === d.id && (
-                          <Loader2 className="h-4 w-4 animate-spin text-muted-foreground self-center" />
-                        )}
-                      </div>
-                    </div>
-
-                    <div>
-                      <p className="text-mono text-[11px] text-muted-foreground uppercase inline-flex items-center gap-1.5">
-                        <Camera className="h-3.5 w-3.5" /> Photos de l&apos;étude
-                      </p>
-                      <div className="mt-2 grid gap-2 sm:grid-cols-2">
-                        {PHOTO_CATEGORIES.map((cat) => {
-                          const cle = `${d.id}:${cat}`;
-                          const nb = photos.data?.[d.id]?.categories?.[cat] ?? 0;
-                          return (
-                            <label
-                              key={cat}
-                              className="text-sm font-semibold rounded-sm border border-border px-3 py-2.5 min-h-11 inline-flex items-center gap-2 cursor-pointer hover:border-primary hover:text-primary"
-                            >
-                              {envoi === cle ? (
-                                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                              ) : (
-                                <Plus className="h-4 w-4 shrink-0" />
-                              )}
-                              <span className="min-w-0">
-                                {PHOTO_CATEGORIES_LABELS[cat]}
-                                {nb > 0 && (
-                                  <span className="text-mono text-[11px] text-muted-foreground font-normal">
-                                    {" "}
-                                    · {nb}
-                                  </span>
-                                )}
-                              </span>
-                              <input
-                                type="file"
-                                accept="image/*"
-                                multiple
-                                disabled={envoi !== null}
-                                onChange={(e) => {
-                                  void ajouterPhotos(d.id, cat, e.target.files);
-                                  e.target.value = "";
-                                }}
-                                className="hidden"
-                              />
-                            </label>
-                          );
-                        })}
-                      </div>
-                      {(photos.data?.[d.id]?.total ?? 0) > 0 && (
-                        <p className="text-mono text-[11px] text-muted-foreground mt-2">
-                          {photos.data![d.id]!.total} photo
-                          {photos.data![d.id]!.total > 1 ? "s" : ""} transmise
-                          {photos.data![d.id]!.total > 1 ? "s" : ""} à Borne de l&apos;Ouest.
-                        </p>
-                      )}
-                    </div>
                   </div>
-
-
-
-                </li>
+                ))}
+              </div>
+              {[
+                {
+                  key: "nouveaux",
+                  title: "Nouveaux / à planifier",
+                  hint: "Dossiers transmis en attente de démarrage.",
+                  items: dossiersNouveaux,
+                  badgeCls: "bg-primary/10 text-primary",
+                },
+                {
+                  key: "encours",
+                  title: "Chantiers en cours",
+                  hint: "Interventions démarrées par l'équipe terrain.",
+                  items: dossiersEnCours,
+                  badgeCls: "bg-amber-500/10 text-amber-700 dark:text-amber-300",
+                },
+                {
+                  key: "termines",
+                  title: "Terminés (à facturer)",
+                  hint: "Travaux terminés, en attente de facturation/règlement.",
+                  items: dossiersTerminesAFacturer,
+                  badgeCls: "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300",
+                },
+                {
+                  key: "factures",
+                  title: "Facturés",
+                  hint: "Chantiers déjà passés en facturation ou payés.",
+                  items: dossiersFactures,
+                  badgeCls: "bg-violet-500/10 text-violet-700 dark:text-violet-300",
+                },
+              ].map((section) => (
+                <div key={section.key} className="space-y-2">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="text-sm font-semibold">{section.title}</h3>
+                    <span className={`text-mono text-[11px] uppercase rounded-full px-2 py-0.5 ${section.badgeCls}`}>
+                      {section.items.length} dossier{section.items.length > 1 ? "s" : ""}
+                    </span>
+                  </div>
+                  <p className="text-xs text-muted-foreground">{section.hint}</p>
+                  {section.items.length === 0 ? (
+                    <p className="text-xs text-muted-foreground bg-card border border-border rounded-lg px-3 py-2">
+                      Aucun dossier dans cette section.
+                    </p>
+                  ) : (
+                    <ul className="grid gap-3">{section.items.map((d) => renderDossier(d))}</ul>
+                  )}
+                </div>
               ))}
-            </ul>
+            </div>
           )}
         </section>
       </div>
