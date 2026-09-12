@@ -366,6 +366,15 @@ function DevisDetail() {
               Convertir en facture
             </button>
           )}
+          {devis.rendezvous_id && (
+            <Link
+              to="/planning"
+              search={{ rdv: devis.rendezvous_id }}
+              className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-2"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" /> Ouvrir en planification
+            </Link>
+          )}
         </div>
 
         {editOpen && editState && (

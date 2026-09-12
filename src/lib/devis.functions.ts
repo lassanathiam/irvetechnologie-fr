@@ -46,6 +46,90 @@ const STATUTS = [
   "expire",
 ] as const;
 
+function datePlanificationDepuisDevis(dateExpiration: string | null | undefined) {
+  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration)
+    ? dateExpiration
+    : new Date().toISOString().slice(0, 10);
+  return `${base}T09:00:00.000Z`;
+}
+
+async function assurerRendezVousPourDevisAccepte(
+  supabase: any,
+  devis: {
+    id: string;
+    numero: string;
+    rendezvous_id: string | null;
+    created_by: string | null;
+    client_nom: string | null;
+    client_email: string | null;
+    client_telephone: string | null;
+    client_adresse: string | null;
+    client_cp_ville: string | null;
+    objet: string | null;
+    notes: string | null;
+    total_ht: number | null;
+    total_tva: number | null;
+    date_expiration: string | null;
+  },
+) {
+  if (devis.rendezvous_id) {
+    const { data: rdv } = await supabase
+      .from("rendezvous")
+      .select("id, statut")
+      .eq("id", devis.rendezvous_id)
+      .maybeSingle();
+    if (rdv && rdv.statut === "planifie") {
+      await supabase.from("rendezvous").update({ statut: "confirme" }).eq("id", rdv.id);
+    }
+    return devis.rendezvous_id;
+  }
+  if (!devis.created_by) return null;
+
+  const totalHt = Number(devis.total_ht ?? 0);
+  const totalTva = Number(devis.total_tva ?? 0);
+  const tvaPct = totalHt > 0 ? Math.max(0, Math.min(30, Math.round((totalTva / totalHt) * 10000) / 100)) : 20;
+
+  const { data: inserted, error: insertError } = await supabase
+    .from("rendezvous")
+    .insert({
+      user_id: devis.created_by,
+      titre: `Devis ${devis.numero} accepté`,
+      type: "installation",
+      statut: "confirme",
+      client_nom: devis.client_nom ?? "Client",
+      client_telephone: devis.client_telephone ?? null,
+      client_email: devis.client_email ?? null,
+      adresse: devis.client_adresse?.trim() || "Adresse à confirmer",
+      cp_ville: devis.client_cp_ville ?? null,
+      date_debut: datePlanificationDepuisDevis(devis.date_expiration),
+      duree_min: 120,
+      notes: [
+        `Créé automatiquement depuis le devis ${devis.numero} accepté.`,
+        devis.notes?.trim() ? `Notes devis : ${devis.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      origine: "direct",
+      partenaire: null,
+      montant_ht: totalHt,
+      tva_pct: tvaPct,
+      statut_facturation: "a_facturer",
+      designation: devis.objet ?? null,
+      date_a_confirmer: true,
+    })
+    .select("id")
+    .single();
+  if (insertError) throw new Error(insertError.message);
+
+  const { error: bindErr } = await supabase
+    .from("devis")
+    .update({ rendezvous_id: inserted.id })
+    .eq("id", devis.id);
+  if (bindErr) throw new Error(bindErr.message);
+
+  return inserted.id as string;
+}
+
 export const listPrestations = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -221,6 +305,20 @@ export const updateStatutDevis = createServerFn({ method: "POST" })
       .update({ statut: data.statut })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
+
+    if (data.statut === "accepte") {
+      const { data: devis, error: devisErr } = await context.supabase
+        .from("devis")
+        .select(
+          "id, numero, rendezvous_id, created_by, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, notes, total_ht, total_tva, date_expiration",
+        )
+        .eq("id", data.id)
+        .maybeSingle();
+      if (devisErr) throw new Error(devisErr.message);
+      if (!devis) throw new Error("Devis introuvable");
+      await assurerRendezVousPourDevisAccepte(context.supabase, devis);
+    }
+
     return { ok: true };
   });
 

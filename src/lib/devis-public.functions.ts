@@ -9,6 +9,89 @@ import { z } from "zod";
 
 const tokenSchema = z.object({ token: z.string().uuid() });
 
+function datePlanificationDepuisDevis(dateExpiration: string | null | undefined) {
+  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration)
+    ? dateExpiration
+    : new Date().toISOString().slice(0, 10);
+  return `${base}T09:00:00.000Z`;
+}
+
+async function assurerRendezVousDepuisDevis(
+  supabaseAdmin: any,
+  devis: {
+    id: string;
+    numero: string;
+    client_nom: string | null;
+    client_email: string | null;
+    client_telephone: string | null;
+    client_adresse: string | null;
+    client_cp_ville: string | null;
+    objet: string | null;
+    notes: string | null;
+    total_ht: number | null;
+    total_tva: number | null;
+    date_expiration: string | null;
+    created_by: string | null;
+    rendezvous_id: string | null;
+  },
+) {
+  if (devis.rendezvous_id) {
+    const { data: rdv } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id, statut")
+      .eq("id", devis.rendezvous_id)
+      .maybeSingle();
+    if (rdv && rdv.statut === "planifie") {
+      await supabaseAdmin
+        .from("rendezvous")
+        .update({ statut: "confirme" })
+        .eq("id", rdv.id);
+    }
+    return devis.rendezvous_id;
+  }
+
+  if (!devis.created_by) return null;
+
+  const totalHt = Number(devis.total_ht ?? 0);
+  const totalTva = Number(devis.total_tva ?? 0);
+  const tvaPct = totalHt > 0 ? Math.max(0, Math.min(30, Math.round((totalTva / totalHt) * 10000) / 100)) : 20;
+
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from("rendezvous")
+    .insert({
+      user_id: devis.created_by,
+      titre: `Devis ${devis.numero} accepté`,
+      type: "installation",
+      statut: "confirme",
+      client_nom: devis.client_nom ?? "Client",
+      client_telephone: devis.client_telephone ?? null,
+      client_email: devis.client_email ?? null,
+      adresse: devis.client_adresse?.trim() || "Adresse à confirmer",
+      cp_ville: devis.client_cp_ville ?? null,
+      date_debut: datePlanificationDepuisDevis(devis.date_expiration),
+      duree_min: 120,
+      notes: [
+        `Créé automatiquement depuis le devis ${devis.numero} accepté en ligne.`,
+        devis.notes?.trim() ? `Notes devis : ${devis.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      origine: "direct",
+      partenaire: null,
+      montant_ht: totalHt,
+      tva_pct: tvaPct,
+      statut_facturation: "a_facturer",
+      designation: devis.objet ?? null,
+      date_a_confirmer: true,
+    })
+    .select("id")
+    .single();
+  if (insertError) return null;
+
+  await supabaseAdmin.from("devis").update({ rendezvous_id: inserted.id }).eq("id", devis.id);
+  return inserted.id as string;
+}
+
 export const getDevisPublic = createServerFn({ method: "GET" })
   .inputValidator((data: { token: string }) => tokenSchema.parse(data))
   .handler(async ({ data }) => {
@@ -55,7 +138,7 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: devis, error } = await supabaseAdmin
       .from("devis")
-      .select("id, numero, signed_at, client_nom, objet, total_ttc")
+      .select("id, numero, signed_at, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, notes, total_ht, total_tva, date_expiration, created_by, rendezvous_id")
       .eq("public_token", data.token)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -73,6 +156,7 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
       })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
+    await assurerRendezVousDepuisDevis(supabaseAdmin, devis);
 
     return { ok: true, already: false };
   });
@@ -89,7 +173,7 @@ export const accepterDevisPublic = createServerFn({ method: "POST" })
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data: devis, error } = await supabaseAdmin
       .from("devis")
-      .select("id, numero, signed_at, client_nom, objet, total_ttc")
+      .select("id, numero, signed_at, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, notes, total_ht, total_tva, date_expiration, created_by, rendezvous_id")
       .eq("public_token", data.token)
       .maybeSingle();
     if (error) throw new Error(error.message);
@@ -106,6 +190,7 @@ export const accepterDevisPublic = createServerFn({ method: "POST" })
       })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
+    await assurerRendezVousDepuisDevis(supabaseAdmin, devis);
 
     return { ok: true, already: false };
   });
