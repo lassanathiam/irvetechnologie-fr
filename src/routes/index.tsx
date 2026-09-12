@@ -1,10 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
-import borneHero from "@/assets/borne-hero.jpg";
 import chantier1 from "@/assets/chantier-1.jpg";
 import chantier2 from "@/assets/chantier-2.jpg";
 import chantier3 from "@/assets/chantier-3.jpg";
+import chantierTechnicienIntervention from "@/assets/chantier-technicien-intervention.jpg";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroSlider } from "@/components/HeroSlider";
@@ -62,10 +62,14 @@ const steps = [
 ];
 
 const heroSlides = [
-  { src: borneHero, label: "Live install", meta: "Borne 22 kW · triphasé" },
-  { src: chantier1, label: "En cours · Vannes (56)", meta: "Borne murale 11 kW · garage" },
-  { src: chantier2, label: "Mise en service", meta: "Tesla Wall Connector · 11 kW" },
-  { src: chantier3, label: "Tableau électrique", meta: "Mise en conformité · Nantes (44)" },
+  {
+    src: chantierTechnicienIntervention,
+    label: "Technicien en intervention",
+    meta: "Pose et raccordement en conditions réelles",
+  },
+  { src: chantier2, label: "Mise en service", meta: "Intervention réelle client" },
+  { src: chantier3, label: "Tableau électrique", meta: "Mise en conformité sur site" },
+  { src: chantier1, label: "Suivi chantier", meta: "Contrôle final et essais" },
 ];
 
 const realisationsFallback = [
