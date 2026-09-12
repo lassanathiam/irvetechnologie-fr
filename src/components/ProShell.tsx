@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   CalendarClock,
   ChevronLeft,
@@ -15,6 +15,7 @@ import {
   LogOut,
   Menu,
   Receipt,
+  Sparkles,
   ShieldCheck,
   X,
 } from "lucide-react";
@@ -39,6 +40,13 @@ const LINKS = [
 export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [reduit, setReduit] = useState(false);
+  const [showWelcome, setShowWelcome] = useState(false);
+
+  useEffect(() => {
+    const key = "irve-mobile-welcome-dismissed";
+    const dismissed = typeof window !== "undefined" ? window.localStorage.getItem(key) : null;
+    if (!dismissed) setShowWelcome(true);
+  }, []);
 
   const quitter = async () => {
     await supabase.auth.signOut();
@@ -124,7 +132,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
         />
       )}
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 overflow-x-hidden">
         <header className="pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2">
             <Button
@@ -166,7 +174,35 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </header>
-        <main className="pro-main p-4 sm:p-6 lg:p-8">{children}</main>
+        <main className="pro-main overflow-x-hidden p-4 sm:p-6 lg:p-8">
+          {showWelcome && (
+            <div className="mb-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 md:hidden">
+              <div className="flex items-start gap-3">
+                <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Sparkles className="h-4 w-4" />
+                </span>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold">Bienvenue sur IRVE Technologies Pro</p>
+                  <p className="mt-0.5 text-xs text-muted-foreground">
+                    Planning, clients, devis et interventions dans une seule application.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    window.localStorage.setItem("irve-mobile-welcome-dismissed", "1");
+                    setShowWelcome(false);
+                  }}
+                  className="ml-auto rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  aria-label="Fermer le message de bienvenue"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </div>
+          )}
+          {children}
+        </main>
       </div>
     </div>
   );

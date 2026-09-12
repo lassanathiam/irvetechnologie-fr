@@ -1390,7 +1390,7 @@ function PlanningPage() {
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
             </h2>
-            <div className="flex items-center gap-4 text-[11px] font-semibold text-muted-foreground ml-auto">
+            <div className="flex w-full flex-wrap items-center gap-3 text-[11px] font-semibold text-muted-foreground sm:ml-auto sm:w-auto sm:gap-4">
               <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
               <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
               <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
@@ -1558,7 +1558,7 @@ function PlanningPage() {
                         <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
                             <p className="font-medium flex flex-wrap items-center gap-2">
-                              <span>
+                              <span className="min-w-0 break-words">
                                 {r.client_nom}
                                 <span className="text-muted-foreground font-normal">
                                   {" "}
@@ -2001,7 +2001,7 @@ function PlanningPage() {
                               </p>
                             )}
                           </div>
-                          <div className="flex items-center gap-2 shrink-0">
+                          <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:shrink-0">
                             <select
                               value={r.statut}
                               onChange={(e) =>
@@ -2800,7 +2800,7 @@ function PlanningPage() {
                   Sur {h} jours
                 </button>
               ))}
-              <label className="min-w-[150px] flex-1 sm:max-w-[210px]">
+              <label className="w-full sm:min-w-[150px] sm:flex-1 sm:max-w-[210px]">
                 <span className="mb-1 block text-mono text-[10px] text-muted-foreground">
                   Durée libre
                 </span>
