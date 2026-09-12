@@ -3,6 +3,11 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
 
+type SmsOutcome =
+  | { status: "sent"; provider: "twilio"; to: string }
+  | { status: "skipped"; reason: string }
+  | { status: "failed"; reason: string };
+
 /** Nombre tolérant : vide, texte invalide ou NaN → valeur par défaut. */
 const num = (min: number, max: number, def: number) =>
   z.preprocess((v) => {
@@ -53,6 +58,94 @@ const rdvSchema = z.object({
 
 
 export type RendezVousInput = z.input<typeof rdvSchema>;
+
+function formatNumeroSms(numero: string | null | undefined): string | null {
+  if (!numero) return null;
+  const brut = numero.trim();
+  if (!brut) return null;
+  if (brut.startsWith("+")) {
+    const keep = `+${brut.slice(1).replace(/[^\d]/g, "")}`;
+    return keep.length > 7 ? keep : null;
+  }
+  const chiffres = brut.replace(/[^\d]/g, "");
+  if (!chiffres) return null;
+  if (chiffres.startsWith("00")) return `+${chiffres.slice(2)}`;
+  if (chiffres.startsWith("221") && chiffres.length >= 11) return `+${chiffres}`;
+  if (chiffres.length === 9) return `+221${chiffres}`;
+  return chiffres.length > 7 ? `+${chiffres}` : null;
+}
+
+function messageSmsConfirmationRdv(rdv: {
+  client_nom: string | null;
+  date_debut: string;
+  adresse: string | null;
+  cp_ville: string | null;
+  designation: string | null;
+  titre: string | null;
+}) {
+  const dt = new Date(rdv.date_debut);
+  const quand = Number.isNaN(dt.getTime())
+    ? "date à confirmer"
+    : dt.toLocaleString("fr-FR", {
+        weekday: "short",
+        day: "2-digit",
+        month: "2-digit",
+        hour: "2-digit",
+        minute: "2-digit",
+      });
+  const objet = rdv.designation?.trim() || rdv.titre?.trim() || "intervention";
+  const lieu = [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", ");
+  return `IRVE Technologie: Bonjour ${rdv.client_nom ?? "client"}, votre rendez-vous est confirmé (${objet}) le ${quand}${lieu ? ` à ${lieu}` : ""}.`;
+}
+
+async function envoyerSmsRendezVousConfirmation(rdv: {
+  client_telephone: string | null;
+  client_nom: string | null;
+  date_debut: string;
+  adresse: string | null;
+  cp_ville: string | null;
+  designation: string | null;
+  titre: string | null;
+}): Promise<SmsOutcome> {
+  const accountSid = process.env["SMS_TWILIO_ACCOUNT_SID"]?.trim();
+  const authToken = process.env["SMS_TWILIO_AUTH_TOKEN"]?.trim();
+  const from = process.env["SMS_FROM"]?.trim();
+  if (!accountSid || !authToken || !from) {
+    return { status: "skipped", reason: "Configuration SMS absente" };
+  }
+  const to = formatNumeroSms(rdv.client_telephone);
+  if (!to) return { status: "skipped", reason: "Téléphone client manquant/invalide" };
+
+  const body = new URLSearchParams({
+    To: to,
+    From: from,
+    Body: messageSmsConfirmationRdv(rdv),
+  });
+
+  try {
+    const res = await fetch(
+      `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+          "Content-Type": "application/x-www-form-urlencoded",
+        },
+        body,
+      },
+    );
+    if (!res.ok) {
+      const details = (await res.text()).slice(0, 180);
+      return { status: "failed", reason: `Échec Twilio (${res.status}) ${details}` };
+    }
+    return { status: "sent", provider: "twilio", to };
+  } catch (error) {
+    return {
+      status: "failed",
+      reason: error instanceof Error ? error.message : "Erreur SMS inconnue",
+    };
+  }
+}
 
 /** Géocodage via l'API Adresse (data.gouv.fr) — gratuite et sans clé. */
 async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
@@ -120,12 +213,34 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
+    const { data: avant, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select("id, statut, client_telephone, client_nom, date_debut, adresse, cp_ville, designation, titre")
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+
     const { error } = await context.supabase
       .from("rendezvous")
       .update({ statut: data.statut })
       .eq("id", data.id);
     if (error) throw new Error(error.message);
-    return { ok: true };
+
+    let sms: SmsOutcome | null = null;
+    const passeEnConfirme = data.statut === "confirme" && avant?.statut !== "confirme";
+    if (passeEnConfirme) {
+      sms = await envoyerSmsRendezVousConfirmation({
+        client_telephone: avant.client_telephone,
+        client_nom: avant.client_nom,
+        date_debut: avant.date_debut,
+        adresse: avant.adresse,
+        cp_ville: avant.cp_ville,
+        designation: avant.designation,
+        titre: avant.titre,
+      });
+    }
+
+    return { ok: true, sms };
   });
 
 /** Modification de l'adresse d'un rendez-vous : re-géocodage + recalcul du trajet. */
