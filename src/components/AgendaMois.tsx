@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { CalendarDays, ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 
 export type AgendaEvent = {
   id: string;
@@ -49,6 +49,7 @@ export function AgendaMois({
   const today = new Date();
   const [cursor, setCursor] = useState(new Date(today.getFullYear(), today.getMonth(), 1));
   const [selected, setSelected] = useState<string>(key(today));
+  const [detailsOuverts, setDetailsOuverts] = useState(false);
 
   const byDay = useMemo(() => {
     const m = new Map<string, AgendaEvent[]>();
@@ -154,7 +155,10 @@ export function AgendaMois({
               <button
                 key={k}
                 type="button"
-                onClick={() => setSelected(k)}
+                onClick={() => {
+                  setSelected(k);
+                  setDetailsOuverts(true);
+                }}
                 onDoubleClick={() => onPickDay?.(k)}
                 title={list.length ? `${list.length} rendez-vous` : "Journée libre"}
                 className={`group relative text-left h-[62px] rounded-lg border px-1.5 pt-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
@@ -204,16 +208,39 @@ export function AgendaMois({
                 month: "long",
               }).format(new Date(`${selected}T12:00:00`))}
             </p>
-            <button
-              type="button"
-              onClick={() => onPickDay?.(selected)}
-              className="text-mono text-[11px] font-bold text-primary inline-flex items-center gap-1 hover:underline shrink-0"
-            >
-              <Plus className="h-3.5 w-3.5" /> Planifier
-            </button>
+            <div className="flex items-center gap-2">
+              {detailsOuverts ? (
+                <button
+                  type="button"
+                  onClick={() => setDetailsOuverts(false)}
+                  className="text-mono text-[11px] font-bold text-muted-foreground inline-flex items-center gap-1 hover:text-primary"
+                >
+                  <X className="h-3.5 w-3.5" /> Fermer
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setDetailsOuverts(true)}
+                  className="text-mono text-[11px] font-bold text-primary inline-flex items-center gap-1 hover:underline shrink-0"
+                >
+                  Voir les clients
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onPickDay?.(selected)}
+                className="text-mono text-[11px] font-bold text-primary inline-flex items-center gap-1 hover:underline shrink-0"
+              >
+                <Plus className="h-3.5 w-3.5" /> Planifier
+              </button>
+            </div>
           </div>
 
-          {daySelected.length === 0 ? (
+          {!detailsOuverts ? (
+            <p className="text-sm text-muted-foreground mt-2.5">
+              Cliquez une date pour afficher les clients programmés, puis fermez si besoin.
+            </p>
+          ) : daySelected.length === 0 ? (
             <p className="text-sm text-muted-foreground mt-2.5">
               Journée libre — créneau disponible pour un chantier.
             </p>
