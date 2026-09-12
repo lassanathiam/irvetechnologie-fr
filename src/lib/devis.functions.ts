@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
-import { buildInterventionProfile, datePlanificationDepuisDevis } from "@/lib/devis-to-planning";
+import { datePlanificationDepuisDevis } from "@/lib/devis-to-planning";
 
 export { computeTotals };
 export type { BillingTotals as DevisTotals } from "@/lib/billing";
@@ -77,22 +77,28 @@ async function assurerRendezVousPourDevisAccepte(
   },
 ) {
   if (devis.rendezvous_id) {
+    const { data: rdv } = await supabase
+      .from("rendezvous")
+      .select("id, notes")
+      .eq("id", devis.rendezvous_id)
+      .maybeSingle();
+    if (rdv?.notes?.startsWith("Créé automatiquement depuis le devis")) {
+      await supabase
+        .from("rendezvous")
+        .update({
+          notes: null,
+          puissance_borne: null,
+          phase_installation: null,
+          type_pose: null,
+          metrage_m: null,
+          designation: null,
+        })
+        .eq("id", rdv.id);
+    }
     return devis.rendezvous_id;
   }
   const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabase));
   if (!ownerUserId) return null;
-
-  const { data: items } = await supabase
-    .from("devis_items")
-    .select("libelle, description, quantite")
-    .eq("devis_id", devis.id)
-    .order("ordre", { ascending: true });
-  const profile = buildInterventionProfile({
-    devisNumero: devis.numero,
-    devisObjet: devis.objet,
-    devisNotes: devis.notes,
-    items: items ?? [],
-  });
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -112,17 +118,17 @@ async function assurerRendezVousPourDevisAccepte(
       cp_ville: devis.client_cp_ville ?? null,
       date_debut: datePlanificationDepuisDevis(devis.date_expiration),
       duree_min: 120,
-      notes: profile.notesPlanning,
+      notes: null,
       origine: "direct",
       partenaire: null,
       montant_ht: totalHt,
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
-      designation: devis.objet ?? null,
-      puissance_borne: profile.puissanceBorne,
-      phase_installation: profile.phaseInstallation,
-      type_pose: profile.typePose,
-      metrage_m: profile.metrageM,
+      designation: null,
+      puissance_borne: null,
+      phase_installation: null,
+      type_pose: null,
+      metrage_m: null,
       date_a_confirmer: true,
     })
     .select("id")
