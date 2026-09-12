@@ -22,6 +22,8 @@ function getBrevoApiKey(): string | null {
     process.env["BREVO_KEY"],
     process.env["BREVO_APIKEY"],
     process.env["BREVO_TOKEN"],
+    process.env["APIBREVO"],
+    process.env["APIMCPBREVO"],
   ];
   for (const c of candidates) {
     const v = c?.trim();
