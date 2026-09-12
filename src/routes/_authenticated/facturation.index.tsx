@@ -365,6 +365,7 @@ function FacturationChantiers() {
                               fd.get("statut_facturation") ?? "a_facturer",
                             ) as "a_facturer" | "facture" | "paye",
                             montant_ht: String(fd.get("montant_ht") ?? ""),
+                            metrage_reel_m: String(fd.get("metrage_reel_m") ?? ""),
                             delai_paiement_jours: String(fd.get("delai") ?? ""),
                             echeance_paiement: String(fd.get("echeance") ?? "") || null,
                           },
@@ -380,6 +381,15 @@ function FacturationChantiers() {
                         inputMode="decimal"
                         defaultValue={String(c.montant_ht ?? 0)}
                         className={`${INPUT} block mt-1 w-28`}
+                      />
+                    </label>
+                    <label className="text-[11px] text-muted-foreground">
+                      Métrage (m)
+                      <input
+                        name="metrage_reel_m"
+                        inputMode="decimal"
+                        defaultValue={String(c.metrage_reel_m ?? c.metrage_m ?? 0)}
+                        className={`${INPUT} block mt-1 w-24`}
                       />
                     </label>
                     <label className="text-[11px] text-muted-foreground">

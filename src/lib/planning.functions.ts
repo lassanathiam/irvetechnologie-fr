@@ -1503,6 +1503,7 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
       delai_paiement_jours?: number | string | null;
       echeance_paiement?: string | null;
       montant_ht?: number | string | null;
+      metrage_reel_m?: number | string | null;
     }) =>
       z
         .object({
@@ -1516,12 +1517,15 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
             )
             .optional(),
           montant_ht: num(0, 1_000_000, 0).optional(),
+          metrage_reel_m: num(0, 10000, 0).optional(),
         })
         .parse(raw),
   )
   .handler(async ({ data, context }) => {
     const patch: {
       montant_ht?: number;
+      metrage_reel_m?: number;
+      metrage_m?: number;
       delai_paiement_jours?: number;
       echeance_paiement?: string | null;
       statut_facturation?: string;
@@ -1529,6 +1533,10 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
       paye_at?: string | null;
     } = {};
     if (data.montant_ht !== undefined) patch.montant_ht = data.montant_ht;
+    if (data.metrage_reel_m !== undefined) {
+      patch.metrage_reel_m = data.metrage_reel_m;
+      patch.metrage_m = data.metrage_reel_m;
+    }
     if (data.delai_paiement_jours !== undefined) patch.delai_paiement_jours = data.delai_paiement_jours;
     if (data.echeance_paiement !== undefined) patch.echeance_paiement = data.echeance_paiement;
 
