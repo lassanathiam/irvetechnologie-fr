@@ -73,6 +73,7 @@ import {
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien } from "@/lib/contact-client";
+import { estNoteAutoDepuisDevis } from "@/lib/devis-to-planning";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -198,7 +199,7 @@ const FACTU_LABEL: Record<string, string> = {
 };
 
 const ETIQUETTES_SUGGEREES = [
-  "Borne 7,4 kW",
+  "Borne 7,4 kW (monophasé 32A)",
   "Borne 11 kW",
   "Borne 22 kW",
   "Maison",
@@ -1246,7 +1247,7 @@ function PlanningPage() {
           <Field label="Partenaire / donneur d'ordre" name="partenaire" placeholder="Ex. ZePlug" />
           <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
           <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
-          <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW" />
+          <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW (monophasé 32A)" />
           <Field
             label="Désignation du chantier"
             name="designation"
@@ -1256,7 +1257,7 @@ function PlanningPage() {
           <label className="block">
             <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
             <select name="puissance_borne" defaultValue="À définir" className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
-              <option>3,7 kW</option><option>7,4 kW</option><option>11 kW</option><option>22 kW</option><option>À définir</option>
+              <option value="3,7 kW">3,7 kW — prise renforcée</option><option value="7,4 kW">7,4 kW — standard maison (32A mono)</option><option value="11 kW">11 kW — recharge accélérée</option><option value="22 kW">22 kW — forte puissance (triphasé)</option><option>À définir</option>
             </select>
           </label>
           <label className="block">
@@ -1278,7 +1279,7 @@ function PlanningPage() {
             <input
               name="etiquettes"
               list="etiquettes-suggestions"
-              placeholder="Borne 7,4 kW, Copropriété, Urgent"
+              placeholder="Borne 7,4 kW (mono 32A), Copropriété, Urgent"
               className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
             />
             <datalist id="etiquettes-suggestions">
@@ -1471,6 +1472,8 @@ function PlanningPage() {
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
+                    const notesVisibles =
+                      r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
                     const tel = telLien(r.client_telephone);
                     const wa = whatsappLien(
                       r.client_telephone,
@@ -1501,6 +1504,14 @@ function PlanningPage() {
                               >
                                 {st.label}
                               </span>
+                              {!r.date_a_confirmer && (
+                                <span className="text-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/40 text-primary">
+                                  {new Date(r.date_debut).toLocaleDateString("fr-FR", {
+                                    day: "2-digit",
+                                    month: "short",
+                                  })}
+                                </span>
+                              )}
                               {r.archive && (
                                 <span className="text-mono text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">
                                   Archivé
@@ -1576,7 +1587,7 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {r.notes && <p className="text-xs mt-2">{r.notes}</p>}
+                            {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
                             {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
                               <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
                                 {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
@@ -2158,7 +2169,7 @@ function PlanningPage() {
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
                               <select name="puissance_borne" defaultValue={r.puissance_borne ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
-                                <option>3,7 kW</option><option>7,4 kW</option><option>11 kW</option><option>22 kW</option><option>À définir</option>
+                                <option value="3,7 kW">3,7 kW — prise renforcée</option><option value="7,4 kW">7,4 kW — standard maison (32A mono)</option><option value="11 kW">11 kW — recharge accélérée</option><option value="22 kW">22 kW — forte puissance (triphasé)</option><option>À définir</option>
                               </select>
                             </label>
                             <label className="block">

@@ -2,7 +2,11 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
-import { datePlanificationDepuisDevis } from "@/lib/devis-to-planning";
+import {
+  datePlanificationDepuisDevis,
+  estNoteAutoDepuisDevis,
+  extraireTechniqueBorneDepuisDevis,
+} from "@/lib/devis-to-planning";
 
 export { computeTotals };
 export type { BillingTotals as DevisTotals } from "@/lib/billing";
@@ -79,10 +83,11 @@ async function assurerRendezVousPourDevisAccepte(
   if (devis.rendezvous_id) {
     const { data: rdv } = await supabase
       .from("rendezvous")
-      .select("id, notes")
+      .select("id, notes, designation, puissance_borne")
       .eq("id", devis.rendezvous_id)
       .maybeSingle();
-    if (rdv?.notes?.startsWith("Créé automatiquement depuis le devis")) {
+    const legacyNote = estNoteAutoDepuisDevis(rdv?.notes);
+    if (legacyNote) {
       await supabase
         .from("rendezvous")
         .update({
@@ -95,10 +100,32 @@ async function assurerRendezVousPourDevisAccepte(
         })
         .eq("id", rdv.id);
     }
+    if (!rdv?.designation || !rdv?.puissance_borne) {
+      const { data: items } = await supabase
+        .from("devis_items")
+        .select("libelle, description")
+        .eq("devis_id", devis.id)
+        .order("ordre", { ascending: true });
+      const technique = extraireTechniqueBorneDepuisDevis(items ?? []);
+      await supabase
+        .from("rendezvous")
+        .update({
+          designation: rdv?.designation ?? technique.designation,
+          puissance_borne: rdv?.puissance_borne ?? technique.puissance,
+        })
+        .eq("id", devis.rendezvous_id);
+    }
     return devis.rendezvous_id;
   }
   const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabase));
   if (!ownerUserId) return null;
+
+  const { data: items } = await supabase
+    .from("devis_items")
+    .select("libelle, description")
+    .eq("devis_id", devis.id)
+    .order("ordre", { ascending: true });
+  const technique = extraireTechniqueBorneDepuisDevis(items ?? []);
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -124,8 +151,8 @@ async function assurerRendezVousPourDevisAccepte(
       montant_ht: totalHt,
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
-      designation: null,
-      puissance_borne: null,
+      designation: technique.designation,
+      puissance_borne: technique.puissance,
       phase_installation: null,
       type_pose: null,
       metrage_m: null,

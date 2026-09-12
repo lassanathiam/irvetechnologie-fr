@@ -1,6 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { datePlanificationDepuisDevis } from "@/lib/devis-to-planning";
+import {
+  datePlanificationDepuisDevis,
+  estNoteAutoDepuisDevis,
+  extraireTechniqueBorneDepuisDevis,
+} from "@/lib/devis-to-planning";
 
 /**
  * Accès client au devis via un lien signé (jeton). Aucune authentification :
@@ -42,10 +46,11 @@ async function assurerRendezVousDepuisDevis(
   if (devis.rendezvous_id) {
     const { data: rdv } = await supabaseAdmin
       .from("rendezvous")
-      .select("id, notes")
+      .select("id, notes, designation, puissance_borne")
       .eq("id", devis.rendezvous_id)
       .maybeSingle();
-    if (rdv?.notes?.startsWith("Créé automatiquement depuis le devis")) {
+    const legacyNote = estNoteAutoDepuisDevis(rdv?.notes);
+    if (legacyNote) {
       await supabaseAdmin
         .from("rendezvous")
         .update({
@@ -58,11 +63,33 @@ async function assurerRendezVousDepuisDevis(
         })
         .eq("id", rdv.id);
     }
+    if (!rdv?.designation || !rdv?.puissance_borne) {
+      const { data: items } = await supabaseAdmin
+        .from("devis_items")
+        .select("libelle, description")
+        .eq("devis_id", devis.id)
+        .order("ordre", { ascending: true });
+      const technique = extraireTechniqueBorneDepuisDevis(items ?? []);
+      await supabaseAdmin
+        .from("rendezvous")
+        .update({
+          designation: rdv?.designation ?? technique.designation,
+          puissance_borne: rdv?.puissance_borne ?? technique.puissance,
+        })
+        .eq("id", devis.rendezvous_id);
+    }
     return devis.rendezvous_id;
   }
 
   const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabaseAdmin));
   if (!ownerUserId) return null;
+
+  const { data: items } = await supabaseAdmin
+    .from("devis_items")
+    .select("libelle, description")
+    .eq("devis_id", devis.id)
+    .order("ordre", { ascending: true });
+  const technique = extraireTechniqueBorneDepuisDevis(items ?? []);
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -88,8 +115,8 @@ async function assurerRendezVousDepuisDevis(
       montant_ht: totalHt,
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
-      designation: null,
-      puissance_borne: null,
+      designation: technique.designation,
+      puissance_borne: technique.puissance,
       phase_installation: null,
       type_pose: null,
       metrage_m: null,
