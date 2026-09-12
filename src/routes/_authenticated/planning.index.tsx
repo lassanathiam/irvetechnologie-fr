@@ -306,11 +306,18 @@ function PlanningPage() {
 
   const setStatut = useMutation({
     mutationFn: (p: { id: string; statut: string }) => statutFn({ data: p }),
-    onSuccess: (res: { ok: boolean; sms?: { status: string; to?: string; reason?: string } | null }) => {
+    onSuccess: (res: {
+      ok: boolean;
+      sms?: { status: string; to?: string; reason?: string } | null;
+      email?: { status: string; to?: string; reason?: string } | null;
+    }) => {
+      if (res?.email?.status === "sent") {
+        toast.success(`Email de confirmation envoyé au client (${res.email.to ?? "adresse masquée"}).`);
+      } else if (res?.email?.status === "failed") {
+        toast.error(`Email non envoyé: ${res.email.reason ?? "erreur inconnue"}`);
+      }
       if (res?.sms?.status === "sent") {
         toast.success(`SMS de confirmation envoyé au client (${res.sms.to ?? "numéro masqué"}).`);
-      } else if (res?.sms?.status === "skipped") {
-        toast.message(`SMS non envoyé: ${res.sms.reason ?? "configuration manquante"}`);
       } else if (res?.sms?.status === "failed") {
         toast.error(`SMS non envoyé: ${res.sms.reason ?? "erreur inconnue"}`);
       }

@@ -9,6 +9,11 @@ type SmsOutcome =
   | { status: "skipped"; reason: string }
   | { status: "failed"; reason: string };
 
+type EmailOutcome =
+  | { status: "sent"; provider: "lovable"; to: string }
+  | { status: "skipped"; reason: string }
+  | { status: "failed"; reason: string };
+
 /** Nombre tolérant : vide, texte invalide ou NaN → valeur par défaut. */
 const num = (min: number, max: number, def: number) =>
   z.preprocess((v) => {
@@ -199,6 +204,49 @@ async function envoyerSmsRendezVousConfirmation(rdv: {
   }
 }
 
+async function envoyerEmailRendezVousConfirmation(rdv: {
+  id: string;
+  client_email: string | null;
+  client_nom: string | null;
+  date_debut: string;
+  adresse: string | null;
+  cp_ville: string | null;
+  designation: string | null;
+  titre: string | null;
+}): Promise<EmailOutcome> {
+  const email = rdv.client_email?.trim();
+  if (!email) return { status: "skipped", reason: "Email client manquant" };
+  try {
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const result = await sendTemplateEmail("rdv-confirme", email, {
+      idempotencyKey: `rdv-confirme-${rdv.id}-${rdv.date_debut}`,
+      replyTo: "contacts@irvetechnologie.fr",
+      templateData: {
+        client_nom: rdv.client_nom ?? "Client",
+        date_debut: rdv.date_debut,
+        adresse: rdv.adresse,
+        cp_ville: rdv.cp_ville,
+        objet: rdv.designation || rdv.titre || "Intervention IRVE",
+      },
+    });
+    if (!result.sent) {
+      return {
+        status: "skipped",
+        reason:
+          result.reason === "email_not_configured"
+            ? "Configuration email absente"
+            : "Destinataire en suppression email",
+      };
+    }
+    return { status: "sent", provider: "lovable", to: email };
+  } catch (error) {
+    return {
+      status: "failed",
+      reason: error instanceof Error ? error.message : "Erreur email inconnue",
+    };
+  }
+}
+
 /** Géocodage via l'API Adresse (data.gouv.fr) — gratuite et sans clé. */
 async function geocode(query: string): Promise<{ lat: number; lng: number } | null> {
   try {
@@ -267,7 +315,7 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: avant, error: readErr } = await context.supabase
       .from("rendezvous")
-      .select("id, statut, client_telephone, client_nom, date_debut, adresse, cp_ville, designation, titre")
+      .select("id, statut, client_telephone, client_email, client_nom, date_debut, adresse, cp_ville, designation, titre")
       .eq("id", data.id)
       .single();
     if (readErr) throw new Error(readErr.message);
@@ -279,8 +327,19 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
 
     let sms: SmsOutcome | null = null;
+    let email: EmailOutcome | null = null;
     const passeEnConfirme = data.statut === "confirme" && avant?.statut !== "confirme";
     if (passeEnConfirme) {
+      email = await envoyerEmailRendezVousConfirmation({
+        id: avant.id,
+        client_email: avant.client_email,
+        client_nom: avant.client_nom,
+        date_debut: avant.date_debut,
+        adresse: avant.adresse,
+        cp_ville: avant.cp_ville,
+        designation: avant.designation,
+        titre: avant.titre,
+      });
       sms = await envoyerSmsRendezVousConfirmation({
         client_telephone: avant.client_telephone,
         client_nom: avant.client_nom,
@@ -292,7 +351,7 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
       });
     }
 
-    return { ok: true, sms };
+    return { ok: true, sms, email };
   });
 
 /** Modification de l'adresse d'un rendez-vous : re-géocodage + recalcul du trajet. */
