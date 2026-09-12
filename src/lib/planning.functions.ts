@@ -296,6 +296,11 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
     }
   };
 
+  // Priorité à Brevo quand la clé existe (évite les blocages recipient_mismatch).
+  if (process.env["BREVO_API_KEY"]?.trim()) {
+    return sendAvecBrevo("Envoi direct Brevo");
+  }
+
   try {
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const result = await sendTemplateEmail("rdv-confirme", email, {
