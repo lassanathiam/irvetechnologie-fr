@@ -133,7 +133,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="min-w-0 flex-1 overflow-x-hidden">
-        <header className="pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-4 backdrop-blur-xl sm:px-6">
+        <header className="pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b border-border bg-card/95 px-3 backdrop-blur-xl sm:px-6">
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -174,7 +174,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </header>
-        <main className="pro-main overflow-x-hidden p-4 sm:p-6 lg:p-8">
+        <main className="pro-main w-full max-w-full overflow-x-hidden p-3 sm:p-6 lg:p-8">
           {showWelcome && (
             <div className="mb-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 md:hidden">
               <div className="flex items-start gap-3">

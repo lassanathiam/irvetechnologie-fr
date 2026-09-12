@@ -124,7 +124,7 @@ function FacturationChantiers() {
   return (
     <ProShell>
       <div className="space-y-6">
-        <header className="flex flex-wrap items-end justify-between gap-3">
+        <header className="flex flex-wrap items-start sm:items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-extrabold tracking-tight inline-flex items-center gap-2">
               <Euro className="h-5 w-5 text-primary" /> Chantiers terminés à facturer
@@ -134,12 +134,12 @@ function FacturationChantiers() {
               délai convenu. Les montants valorisés par les partenaires attendent votre validation.
             </p>
           </div>
-          <label className="text-mono text-xs text-muted-foreground">
+          <label className="w-full sm:w-auto text-mono text-xs text-muted-foreground">
             Mois
             <select
               value={mois}
               onChange={(e) => setMois(e.target.value)}
-              className={`${INPUT} ml-2`}
+              className={`${INPUT} mt-1 sm:mt-0 sm:ml-2 w-full sm:w-auto`}
             >
               {moisRecents().map((v) => (
                 <option key={v} value={v}>
@@ -196,7 +196,8 @@ function FacturationChantiers() {
           />
         </section>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="-mx-1 overflow-x-auto px-1 pb-1">
+          <div className="flex min-w-max gap-2">
           {(
             [
               ["encours", "En cours"],
@@ -209,7 +210,7 @@ function FacturationChantiers() {
               key={v}
               type="button"
               onClick={() => setFiltre(v)}
-              className={`text-xs font-semibold rounded-sm px-3 py-2 border min-h-10 ${
+              className={`shrink-0 text-xs font-semibold rounded-sm px-3 py-2 border min-h-10 ${
                 filtre === v
                   ? "border-primary text-primary bg-muted"
                   : "border-border text-muted-foreground"
@@ -218,6 +219,7 @@ function FacturationChantiers() {
               {label}
             </button>
           ))}
+          </div>
         </div>
 
         {erreur && <p className="text-sm text-destructive">{erreur}</p>}
@@ -297,7 +299,7 @@ function FacturationChantiers() {
                         )}
                       </p>
                     </div>
-                    <div className="text-right">
+                    <div className="text-left sm:text-right">
                       <p className="text-mono text-[11px] uppercase text-primary">
                         {FACTU_LABEL[c.statut_facturation] ?? c.statut_facturation}
                       </p>

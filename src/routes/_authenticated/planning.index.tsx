@@ -1470,7 +1470,8 @@ function PlanningPage() {
             </button>
           </div>
 
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="-mx-1 overflow-x-auto px-1 pb-1">
+            <div className="flex min-w-max items-center gap-2">
             {[
               { v: "tous", l: "Tous", point: "bg-muted-foreground" },
               ...STATUTS.map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
@@ -1488,7 +1489,7 @@ function PlanningPage() {
                   key={f.v}
                   type="button"
                   onClick={() => setFiltreStatut(f.v)}
-                  className={`text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                  className={`shrink-0 text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
                     on
                       ? "border-primary bg-primary/10 text-primary"
                       : "border-border text-muted-foreground hover:border-primary/60"
@@ -1501,7 +1502,7 @@ function PlanningPage() {
             <button
               type="button"
               onClick={() => setMontantsVisibles((v) => !v)}
-              className="text-mono text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
+              className="shrink-0 text-mono text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
             >
               {montantsVisibles ? (
                 <>
@@ -1513,6 +1514,7 @@ function PlanningPage() {
                 </>
               )}
             </button>
+          </div>
           </div>
 
           {list.isLoading ? (
@@ -1613,7 +1615,7 @@ function PlanningPage() {
                                   </a>
                                 )}
                                 {r.client_telephone && (
-                                  <span className="text-mono text-[11px] text-muted-foreground">
+                          <span className="text-mono text-[11px] text-muted-foreground break-all">
                                     {r.client_telephone}
                                   </span>
                                 )}

@@ -140,7 +140,7 @@ function EspacePage() {
                         {r.client_nom}
                         <span className="neo-dashboard-muted font-normal"> · {r.cp_ville || r.adresse}</span>
                       </span>
-                      <span className="text-mono text-sm text-dashboard-muted">
+                      <span className="text-mono text-xs sm:text-sm text-dashboard-muted">
                         Démarré à{" "}
                         {new Date(r.demarre_at ?? r.date_debut).toLocaleTimeString("fr-FR", {
                           hour: "2-digit",
@@ -204,7 +204,7 @@ function EspacePage() {
                         <Link
                           to="/devis/$id"
                           params={{ id: d.id }}
-                          className="flex items-center justify-between gap-3 px-1 py-3 transition hover:bg-dashboard-raised/50"
+                          className="flex flex-wrap items-center justify-between gap-2 px-1 py-3 transition hover:bg-dashboard-raised/50 sm:flex-nowrap"
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-dashboard-foreground">
@@ -212,11 +212,11 @@ function EspacePage() {
                             </span>
                             <span className="block text-mono text-[11px] text-dashboard-muted">{d.numero}</span>
                           </span>
-                          <span className="flex items-center gap-2">
+                          <span className="flex min-w-0 items-center gap-2">
                             <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${badge.cls}`}>
                               {badge.label}
                             </span>
-                            <span className="text-mono text-xs font-bold text-dashboard-foreground">
+                            <span className="text-mono text-xs font-bold text-dashboard-foreground whitespace-nowrap">
                               {euro(Number(d.total_ttc))}
                             </span>
                           </span>
@@ -393,7 +393,7 @@ function Panel({
 }) {
   return (
     <section className="neo-dashboard-panel rounded-md p-5">
-      <div className="flex items-center justify-between gap-3 mb-3">
+      <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <h2 className="text-sm font-bold flex items-center gap-2">
           <Icon className="h-4 w-4 text-dashboard-foreground" /> {title}
         </h2>
