@@ -246,7 +246,7 @@ function EspacePage() {
                           search={{ rdv: r.id }}
                           className="flex items-center gap-4 rounded-md px-1 py-3 transition hover:bg-dashboard-raised/60"
                         >
-                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-neon-magenta/15 text-neon-magenta">
+                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-primary/15 text-primary">
                             <span className="text-xl font-bold leading-none">{dj.jour}</span>
                             <span className="text-[9px] font-bold uppercase leading-none">{dj.mois}</span>
                           </span>

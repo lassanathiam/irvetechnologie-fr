@@ -29,6 +29,7 @@ import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authentic
 import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
+import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
@@ -140,6 +141,12 @@ const AuthenticatedFacturesIdRoute = AuthenticatedFacturesIdRouteImport.update({
   path: '/factures/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedEspaceDashboardRoute =
+  AuthenticatedEspaceDashboardRouteImport.update({
+    id: '/espace/dashboard',
+    path: '/espace/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
   id: '/devis/$id',
   path: '/devis/$id',
@@ -167,6 +174,7 @@ export interface FileRoutesByFullPath {
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/demandes/': typeof AuthenticatedDemandesIndexRoute
@@ -191,6 +199,7 @@ export interface FileRoutesByTo {
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/demandes': typeof AuthenticatedDemandesIndexRoute
@@ -217,6 +226,7 @@ export interface FileRoutesById {
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
+  '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/_authenticated/demandes/': typeof AuthenticatedDemandesIndexRoute
@@ -243,6 +253,7 @@ export interface FileRouteTypes {
     | '/facture-client/$token'
     | '/partenaire/$token'
     | '/devis/$id'
+    | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
     | '/demandes/'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/facture-client/$token'
     | '/partenaire/$token'
     | '/devis/$id'
+    | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
     | '/demandes'
@@ -292,6 +304,7 @@ export interface FileRouteTypes {
     | '/facture-client/$token'
     | '/partenaire/$token'
     | '/_authenticated/devis/$id'
+    | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
     | '/_authenticated/demandes/'
@@ -463,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFacturesIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/espace/dashboard': {
+      id: '/_authenticated/espace/dashboard'
+      path: '/espace/dashboard'
+      fullPath: '/espace/dashboard'
+      preLoaderRoute: typeof AuthenticatedEspaceDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/devis/$id': {
       id: '/_authenticated/devis/$id'
       path: '/devis/$id'
@@ -489,6 +509,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
+  AuthenticatedEspaceDashboardRoute: typeof AuthenticatedEspaceDashboardRoute
   AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
   AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
   AuthenticatedDemandesIndexRoute: typeof AuthenticatedDemandesIndexRoute
@@ -504,6 +525,7 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
+  AuthenticatedEspaceDashboardRoute: AuthenticatedEspaceDashboardRoute,
   AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,
   AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
   AuthenticatedDemandesIndexRoute: AuthenticatedDemandesIndexRoute,

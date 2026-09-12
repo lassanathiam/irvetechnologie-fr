@@ -4,6 +4,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
 import {
   ArrowRight,
+  ChevronDown,
+  ChevronUp,
   CheckCircle2,
   FileText,
   Loader2,
@@ -56,6 +58,8 @@ const STATUT_LABEL: Record<string, string> = {
   expire: "Expiré",
 };
 
+type SectionKey = "client" | "dates" | "prestations" | "conditions";
+
 function DevisPage() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -86,6 +90,7 @@ function DevisPage() {
     notes: "",
   });
   const [error, setError] = useState<string | null>(null);
+  const [openSection, setOpenSection] = useState<SectionKey | null>("client");
 
   // Demande client acceptée : préremplissage automatique des coordonnées.
   const { demande: demandeId } = Route.useSearch();
@@ -210,7 +215,12 @@ function DevisPage() {
 
       <div className="mt-8 grid lg:grid-cols-[1fr_340px] gap-6 items-start">
         <div className="space-y-5">
-          <Card step="01" title="Client">
+          <Card
+            step="01"
+            title="Client"
+            open={openSection === "client"}
+            onToggle={() => setOpenSection((v) => (v === "client" ? null : "client"))}
+          >
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nom / société *" value={client.client_nom} onChange={(v) => setClient({ ...client, client_nom: v })} />
               <Field label="Objet" value={client.objet} onChange={(v) => setClient({ ...client, objet: v })} />
@@ -221,7 +231,12 @@ function DevisPage() {
             </div>
           </Card>
 
-          <Card step="02" title="Dates & validité">
+          <Card
+            step="02"
+            title="Dates & validité"
+            open={openSection === "dates"}
+            onToggle={() => setOpenSection((v) => (v === "dates" ? null : "dates"))}
+          >
             <div className="grid sm:grid-cols-2 gap-4">
               <Field
                 label="Date du devis"
@@ -255,7 +270,12 @@ function DevisPage() {
             </div>
           </Card>
 
-          <Card step="03" title="Prestations">
+          <Card
+            step="03"
+            title="Prestations"
+            open={openSection === "prestations"}
+            onToggle={() => setOpenSection((v) => (v === "prestations" ? null : "prestations"))}
+          >
             <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">
@@ -380,7 +400,12 @@ function DevisPage() {
             )}
           </Card>
 
-          <Card step="04" title="Remise, acompte & conditions">
+          <Card
+            step="04"
+            title="Remise, acompte & conditions"
+            open={openSection === "conditions"}
+            onToggle={() => setOpenSection((v) => (v === "conditions" ? null : "conditions"))}
+          >
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Remise globale (%)</span>
@@ -510,13 +535,32 @@ function DevisPage() {
   );
 }
 
-function Card({ step, title, children }: { step: string; title: string; children: React.ReactNode }) {
+function Card({
+  step,
+  title,
+  open,
+  onToggle,
+  children,
+}: {
+  step: string;
+  title: string;
+  open: boolean;
+  onToggle: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <div className="border border-border rounded-sm bg-card p-6 space-y-4">
-      <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary flex items-center gap-2">
-        <FileText className="h-3.5 w-3.5" /> {step} · {title}
-      </h2>
-      {children}
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full text-left text-mono text-[11px] uppercase tracking-[0.2em] text-primary flex items-center justify-between gap-2"
+      >
+        <span className="inline-flex items-center gap-2">
+          <FileText className="h-3.5 w-3.5" /> {step} · {title}
+        </span>
+        {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      </button>
+      {open ? children : null}
     </div>
   );
 }
