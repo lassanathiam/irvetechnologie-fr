@@ -294,6 +294,7 @@ function DevisDetail() {
   const { devis, items } = query.data;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const lienClient = `${origin}/devis-client/${devis.public_token}`;
+  const devisAccepteEnLigne = Boolean(devis.signed_at);
 
   return (
     <ProShell>
@@ -612,6 +613,12 @@ function DevisDetail() {
             <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
               Envoyer au client
             </h2>
+            {devisAccepteEnLigne && (
+              <div className="rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-mono text-xs text-emerald-700 dark:text-emerald-300">
+                Devis déjà accepté en ligne — {devis.signataire_nom ?? "Client"} le{" "}
+                {new Date(devis.signed_at!).toLocaleString("fr-FR")}
+              </div>
+            )}
             <p className="text-sm text-muted-foreground">
               {devis.client_email
                 ? `Destinataire : ${devis.client_email}`
@@ -622,22 +629,29 @@ function DevisDetail() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message personnalisé (optionnel)"
+              disabled={devisAccepteEnLigne}
               className="w-full bg-input border border-border rounded-sm px-4 py-3 text-sm resize-none"
             />
             <div className="flex flex-wrap items-center gap-4">
-              <button
-                type="button"
-                disabled={!devis.client_email || send.isPending}
-                onClick={() => {
-                  setFeedback(null);
-                  setError(null);
-                  send.mutate();
-                }}
-                className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
-              >
-                {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
-                Envoyer le devis
-              </button>
+              {!devisAccepteEnLigne ? (
+                <button
+                  type="button"
+                  disabled={!devis.client_email || send.isPending}
+                  onClick={() => {
+                    setFeedback(null);
+                    setError(null);
+                    send.mutate();
+                  }}
+                  className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50"
+                >
+                  {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Mail className="h-4 w-4" />}
+                  Envoyer le devis
+                </button>
+              ) : (
+                <span className="inline-flex items-center rounded-sm border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-mono text-xs font-bold text-emerald-700 dark:text-emerald-300">
+                  Statut: envoyé puis accepté
+                </span>
+              )}
               {devis.sent_at && (
                 <span className="text-mono text-xs text-muted-foreground">
                   Dernier envoi : {new Date(devis.sent_at).toLocaleString("fr-FR")}
@@ -668,6 +682,53 @@ function DevisDetail() {
                   <Copy className="h-3.5 w-3.5" /> Copier
                 </button>
               </div>
+            </div>
+
+            <div className="pt-4 border-t border-border space-y-3">
+              <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
+                Historique d&apos;envois
+              </h2>
+              {devisAccepteEnLigne && (
+                <div className="text-[12px] border-b border-border pb-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-mono font-bold">
+                      {new Date(devis.signed_at!).toLocaleString("fr-FR")}
+                    </span>
+                    <span className="text-mono text-[10px] text-emerald-700 dark:text-emerald-300 uppercase">
+                      Accepté
+                    </span>
+                  </div>
+                  <div className="text-muted-foreground">
+                    {devis.signataire_nom ?? "Client"} a accepté le devis en ligne.
+                  </div>
+                </div>
+              )}
+              {(envois.data ?? []).length === 0 ? (
+                <p className="text-sm text-muted-foreground">Aucun envoi enregistré.</p>
+              ) : (
+                <ul className="space-y-2.5">
+                  {(envois.data ?? []).map((e) => (
+                    <li key={e.id} className="text-[12px] border-b border-border pb-2 last:border-0">
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-mono font-bold">
+                          {new Date(e.created_at).toLocaleString("fr-FR")}
+                        </span>
+                        <span
+                          className={
+                            e.resultat === "envoye"
+                              ? "text-mono text-[10px] text-primary uppercase"
+                              : "text-mono text-[10px] text-destructive uppercase"
+                          }
+                        >
+                          {e.resultat === "envoye" ? "Envoyé" : "Bloqué"}
+                        </span>
+                      </div>
+                      <div className="text-muted-foreground">{e.destinataire}</div>
+                      {e.message && <div className="text-muted-foreground italic">{e.message}</div>}
+                    </li>
+                  ))}
+                </ul>
+              )}
             </div>
           </div>
 
@@ -715,37 +776,6 @@ function DevisDetail() {
 
             <EmailReceipts email={devis.client_email} />
 
-            <div className="border border-border rounded-sm bg-card p-6 space-y-3">
-              <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
-                Historique d&apos;envois
-              </h2>
-              {(envois.data ?? []).length === 0 ? (
-                <p className="text-sm text-muted-foreground">Aucun envoi enregistré.</p>
-              ) : (
-                <ul className="space-y-2.5">
-                  {(envois.data ?? []).map((e) => (
-                    <li key={e.id} className="text-[12px] border-b border-border pb-2 last:border-0">
-                      <div className="flex items-center justify-between gap-2">
-                        <span className="text-mono font-bold">
-                          {new Date(e.created_at).toLocaleString("fr-FR")}
-                        </span>
-                        <span
-                          className={
-                            e.resultat === "envoye"
-                              ? "text-mono text-[10px] text-primary uppercase"
-                              : "text-mono text-[10px] text-destructive uppercase"
-                          }
-                        >
-                          {e.resultat === "envoye" ? "Envoyé" : "Bloqué"}
-                        </span>
-                      </div>
-                      <div className="text-muted-foreground">{e.destinataire}</div>
-                      {e.message && <div className="text-muted-foreground italic">{e.message}</div>}
-                    </li>
-                  ))}
-                </ul>
-              )}
-            </div>
           </div>
         </div>
       </div>
