@@ -35,7 +35,7 @@ export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; inter
       onMouseLeave={() => setPaused(false)}
     >
       <div className="absolute inset-0 -m-4 border border-primary/20 rounded-sm animate-glow" aria-hidden />
-      <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card">
+      <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border">
         {slides.map((s, idx) => (
           <img
             key={s.src}
@@ -70,28 +70,29 @@ export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; inter
           <ChevronRight className="h-4 w-4" />
         </button>
 
-        {/* caption + dots */}
-        <div className="absolute bottom-6 left-6 right-6 backdrop-blur-md bg-background/70 border border-border p-4 rounded-sm flex justify-between items-center">
-          <div>
-            <div className="text-mono text-primary flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              {slides[i].label}
-            </div>
-            <div className="mt-1 text-sm">{slides[i].meta}</div>
+      </div>
+
+      {/* caption + dots (hors de l'image pour éviter de masquer la photo en mobile) */}
+      <div className="mt-3 rounded-sm border border-border bg-card/80 backdrop-blur-md p-3 sm:p-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-mono text-primary flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+            <span className="truncate">{slides[i].label}</span>
           </div>
-          <div className="flex gap-1.5">
-            {slides.map((_, idx) => (
-              <button
-                key={idx}
-                type="button"
-                onClick={() => setI(idx)}
-                aria-label={`Photo ${idx + 1}`}
-                className={`h-1.5 rounded-full transition-all ${
-                  idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"
-                }`}
-              />
-            ))}
-          </div>
+          <div className="mt-1 text-xs sm:text-sm text-muted-foreground break-words">{slides[i].meta}</div>
+        </div>
+        <div className="flex gap-1.5 shrink-0 pt-1">
+          {slides.map((_, idx) => (
+            <button
+              key={idx}
+              type="button"
+              onClick={() => setI(idx)}
+              aria-label={`Photo ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all ${
+                idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"
+              }`}
+            />
+          ))}
         </div>
       </div>
     </div>
