@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { Lock } from "lucide-react";
+import { Lock, PhoneCall } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
 
 export function SiteNav() {
@@ -43,6 +43,13 @@ export function SiteNav() {
             <Lock className="h-3.5 w-3.5" />
             <span className="hidden xs:inline sm:inline">Espace pro</span>
           </Link>
+          <a
+            href="tel:+33768084367"
+            className="hidden sm:inline-flex items-center gap-2 text-mono text-xs font-semibold bg-primary/10 text-primary border border-primary/30 rounded-sm px-3 py-2.5 hover:bg-primary/15 hover:border-primary/45 transition"
+          >
+            <PhoneCall className="h-3.5 w-3.5" />
+            Besoin d&apos;infos ? Appelez-nous
+          </a>
 
           <Link
             to="/demande"
