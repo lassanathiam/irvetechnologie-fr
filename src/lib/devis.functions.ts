@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
+import { buildInterventionProfile, datePlanificationDepuisDevis } from "@/lib/devis-to-planning";
 
 export { computeTotals };
 export type { BillingTotals as DevisTotals } from "@/lib/billing";
@@ -46,29 +47,6 @@ const STATUTS = [
   "expire",
 ] as const;
 
-function datePlanificationDepuisDevis(dateExpiration: string | null | undefined) {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const fallback = today.toISOString().slice(0, 10);
-  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration) ? dateExpiration : fallback;
-  const d = new Date(`${base}T09:00:00`);
-  if (Number.isNaN(d.getTime()) || d.getTime() < today.getTime()) {
-    return `${fallback}T09:00:00.000Z`;
-  }
-  return d.toISOString();
-}
-
-function extraireDetail(prefixe: string, notes: string | null | undefined): string | null {
-  if (!notes) return null;
-  const row = notes
-    .split("\n")
-    .map((l) => l.trim())
-    .find((l) => l.toLowerCase().startsWith(prefixe.toLowerCase()));
-  if (!row) return null;
-  const value = row.split(":").slice(1).join(":").trim();
-  return value || null;
-}
-
 async function fallbackOwnerUserId(supabase: any): Promise<string | null> {
   const { data } = await supabase
     .from("user_roles")
@@ -99,27 +77,22 @@ async function assurerRendezVousPourDevisAccepte(
   },
 ) {
   if (devis.rendezvous_id) {
-    const { data: rdv } = await supabase
-      .from("rendezvous")
-      .select("id, statut")
-      .eq("id", devis.rendezvous_id)
-      .maybeSingle();
-    if (rdv && rdv.statut === "planifie") {
-      await supabase.from("rendezvous").update({ statut: "confirme" }).eq("id", rdv.id);
-    }
     return devis.rendezvous_id;
   }
   const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabase));
   if (!ownerUserId) return null;
-  const puissance = extraireDetail("Puissance borne", devis.notes);
-  const phase = extraireDetail("Alimentation", devis.notes);
-  const typeInstallation = extraireDetail("Installation", devis.notes);
-  const typePose =
-    typeInstallation && /mur/i.test(typeInstallation)
-      ? "Murale"
-      : typeInstallation && /sol|pied|borne/i.test(typeInstallation)
-        ? "Sur pied"
-        : null;
+
+  const { data: items } = await supabase
+    .from("devis_items")
+    .select("libelle, description, quantite")
+    .eq("devis_id", devis.id)
+    .order("ordre", { ascending: true });
+  const profile = buildInterventionProfile({
+    devisNumero: devis.numero,
+    devisObjet: devis.objet,
+    devisNotes: devis.notes,
+    items: items ?? [],
+  });
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -131,7 +104,7 @@ async function assurerRendezVousPourDevisAccepte(
       user_id: ownerUserId,
       titre: `Devis ${devis.numero} accepté`,
       type: "installation",
-      statut: "confirme",
+      statut: "planifie",
       client_nom: devis.client_nom ?? "Client",
       client_telephone: devis.client_telephone ?? null,
       client_email: devis.client_email ?? null,
@@ -139,21 +112,17 @@ async function assurerRendezVousPourDevisAccepte(
       cp_ville: devis.client_cp_ville ?? null,
       date_debut: datePlanificationDepuisDevis(devis.date_expiration),
       duree_min: 120,
-      notes: [
-        `Créé automatiquement depuis le devis ${devis.numero} accepté.`,
-        devis.notes?.trim() ? `Notes devis : ${devis.notes}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      notes: profile.notesPlanning,
       origine: "direct",
       partenaire: null,
       montant_ht: totalHt,
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
       designation: devis.objet ?? null,
-      puissance_borne: puissance,
-      phase_installation: phase,
-      type_pose: typePose,
+      puissance_borne: profile.puissanceBorne,
+      phase_installation: profile.phaseInstallation,
+      type_pose: profile.typePose,
+      metrage_m: profile.metrageM,
       date_a_confirmer: true,
     })
     .select("id")
