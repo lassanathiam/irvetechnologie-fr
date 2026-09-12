@@ -50,6 +50,7 @@ export default function RetourTravauxSheet({
   );
   const [observations, setObservations] = useState(rdv.retour_observations ?? "");
   const [delestage, setDelestage] = useState(Boolean(rdv.retour_delestage));
+  const [photoReelle, setPhotoReelle] = useState(false);
   const [enCours, setEnCours] = useState<string | null>(null);
 
   const photos = useQuery({
@@ -68,12 +69,18 @@ export default function RetourTravauxSheet({
 
   async function envoyer(cat: string, files: FileList | null) {
     if (!files?.length) return;
+    if (!photoReelle) {
+      toast.error("Confirmez d'abord que les photos sont réelles (pas générées par IA).");
+      return;
+    }
     setEnCours(cat);
     let ok = 0;
     for (const file of Array.from(files).slice(0, 6)) {
       try {
         const data_url = await compressImage(file);
-        await uploadFn({ data: { rendezvous_id: rdv.id, categorie: cat, data_url } });
+        await uploadFn({
+          data: { rendezvous_id: rdv.id, categorie: cat, data_url, photo_reelle: true },
+        });
         ok++;
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Envoi de la photo impossible.");
@@ -205,6 +212,19 @@ export default function RetourTravauxSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        <label className="mb-3 flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
+          <input
+            type="checkbox"
+            checked={photoReelle}
+            onChange={(e) => setPhotoReelle(e.target.checked)}
+            className="mt-0.5 h-5 w-5"
+          />
+          <span>
+            Je confirme que les photos ajoutées sont des photos réelles du chantier (aucune image
+            générée par intelligence artificielle).
+          </span>
+        </label>
 
         <div className="grid gap-2">
           {RETOUR_CATEGORIES_OBLIGATOIRES.map((c) => ligne(c, true))}

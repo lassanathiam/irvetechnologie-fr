@@ -1242,17 +1242,29 @@ function decodePhoto(dataUrl: string): { bytes: Uint8Array; contentType: string 
 /** L'équipe dépose une photo de retour de travaux sur un chantier. */
 export const uploadPhotoChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { rendezvous_id: string; categorie: string; data_url: string; legende?: string | null }) =>
+  .inputValidator(
+    (raw: {
+      rendezvous_id: string;
+      categorie: string;
+      data_url: string;
+      legende?: string | null;
+      photo_reelle?: boolean;
+    }) =>
     z
       .object({
         rendezvous_id: z.string().uuid(),
         categorie: z.enum(RETOUR_CATEGORIES),
         data_url: z.string().max(4_500_000),
         legende: z.string().trim().max(160).optional().nullable(),
+        photo_reelle: z.boolean(),
       })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
+    if (!data.photo_reelle) {
+      throw new Error("Photo refusée : seules les photos réelles de chantier sont autorisées.");
+    }
+
     const { count } = await context.supabase
       .from("rendezvous_photos")
       .select("id", { count: "exact", head: true })
