@@ -185,9 +185,11 @@ function Index() {
               <span className="block animate-fade-up" style={{ animationDelay: "80ms" }}>Borne de</span>
               <span className="block animate-fade-up" style={{ animationDelay: "180ms" }}>
                 <em className="not-italic text-primary font-light italic">l'Ouest</em>{" "}
-                <span className="text-muted-foreground/60">— rechargez</span>
+                <span className="text-muted-foreground/60">— installation</span>
               </span>
-              <span className="block animate-fade-up" style={{ animationDelay: "280ms" }}>près de chez vous.</span>
+              <span className="block animate-fade-up" style={{ animationDelay: "280ms" }}>
+                IRVE pour particuliers, entreprises et collectivités.
+              </span>
             </h1>
             <p className="mt-8 max-w-lg text-muted-foreground leading-relaxed animate-fade-up" style={{ animationDelay: "400ms" }}>
               Installation de bornes de recharge pour véhicules électriques dans tout le
