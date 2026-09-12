@@ -15,6 +15,21 @@ type EmailOutcome =
   | { status: "skipped"; reason: string }
   | { status: "failed"; reason: string };
 
+function getBrevoApiKey(): string | null {
+  const candidates = [
+    process.env["BREVO_API_KEY"],
+    process.env["BREVO_API_V3_KEY"],
+    process.env["BREVO_KEY"],
+    process.env["BREVO_APIKEY"],
+    process.env["BREVO_TOKEN"],
+  ];
+  for (const c of candidates) {
+    const v = c?.trim();
+    if (v) return v;
+  }
+  return null;
+}
+
 /** Nombre tolérant : vide, texte invalide ou NaN → valeur par défaut. */
 const num = (min: number, max: number, def: number) =>
   z.preprocess((v) => {
@@ -147,10 +162,13 @@ async function envoyerSmsRendezVousConfirmation(rdv: {
   const provider = (process.env["SMS_PROVIDER"] || "auto").trim().toLowerCase();
 
   const sendWithBrevo = async (): Promise<SmsOutcome> => {
-    const apiKey = process.env["BREVO_API_KEY"]?.trim();
+    const apiKey = getBrevoApiKey();
     const sender = process.env["SMS_FROM"]?.trim();
     if (!apiKey || !sender) {
-      return { status: "skipped", reason: "Configuration Brevo absente" };
+      return {
+        status: "skipped",
+        reason: "Configuration Brevo absente (clé API ou SMS_FROM manquant)",
+      };
     }
     try {
       const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
@@ -245,10 +263,17 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
   if (!email) return { status: "skipped", reason: "Email client manquant" };
 
   const sendAvecBrevo = async (motif: string): Promise<EmailOutcome> => {
-    const apiKey = process.env["BREVO_API_KEY"]?.trim();
+    const apiKey = getBrevoApiKey();
     const senderEmail = process.env["BREVO_SENDER_EMAIL"]?.trim() || "contacts@irvetechnologie.fr";
     const senderName = process.env["BREVO_SENDER_NAME"]?.trim() || "IRVE Technologies";
-    if (!apiKey) return { status: "failed", reason: `${motif} (BREVO_API_KEY manquante)` };
+    if (!apiKey) {
+      return {
+        status: "failed",
+        reason:
+          `${motif} (clé Brevo manquante: BREVO_API_KEY` +
+          " / BREVO_API_V3_KEY / BREVO_KEY / BREVO_APIKEY / BREVO_TOKEN)",
+      };
+    }
 
     const dt = new Date(rdv.date_debut);
     const quand = Number.isNaN(dt.getTime())
@@ -297,7 +322,7 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
   };
 
   // Priorité à Brevo quand la clé existe (évite les blocages recipient_mismatch).
-  if (process.env["BREVO_API_KEY"]?.trim()) {
+  if (getBrevoApiKey()) {
     return sendAvecBrevo("Envoi direct Brevo");
   }
 
