@@ -262,6 +262,20 @@ function DevisDetail() {
     onError: (err) => setError(err instanceof Error ? err.message : "Modification impossible."),
   });
 
+  const editTotals = useMemo(() => {
+    if (!editState) return null;
+    return computeTotals(
+      editState.lines.map((line) => ({
+        libelle: line.libelle,
+        description: line.description || null,
+        quantite: line.quantite,
+        prix_unitaire: line.prix_unitaire,
+        tva: line.tva,
+      })),
+      editState.remise_pct,
+    );
+  }, [editState]);
+
   if (query.isLoading) {
     return (
       <ProShell>
@@ -280,19 +294,6 @@ function DevisDetail() {
   const { devis, items } = query.data;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const lienClient = `${origin}/devis-client/${devis.public_token}`;
-  const editTotals = useMemo(() => {
-    if (!editState) return null;
-    return computeTotals(
-      editState.lines.map((line) => ({
-        libelle: line.libelle,
-        description: line.description || null,
-        quantite: line.quantite,
-        prix_unitaire: line.prix_unitaire,
-        tva: line.tva,
-      })),
-      editState.remise_pct,
-    );
-  }, [editState]);
 
   return (
     <ProShell>

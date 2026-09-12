@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 import {
   Archive,
   ArchiveRestore,
@@ -360,16 +361,22 @@ function PlanningPage() {
   const demarrer = useMutation({
     mutationFn: (p: { id: string; demarre: boolean }) => demarrerFn({ data: p }),
     onSuccess: refresh,
-    onError: (e: unknown) =>
-      setError(e instanceof Error ? e.message : "Démarrage du chantier impossible."),
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Démarrage du chantier impossible.";
+      setError(msg);
+      toast.error(msg);
+    },
   });
   const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
   const terminerFn = useServerFn(terminerChantier);
   const terminer = useMutation({
     mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
     onSuccess: refresh,
-    onError: (e: unknown) =>
-      setError(e instanceof Error ? e.message : "Clôture du chantier impossible."),
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Clôture du chantier impossible.";
+      setError(msg);
+      toast.error(msg);
+    },
   });
   const programmeFn = useServerFn(appliquerProgramme);
   const appliquer = useMutation({
