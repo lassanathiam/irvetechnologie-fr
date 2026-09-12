@@ -226,7 +226,7 @@ export function DocumentPrint({
           <div className="mt-5 grid grid-cols-2 gap-4">
             <div className="border-2 rounded-sm p-3" style={{ borderColor: accent }}>
               <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: accent }}>
-                {signature?.signature_client ? "Devis signé — bon pour accord" : "Client — bon pour accord"}
+                {signature?.signed_at ? "Devis accepté — bon pour accord" : "Client — bon pour accord"}
               </div>
               {signature?.signature_client ? (
                 <div className="mt-1">
@@ -241,6 +241,16 @@ export function DocumentPrint({
                       ? ` — signé le ${new Date(signature.signed_at).toLocaleString("fr-FR")}`
                       : null}
                   </div>
+                </div>
+              ) : signature?.signed_at ? (
+                <div className="mt-1 h-12 text-[10px] text-muted-foreground">
+                  <div className="font-semibold text-foreground">
+                    Accepté par {signature.signataire_nom || "le client"}
+                  </div>
+                  <div className="mt-0.5">
+                    le {new Date(signature.signed_at).toLocaleString("fr-FR")}
+                  </div>
+                  <div className="mt-0.5">Sans signature manuscrite</div>
                 </div>
               ) : (
                 <div className="mt-1 h-12 text-[10px] text-muted-foreground">

@@ -97,7 +97,8 @@ function DevisClientPage() {
   }
 
   const { devis, items } = query.data;
-  const signe = Boolean(devis.signed_at);
+  const accepte = Boolean(devis.signed_at);
+  const signe = Boolean(devis.signature_client);
 
   return (
     <main className="min-h-screen bg-background">
@@ -121,13 +122,13 @@ function DevisClientPage() {
       </header>
 
       <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8 space-y-8">
-        {signe ? (
+        {accepte ? (
           <div className="print:hidden border border-primary/50 bg-primary/10 rounded-sm p-5 flex items-start gap-3">
             <CheckCircle2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
             <div>
-              <div className="font-bold">Devis signé — merci !</div>
+              <div className="font-bold">{signe ? "Devis signé — merci !" : "Devis accepté — merci !"}</div>
               <p className="text-sm text-muted-foreground mt-1">
-                Signé par {devis.signataire_nom} le{" "}
+                Accepté par {devis.signataire_nom || "le client"} le{" "}
                 {new Date(devis.signed_at!).toLocaleString("fr-FR")}. Nous revenons vers vous pour
                 planifier l&apos;intervention.
               </p>
@@ -160,7 +161,7 @@ function DevisClientPage() {
           }}
         />
 
-        {!signe ? (
+        {!accepte ? (
           <section className="print:hidden border border-border rounded-sm bg-card p-6 space-y-4">
             <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
               Accepter le devis en ligne

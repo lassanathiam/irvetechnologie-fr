@@ -9,33 +9,6 @@ import { z } from "zod";
 
 const tokenSchema = z.object({ token: z.string().uuid() });
 
-async function notifierAcceptationDevis(args: {
-  devisId: string;
-  numero: string;
-  clientNom: string | null;
-  objet: string | null;
-  totalTtc: number | null;
-  signataireNom: string;
-  signedAt: string;
-}) {
-  try {
-    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
-    await sendTemplateEmail("devis-signe", "", {
-      idempotencyKey: `devis-signe-${args.devisId}`,
-      templateData: {
-        numero: args.numero,
-        client_nom: args.clientNom,
-        objet: args.objet,
-        total_ttc: args.totalTtc,
-        signataire_nom: args.signataireNom,
-        signed_at: args.signedAt,
-      },
-    });
-  } catch (e) {
-    console.error("Notification de signature non envoyée:", e);
-  }
-}
-
 export const getDevisPublic = createServerFn({ method: "GET" })
   .inputValidator((data: { token: string }) => tokenSchema.parse(data))
   .handler(async ({ data }) => {
@@ -101,16 +74,6 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
 
-    await notifierAcceptationDevis({
-      devisId: devis.id,
-      numero: devis.numero,
-      clientNom: devis.client_nom,
-      objet: devis.objet,
-      totalTtc: devis.total_ttc,
-      signataireNom: data.signataire_nom,
-      signedAt,
-    });
-
     return { ok: true, already: false };
   });
 
@@ -143,16 +106,6 @@ export const accepterDevisPublic = createServerFn({ method: "POST" })
       })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
-
-    await notifierAcceptationDevis({
-      devisId: devis.id,
-      numero: devis.numero,
-      clientNom: devis.client_nom,
-      objet: devis.objet,
-      totalTtc: devis.total_ttc,
-      signataireNom: data.signataire_nom,
-      signedAt,
-    });
 
     return { ok: true, already: false };
   });

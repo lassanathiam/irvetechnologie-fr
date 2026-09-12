@@ -696,7 +696,7 @@ function DevisDetail() {
                 value={devis.view_count ? String(devis.view_count) : null}
               />
               <TrackRow
-                label="Signé en ligne"
+                label="Accepté en ligne"
                 value={
                   devis.signed_at
                     ? `${devis.signataire_nom ?? "Client"} — ${new Date(devis.signed_at).toLocaleString("fr-FR")}`
