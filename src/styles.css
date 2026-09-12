@@ -346,6 +346,9 @@
   .pro-main > form {
     animation: none;
   }
+  .animate-cta-attention {
+    animation: none !important;
+  }
 }
 
 @utility text-mono {
@@ -384,12 +387,31 @@
   from { transform: translateX(0); }
   to   { transform: translateX(-50%); }
 }
+@keyframes cta-attention {
+  0%, 78%, 100% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+  82% {
+    transform: translateY(-1px) scale(1.012);
+    box-shadow: 0 0 0 4px color-mix(in oklab, var(--primary) 18%, transparent);
+  }
+  86% {
+    transform: translateY(0) scale(1);
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--primary) 0%, transparent);
+  }
+  90% {
+    transform: translateY(-1px) scale(1.008);
+    box-shadow: 0 0 0 2px color-mix(in oklab, var(--primary) 12%, transparent);
+  }
+}
 
 @utility animate-kenburns   { animation: kenburns 9s ease-in-out infinite alternate; }
 @utility animate-fade-up    { animation: fade-up 0.7s ease-out both; }
 @utility animate-fade-soft  { animation: fade-in-soft 0.6s ease-out both; }
 @utility animate-glow       { animation: glow-pulse 3s ease-in-out infinite; }
 @utility animate-marquee    { animation: marquee 35s linear infinite; }
+@utility animate-cta-attention { animation: cta-attention 7.5s ease-in-out infinite; }
 
 @utility reveal-on-scroll {
   opacity: 0;

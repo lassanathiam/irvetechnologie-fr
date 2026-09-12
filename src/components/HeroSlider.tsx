@@ -4,6 +4,19 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 type Slide = { src: string; label: string; meta: string };
 
 export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; interval?: number }) {
+  if (!slides?.length) {
+    return (
+      <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border p-6 flex items-end">
+        <div className="backdrop-blur-md bg-background/70 border border-border rounded-sm p-4">
+          <p className="text-mono text-primary">Photos en cours de publication</p>
+          <p className="text-sm text-muted-foreground mt-1">
+            Ajoutez des photos réelles depuis l&apos;espace pro pour alimenter ce diaporama.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   const [i, setI] = useState(0);
   const [paused, setPaused] = useState(false);
 

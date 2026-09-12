@@ -35,7 +35,7 @@ export function SiteNav() {
           </Link>
           <a
             href="tel:+33768084367"
-            className="hidden sm:inline-flex items-center gap-2 text-mono text-xs font-semibold bg-primary/10 text-primary border border-primary/30 rounded-sm px-3 py-2.5 hover:bg-primary/15 hover:border-primary/45 transition"
+            className="hidden sm:inline-flex items-center gap-2 text-mono text-xs font-semibold bg-primary/10 text-primary border border-primary/30 rounded-sm px-3 py-2.5 hover:bg-primary/15 hover:border-primary/45 transition animate-cta-attention"
           >
             <PhoneCall className="h-3.5 w-3.5" />
             Besoin d&apos;infos ? Appelez-nous
@@ -43,7 +43,7 @@ export function SiteNav() {
 
           <Link
             to="/demande"
-          className="hero-grad text-primary-foreground text-mono px-4 py-2.5 rounded-sm hover:opacity-90 transition"
+          className="hero-grad text-primary-foreground text-mono px-4 py-2.5 rounded-sm hover:opacity-90 transition animate-cta-attention"
           >
             Demande
           </Link>
