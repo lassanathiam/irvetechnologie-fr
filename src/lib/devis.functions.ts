@@ -47,10 +47,36 @@ const STATUTS = [
 ] as const;
 
 function datePlanificationDepuisDevis(dateExpiration: string | null | undefined) {
-  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration)
-    ? dateExpiration
-    : new Date().toISOString().slice(0, 10);
-  return `${base}T09:00:00.000Z`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const fallback = today.toISOString().slice(0, 10);
+  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration) ? dateExpiration : fallback;
+  const d = new Date(`${base}T09:00:00`);
+  if (Number.isNaN(d.getTime()) || d.getTime() < today.getTime()) {
+    return `${fallback}T09:00:00.000Z`;
+  }
+  return d.toISOString();
+}
+
+function extraireDetail(prefixe: string, notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  const row = notes
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.toLowerCase().startsWith(prefixe.toLowerCase()));
+  if (!row) return null;
+  const value = row.split(":").slice(1).join(":").trim();
+  return value || null;
+}
+
+async function fallbackOwnerUserId(supabase: any): Promise<string | null> {
+  const { data } = await supabase
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
+  return data?.user_id ?? null;
 }
 
 async function assurerRendezVousPourDevisAccepte(
@@ -83,7 +109,17 @@ async function assurerRendezVousPourDevisAccepte(
     }
     return devis.rendezvous_id;
   }
-  if (!devis.created_by) return null;
+  const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabase));
+  if (!ownerUserId) return null;
+  const puissance = extraireDetail("Puissance borne", devis.notes);
+  const phase = extraireDetail("Alimentation", devis.notes);
+  const typeInstallation = extraireDetail("Installation", devis.notes);
+  const typePose =
+    typeInstallation && /mur/i.test(typeInstallation)
+      ? "Murale"
+      : typeInstallation && /sol|pied|borne/i.test(typeInstallation)
+        ? "Sur pied"
+        : null;
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -92,7 +128,7 @@ async function assurerRendezVousPourDevisAccepte(
   const { data: inserted, error: insertError } = await supabase
     .from("rendezvous")
     .insert({
-      user_id: devis.created_by,
+      user_id: ownerUserId,
       titre: `Devis ${devis.numero} accepté`,
       type: "installation",
       statut: "confirme",
@@ -115,6 +151,9 @@ async function assurerRendezVousPourDevisAccepte(
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
       designation: devis.objet ?? null,
+      puissance_borne: puissance,
+      phase_installation: phase,
+      type_pose: typePose,
       date_a_confirmer: true,
     })
     .select("id")
@@ -160,13 +199,23 @@ export const getDevis = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: { id: string }) => z.object({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: devis, error } = await context.supabase
+    let { data: devis, error } = await context.supabase
       .from("devis")
       .select("*")
       .eq("id", data.id)
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!devis) throw new Error("Devis introuvable");
+    if (devis.statut === "accepte" && !devis.rendezvous_id) {
+      await assurerRendezVousPourDevisAccepte(context.supabase, devis);
+      const refreshed = await context.supabase
+        .from("devis")
+        .select("*")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (refreshed.error) throw new Error(refreshed.error.message);
+      if (refreshed.data) devis = refreshed.data;
+    }
     const { data: items, error: itemsError } = await context.supabase
       .from("devis_items")
       .select("*")

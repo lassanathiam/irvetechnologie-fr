@@ -10,10 +10,36 @@ import { z } from "zod";
 const tokenSchema = z.object({ token: z.string().uuid() });
 
 function datePlanificationDepuisDevis(dateExpiration: string | null | undefined) {
-  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration)
-    ? dateExpiration
-    : new Date().toISOString().slice(0, 10);
-  return `${base}T09:00:00.000Z`;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const fallback = today.toISOString().slice(0, 10);
+  const base = dateExpiration && /^\d{4}-\d{2}-\d{2}$/.test(dateExpiration) ? dateExpiration : fallback;
+  const d = new Date(`${base}T09:00:00`);
+  if (Number.isNaN(d.getTime()) || d.getTime() < today.getTime()) {
+    return `${fallback}T09:00:00.000Z`;
+  }
+  return d.toISOString();
+}
+
+function extraireDetail(prefixe: string, notes: string | null | undefined): string | null {
+  if (!notes) return null;
+  const row = notes
+    .split("\n")
+    .map((l) => l.trim())
+    .find((l) => l.toLowerCase().startsWith(prefixe.toLowerCase()));
+  if (!row) return null;
+  const value = row.split(":").slice(1).join(":").trim();
+  return value || null;
+}
+
+async function fallbackOwnerUserId(supabaseAdmin: any): Promise<string | null> {
+  const { data } = await supabaseAdmin
+    .from("user_roles")
+    .select("user_id")
+    .eq("role", "admin")
+    .limit(1)
+    .maybeSingle();
+  return data?.user_id ?? null;
 }
 
 async function assurerRendezVousDepuisDevis(
@@ -50,7 +76,17 @@ async function assurerRendezVousDepuisDevis(
     return devis.rendezvous_id;
   }
 
-  if (!devis.created_by) return null;
+  const ownerUserId = devis.created_by ?? (await fallbackOwnerUserId(supabaseAdmin));
+  if (!ownerUserId) return null;
+  const puissance = extraireDetail("Puissance borne", devis.notes);
+  const phase = extraireDetail("Alimentation", devis.notes);
+  const typeInstallation = extraireDetail("Installation", devis.notes);
+  const typePose =
+    typeInstallation && /mur/i.test(typeInstallation)
+      ? "Murale"
+      : typeInstallation && /sol|pied|borne/i.test(typeInstallation)
+        ? "Sur pied"
+        : null;
 
   const totalHt = Number(devis.total_ht ?? 0);
   const totalTva = Number(devis.total_tva ?? 0);
@@ -59,7 +95,7 @@ async function assurerRendezVousDepuisDevis(
   const { data: inserted, error: insertError } = await supabaseAdmin
     .from("rendezvous")
     .insert({
-      user_id: devis.created_by,
+      user_id: ownerUserId,
       titre: `Devis ${devis.numero} accepté`,
       type: "installation",
       statut: "confirme",
@@ -82,6 +118,9 @@ async function assurerRendezVousDepuisDevis(
       tva_pct: tvaPct,
       statut_facturation: "a_facturer",
       designation: devis.objet ?? null,
+      puissance_borne: puissance,
+      phase_installation: phase,
+      type_pose: typePose,
       date_a_confirmer: true,
     })
     .select("id")
