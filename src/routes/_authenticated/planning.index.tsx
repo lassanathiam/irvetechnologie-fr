@@ -211,12 +211,30 @@ const ETIQUETTES_SUGGEREES = [
   "SAV",
 ];
 
+const normaliserEtiquettes = (etiquettes: string[]) => {
+  const propres: string[] = [];
+  for (const brute of etiquettes) {
+    const valeur = brute.trim();
+    if (!valeur) continue;
+    const precedente = propres[propres.length - 1];
+    const debutPuissance = precedente?.match(/^(.*\D)\s(\d+)$/i);
+    const finPuissance = valeur.match(/^(\d+)\s*kW$/i);
+    if (debutPuissance && finPuissance) {
+      propres[propres.length - 1] = `${debutPuissance[1].trim()} ${debutPuissance[2]},${finPuissance[1]} kW`;
+      continue;
+    }
+    propres.push(valeur);
+  }
+  return propres.slice(0, 12);
+};
+
 const parseEtiquettes = (v: string) =>
-  v
-    .split(",")
-    .map((s) => s.trim())
-    .filter(Boolean)
-    .slice(0, 12);
+  normaliserEtiquettes(
+    v
+      .split(/,(?!\d)/)
+      .map((s) => s.trim())
+      .filter(Boolean),
+  );
 
 
 const eurosFr = (n: number) =>
@@ -1623,9 +1641,9 @@ function PlanningPage() {
 
                             {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
                               <p className="mt-2 flex flex-wrap gap-1.5">
-                                {r.etiquettes.map((et: string) => (
+                                {normaliserEtiquettes(r.etiquettes).map((et: string, idx: number) => (
                                   <span
-                                    key={et}
+                                    key={`${et}-${idx}`}
                                     className="text-mono text-[10px] px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground border border-border"
                                   >
                                     {et}
@@ -2192,7 +2210,7 @@ function PlanningPage() {
                                 name="etiquettes"
                                 list="etiquettes-suggestions"
                                 defaultValue={
-                                  Array.isArray(r.etiquettes) ? r.etiquettes.join(", ") : ""
+                                  Array.isArray(r.etiquettes) ? normaliserEtiquettes(r.etiquettes).join(", ") : ""
                                 }
                                 className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
                               />
