@@ -5,6 +5,7 @@ import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
 
 type SmsOutcome =
   | { status: "sent"; provider: "twilio"; to: string }
+  | { status: "sent"; provider: "brevo"; to: string }
   | { status: "skipped"; reason: string }
   | { status: "failed"; reason: string };
 
@@ -107,43 +108,94 @@ async function envoyerSmsRendezVousConfirmation(rdv: {
   designation: string | null;
   titre: string | null;
 }): Promise<SmsOutcome> {
-  const accountSid = process.env["SMS_TWILIO_ACCOUNT_SID"]?.trim();
-  const authToken = process.env["SMS_TWILIO_AUTH_TOKEN"]?.trim();
-  const from = process.env["SMS_FROM"]?.trim();
-  if (!accountSid || !authToken || !from) {
-    return { status: "skipped", reason: "Configuration SMS absente" };
-  }
   const to = formatNumeroSms(rdv.client_telephone);
   if (!to) return { status: "skipped", reason: "Téléphone client manquant/invalide" };
+  const message = messageSmsConfirmationRdv(rdv);
 
-  const body = new URLSearchParams({
-    To: to,
-    From: from,
-    Body: messageSmsConfirmationRdv(rdv),
-  });
+  const provider = (process.env["SMS_PROVIDER"] || "auto").trim().toLowerCase();
 
-  try {
-    const res = await fetch(
-      `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`,
-      {
+  const sendWithBrevo = async (): Promise<SmsOutcome> => {
+    const apiKey = process.env["BREVO_API_KEY"]?.trim();
+    const sender = process.env["SMS_FROM"]?.trim();
+    if (!apiKey || !sender) {
+      return { status: "skipped", reason: "Configuration Brevo absente" };
+    }
+    try {
+      const res = await fetch("https://api.brevo.com/v3/transactionalSMS/sms", {
         method: "POST",
         headers: {
-          Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
-          "Content-Type": "application/x-www-form-urlencoded",
+          "api-key": apiKey,
+          accept: "application/json",
+          "content-type": "application/json",
         },
-        body,
-      },
-    );
-    if (!res.ok) {
-      const details = (await res.text()).slice(0, 180);
-      return { status: "failed", reason: `Échec Twilio (${res.status}) ${details}` };
+        body: JSON.stringify({
+          sender,
+          recipient: to,
+          content: message,
+          type: "transactional",
+        }),
+      });
+      if (!res.ok) {
+        const details = (await res.text()).slice(0, 180);
+        return { status: "failed", reason: `Échec Brevo (${res.status}) ${details}` };
+      }
+      return { status: "sent", provider: "brevo", to };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error ? error.message : "Erreur SMS Brevo inconnue",
+      };
     }
-    return { status: "sent", provider: "twilio", to };
-  } catch (error) {
-    return {
-      status: "failed",
-      reason: error instanceof Error ? error.message : "Erreur SMS inconnue",
-    };
+  };
+
+  const sendWithTwilio = async (): Promise<SmsOutcome> => {
+    const accountSid = process.env["SMS_TWILIO_ACCOUNT_SID"]?.trim();
+    const authToken = process.env["SMS_TWILIO_AUTH_TOKEN"]?.trim();
+    const from = process.env["SMS_FROM"]?.trim();
+    if (!accountSid || !authToken || !from) {
+      return { status: "skipped", reason: "Configuration Twilio absente" };
+    }
+
+    const body = new URLSearchParams({
+      To: to,
+      From: from,
+      Body: message,
+    });
+
+    try {
+      const res = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${encodeURIComponent(accountSid)}/Messages.json`,
+        {
+          method: "POST",
+          headers: {
+            Authorization: `Basic ${Buffer.from(`${accountSid}:${authToken}`).toString("base64")}`,
+            "Content-Type": "application/x-www-form-urlencoded",
+          },
+          body,
+        },
+      );
+      if (!res.ok) {
+        const details = (await res.text()).slice(0, 180);
+        return { status: "failed", reason: `Échec Twilio (${res.status}) ${details}` };
+      }
+      return { status: "sent", provider: "twilio", to };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: error instanceof Error ? error.message : "Erreur SMS Twilio inconnue",
+      };
+    }
+  };
+
+  if (provider === "brevo") return sendWithBrevo();
+  if (provider === "twilio") return sendWithTwilio();
+  const brevoAttempt = await sendWithBrevo();
+  if (brevoAttempt.status === "sent" || brevoAttempt.status === "failed") return brevoAttempt;
+  const twilioAttempt = await sendWithTwilio();
+  if (twilioAttempt.status === "sent" || twilioAttempt.status === "failed") return twilioAttempt;
+  return {
+    status: "skipped",
+    reason: "Aucun provider SMS configuré (Brevo ou Twilio).",
   }
 }
 
