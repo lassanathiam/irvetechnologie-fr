@@ -476,25 +476,27 @@ function PlanningPage() {
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
 
   const toutes = list.data ?? [];
-  const nbArchives = toutes.filter((r) => r.archive).length;
+  const estArchiveLogique = (r: (typeof toutes)[number]) =>
+    Boolean(r.archive) || r.statut_facturation === "facture" || r.statut_facturation === "paye";
+  const nbArchives = toutes.filter(estArchiveLogique).length;
   const rows = useMemo(
     () =>
       toutes
-        .filter((r) => Boolean(r.archive) === vueArchives)
+        .filter((r) => estArchiveLogique(r) === vueArchives)
         .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [list.data, vueArchives, filtreStatut],
   );
   /** Chantiers en cours : toujours remontés en tête de page. */
   const enCours = useMemo(
-    () => toutes.filter((r) => r.demarre_at && !r.termine_at && !r.archive),
+    () => toutes.filter((r) => r.demarre_at && !r.termine_at && !estArchiveLogique(r)),
     [toutes],
   );
   /** Chantiers clôturés (validés) qui peuvent être rangés pour libérer la liste. */
   const aRanger = useMemo(
     () =>
       toutes.filter(
-        (r) => !r.archive && (r.statut === "termine" || r.statut === "realise"),
+        (r) => !estArchiveLogique(r) && (r.statut === "termine" || r.statut === "realise"),
       ),
     [toutes],
   );
@@ -504,7 +506,7 @@ function PlanningPage() {
       .filter((r) => {
         const date = new Date(r.date_debut);
         return (
-          !r.archive &&
+          !estArchiveLogique(r) &&
           r.statut !== "annule" &&
           date.getFullYear() === maintenant.getFullYear() &&
           date.getMonth() === maintenant.getMonth() &&
@@ -1475,8 +1477,10 @@ function PlanningPage() {
             ].map((f) => {
               const nb =
                 f.v === "tous"
-                  ? toutes.filter((r) => Boolean(r.archive) === vueArchives).length
-                  : toutes.filter((r) => Boolean(r.archive) === vueArchives && r.statut === f.v)
+                  ? toutes.filter((r) => estArchiveLogique(r) === vueArchives).length
+                  : toutes.filter(
+                      (r) => estArchiveLogique(r) === vueArchives && r.statut === f.v,
+                    )
                       .length;
               const on = filtreStatut === f.v;
               return (

@@ -4,17 +4,21 @@ import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
   AlertTriangle,
+  Archive,
   CheckCircle2,
   Euro,
   Loader2,
   MapPin,
   Receipt,
   Ruler,
+  Trash2,
   Zap,
 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import {
+  archiverRendezVous,
   creerFactureChantier,
+  deleteRendezVous,
   getSuiviFacturation,
   updateSuiviPaiement,
   validerMontantPropose,
@@ -45,6 +49,13 @@ export const Route = createFileRoute("/_authenticated/facturation/")({
 const eurosFr = (n: number) =>
   new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n);
 
+const parseNombreSaisi = (v: FormDataEntryValue | null): number | null => {
+  const brut = String(v ?? "").trim();
+  if (!brut) return null;
+  const n = Number(brut.replace(",", "."));
+  return Number.isFinite(n) ? n : null;
+};
+
 const FACTU_LABEL: Record<string, string> = {
   a_facturer: "À facturer",
   facture: "Facturé",
@@ -70,6 +81,8 @@ function FacturationChantiers() {
   const majPaiement = useServerFn(updateSuiviPaiement);
   const validerMontant = useServerFn(validerMontantPropose);
   const creerFacture = useServerFn(creerFactureChantier);
+  const archiverRdv = useServerFn(archiverRendezVous);
+  const supprimerRdv = useServerFn(deleteRendezVous);
   const [message, setMessage] = useState<string | null>(null);
 
   const [mois, setMois] = useState(() => new Date().toISOString().slice(0, 7));
@@ -220,6 +233,7 @@ function FacturationChantiers() {
           <ul className="grid gap-3">
             {chantiers.map((c) => {
               const proposeEnAttente = c.montant_propose_ht != null && c.montant_valide_at == null;
+              const tvaPct = Number(c.tva_pct ?? 20);
               return (
                 <li
                   key={c.id}
@@ -357,6 +371,16 @@ function FacturationChantiers() {
                     onSubmit={(e) => {
                       e.preventDefault();
                       const fd = new FormData(e.currentTarget);
+                      const modeMontant = String(fd.get("mode_montant") ?? "ht") === "ttc" ? "ttc" : "ht";
+                      const montantSaisi = parseNombreSaisi(fd.get("montant_saisi"));
+                      if (montantSaisi == null) {
+                        setErreur("Montant invalide. Vérifiez la saisie.");
+                        return;
+                      }
+                      const montantHt =
+                        modeMontant === "ttc"
+                          ? montantSaisi / (1 + tvaPct / 100)
+                          : montantSaisi;
                       void action(c.id, () =>
                         majPaiement({
                           data: {
@@ -364,7 +388,7 @@ function FacturationChantiers() {
                             statut_facturation: String(
                               fd.get("statut_facturation") ?? "a_facturer",
                             ) as "a_facturer" | "facture" | "paye",
-                            montant_ht: String(fd.get("montant_ht") ?? ""),
+                            montant_ht: String(Math.round(montantHt * 100) / 100),
                             metrage_reel_m: String(fd.get("metrage_reel_m") ?? ""),
                             delai_paiement_jours: String(fd.get("delai") ?? ""),
                             echeance_paiement: String(fd.get("echeance") ?? "") || null,
@@ -372,84 +396,141 @@ function FacturationChantiers() {
                         }),
                       );
                     }}
-                    className="mt-3 border-t border-border pt-3 flex flex-wrap items-end gap-2"
+                    className="mt-3 border-t border-border pt-3 space-y-3"
                   >
-                    <label className="text-[11px] text-muted-foreground">
-                      Montant HT
-                      <input
-                        name="montant_ht"
-                        inputMode="decimal"
-                        defaultValue={String(c.montant_ht ?? 0)}
-                        className={`${INPUT} block mt-1 w-28`}
-                      />
-                    </label>
-                    <label className="text-[11px] text-muted-foreground">
-                      Métrage (m)
-                      <input
-                        name="metrage_reel_m"
-                        inputMode="decimal"
-                        defaultValue={String(c.metrage_reel_m ?? c.metrage_m ?? 0)}
-                        className={`${INPUT} block mt-1 w-24`}
-                      />
-                    </label>
-                    <label className="text-[11px] text-muted-foreground">
-                      Délai (j)
-                      <input
-                        name="delai"
-                        inputMode="numeric"
-                        defaultValue={String(c.delai_paiement_jours ?? 30)}
-                        className={`${INPUT} block mt-1 w-20`}
-                      />
-                    </label>
-                    <label className="text-[11px] text-muted-foreground">
-                      Échéance
-                      <input
-                        name="echeance"
-                        type="date"
-                        defaultValue={c.echeance_paiement ?? ""}
-                        className={`${INPUT} block mt-1`}
-                      />
-                    </label>
-                    <label className="text-[11px] text-muted-foreground">
-                      Règlement
-                      <select
-                        name="statut_facturation"
-                        defaultValue={c.statut_facturation}
-                        className={`${INPUT} block mt-1`}
+                    <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-6">
+                      <label className="text-[11px] text-muted-foreground">
+                        Montant saisi
+                        <input
+                          name="montant_saisi"
+                          inputMode="decimal"
+                          defaultValue={String(c.montant_ht ?? 0)}
+                          className={`${INPUT} block mt-1 w-full`}
+                        />
+                      </label>
+                      <label className="text-[11px] text-muted-foreground">
+                        Saisie en
+                        <select name="mode_montant" defaultValue="ht" className={`${INPUT} block mt-1 w-full`}>
+                          <option value="ht">HT</option>
+                          <option value="ttc">TTC</option>
+                        </select>
+                      </label>
+                      <label className="text-[11px] text-muted-foreground">
+                        Métrage (m)
+                        <input
+                          name="metrage_reel_m"
+                          inputMode="decimal"
+                          defaultValue={String(c.metrage_reel_m ?? c.metrage_m ?? 0)}
+                          className={`${INPUT} block mt-1 w-full`}
+                        />
+                      </label>
+                      <label className="text-[11px] text-muted-foreground">
+                        Délai (j)
+                        <input
+                          name="delai"
+                          inputMode="numeric"
+                          defaultValue={String(c.delai_paiement_jours ?? 30)}
+                          className={`${INPUT} block mt-1 w-full`}
+                        />
+                      </label>
+                      <label className="text-[11px] text-muted-foreground">
+                        Échéance
+                        <input
+                          name="echeance"
+                          type="date"
+                          defaultValue={c.echeance_paiement ?? ""}
+                          className={`${INPUT} block mt-1 w-full`}
+                        />
+                      </label>
+                      <label className="text-[11px] text-muted-foreground">
+                        Règlement
+                        <select
+                          name="statut_facturation"
+                          defaultValue={c.statut_facturation}
+                          className={`${INPUT} block mt-1 w-full`}
+                        >
+                          <option value="a_facturer">À facturer</option>
+                          <option value="facture">Facturé</option>
+                          <option value="paye">Payé</option>
+                        </select>
+                      </label>
+                    </div>
+
+                    <p className="text-[11px] text-muted-foreground">
+                      Si vous saisissez en TTC, la conversion en HT est calculée automatiquement avec la TVA
+                      actuelle ({tvaPct}%).
+                    </p>
+
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        type="submit"
+                        disabled={busy === c.id}
+                        className="text-xs font-semibold rounded-sm px-3 py-2 border border-border hover:border-primary hover:text-primary min-h-10 inline-flex items-center gap-1.5 disabled:opacity-60"
                       >
-                        <option value="a_facturer">À facturer</option>
-                        <option value="facture">Facturé</option>
-                        <option value="paye">Payé</option>
-                      </select>
-                    </label>
-                    <button
-                      type="submit"
-                      disabled={busy === c.id}
-                      className="text-xs font-semibold rounded-sm px-3 py-2 border border-border hover:border-primary hover:text-primary min-h-10 inline-flex items-center gap-1.5 disabled:opacity-60"
-                    >
-                      {busy === c.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
-                      Enregistrer
-                    </button>
-                    <button
-                      type="button"
-                      disabled={busy === c.id}
-                      onClick={() =>
-                        void action(c.id, async () => {
-                          const r = await creerFacture({ data: { id: c.id } });
-                          setMessage(
-                            `Facture ${r.numero} créée au nom de ${r.destinataire} (${
-                              r.facturer_a === "partenaire" ? "partenaire" : "client"
-                            }).`,
-                          );
-                        })
-                      }
-                      className="bg-primary text-primary-foreground rounded-sm px-3 py-2 text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-60 min-h-10"
-                    >
-                      <Receipt className="h-3.5 w-3.5" />
-                      {c.facturer_a === "partenaire"
-                        ? "Facturer le partenaire"
-                        : "Facturer le client"}
-                    </button>
+                        {busy === c.id && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
+                        Enregistrer
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy === c.id}
+                        onClick={() =>
+                          void action(c.id, async () => {
+                            const r = await creerFacture({ data: { id: c.id } });
+                            setMessage(
+                              `Facture ${r.numero} créée au nom de ${r.destinataire} (${
+                                r.facturer_a === "partenaire" ? "partenaire" : "client"
+                              }).`,
+                            );
+                          })
+                        }
+                        className="bg-primary text-primary-foreground rounded-sm px-3 py-2 text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-60 min-h-10"
+                      >
+                        <Receipt className="h-3.5 w-3.5" />
+                        {c.facturer_a === "partenaire"
+                          ? "Facturer le partenaire"
+                          : "Facturer le client"}
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy === c.id}
+                        onClick={() => {
+                          if (!window.confirm("Archiver ce dossier pour le retirer du planning actif ?")) {
+                            return;
+                          }
+                          void action(c.id, async () => {
+                            await archiverRdv({
+                              data: { id: c.id, archive: true, notifier: false },
+                            });
+                            setMessage("Dossier archivé.");
+                          });
+                        }}
+                        className="text-xs font-semibold rounded-sm px-3 py-2 border border-border text-muted-foreground hover:border-primary hover:text-primary min-h-10 inline-flex items-center gap-1.5 disabled:opacity-60"
+                      >
+                        <Archive className="h-3.5 w-3.5" />
+                        Archiver dossier
+                      </button>
+                      <button
+                        type="button"
+                        disabled={busy === c.id}
+                        onClick={() => {
+                          if (
+                            !window.confirm(
+                              "Supprimer ce dossier définitivement ? Cette action est irréversible.",
+                            )
+                          ) {
+                            return;
+                          }
+                          void action(c.id, async () => {
+                            await supprimerRdv({ data: { id: c.id } });
+                            setMessage("Dossier supprimé.");
+                          });
+                        }}
+                        className="text-xs font-semibold rounded-sm px-3 py-2 border border-destructive/50 text-destructive hover:border-destructive min-h-10 inline-flex items-center gap-1.5 disabled:opacity-60"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Supprimer dossier
+                      </button>
+                    </div>
                   </form>
                 </li>
               );

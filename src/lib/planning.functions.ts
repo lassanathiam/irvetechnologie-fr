@@ -1531,6 +1531,8 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
       statut_facturation?: string;
       facture_envoyee_at?: string | null;
       paye_at?: string | null;
+      archive?: boolean;
+      archive_at?: string | null;
     } = {};
     if (data.montant_ht !== undefined) patch.montant_ht = data.montant_ht;
     if (data.metrage_reel_m !== undefined) {
@@ -1546,6 +1548,8 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
       if (data.statut_facturation === "facture") {
         patch.facture_envoyee_at = maintenant.toISOString();
         patch.paye_at = null;
+        patch.archive = true;
+        patch.archive_at = maintenant.toISOString();
         // L'échéance court à partir de la facture si elle n'est pas fixée à la main.
         if (data.echeance_paiement === undefined) {
           const { data: rdv } = await context.supabase
@@ -1560,8 +1564,12 @@ export const updateSuiviPaiement = createServerFn({ method: "POST" })
         }
       } else if (data.statut_facturation === "paye") {
         patch.paye_at = maintenant.toISOString();
+        patch.archive = true;
+        patch.archive_at = maintenant.toISOString();
       } else {
         patch.paye_at = null;
+        patch.archive = false;
+        patch.archive_at = null;
       }
     }
 
