@@ -372,8 +372,11 @@ function PlanningPage() {
   const terminer = useMutation({
     mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
     onSuccess: refresh,
-    onError: (e: unknown) =>
-      setError(e instanceof Error ? e.message : "Clôture du chantier impossible."),
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Clôture du chantier impossible.";
+      setError(msg);
+      toast.error(msg);
+    },
   });
   const programmeFn = useServerFn(appliquerProgramme);
   const appliquer = useMutation({
