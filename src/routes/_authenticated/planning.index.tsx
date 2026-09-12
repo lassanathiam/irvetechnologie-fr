@@ -361,8 +361,11 @@ function PlanningPage() {
   const demarrer = useMutation({
     mutationFn: (p: { id: string; demarre: boolean }) => demarrerFn({ data: p }),
     onSuccess: refresh,
-    onError: (e: unknown) =>
-      setError(e instanceof Error ? e.message : "Démarrage du chantier impossible."),
+    onError: (e: unknown) => {
+      const msg = e instanceof Error ? e.message : "Démarrage du chantier impossible.";
+      setError(msg);
+      toast.error(msg);
+    },
   });
   const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
   const terminerFn = useServerFn(terminerChantier);
