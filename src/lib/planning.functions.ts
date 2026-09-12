@@ -11,6 +11,7 @@ type SmsOutcome =
 
 type EmailOutcome =
   | { status: "sent"; provider: "lovable"; to: string }
+  | { status: "sent"; provider: "brevo"; to: string }
   | { status: "skipped"; reason: string }
   | { status: "failed"; reason: string };
 
@@ -242,6 +243,59 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
 }): Promise<EmailOutcome> {
   const email = rdv.client_email?.trim();
   if (!email) return { status: "skipped", reason: "Email client manquant" };
+
+  const sendAvecBrevo = async (motif: string): Promise<EmailOutcome> => {
+    const apiKey = process.env["BREVO_API_KEY"]?.trim();
+    const senderEmail = process.env["BREVO_SENDER_EMAIL"]?.trim() || "contacts@irvetechnologie.fr";
+    const senderName = process.env["BREVO_SENDER_NAME"]?.trim() || "IRVE Technologies";
+    if (!apiKey) return { status: "failed", reason: `${motif} (BREVO_API_KEY manquante)` };
+
+    const dt = new Date(rdv.date_debut);
+    const quand = Number.isNaN(dt.getTime())
+      ? "date à confirmer"
+      : dt.toLocaleString("fr-FR", {
+          weekday: "long",
+          day: "2-digit",
+          month: "long",
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+    const objet = rdv.designation || rdv.titre || "Intervention IRVE";
+    const lieu = [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", ");
+    const textContent = `Bonjour ${rdv.client_nom ?? "client"}, votre rendez-vous est confirmé.\n\nIntervention: ${objet}\nDate et heure: ${quand}\nAdresse: ${lieu || "à confirmer"}\n\nIRVE Technologies`;
+
+    try {
+      const res = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "api-key": apiKey,
+          accept: "application/json",
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({
+          sender: { name: senderName, email: senderEmail },
+          to: [{ email, name: rdv.client_nom ?? undefined }],
+          subject: `Rendez-vous confirmé — ${rdv.client_nom ?? "client"}`,
+          textContent,
+          replyTo: { email: "contacts@irvetechnologie.fr", name: "IRVE Technologies" },
+        }),
+      });
+      if (!res.ok) {
+        const details = (await res.text()).slice(0, 200);
+        return {
+          status: "failed",
+          reason: `${motif} + échec Brevo (${res.status}) ${details}`,
+        };
+      }
+      return { status: "sent", provider: "brevo", to: email };
+    } catch (error) {
+      return {
+        status: "failed",
+        reason: `${motif} + erreur Brevo: ${error instanceof Error ? error.message : "inconnue"}`,
+      };
+    }
+  };
+
   try {
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const result = await sendTemplateEmail("rdv-confirme", email, {
@@ -256,19 +310,23 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
       },
     });
     if (!result.sent) {
+      if (result.reason === "email_not_configured") {
+        return sendAvecBrevo("LOVABLE_API_KEY absente");
+      }
       return {
         status: "skipped",
-        reason:
-          result.reason === "email_not_configured"
-            ? "Configuration email absente"
-            : "Destinataire en suppression email",
+        reason: "Destinataire en suppression email",
       };
     }
     return { status: "sent", provider: "lovable", to: email };
   } catch (error) {
+    const message = error instanceof Error ? error.message : "Erreur email inconnue";
+    if (message.includes("recipient_mismatch") || message.includes("Recipient does not match run")) {
+      return sendAvecBrevo("Blocage Lovable recipient_mismatch");
+    }
     return {
       status: "failed",
-      reason: error instanceof Error ? error.message : "Erreur email inconnue",
+      reason: message,
     };
   }
 }
