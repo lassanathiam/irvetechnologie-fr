@@ -60,20 +60,21 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
         <button onClick={() => go(1)} className="absolute right-3 top-1/2 -translate-y-1/2 bg-background/70 backdrop-blur border border-border p-2 rounded-sm hover:border-primary hover:text-primary transition" aria-label="Suivant">
           <ChevronRight className="h-4 w-4" />
         </button>
-        <div className="absolute bottom-3 left-3 right-3 flex justify-between items-end">
-          <div className="text-mono text-primary bg-background/80 backdrop-blur px-2 py-1 rounded-sm">
-            {String(i + 1).padStart(2, "0")} / {String(safeItems.length).padStart(2, "0")}
-          </div>
-          <div className="flex gap-1.5">
-            {safeItems.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setI(idx)}
-                aria-label={`Réalisation ${idx + 1}`}
-                className={`h-1.5 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"}`}
-              />
-            ))}
-          </div>
+      </div>
+
+      <div className="mt-2 flex items-center justify-between rounded-sm border border-border bg-card/50 px-3 py-2">
+        <div className="text-mono text-primary">
+          {String(i + 1).padStart(2, "0")} / {String(safeItems.length).padStart(2, "0")}
+        </div>
+        <div className="flex gap-1.5">
+          {safeItems.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setI(idx)}
+              aria-label={`Réalisation ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"}`}
+            />
+          ))}
         </div>
       </div>
 

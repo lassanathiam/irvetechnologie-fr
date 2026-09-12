@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -10,6 +10,7 @@ import { useReveal } from "@/hooks/use-reveal";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
+import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
 import { COMPANY, GARANTIES } from "@/lib/company";
 
 export const Route = createFileRoute("/")({
@@ -155,7 +156,50 @@ function Index() {
   }));
   const zones_r = useReveal<HTMLDivElement>();
   const [audience, setAudience] = useState<"client" | "external">("client");
+  const [avisSent, setAvisSent] = useState(false);
+  const [avisBusy, setAvisBusy] = useState(false);
+  const [avisError, setAvisError] = useState<string | null>(null);
+  const avisMountedAt = useRef<number>(Date.now());
+  const envoyerAvis = useServerFn(submitAvisClient);
+  const fetchAvis = useServerFn(listPublicAvis);
+  const avisQuery = useQuery({
+    queryKey: ["avis-publics"],
+    queryFn: () => fetchAvis(),
+    staleTime: 60_000,
+  });
   const isClient = audience === "client";
+
+  async function onSubmitAvis(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    if (avisBusy) return;
+    setAvisError(null);
+    setAvisBusy(true);
+    try {
+      const fd = new FormData(e.currentTarget);
+      const note = Number(fd.get("note") ?? "5");
+      await envoyerAvis({
+        data: {
+          nom: String(fd.get("nom") ?? "").trim(),
+          email: String(fd.get("email") ?? "").trim(),
+          telephone: String(fd.get("telephone") ?? "").trim(),
+          code_postal: String(fd.get("code_postal") ?? "").trim(),
+          partenaire: String(fd.get("partenaire") ?? "").trim() || null,
+          intervention: String(fd.get("intervention") ?? "").trim() || null,
+          note: Number.isFinite(note) ? note : 5,
+          avis: String(fd.get("avis") ?? "").trim(),
+          website: String(fd.get("website") ?? "").trim() || null,
+          elapsed_ms: Date.now() - avisMountedAt.current,
+        },
+      });
+      setAvisSent(true);
+      (e.currentTarget as HTMLFormElement).reset();
+      void avisQuery.refetch();
+    } catch (err) {
+      setAvisError(err instanceof Error ? err.message : "Envoi de l'avis impossible.");
+    } finally {
+      setAvisBusy(false);
+    }
+  }
 
   return (
     <div className="min-h-screen overflow-x-hidden">
@@ -293,6 +337,122 @@ function Index() {
             <p className="text-mono text-muted-foreground">défilement automatique · cliquez pour explorer</p>
           </div>
           <RealisationsSlider items={realisations} />
+        </div>
+      </section>
+
+      {/* AVIS */}
+      <section id="avis" className="py-24 border-t border-border">
+        <div className="mx-auto max-w-7xl px-6 grid gap-10 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center gap-3 text-mono text-primary mb-6">
+              <span className="h-px w-10 bg-primary" /> Avis clients & partenaires
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              Vos retours terrain,{" "}
+              <span className="text-muted-foreground/60">directement depuis l&apos;écran.</span>
+            </h2>
+            <p className="mt-5 text-muted-foreground max-w-xl">
+              Après une intervention, le client peut laisser un avis ici. Nous pouvons ainsi valoriser le
+              travail réalisé, y compris pour des chantiers effectués au nom d&apos;un partenaire.
+            </p>
+            <div className="mt-7 space-y-3">
+              {(avisQuery.data ?? []).slice(0, 4).map((a) => (
+                <article key={a.id} className="rounded-sm border border-border bg-card/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold">{a.nom}</p>
+                    <span className="text-mono text-xs text-primary">
+                      {"★".repeat(a.note)}
+                      {"☆".repeat(Math.max(0, 5 - a.note))}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{a.avis}</p>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    {a.partenaire ? `Intervention via partenaire ${a.partenaire}` : "Intervention directe"} ·{" "}
+                    {a.code_postal}
+                  </p>
+                </article>
+              ))}
+              {avisQuery.isLoading && <p className="text-sm text-muted-foreground">Chargement des avis…</p>}
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-border bg-card p-6">
+            <p className="text-mono text-primary">Laisser un avis</p>
+            <form className="mt-4 space-y-4" onSubmit={onSubmitAvis}>
+              <input
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                defaultValue=""
+                className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
+                aria-hidden="true"
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm">
+                  Nom complet
+                  <input name="nom" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Email
+                  <input name="email" type="email" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Téléphone
+                  <input name="telephone" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Code postal
+                  <input name="code_postal" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+              </div>
+              <label className="text-sm block">
+                Société partenaire (optionnel)
+                <input
+                  name="partenaire"
+                  placeholder="Ex: concession partenaire"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              <label className="text-sm block">
+                Type d&apos;intervention
+                <input
+                  name="intervention"
+                  placeholder="Ex: borne 7,4 kW en maison"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              <label className="text-sm block">
+                Note
+                <select name="note" defaultValue="5" className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5">
+                  <option value="5">5 / 5 — Excellent</option>
+                  <option value="4">4 / 5 — Très bien</option>
+                  <option value="3">3 / 5 — Bien</option>
+                  <option value="2">2 / 5 — Correct</option>
+                  <option value="1">1 / 5 — À améliorer</option>
+                </select>
+              </label>
+              <label className="text-sm block">
+                Avis
+                <textarea
+                  name="avis"
+                  required
+                  minLength={10}
+                  rows={4}
+                  placeholder="Décrivez votre retour d'expérience"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              {avisError && <p className="text-sm text-destructive">{avisError}</p>}
+              {avisSent && <p className="text-sm text-primary">Merci, votre avis a bien été envoyé.</p>}
+              <button
+                type="submit"
+                disabled={avisBusy}
+                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+              >
+                {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
         </div>
       </section>
 

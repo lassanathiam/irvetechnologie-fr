@@ -44,6 +44,7 @@ const TYPE_DEMANDE_LABELS: Record<string, string> = {
   intervention: "Demande d'intervention",
   maintenance: "Demande de maintenance",
   souscription: "Souscription formule",
+  avis: "Avis client",
 };
 
 const FORMULE_LABELS: Record<string, string> = {
