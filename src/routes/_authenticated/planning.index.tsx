@@ -45,8 +45,10 @@ import {
   programmerEnsemble,
   updateStatutRendezVous,
   updateAdresseRendezVous,
+  updateDossierRendezVous,
   validerChantier,
   updateFacturationRdv,
+  type DossierRendezVousInput,
   type RendezVousInput,
 } from "@/lib/planning.functions";
 
@@ -261,7 +263,7 @@ function PlanningPage() {
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{
     id: string;
-    tab: "chantier" | "voirie" | "montant" | "adresse" | "date";
+    tab: "chantier" | "voirie" | "montant" | "adresse" | "date" | "dossier";
   } | null>(null);
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
@@ -313,6 +315,8 @@ function PlanningPage() {
     }) => {
       if (res?.email?.status === "sent") {
         toast.success(`Email de confirmation envoyé au client (${res.email.to ?? "adresse masquée"}).`);
+      } else if (res?.email?.status === "skipped") {
+        toast.message(`Email non envoyé: ${res.email.reason ?? "configuration manquante"}`);
       } else if (res?.email?.status === "failed") {
         toast.error(`Email non envoyé: ${res.email.reason ?? "erreur inconnue"}`);
       }
@@ -348,6 +352,7 @@ function PlanningPage() {
       setError(e instanceof Error ? e.message : "Enregistrement de l'autorisation impossible."),
   });
   const factuFn = useServerFn(updateFacturationRdv);
+  const dossierFn = useServerFn(updateDossierRendezVous);
   const setFacturation = useMutation({
     mutationFn: (p: {
       id: string;
@@ -370,6 +375,32 @@ function PlanningPage() {
       refresh();
     },
     onError: (e: unknown) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
+  });
+  const setDossierComplet = useMutation({
+    mutationFn: (payload: DossierRendezVousInput) => dossierFn({ data: payload }),
+    onSuccess: (res: {
+      ok: boolean;
+      email?: { status: string; to?: string; reason?: string } | null;
+      sms?: { status: string; to?: string; reason?: string } | null;
+    }) => {
+      setPanel(null);
+      setError(null);
+      if (res?.email?.status === "sent") {
+        toast.success(`Email de confirmation envoyé au client (${res.email.to ?? "adresse masquée"}).`);
+      } else if (res?.email?.status === "skipped") {
+        toast.message(`Email non envoyé: ${res.email.reason ?? "configuration manquante"}`);
+      } else if (res?.email?.status === "failed") {
+        toast.error(`Email non envoyé: ${res.email.reason ?? "erreur inconnue"}`);
+      }
+      if (res?.sms?.status === "sent") {
+        toast.success(`SMS de confirmation envoyé au client (${res.sms.to ?? "numéro masqué"}).`);
+      } else if (res?.sms?.status === "failed") {
+        toast.error(`SMS non envoyé: ${res.sms.reason ?? "erreur inconnue"}`);
+      }
+      refresh();
+    },
+    onError: (e: unknown) =>
+      setError(e instanceof Error ? e.message : "Mise à jour du dossier impossible."),
   });
   const adresseFn = useServerFn(updateAdresseRendezVous);
   const setAdresse = useMutation({
@@ -1504,6 +1535,7 @@ function PlanningPage() {
                     const isMontantPanel = panel?.id === r.id && panel.tab === "montant";
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
+                    const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
                     const dossierOuvert = dossier === r.id;
                     const st = styleStatut(r.statut);
                     const notesVisibles =
@@ -1843,6 +1875,19 @@ function PlanningPage() {
                                 <button
                                   type="button"
                                   onClick={() =>
+                                    setPanel(isDossierPanel ? null : { id: r.id, tab: "dossier" })
+                                  }
+                                  className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
+                                    isDossierPanel
+                                      ? "border-primary text-primary"
+                                      : "border-primary/50 text-primary hover:border-primary"
+                                  }`}
+                                >
+                                  <ClipboardCheck className="h-3 w-3" /> Dossier complet
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() =>
                                     setPanel(isChantierPanel ? null : { id: r.id, tab: "chantier" })
                                   }
                                   className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 ${
@@ -1989,6 +2034,205 @@ function PlanningPage() {
                             </button>
                           </div>
                         </div>
+
+                        {isDossierPanel && (
+                          <form
+                            key={`dossier-${r.id}`}
+                            onSubmit={(e) => {
+                              e.preventDefault();
+                              const f = new FormData(e.currentTarget);
+                              const g = (k: string) => String(f.get(k) ?? "").trim();
+                              const dateLocal = g("date_debut");
+                              const d = new Date(dateLocal);
+                              if (Number.isNaN(d.getTime())) {
+                                setError("Date de rendez-vous invalide.");
+                                return;
+                              }
+                              if (!g("adresse")) {
+                                setError("Merci d'indiquer l'adresse du chantier.");
+                                return;
+                              }
+                              setDossierComplet.mutate({
+                                id: r.id,
+                                titre: g("titre"),
+                                type: g("type"),
+                                statut: g("statut"),
+                                client_nom: g("client_nom"),
+                                client_telephone: g("client_telephone") || null,
+                                client_email: g("client_email") || null,
+                                adresse: g("adresse"),
+                                cp_ville: g("cp_ville") || null,
+                                date_debut: d.toISOString(),
+                                duree_min: Number(g("duree_min") || 120),
+                                technicien: g("technicien") || null,
+                                notes: g("notes") || null,
+                                origine: g("origine"),
+                                partenaire: g("partenaire") || null,
+                                montant_ht: Number(g("montant_ht") || 0),
+                                tva_pct: Number(g("tva_pct") || 20),
+                                statut_facturation: g("statut_facturation"),
+                                designation: g("designation") || null,
+                                etiquettes: parseEtiquettes(g("etiquettes")),
+                                metrage_m: Number(g("metrage_m") || 0),
+                                puissance_borne: g("puissance_borne") || null,
+                                phase_installation: g("phase_installation") || null,
+                                type_pose: g("type_pose") || null,
+                              });
+                            }}
+                            className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
+                          >
+                            <Field label="Client" name="client_nom" defaultValue={r.client_nom ?? ""} required />
+                            <Field label="Téléphone" name="client_telephone" defaultValue={r.client_telephone ?? ""} />
+                            <Field label="Email" name="client_email" type="email" defaultValue={r.client_email ?? ""} />
+                            <Field label="Objet" name="titre" defaultValue={r.titre ?? ""} />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Type d&apos;intervention</span>
+                              <select
+                                name="type"
+                                defaultValue={r.type}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                {TYPES.map((t) => (
+                                  <option key={t.v} value={t.v}>
+                                    {t.l}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Statut chantier</span>
+                              <select
+                                name="statut"
+                                defaultValue={r.statut}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                {STATUTS.map((s) => (
+                                  <option key={s.v} value={s.v}>
+                                    {s.l}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Date & heure</span>
+                              <input
+                                type="datetime-local"
+                                name="date_debut"
+                                required
+                                defaultValue={new Date(
+                                  new Date(r.date_debut).getTime() -
+                                    new Date(r.date_debut).getTimezoneOffset() * 60000,
+                                )
+                                  .toISOString()
+                                  .slice(0, 16)}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue={String(r.duree_min ?? 120)} />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Technicien</span>
+                              <select
+                                name="technicien"
+                                defaultValue={r.technicien ?? ""}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="">À attribuer</option>
+                                {TECHNICIENS.map((t) => (
+                                  <option key={t.id} value={t.nom}>
+                                    {t.nom} — départ {t.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                            <div className="sm:col-span-2">
+                              <AdresseFields
+                                required
+                                defaultAdresse={r.adresse}
+                                defaultCpVille={r.cp_ville ?? ""}
+                              />
+                            </div>
+
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Origine</span>
+                              <select
+                                name="origine"
+                                defaultValue={r.origine ?? "direct"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="direct">Client direct</option>
+                                <option value="sous_traitance">Sous-traitance / partenaire</option>
+                              </select>
+                            </label>
+                            <Field label="Partenaire / donneur d'ordre" name="partenaire" defaultValue={r.partenaire ?? ""} />
+                            <Field label="Montant HT (€)" name="montant_ht" type="number" defaultValue={String(r.montant_ht ?? 0)} />
+                            <Field label="TVA (%)" name="tva_pct" type="number" defaultValue={String(r.tva_pct ?? 20)} />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Facturation</span>
+                              <select
+                                name="statut_facturation"
+                                defaultValue={r.statut_facturation ?? "a_facturer"}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              >
+                                <option value="a_facturer">À facturer</option>
+                                <option value="facture">Facturé</option>
+                                <option value="paye">Payé</option>
+                              </select>
+                            </label>
+                            <div className="sm:col-span-2">
+                              <Field label="Désignation du chantier" name="designation" defaultValue={r.designation ?? ""} />
+                            </div>
+                            <Field label="Métrage estimé (m)" name="metrage_m" type="number" defaultValue={String(r.metrage_m ?? 0)} />
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
+                              <select name="puissance_borne" defaultValue={r.puissance_borne ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option value="3,7 kW">3,7 kW — prise renforcée</option><option value="7,4 kW">7,4 kW — standard maison (32A mono)</option><option value="11 kW">11 kW — recharge accélérée</option><option value="22 kW">22 kW — forte puissance (triphasé)</option><option>À définir</option>
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Alimentation</span>
+                              <select name="phase_installation" defaultValue={r.phase_installation ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option>Monophasé</option><option>Triphasé</option><option>À définir</option>
+                              </select>
+                            </label>
+                            <label className="block">
+                              <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+                              <select name="type_pose" defaultValue={r.type_pose ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
+                                <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
+                              </select>
+                            </label>
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">Étiquettes</span>
+                              <input
+                                name="etiquettes"
+                                list="etiquettes-suggestions"
+                                defaultValue={Array.isArray(r.etiquettes) ? normaliserEtiquettes(r.etiquettes).join(", ") : ""}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
+                              />
+                            </label>
+                            <label className="block sm:col-span-2">
+                              <span className="text-mono text-xs text-muted-foreground">Notes</span>
+                              <textarea
+                                name="notes"
+                                rows={3}
+                                defaultValue={r.notes ?? ""}
+                                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+                              />
+                            </label>
+                            <div className="sm:col-span-2 flex items-center gap-3">
+                              <button
+                                type="submit"
+                                disabled={setDossierComplet.isPending}
+                                className="hero-grad text-primary-foreground text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                              >
+                                {setDossierComplet.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
+                                Enregistrer tout le dossier
+                              </button>
+                              <span className="text-mono text-xs text-muted-foreground">
+                                Un seul bouton pour corriger client, adresse, planning et montant.
+                              </span>
+                            </div>
+                          </form>
+                        )}
 
                         {isChantierPanel && (
                           <form

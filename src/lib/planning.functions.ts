@@ -64,6 +64,32 @@ const rdvSchema = z.object({
 
 
 export type RendezVousInput = z.input<typeof rdvSchema>;
+export type DossierRendezVousInput = {
+  id: string;
+  titre: string;
+  type: "visite" | "installation" | "maintenance" | "sav" | "controle";
+  statut: (typeof STATUTS_CHANTIER)[number];
+  client_nom: string;
+  client_telephone?: string | null;
+  client_email?: string | null;
+  adresse: string;
+  cp_ville?: string | null;
+  date_debut: string;
+  duree_min?: number;
+  technicien?: string | null;
+  notes?: string | null;
+  origine?: "direct" | "sous_traitance";
+  partenaire?: string | null;
+  montant_ht?: number;
+  tva_pct?: number;
+  statut_facturation?: "a_facturer" | "facture" | "paye";
+  designation?: string | null;
+  etiquettes?: string[];
+  metrage_m?: number;
+  puissance_borne?: string | null;
+  phase_installation?: string | null;
+  type_pose?: string | null;
+};
 
 function formatNumeroSms(numero: string | null | undefined): string | null {
   if (!numero) return null;
@@ -352,6 +378,115 @@ export const updateStatutRendezVous = createServerFn({ method: "POST" })
     }
 
     return { ok: true, sms, email };
+  });
+
+const dossierSchema = z.object({
+  id: z.string().uuid(),
+  titre: z.string().trim().min(1).max(160),
+  type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
+  statut: z.enum(STATUTS_CHANTIER),
+  client_nom: z.string().trim().min(1).max(160),
+  client_telephone: z.string().trim().max(40).optional().nullable(),
+  client_email: z.string().trim().max(255).optional().nullable(),
+  adresse: z.string().trim().min(3).max(300),
+  cp_ville: z.string().trim().max(160).optional().nullable(),
+  date_debut: z.string().min(10).max(40),
+  duree_min: z.coerce.number().int().min(15).max(1440).default(120),
+  technicien: z.string().trim().max(160).optional().nullable(),
+  notes: z.string().trim().max(4000).optional().nullable(),
+  origine: z.enum(["direct", "sous_traitance"]).default("direct"),
+  partenaire: z.string().trim().max(160).optional().nullable(),
+  montant_ht: num(0, 1_000_000, 0),
+  tva_pct: num(0, 30, 20),
+  statut_facturation: z.enum(["a_facturer", "facture", "paye"]).default("a_facturer"),
+  designation: z.string().trim().max(200).optional().nullable(),
+  etiquettes: z.array(z.string().trim().min(1).max(40)).max(12).default([]),
+  metrage_m: num(0, 10000, 0),
+  puissance_borne: z.string().trim().max(40).optional().nullable(),
+  phase_installation: z.string().trim().max(40).optional().nullable(),
+  type_pose: z.string().trim().max(80).optional().nullable(),
+});
+
+export const updateDossierRendezVous = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: DossierRendezVousInput) => dossierSchema.parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: avant, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select("id, statut")
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+
+    const d = new Date(data.date_debut);
+    if (Number.isNaN(d.getTime())) throw new Error("Date de rendez-vous invalide.");
+
+    const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
+    const tech = technicienByNom(data.technicien);
+    const trajet = geo
+      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+      : null;
+
+    const patch = {
+      titre: data.titre,
+      type: data.type,
+      statut: data.statut,
+      client_nom: data.client_nom,
+      client_telephone: data.client_telephone ?? null,
+      client_email: data.client_email ?? null,
+      adresse: data.adresse,
+      cp_ville: data.cp_ville ?? null,
+      date_debut: d.toISOString(),
+      duree_min: data.duree_min,
+      technicien: data.technicien ?? null,
+      notes: data.notes ?? null,
+      origine: data.origine,
+      partenaire: data.partenaire ?? null,
+      montant_ht: data.montant_ht,
+      tva_pct: data.tva_pct,
+      statut_facturation: data.statut_facturation,
+      designation: data.designation ?? null,
+      etiquettes: data.etiquettes ?? [],
+      metrage_m: data.metrage_m,
+      puissance_borne: data.puissance_borne ?? null,
+      phase_installation: data.phase_installation ?? null,
+      type_pose: data.type_pose ?? null,
+      lat: geo?.lat ?? null,
+      lng: geo?.lng ?? null,
+      distance_km: trajet?.distance_km ?? null,
+      duree_trajet_min: trajet?.duree_trajet_min ?? null,
+      date_a_confirmer: false,
+    };
+
+    const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+
+    let sms: SmsOutcome | null = null;
+    let email: EmailOutcome | null = null;
+    const passeEnConfirme = data.statut === "confirme" && avant?.statut !== "confirme";
+    if (passeEnConfirme) {
+      email = await envoyerEmailRendezVousConfirmation({
+        id: data.id,
+        client_email: data.client_email ?? null,
+        client_nom: data.client_nom,
+        date_debut: patch.date_debut,
+        adresse: data.adresse,
+        cp_ville: data.cp_ville ?? null,
+        designation: data.designation ?? null,
+        titre: data.titre,
+      });
+      sms = await envoyerSmsRendezVousConfirmation({
+        client_telephone: data.client_telephone ?? null,
+        client_nom: data.client_nom,
+        date_debut: patch.date_debut,
+        adresse: data.adresse,
+        cp_ville: data.cp_ville ?? null,
+        designation: data.designation ?? null,
+        titre: data.titre,
+      });
+    }
+
+    return { ok: true as const, geocode: Boolean(geo), sms, email };
   });
 
 /** Modification de l'adresse d'un rendez-vous : re-géocodage + recalcul du trajet. */
