@@ -16,7 +16,7 @@ export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; inter
 
   if (count === 0) {
     return (
-      <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border p-6 flex items-end">
+      <div className="relative rounded-2xl w-full aspect-[4/3] sm:aspect-square overflow-hidden bg-card border border-border p-6 flex items-end">
         <div className="backdrop-blur-md bg-background/70 border border-border rounded-sm p-4">
           <p className="text-mono text-primary">Photos en cours de publication</p>
           <p className="text-sm text-muted-foreground mt-1">
@@ -36,7 +36,7 @@ export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; inter
       onMouseLeave={() => setPaused(false)}
     >
       <div className="absolute inset-0 border border-primary/20 rounded-sm animate-glow md:-m-4" aria-hidden />
-      <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border">
+      <div className="relative rounded-2xl w-full aspect-[4/3] sm:aspect-square overflow-hidden bg-card border border-border">
         {slides.map((s, idx) => (
           <img
             key={s.src}

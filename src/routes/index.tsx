@@ -207,69 +207,87 @@ function Index() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="relative pt-24 pb-16 sm:pt-28 sm:pb-20">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-8 lg:gap-10 items-start">
+      <section className="relative overflow-hidden pt-22 pb-14 sm:pt-26 sm:pb-18">
+        <div className="pointer-events-none absolute -top-28 -left-24 h-72 w-72 rounded-full bg-primary/12 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
           <div className="animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-mono text-primary">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/85 px-3 py-1.5 text-mono text-primary shadow-sm">
               <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Installateur IRVE · Grand Ouest
+              Grand Ouest · Installateur IRVE
             </div>
 
-            <h1 className="mt-5 font-display text-4xl sm:text-5xl lg:text-6xl font-medium tracking-tight leading-[1.04] break-words">
-              Installation de borne de recharge
-              <span className="block text-muted-foreground/70 font-normal mt-2">
-                pour particuliers, entreprises et collectivités.
-              </span>
+            <h1 className="mt-5 font-display text-[2.05rem] leading-[1.02] sm:text-5xl lg:text-6xl font-semibold tracking-tight">
+              Votre borne installée
+              <span className="block text-primary">proprement et sans stress.</span>
             </h1>
 
-            <p className="mt-5 max-w-2xl text-muted-foreground leading-relaxed">
-              Étude technique, raccordement, pose et mise en service par une équipe qualifiée.
-              Un seul interlocuteur, du devis à l&apos;intervention.
+            <p className="mt-4 max-w-xl text-muted-foreground leading-relaxed">
+              Étude, pose, raccordement et mise en service pour particuliers, entreprises et
+              collectivités, avec une équipe locale qualifiée.
             </p>
 
-            <div className="mt-5 max-w-2xl rounded-xl border border-border bg-card/80 p-4">
+            <div className="mt-5 rounded-2xl border border-border bg-card/85 shadow-[0_16px_45px_-35px_color-mix(in_oklab,var(--primary)_55%,black)] p-4 sm:p-5">
               <p className="text-mono text-primary">Installation de borne de recharge</p>
-              <p className="mt-1 text-3xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
+              <p className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
               <p className="mt-1 text-sm text-muted-foreground">
                 Borne + installation par un professionnel IRVE.
               </p>
               <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
                 Tarif indicatif pour une installation standard. Le prix peut varier selon la
-                distance entre le tableau électrique et la borne, la puissance choisie et les
-                travaux nécessaires.
+                distance tableau-borne, la puissance choisie et les travaux nécessaires.
               </p>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2.5 text-xs">
-              <span className="rounded-full border border-border bg-card/60 px-3 py-1.5 text-mono text-muted-foreground">
+            <div className="mt-4 flex flex-wrap gap-2 text-[11px] sm:text-xs">
+              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
                 Qualification IRVE
               </span>
-              <span className="rounded-full border border-border bg-card/60 px-3 py-1.5 text-mono text-muted-foreground">
-                Intervention 24-48h
+              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
+                Étude technique rapide
               </span>
-              <span className="rounded-full border border-border bg-card/60 px-3 py-1.5 text-mono text-muted-foreground">
-                Photos réelles de chantiers
+              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
+                Interventions réelles
               </span>
             </div>
 
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-6 grid gap-2.5 sm:flex sm:flex-wrap">
               <Link
                 to="/demande"
-                className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:opacity-90 transition"
+                className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-xl inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:opacity-90 transition animate-cta-attention"
               >
-                Demande de raccordement <ArrowRight className="h-4 w-4" />
+                Démarrer ma demande <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="tel:+33633657840"
-                className="border border-border text-mono px-5 py-3.5 rounded-sm inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:border-primary hover:text-primary transition"
+                className="border border-border bg-card/70 text-mono px-5 py-3.5 rounded-xl inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:border-primary hover:text-primary transition"
               >
-                <Phone className="h-4 w-4" /> 06 33 65 78 40
+                <Phone className="h-4 w-4" /> Parler à un conseiller
               </a>
             </div>
           </div>
 
-          <div className="animate-fade-soft w-full min-w-0" style={{ animationDelay: "180ms" }}>
-            <HeroSlider slides={heroSlides} />
+          <div className="animate-fade-soft w-full min-w-0 relative" style={{ animationDelay: "180ms" }}>
+            <div className="rounded-2xl border border-border/80 bg-background/70 p-2.5 sm:p-3 shadow-[0_18px_45px_-35px_color-mix(in_oklab,var(--primary)_45%,black)]">
+              <HeroSlider slides={heroSlides} />
+            </div>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
+                <p className="text-xl font-semibold tracking-tight"><AnimatedCounter to={7} /></p>
+                <p className="text-[10px] text-mono text-muted-foreground">Départements</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
+                <p className="text-xl font-semibold tracking-tight"><AnimatedCounter to={48} suffix="h" /></p>
+                <p className="text-[10px] text-mono text-muted-foreground">Étude</p>
+              </div>
+              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
+                <p className="text-xl font-semibold tracking-tight inline-flex items-center gap-0.5">
+                  <AnimatedCounter to={10} />
+                  <Star className="h-4 w-4 text-primary fill-primary" />
+                </p>
+                <p className="text-[10px] text-mono text-muted-foreground">Avis</p>
+              </div>
+            </div>
           </div>
         </div>
       </section>
