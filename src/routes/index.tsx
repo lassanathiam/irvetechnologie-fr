@@ -175,7 +175,8 @@ function Index() {
     setAvisError(null);
     setAvisBusy(true);
     try {
-      const fd = new FormData(e.currentTarget);
+      const form = e.currentTarget;
+      const fd = new FormData(form);
       const note = Number(fd.get("note") ?? "5");
       await envoyerAvis({
         data: {
@@ -192,7 +193,7 @@ function Index() {
         },
       });
       setAvisSent(true);
-      (e.currentTarget as HTMLFormElement).reset();
+      form.reset();
       void avisQuery.refetch();
     } catch (err) {
       setAvisError(err instanceof Error ? err.message : "Envoi de l'avis impossible.");
