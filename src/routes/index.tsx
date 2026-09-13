@@ -217,7 +217,7 @@ function Index() {
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-14">
         <div className="pointer-events-none absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[#050b12] text-white shadow-[0_35px_90px_-50px_rgba(0,0,0,.9)]">
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[#07120d] text-white shadow-[0_35px_90px_-50px_rgba(0,0,0,.9)]">
             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(38,211,167,.25),transparent_45%),radial-gradient(circle_at_20%_100%,rgba(34,197,94,.18),transparent_42%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-30 bg-[linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
             <div className="relative z-10 grid gap-7 p-6 sm:p-8 lg:grid-cols-12 lg:p-10">
@@ -270,15 +270,15 @@ function Index() {
                     <p className="mt-1 text-lg font-semibold">Pose & mise en service</p>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-white/20 bg-black/20 p-3 text-center">
+                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
                       <p className="text-xl font-semibold"><AnimatedCounter to={7} /></p>
                       <p className="text-[10px] text-white/70">Départements</p>
                     </div>
-                    <div className="rounded-xl border border-white/20 bg-black/20 p-3 text-center">
+                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
                       <p className="text-xl font-semibold"><AnimatedCounter to={48} suffix="h" /></p>
                       <p className="text-[10px] text-white/70">Étude</p>
                     </div>
-                    <div className="rounded-xl border border-white/20 bg-black/20 p-3 text-center">
+                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
                       <p className="text-xl font-semibold">IRVE</p>
                       <p className="text-[10px] text-white/70">Qualifiée</p>
                     </div>
