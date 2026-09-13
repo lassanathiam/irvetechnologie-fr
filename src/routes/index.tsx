@@ -1,9 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, Star, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
+import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
-import { HeroSlider } from "@/components/HeroSlider";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
 import { AnimatedCounter } from "@/components/AnimatedCounter";
 import { useReveal } from "@/hooks/use-reveal";
@@ -16,10 +15,10 @@ import { COMPANY, GARANTIES } from "@/lib/company";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Grand Ouest" },
-      { name: "description", content: "Borne de l'Ouest : installation de bornes de recharge IRVE en Bretagne et Pays de la Loire. Étude, génie civil, électricité et maintenance — 44, 49, 56, 35, 85, 72, 53." },
-      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE dans le Grand Ouest" },
-      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW en Bretagne & Pays de la Loire." },
+      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Nantes & Grand Ouest élargi" },
+      { name: "description", content: "Borne de l'Ouest intervient principalement dans le Grand Ouest et dans les régions voisines, jusqu'à environ 250 km autour de Nantes, avec étude au cas par cas selon la rentabilité du chantier." },
+      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE autour de Nantes (Grand Ouest élargi)" },
+      { property: "og:description", content: "Installation IRVE autour de Nantes : zone principale Grand Ouest + extension jusqu'à ~250 km selon distance, trajet et rentabilité du projet." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -149,11 +148,6 @@ function Index() {
     place: r.lieu,
     spec: r.description,
   }));
-  const heroSlides = realisations.slice(0, 6).map((r) => ({
-    src: r.src,
-    label: r.title || "Intervention IRVE",
-    meta: r.place || "Réalisation client",
-  }));
   const zones_r = useReveal<HTMLDivElement>();
   const [audience, setAudience] = useState<"client" | "external">("client");
   const [avisSent, setAvisSent] = useState(false);
@@ -207,85 +201,89 @@ function Index() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-22 pb-14 sm:pt-26 sm:pb-18">
-        <div className="pointer-events-none absolute -top-28 -left-24 h-72 w-72 rounded-full bg-primary/12 blur-3xl" />
-        <div className="pointer-events-none absolute -bottom-28 right-0 h-80 w-80 rounded-full bg-primary/10 blur-3xl" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
-          <div className="animate-fade-up">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary/30 bg-background/85 px-3 py-1.5 text-mono text-primary shadow-sm">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
-              Grand Ouest · Installateur IRVE
-            </div>
+      <section className="relative overflow-hidden pt-24 pb-16 sm:pt-28 sm:pb-20">
+        <div className="pointer-events-none absolute inset-x-0 top-24 mx-auto h-72 max-w-5xl rounded-full bg-primary/10 blur-3xl animate-hero-drift" />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-background/85 p-5 sm:p-8 lg:p-10 shadow-[0_25px_90px_-60px_color-mix(in_oklab,var(--primary)_70%,black)] animate-fade-up">
+            <div className="pointer-events-none absolute inset-0 opacity-60 animate-hero-grid-pan bg-[radial-gradient(circle_at_20%_20%,color-mix(in_oklab,var(--primary)_24%,transparent),transparent_38%),radial-gradient(circle_at_80%_0%,color-mix(in_oklab,var(--primary)_18%,transparent),transparent_34%),linear-gradient(to_right,color-mix(in_oklab,var(--primary)_8%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklab,var(--primary)_8%,transparent)_1px,transparent_1px)] bg-[size:auto,auto,34px_34px,34px_34px]" />
+            <div className="pointer-events-none absolute -top-16 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-float" />
 
-            <h1 className="mt-5 font-display text-[2.05rem] leading-[1.02] sm:text-5xl lg:text-6xl font-semibold tracking-tight">
-              Votre borne installée
-              <span className="block text-primary">proprement et sans stress.</span>
-            </h1>
-
-            <p className="mt-4 max-w-xl text-muted-foreground leading-relaxed">
-              Étude, pose, raccordement et mise en service pour particuliers, entreprises et
-              collectivités, avec une équipe locale qualifiée.
-            </p>
-
-            <div className="mt-5 rounded-2xl border border-border bg-card/85 shadow-[0_16px_45px_-35px_color-mix(in_oklab,var(--primary)_55%,black)] p-4 sm:p-5">
-              <p className="text-mono text-primary">Installation de borne de recharge</p>
-              <p className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                Borne + installation par un professionnel IRVE.
-              </p>
-              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-                Tarif indicatif pour une installation standard. Le prix peut varier selon la
-                distance tableau-borne, la puissance choisie et les travaux nécessaires.
-              </p>
-            </div>
-
-            <div className="mt-4 flex flex-wrap gap-2 text-[11px] sm:text-xs">
-              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
-                Qualification IRVE
-              </span>
-              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
-                Étude technique rapide
-              </span>
-              <span className="rounded-full border border-border bg-card/70 px-3 py-1.5 text-mono text-muted-foreground">
-                Interventions réelles
-              </span>
-            </div>
-
-            <div className="mt-6 grid gap-2.5 sm:flex sm:flex-wrap">
-              <Link
-                to="/demande"
-                className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-xl inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:opacity-90 transition animate-cta-attention"
-              >
-                Démarrer ma demande <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="tel:+33633657840"
-                className="border border-border bg-card/70 text-mono px-5 py-3.5 rounded-xl inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:border-primary hover:text-primary transition"
-              >
-                <Phone className="h-4 w-4" /> Parler à un conseiller
-              </a>
-            </div>
-          </div>
-
-          <div className="animate-fade-soft w-full min-w-0 relative" style={{ animationDelay: "180ms" }}>
-            <div className="rounded-2xl border border-border/80 bg-background/70 p-2.5 sm:p-3 shadow-[0_18px_45px_-35px_color-mix(in_oklab,var(--primary)_45%,black)]">
-              <HeroSlider slides={heroSlides} />
-            </div>
-            <div className="mt-3 grid grid-cols-3 gap-2">
-              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
-                <p className="text-xl font-semibold tracking-tight"><AnimatedCounter to={7} /></p>
-                <p className="text-[10px] text-mono text-muted-foreground">Départements</p>
+            <div className="relative z-10 mx-auto max-w-4xl text-center">
+              <div className="inline-flex items-center gap-2 rounded-full border border-primary/35 bg-background/90 px-3 py-1.5 text-mono text-primary">
+                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
+                Solution IRVE · Particuliers · Entreprises · Collectivités
               </div>
-              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
-                <p className="text-xl font-semibold tracking-tight"><AnimatedCounter to={48} suffix="h" /></p>
-                <p className="text-[10px] text-mono text-muted-foreground">Étude</p>
+
+              <h1 className="mt-5 font-display text-[2.2rem] sm:text-5xl lg:text-7xl font-semibold leading-[0.98] tracking-tight">
+                Un hero nouveau.
+                <span className="mt-1 block text-primary [text-shadow:0_8px_36px_color-mix(in_oklab,var(--primary)_35%,transparent)]">
+                  Plus premium. Plus vivant.
+                </span>
+              </h1>
+
+              <p className="mx-auto mt-5 max-w-3xl text-sm sm:text-base text-muted-foreground leading-relaxed">
+                Installation de borne en mode clé-en-main : audit, devis, pose, raccordement et
+                mise en service avec une équipe locale certifiée IRVE.
+              </p>
+
+              <div className="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+                <Link
+                  to="/demande"
+                  className="hero-grad text-primary-foreground text-mono px-6 py-3.5 rounded-xl inline-flex items-center justify-center gap-2 transition hover:opacity-90 animate-cta-attention"
+                >
+                  Démarrer ma demande <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="tel:+33633657840"
+                  className="border border-border bg-card/80 text-mono px-6 py-3.5 rounded-xl inline-flex items-center justify-center gap-2 transition hover:border-primary hover:text-primary"
+                >
+                  <Phone className="h-4 w-4" /> Parler à un conseiller
+                </a>
               </div>
-              <div className="rounded-xl border border-border bg-card/70 px-2.5 py-2.5 text-center">
-                <p className="text-xl font-semibold tracking-tight inline-flex items-center gap-0.5">
-                  <AnimatedCounter to={10} />
-                  <Star className="h-4 w-4 text-primary fill-primary" />
-                </p>
-                <p className="text-[10px] text-mono text-muted-foreground">Avis</p>
+
+              <div className="mt-8 grid gap-3 md:grid-cols-3 text-left">
+                <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft">
+                  <p className="text-mono text-primary">Installation de borne de recharge</p>
+                  <p className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
+                  <p className="mt-1 text-sm text-muted-foreground">Borne + installation par un professionnel IRVE.</p>
+                  <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                    Tarif indicatif pour une installation standard. Le prix peut varier selon la
+                    distance entre le tableau électrique et la borne, la puissance choisie et les travaux nécessaires.
+                  </p>
+                </div>
+
+                <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "120ms" }}>
+                  <p className="text-mono text-primary">Workflow express</p>
+                  <ul className="mt-2 space-y-2 text-sm">
+                    <li className="inline-flex items-center gap-2">
+                      <Check className="h-4 w-4 text-primary" /> Étude technique
+                    </li>
+                    <li className="inline-flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-primary" /> Devis validé
+                    </li>
+                    <li className="inline-flex items-center gap-2">
+                      <Zap className="h-4 w-4 text-primary" /> Pose et mise en service
+                    </li>
+                  </ul>
+                </div>
+
+                <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "220ms" }}>
+                  <p className="text-mono text-primary">Repères</p>
+                  <div className="mt-2 grid grid-cols-3 gap-2">
+                    <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
+                      <p className="text-lg font-semibold tracking-tight"><AnimatedCounter to={7} /></p>
+                      <p className="text-[10px] text-mono text-muted-foreground">Départements</p>
+                    </div>
+                    <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
+                      <p className="text-lg font-semibold tracking-tight"><AnimatedCounter to={48} suffix="h" /></p>
+                      <p className="text-[10px] text-mono text-muted-foreground">Étude</p>
+                    </div>
+                    <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
+                      <p className="text-lg font-semibold tracking-tight">IRVE</p>
+                      <p className="text-[10px] text-mono text-muted-foreground">Qualifié</p>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -354,7 +352,7 @@ function Index() {
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
                 Chantiers livrés{" "}
-                <span className="text-muted-foreground/60">dans le Grand Ouest.</span>
+                <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
               </h2>
             </div>
             <p className="text-mono text-muted-foreground">défilement automatique · cliquez pour explorer</p>
@@ -521,17 +519,38 @@ function Index() {
                 <span className="h-px w-10 bg-primary" /> Zones d'intervention
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-                Le Grand Ouest,{" "}
-                <span className="text-muted-foreground/60">notre terrain de jeu.</span>
+                Nantes au centre,{" "}
+                <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
               </h2>
-              <p className="mt-6 text-muted-foreground max-w-md">
-                Bretagne et Pays de la Loire en priorité — équipes locales, connaissance
-                du terrain et du réseau électrique. Et partout ailleurs en France, on
-                intervient aussi, avec un léger délai supplémentaire.
+              <p className="mt-6 text-muted-foreground max-w-lg">
+                Borne de l&apos;Ouest intervient principalement dans le Grand Ouest et étend ses
+                interventions dans les régions voisines, jusqu&apos;à environ 250 km autour de Nantes.
+                Pour les projets professionnels, copropriétés et installations multi-bornes, nous
+                pouvons également étudier des interventions au-delà selon la nature et la
+                rentabilité du chantier.
               </p>
             </div>
-            <ul className="grid grid-cols-2 gap-3 self-end">
-              {["44 · Loire-Atlantique", "49 · Maine-et-Loire", "85 · Vendée", "72 · Sarthe", "53 · Mayenne", "35 · Ille-et-Vilaine", "56 · Morbihan"].map((z, idx) => (
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 self-end">
+              {[
+                "44 · Loire-Atlantique",
+                "49 · Maine-et-Loire",
+                "85 · Vendée",
+                "53 · Mayenne",
+                "72 · Sarthe",
+                "35 · Ille-et-Vilaine",
+                "56 · Morbihan",
+                "22 · Côtes-d'Armor",
+                "29 · Finistère",
+                "79 · Deux-Sèvres",
+                "86 · Vienne",
+                "16 · Charente",
+                "17 · Charente-Maritime",
+                "37 · Indre-et-Loire",
+                "41 · Loir-et-Cher",
+                "61 · Orne",
+                "14 · Calvados",
+                "18 · Cher",
+              ].map((z, idx) => (
                 <li
                   key={z}
                   className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card hover:translate-x-1 transition-all"
@@ -550,9 +569,11 @@ function Index() {
                 <MapPin className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Grand Ouest</div>
-                <div className="font-medium">Intervention 24-48h</div>
-                <p className="text-sm text-muted-foreground mt-1">Bretagne & Pays de la Loire, équipe locale.</p>
+                <div className="text-mono text-primary mb-1">Zone principale</div>
+                <div className="font-medium">Grand Ouest élargi</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Départements prioritaires + régions voisines autour de Nantes.
+                </p>
               </div>
             </div>
             <div className="bg-card p-6 flex items-start gap-4">
@@ -560,9 +581,11 @@ function Index() {
                 <Clock className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Reste de la France</div>
-                <div className="font-medium">Intervention 48-72h</div>
-                <p className="text-sm text-muted-foreground mt-1">Métropole entière, déplacement organisé sous 72h max.</p>
+                <div className="text-mono text-primary mb-1">Zone élargie</div>
+                <div className="font-medium">Jusqu&apos;à ~250 km autour de Nantes</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Distance et temps de trajet étudiés selon le type de chantier.
+                </p>
               </div>
             </div>
             <div className="bg-card p-6 flex items-start gap-4">
@@ -570,9 +593,11 @@ function Index() {
                 <Zap className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Urgence panne</div>
-                <div className="font-medium">Intervention rapide</div>
-                <p className="text-sm text-muted-foreground mt-1">Diagnostic à distance puis déplacement prioritaire sous contrat Confort / Pro.</p>
+                <div className="text-mono text-primary mb-1">Règle commerciale</div>
+                <div className="font-medium">Décision à la rentabilité globale</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Montant, nombre de bornes, frais, regroupement d&apos;interventions et rentabilité du déplacement.
+                </p>
               </div>
             </div>
           </div>

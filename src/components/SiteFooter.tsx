@@ -7,7 +7,7 @@ export function SiteFooter() {
           <div className="flex flex-wrap gap-6">
             <a href="mailto:contacts@irvetechnologie.fr" className="hover:text-foreground">contacts@irvetechnologie.fr</a>
             <a href="tel:+33633657840" className="hover:text-foreground">06 33 65 78 40</a>
-            <span>Grand Ouest · Bretagne & Pays de la Loire</span>
+            <span>Nantes · Grand Ouest élargi · jusqu&apos;à ~250 km (selon projet)</span>
           </div>
         </div>
         <div className="pt-6 border-t border-border/40 grid gap-2 md:grid-cols-2 text-xs leading-relaxed">
