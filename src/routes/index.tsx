@@ -154,8 +154,10 @@ function Index() {
   const [avisError, setAvisError] = useState<string | null>(null);
   const [homeCompact, setHomeCompact] = useState(true);
   const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
-  const [aideBornes, setAideBornes] = useState(1);
-  const [aideMontantHt, setAideMontantHt] = useState(1500);
+  const PRIX_DEMARRAGE_TTC = 1290;
+  const PRIX_DEMARRAGE_HT = Math.round((PRIX_DEMARRAGE_TTC / 1.2) * 100) / 100;
+  const [aideBornes, setAideBornes] = useState(0);
+  const [aideMontantHt, setAideMontantHt] = useState(PRIX_DEMARRAGE_HT);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -166,7 +168,7 @@ function Index() {
   });
   const isClient = audience === "client";
   const baseHt = Math.max(0, aideMontantHt);
-  const nbBornes = Math.max(1, aideBornes);
+  const nbBornes = Math.max(0, aideBornes);
   const aideTotale =
     aideProfil === "copro-individuelle"
       ? Math.min(baseHt * 0.5, 1000) * nbBornes
@@ -353,10 +355,9 @@ function Index() {
               <label className="text-sm text-muted-foreground">Nombre de bornes</label>
               <input
                 type="number"
-                min={1}
-                max={20}
+                min={0}
                 value={aideBornes}
-                onChange={(e) => setAideBornes(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+                onChange={(e) => setAideBornes(Math.max(0, Number(e.target.value) || 0))}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
               <label className="text-sm text-muted-foreground">Coût HT / borne</label>
@@ -398,7 +399,7 @@ function Index() {
               </>
             )}
             <p className="mt-2 text-xs text-muted-foreground">
-              Montants donnés à titre indicatif. Validation finale selon dossier, devis signé et règles en vigueur.
+              Base de calcul par défaut : 1 290 € TTC (≈ {new Intl.NumberFormat("fr-FR").format(PRIX_DEMARRAGE_HT)} € HT) par borne. Montants donnés à titre indicatif ; validation finale selon dossier, devis signé et règles en vigueur.
             </p>
           </div>
 
