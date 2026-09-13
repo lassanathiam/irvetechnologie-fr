@@ -413,6 +413,10 @@
   0%, 100% { transform: translate3d(0, 0, 0); }
   50% { transform: translate3d(0, -6px, 0); }
 }
+@keyframes hero-grid-pan {
+  0% { background-position: 0 0, 0 0, 0 0, 0 0; }
+  100% { background-position: 30px -20px, -20px 24px, 34px 0, 0 34px; }
+}
 
 @utility animate-kenburns   { animation: kenburns 9s ease-in-out infinite alternate; }
 @utility animate-fade-up    { animation: fade-up 0.7s ease-out both; }
@@ -422,6 +426,7 @@
 @utility animate-cta-attention { animation: cta-attention 7.5s ease-in-out infinite; }
 @utility animate-hero-drift { animation: hero-drift 7s ease-in-out infinite; }
 @utility animate-hero-float { animation: hero-float 4.2s ease-in-out infinite; }
+@utility animate-hero-grid-pan { animation: hero-grid-pan 14s linear infinite; }
 
 @utility reveal-on-scroll {
   opacity: 0;
