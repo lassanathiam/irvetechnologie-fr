@@ -153,6 +153,7 @@ function Index() {
   const [avisSent, setAvisSent] = useState(false);
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
+  const [homeCompact, setHomeCompact] = useState(true);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -288,6 +289,8 @@ function Index() {
         </div>
       </section>
 
+      {!homeCompact && (
+      <>
       {/* MAINTENANCE / ABONNEMENTS */}
       <section id="maintenance" className="py-16 sm:py-20 md:py-24 border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-6xl px-6">
@@ -489,6 +492,8 @@ function Index() {
           </div>
         </div>
       </section>
+      </>
+      )}
 
       {/* RÉALISATIONS — diaporama */}
       <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
@@ -511,6 +516,23 @@ function Index() {
         </div>
       </section>
 
+      <section className="border-t border-border bg-card/35 py-5">
+        <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Mode compact actif pour raccourcir la page d&apos;accueil.
+          </p>
+          <button
+            type="button"
+            onClick={() => setHomeCompact((v) => !v)}
+            className="text-mono text-xs px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition"
+          >
+            {homeCompact ? "Afficher toutes les sections" : "Revenir au mode compact"}
+          </button>
+        </div>
+      </section>
+
+      {!homeCompact && (
+      <>
       {/* AVIS */}
       <section id="avis" className="py-16 sm:py-20 border-t border-border">
         <div className="mx-auto max-w-7xl px-6 grid gap-10 lg:grid-cols-2">
@@ -753,10 +775,12 @@ function Index() {
           </div>
         </div>
       </section>
+      </>
+      )}
 
 
       {/* CTA */}
-      <section className="py-24 border-t border-border relative overflow-hidden">
+      <section className="py-16 sm:py-20 border-t border-border relative overflow-hidden">
         <div className="absolute inset-0 hero-grad opacity-[0.03]" aria-hidden />
         <div className="mx-auto max-w-5xl px-6 text-center relative">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tight">
