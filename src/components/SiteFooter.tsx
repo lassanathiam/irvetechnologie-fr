@@ -1,3 +1,5 @@
+import { Link } from "@tanstack/react-router";
+
 export function SiteFooter() {
   return (
     <footer className="border-t border-border/60 mt-32">
@@ -7,6 +9,7 @@ export function SiteFooter() {
           <div className="flex flex-wrap gap-6">
             <a href="mailto:contacts@irvetechnologie.fr" className="hover:text-foreground">contacts@irvetechnologie.fr</a>
             <a href="tel:+33633657840" className="hover:text-foreground">06 33 65 78 40</a>
+            <Link to="/a-propos" className="hover:text-foreground">À propos</Link>
             <span>Nantes · Grand Ouest élargi · jusqu&apos;à ~250 km (selon projet)</span>
           </div>
         </div>

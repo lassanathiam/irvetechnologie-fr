@@ -51,6 +51,10 @@ const LONG_WINDOW_MS = 24 * 60 * 60 * 1000; // 24h
 const LONG_LIMIT = 10;
 const MIN_ELAPSED_MS = 1500;
 
+function canUseSupabaseServerWrites() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 function getClientIp(): string {
   try {
     const ip = getRequestIP({ xForwardedFor: true });
@@ -64,6 +68,9 @@ function getClientIp(): string {
 export const submitDemande = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => submitSchema.parse(input))
   .handler(async ({ data }) => {
+    if (!canUseSupabaseServerWrites()) {
+      throw new Error("Le formulaire est temporairement indisponible. Merci de réessayer dans un instant.");
+    }
     // Honeypot: silently reject (pretend success to avoid signaling bots)
     if (data.website && data.website.length > 0) {
       console.warn("submitDemande honeypot triggered");
@@ -147,6 +154,9 @@ export const submitDemande = createServerFn({ method: "POST" })
 export const submitAvisClient = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => avisSchema.parse(input))
   .handler(async ({ data }) => {
+    if (!canUseSupabaseServerWrites()) {
+      throw new Error("L'envoi d'avis est temporairement indisponible. Merci de réessayer dans un instant.");
+    }
     if (data.website && data.website.length > 0) {
       console.warn("submitAvisClient honeypot triggered");
       return { ok: true as const, id: "honeypot" };
@@ -211,6 +221,17 @@ export const submitAvisClient = createServerFn({ method: "POST" })
 
 /** Avis validés à afficher publiquement sur le site. */
 export const listPublicAvis = createServerFn({ method: "GET" }).handler(async () => {
+  if (!canUseSupabaseServerWrites()) {
+    return [] as Array<{
+      id: string;
+      nom: string;
+      code_postal: string;
+      avis: string;
+      note: number;
+      partenaire: string | null;
+      created_at: string;
+    }>;
+  }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
