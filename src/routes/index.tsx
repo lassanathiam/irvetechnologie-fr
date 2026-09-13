@@ -232,6 +232,23 @@ function Index() {
               Grand Ouest. Étude technique, génie civil, raccordement et maintenance —
               une équipe locale, un seul interlocuteur, du devis à la mise en service.
             </p>
+            <div
+              className="mt-6 max-w-xl rounded-sm border border-border bg-card/70 p-4 animate-fade-up"
+              style={{ animationDelay: "460ms" }}
+            >
+              <p className="text-mono text-primary">Installation de borne de recharge</p>
+              <p className="mt-2 text-3xl font-semibold tracking-tight">
+                À partir de 1 290 € TTC
+              </p>
+              <p className="mt-2 text-sm text-muted-foreground">
+                Borne + installation par un professionnel IRVE.
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
+                Tarif indicatif pour une installation standard. Le prix peut varier selon la
+                distance entre le tableau électrique et la borne, la puissance choisie et les
+                travaux nécessaires.
+              </p>
+            </div>
             <div className="mt-10 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "500ms" }}>
               <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.02] transition">
                 Demande de raccordement <ArrowRight className="h-4 w-4" />
