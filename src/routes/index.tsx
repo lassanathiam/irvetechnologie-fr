@@ -15,10 +15,10 @@ import { COMPANY, GARANTIES } from "@/lib/company";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Grand Ouest" },
-      { name: "description", content: "Borne de l'Ouest : installation de bornes de recharge IRVE en Bretagne et Pays de la Loire. Étude, génie civil, électricité et maintenance — 44, 49, 56, 35, 85, 72, 53." },
-      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE dans le Grand Ouest" },
-      { property: "og:description", content: "Étude, génie civil, électricité et maintenance pour vos bornes 7 / 11 / 22 kW en Bretagne & Pays de la Loire." },
+      { title: "Borne de l'Ouest — Installation bornes de recharge VE | Nantes & Grand Ouest élargi" },
+      { name: "description", content: "Borne de l'Ouest intervient principalement dans le Grand Ouest et dans les régions voisines, jusqu'à environ 250 km autour de Nantes, avec étude au cas par cas selon la rentabilité du chantier." },
+      { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE autour de Nantes (Grand Ouest élargi)" },
+      { property: "og:description", content: "Installation IRVE autour de Nantes : zone principale Grand Ouest + extension jusqu'à ~250 km selon distance, trajet et rentabilité du projet." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -352,7 +352,7 @@ function Index() {
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
                 Chantiers livrés{" "}
-                <span className="text-muted-foreground/60">dans le Grand Ouest.</span>
+                <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
               </h2>
             </div>
             <p className="text-mono text-muted-foreground">défilement automatique · cliquez pour explorer</p>
@@ -519,17 +519,38 @@ function Index() {
                 <span className="h-px w-10 bg-primary" /> Zones d'intervention
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-                Le Grand Ouest,{" "}
-                <span className="text-muted-foreground/60">notre terrain de jeu.</span>
+                Nantes au centre,{" "}
+                <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
               </h2>
-              <p className="mt-6 text-muted-foreground max-w-md">
-                Bretagne et Pays de la Loire en priorité — équipes locales, connaissance
-                du terrain et du réseau électrique. Et partout ailleurs en France, on
-                intervient aussi, avec un léger délai supplémentaire.
+              <p className="mt-6 text-muted-foreground max-w-lg">
+                Borne de l&apos;Ouest intervient principalement dans le Grand Ouest et étend ses
+                interventions dans les régions voisines, jusqu&apos;à environ 250 km autour de Nantes.
+                Pour les projets professionnels, copropriétés et installations multi-bornes, nous
+                pouvons également étudier des interventions au-delà selon la nature et la
+                rentabilité du chantier.
               </p>
             </div>
-            <ul className="grid grid-cols-2 gap-3 self-end">
-              {["44 · Loire-Atlantique", "49 · Maine-et-Loire", "85 · Vendée", "72 · Sarthe", "53 · Mayenne", "35 · Ille-et-Vilaine", "56 · Morbihan"].map((z, idx) => (
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 self-end">
+              {[
+                "44 · Loire-Atlantique",
+                "49 · Maine-et-Loire",
+                "85 · Vendée",
+                "53 · Mayenne",
+                "72 · Sarthe",
+                "35 · Ille-et-Vilaine",
+                "56 · Morbihan",
+                "22 · Côtes-d'Armor",
+                "29 · Finistère",
+                "79 · Deux-Sèvres",
+                "86 · Vienne",
+                "16 · Charente",
+                "17 · Charente-Maritime",
+                "37 · Indre-et-Loire",
+                "41 · Loir-et-Cher",
+                "61 · Orne",
+                "14 · Calvados",
+                "18 · Cher",
+              ].map((z, idx) => (
                 <li
                   key={z}
                   className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card hover:translate-x-1 transition-all"
@@ -548,9 +569,11 @@ function Index() {
                 <MapPin className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Grand Ouest</div>
-                <div className="font-medium">Intervention 24-48h</div>
-                <p className="text-sm text-muted-foreground mt-1">Bretagne & Pays de la Loire, équipe locale.</p>
+                <div className="text-mono text-primary mb-1">Zone principale</div>
+                <div className="font-medium">Grand Ouest élargi</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Départements prioritaires + régions voisines autour de Nantes.
+                </p>
               </div>
             </div>
             <div className="bg-card p-6 flex items-start gap-4">
@@ -558,9 +581,11 @@ function Index() {
                 <Clock className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Reste de la France</div>
-                <div className="font-medium">Intervention 48-72h</div>
-                <p className="text-sm text-muted-foreground mt-1">Métropole entière, déplacement organisé sous 72h max.</p>
+                <div className="text-mono text-primary mb-1">Zone élargie</div>
+                <div className="font-medium">Jusqu&apos;à ~250 km autour de Nantes</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Distance et temps de trajet étudiés selon le type de chantier.
+                </p>
               </div>
             </div>
             <div className="bg-card p-6 flex items-start gap-4">
@@ -568,9 +593,11 @@ function Index() {
                 <Zap className="h-4 w-4" />
               </span>
               <div>
-                <div className="text-mono text-primary mb-1">Urgence panne</div>
-                <div className="font-medium">Intervention rapide</div>
-                <p className="text-sm text-muted-foreground mt-1">Diagnostic à distance puis déplacement prioritaire sous contrat Confort / Pro.</p>
+                <div className="text-mono text-primary mb-1">Règle commerciale</div>
+                <div className="font-medium">Décision à la rentabilité globale</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Montant, nombre de bornes, frais, regroupement d&apos;interventions et rentabilité du déplacement.
+                </p>
               </div>
             </div>
           </div>
