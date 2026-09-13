@@ -4,29 +4,30 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 type Slide = { src: string; label: string; meta: string };
 
 export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; interval?: number }) {
-  if (!slides?.length) {
+  const [i, setI] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const count = slides?.length ?? 0;
+
+  useEffect(() => {
+    if (paused || count === 0) return;
+    const t = setInterval(() => setI((v) => (v + 1) % count), interval);
+    return () => clearInterval(t);
+  }, [paused, interval, count]);
+
+  if (count === 0) {
     return (
       <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border p-6 flex items-end">
         <div className="backdrop-blur-md bg-background/70 border border-border rounded-sm p-4">
           <p className="text-mono text-primary">Photos en cours de publication</p>
           <p className="text-sm text-muted-foreground mt-1">
-            Ajoutez des photos réelles depuis l&apos;espace pro pour alimenter ce diaporama.
+            Ajoutez des photos réelles depuis l'espace pro pour alimenter ce diaporama.
           </p>
         </div>
       </div>
     );
   }
 
-  const [i, setI] = useState(0);
-  const [paused, setPaused] = useState(false);
-
-  useEffect(() => {
-    if (paused) return;
-    const t = setInterval(() => setI((v) => (v + 1) % slides.length), interval);
-    return () => clearInterval(t);
-  }, [paused, interval, slides.length]);
-
-  const go = (d: number) => setI((v) => (v + d + slides.length) % slides.length);
+  const go = (d: number) => setI((v) => (v + d + count) % count);
 
   return (
     <div
