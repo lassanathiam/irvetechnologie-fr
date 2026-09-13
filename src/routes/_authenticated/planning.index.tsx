@@ -1387,7 +1387,7 @@ function PlanningPage() {
           onToggle={() => toggleMobileSection("carte")}
         />
         {/* CARTE — en haut à gauche */}
-        <section className={`bg-card border border-border rounded-xl overflow-hidden shadow-sm ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
+        <section className={`bg-card border border-border rounded-xl overflow-hidden shadow-sm min-w-0 ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
           <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
@@ -1410,7 +1410,7 @@ function PlanningPage() {
               markers={points}
               activeId={active}
               onSelect={setActive}
-              height={isMobile ? 360 : 620}
+              height={isMobile ? 300 : 620}
               scrollWheelZoom
               selectionMode={modeSelection}
               selectedIds={selection}
@@ -1419,6 +1419,7 @@ function PlanningPage() {
               routeCoords={itineraire.data?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
+              visible={!modeIntervention || mobileSections.carte || !isMobile}
             />
 
             <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
@@ -2625,7 +2626,7 @@ function PlanningPage() {
             open={!modeIntervention || mobileSections.agenda}
             onToggle={() => toggleMobileSection("agenda")}
           />
-          <div className={modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}>
+          <div className={`min-w-0 ${modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}`}>
             <AgendaMois
               events={rows.map((r) => ({
                 id: r.id,
@@ -2652,7 +2653,7 @@ function PlanningPage() {
             open={!modeIntervention || mobileSections.trajet}
             onToggle={() => toggleMobileSection("trajet")}
           />
-          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
+          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
               {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
@@ -2668,14 +2669,14 @@ function PlanningPage() {
                   key={t.id}
                   type="button"
                   onClick={() => setDepartId(t.id)}
-                  className={`text-left border rounded-lg px-3 py-2 text-xs transition ${
+                  className={`min-w-0 w-full sm:w-auto sm:max-w-[280px] text-left border rounded-lg px-3 py-2 text-xs transition ${
                     depart.id === t.id
                       ? "border-primary bg-primary/10"
                       : "border-border hover:border-primary/50"
                   }`}
                 >
                   <span className="block font-semibold">{t.nom}</span>
-                  <span className="block text-muted-foreground">Départ {t.adresse}</span>
+                  <span className="block truncate text-muted-foreground">Départ {t.adresse}</span>
                 </button>
               ))}
             </div>
@@ -2762,7 +2763,7 @@ function PlanningPage() {
             open={!modeIntervention || mobileSections.programme}
             onToggle={() => toggleMobileSection("programme")}
           />
-          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
+          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
             </h2>
@@ -2920,7 +2921,7 @@ function PlanningPage() {
               open={!modeIntervention || mobileSections.proches}
               onToggle={() => toggleMobileSection("proches")}
             />
-            <div className={`bg-card border border-border rounded-xl p-5 shadow-sm ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
+            <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>

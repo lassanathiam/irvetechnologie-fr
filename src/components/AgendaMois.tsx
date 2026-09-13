@@ -87,7 +87,7 @@ export function AgendaMois({
   );
 
   return (
-    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+    <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm max-w-full">
       {/* En-tête */}
       <div className="hero-grad px-5 py-4 text-primary-foreground">
         <div className="flex items-center justify-between gap-3">
@@ -133,8 +133,8 @@ export function AgendaMois({
         </p>
       </div>
 
-      <div className="p-4 sm:p-5">
-        <div className="grid grid-cols-7 gap-1.5 text-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
+      <div className="p-3 sm:p-5">
+        <div className="grid grid-cols-7 gap-1 text-mono text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
           {JOURS.map((j) => (
             <div key={j} className="text-center py-1">
               {j}
@@ -142,7 +142,7 @@ export function AgendaMois({
           ))}
         </div>
 
-        <div className="grid grid-cols-7 gap-1.5">
+        <div className="grid grid-cols-7 gap-1">
           {cells.map((d) => {
             const k = key(d);
             const list = byDay.get(k) ?? [];
@@ -161,7 +161,7 @@ export function AgendaMois({
                 }}
                 onDoubleClick={() => onPickDay?.(k)}
                 title={list.length ? `${list.length} rendez-vous` : "Journée libre"}
-                className={`group relative text-left h-[62px] rounded-lg border px-1.5 pt-1.5 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                className={`group relative text-left h-[54px] sm:h-[62px] rounded-lg border px-1 pt-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   isSel
                     ? "border-primary bg-primary/12 shadow-sm"
                     : plein
@@ -200,7 +200,7 @@ export function AgendaMois({
 
         {/* Jour sélectionné */}
         <div className="mt-5 pt-4 border-t border-border">
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
               {new Intl.DateTimeFormat("fr-FR", {
                 weekday: "long",
@@ -208,7 +208,7 @@ export function AgendaMois({
                 month: "long",
               }).format(new Date(`${selected}T12:00:00`))}
             </p>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               {detailsOuverts ? (
                 <button
                   type="button"
@@ -264,7 +264,7 @@ export function AgendaMois({
                       {heureFr(e.date_debut)}
                     </span>
                     <span className="font-bold truncate">{e.client_nom}</span>
-                    <span className="ml-auto text-mono text-[11px] text-muted-foreground shrink-0">
+                    <span className="ml-auto hidden text-mono text-[11px] text-muted-foreground shrink-0 sm:inline">
                       {e.cp_ville ?? ""}
                     </span>
                   </button>

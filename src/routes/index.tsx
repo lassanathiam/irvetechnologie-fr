@@ -153,6 +153,7 @@ function Index() {
   const [avisSent, setAvisSent] = useState(false);
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
+  const [homeCompact, setHomeCompact] = useState(true);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -215,9 +216,9 @@ function Index() {
               </div>
 
               <h1 className="mt-5 font-display text-[2.2rem] sm:text-5xl lg:text-7xl font-semibold leading-[0.98] tracking-tight">
-                Un hero nouveau.
+                Installation de borne de recharge
                 <span className="mt-1 block text-primary [text-shadow:0_8px_36px_color-mix(in_oklab,var(--primary)_35%,transparent)]">
-                  Plus premium. Plus vivant.
+                  pour particuliers, entreprises et collectivités.
                 </span>
               </h1>
 
@@ -240,8 +241,11 @@ function Index() {
                   <Phone className="h-4 w-4" /> Parler à un conseiller
                 </a>
               </div>
+              <p className="mt-4 text-mono text-xs text-muted-foreground">
+                Études techniques · Devis validés · Pose et mise en service
+              </p>
 
-              <div className="mt-8 grid gap-3 md:grid-cols-3 text-left">
+              <div className="mt-8 grid gap-3 md:grid-cols-2 text-left">
                 <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft">
                   <p className="text-mono text-primary">Installation de borne de recharge</p>
                   <p className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
@@ -251,23 +255,7 @@ function Index() {
                     distance entre le tableau électrique et la borne, la puissance choisie et les travaux nécessaires.
                   </p>
                 </div>
-
                 <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "120ms" }}>
-                  <p className="text-mono text-primary">Workflow express</p>
-                  <ul className="mt-2 space-y-2 text-sm">
-                    <li className="inline-flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" /> Étude technique
-                    </li>
-                    <li className="inline-flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary" /> Devis validé
-                    </li>
-                    <li className="inline-flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" /> Pose et mise en service
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "220ms" }}>
                   <p className="text-mono text-primary">Repères</p>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
@@ -276,11 +264,11 @@ function Index() {
                     </div>
                     <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
                       <p className="text-lg font-semibold tracking-tight"><AnimatedCounter to={48} suffix="h" /></p>
-                      <p className="text-[10px] text-mono text-muted-foreground">Étude</p>
+                      <p className="text-[10px] text-mono text-muted-foreground">48h étude</p>
                     </div>
                     <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
                       <p className="text-lg font-semibold tracking-tight">IRVE</p>
-                      <p className="text-[10px] text-mono text-muted-foreground">Qualifié</p>
+                      <p className="text-[10px] text-mono text-muted-foreground">Qualifiées</p>
                     </div>
                   </div>
                 </div>
@@ -301,311 +289,10 @@ function Index() {
         </div>
       </section>
 
-      {/* SERVICES */}
-      <section id="services" className="py-24 border-t border-border">
-        <div
-          ref={services_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${services_r.shown ? "reveal-visible" : ""}`}
-        >
-          <div className="flex items-center gap-3 text-mono text-primary mb-6">
-            <span className="h-px w-10 bg-primary" /> Nos services
-          </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
-            Une offre complète,{" "}
-            <span className="text-muted-foreground/60">pas juste une pose de borne.</span>
-          </h2>
-          <p className="mt-6 max-w-2xl text-muted-foreground">
-            Vous n'achetez pas seulement une borne — vous obtenez une installation fiable,
-            conforme, propre et suivie. Un seul interlocuteur technique, du devis à la maintenance.
-          </p>
-
-          <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
-            {services.map((s, idx) => (
-              <div
-                key={s.code}
-                className="bg-card p-8 hover:bg-secondary/50 transition-all duration-300 group relative overflow-hidden"
-                style={{ transitionDelay: `${idx * 30}ms` }}
-              >
-                <div className="absolute inset-x-0 top-0 h-px bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
-                <div className="flex justify-between items-start mb-10">
-                  <span className="text-mono text-muted-foreground">{s.code}</span>
-                  <s.icon className="h-5 w-5 text-primary group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" strokeWidth={1.5} />
-                </div>
-                <h3 className="text-xl font-medium tracking-tight group-hover:text-primary transition">{s.title}</h3>
-                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.body}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* RÉALISATIONS — diaporama */}
-      <section id="realisations" className="py-24 border-t border-border bg-card/20">
-        <div
-          ref={real_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${real_r.shown ? "reveal-visible" : ""}`}
-        >
-          <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
-            <div>
-              <div className="flex items-center gap-3 text-mono text-primary mb-6">
-                <span className="h-px w-10 bg-primary" /> Réalisations récentes
-              </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
-                Chantiers livrés{" "}
-                <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
-              </h2>
-            </div>
-            <p className="text-mono text-muted-foreground">défilement automatique · cliquez pour explorer</p>
-          </div>
-          <RealisationsSlider items={realisations} />
-        </div>
-      </section>
-
-      {/* AVIS */}
-      <section id="avis" className="py-24 border-t border-border">
-        <div className="mx-auto max-w-7xl px-6 grid gap-10 lg:grid-cols-2">
-          <div>
-            <div className="flex items-center gap-3 text-mono text-primary mb-6">
-              <span className="h-px w-10 bg-primary" /> Avis clients & partenaires
-            </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              Vos retours terrain,{" "}
-              <span className="text-muted-foreground/60">directement depuis l&apos;écran.</span>
-            </h2>
-            <p className="mt-5 text-muted-foreground max-w-xl">
-              Après une intervention, le client peut laisser un avis ici. Nous pouvons ainsi valoriser le
-              travail réalisé, y compris pour des chantiers effectués au nom d&apos;un partenaire.
-            </p>
-            <div className="mt-7 space-y-3">
-              {(avisQuery.data ?? []).slice(0, 4).map((a) => (
-                <article key={a.id} className="rounded-sm border border-border bg-card/50 p-4">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <p className="font-semibold">{a.nom}</p>
-                    <span className="text-mono text-xs text-primary">
-                      {"★".repeat(a.note)}
-                      {"☆".repeat(Math.max(0, 5 - a.note))}
-                    </span>
-                  </div>
-                  <p className="mt-2 text-sm text-muted-foreground">{a.avis}</p>
-                  <p className="mt-2 text-[11px] text-muted-foreground">
-                    {a.partenaire ? `Intervention via partenaire ${a.partenaire}` : "Intervention directe"} ·{" "}
-                    {a.code_postal}
-                  </p>
-                </article>
-              ))}
-              {avisQuery.isLoading && <p className="text-sm text-muted-foreground">Chargement des avis…</p>}
-            </div>
-          </div>
-
-          <div className="rounded-sm border border-border bg-card p-6">
-            <p className="text-mono text-primary">Laisser un avis</p>
-            <form className="mt-4 space-y-4" onSubmit={onSubmitAvis}>
-              <input
-                name="website"
-                tabIndex={-1}
-                autoComplete="off"
-                defaultValue=""
-                className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
-                aria-hidden="true"
-              />
-              <div className="grid gap-4 sm:grid-cols-2">
-                <label className="text-sm">
-                  Nom complet
-                  <input name="nom" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
-                </label>
-                <label className="text-sm">
-                  Email
-                  <input name="email" type="email" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
-                </label>
-                <label className="text-sm">
-                  Téléphone
-                  <input name="telephone" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
-                </label>
-                <label className="text-sm">
-                  Code postal
-                  <input name="code_postal" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
-                </label>
-              </div>
-              <label className="text-sm block">
-                Société partenaire (optionnel)
-                <input
-                  name="partenaire"
-                  placeholder="Ex: concession partenaire"
-                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
-                />
-              </label>
-              <label className="text-sm block">
-                Type d&apos;intervention
-                <input
-                  name="intervention"
-                  placeholder="Ex: borne 7,4 kW en maison"
-                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
-                />
-              </label>
-              <label className="text-sm block">
-                Note
-                <select name="note" defaultValue="5" className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5">
-                  <option value="5">5 / 5 — Excellent</option>
-                  <option value="4">4 / 5 — Très bien</option>
-                  <option value="3">3 / 5 — Bien</option>
-                  <option value="2">2 / 5 — Correct</option>
-                  <option value="1">1 / 5 — À améliorer</option>
-                </select>
-              </label>
-              <label className="text-sm block">
-                Avis
-                <textarea
-                  name="avis"
-                  required
-                  minLength={10}
-                  rows={4}
-                  placeholder="Décrivez votre retour d'expérience"
-                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
-                />
-              </label>
-              {avisError && <p className="text-sm text-destructive">{avisError}</p>}
-              {avisSent && <p className="text-sm text-primary">Merci, votre avis a bien été envoyé.</p>}
-              <button
-                type="submit"
-                disabled={avisBusy}
-                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
-              >
-                {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
-              </button>
-            </form>
-          </div>
-        </div>
-      </section>
-
-      {/* PARCOURS */}
-      <section id="parcours" className="py-24 border-t border-border">
-        <div
-          ref={parcours_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${parcours_r.shown ? "reveal-visible" : ""}`}
-        >
-          <div className="flex items-center gap-3 text-mono text-primary mb-6">
-            <span className="h-px w-10 bg-primary" /> Parcours client
-          </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
-            Devis clair,{" "}
-            <span className="text-muted-foreground/60">chantier maîtrisé.</span>
-          </h2>
-
-          <ol className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {steps.map((s, idx) => (
-              <li
-                key={s.n}
-                className="relative p-6 border border-border rounded-sm bg-card/50 hover:border-primary hover:-translate-y-1 transition-all duration-300"
-                style={{ transitionDelay: `${idx * 60}ms` }}
-              >
-                <div className="text-mono text-primary mb-6">{s.n}</div>
-                <div className="font-medium">{s.t}</div>
-                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.d}</p>
-              </li>
-            ))}
-          </ol>
-        </div>
-      </section>
-
-      {/* ZONES */}
-      <section id="zones" className="py-24 border-t border-border">
-        <div
-          ref={zones_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${zones_r.shown ? "reveal-visible" : ""}`}
-        >
-          <div className="grid lg:grid-cols-2 gap-12">
-            <div>
-              <div className="flex items-center gap-3 text-mono text-primary mb-6">
-                <span className="h-px w-10 bg-primary" /> Zones d'intervention
-              </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-                Nantes au centre,{" "}
-                <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
-              </h2>
-              <p className="mt-6 text-muted-foreground max-w-lg">
-                Borne de l&apos;Ouest intervient principalement dans le Grand Ouest et étend ses
-                interventions dans les régions voisines, jusqu&apos;à environ 250 km autour de Nantes.
-                Pour les projets professionnels, copropriétés et installations multi-bornes, nous
-                pouvons également étudier des interventions au-delà selon la nature et la
-                rentabilité du chantier.
-              </p>
-            </div>
-            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 self-end">
-              {[
-                "44 · Loire-Atlantique",
-                "49 · Maine-et-Loire",
-                "85 · Vendée",
-                "53 · Mayenne",
-                "72 · Sarthe",
-                "35 · Ille-et-Vilaine",
-                "56 · Morbihan",
-                "22 · Côtes-d'Armor",
-                "29 · Finistère",
-                "79 · Deux-Sèvres",
-                "86 · Vienne",
-                "16 · Charente",
-                "17 · Charente-Maritime",
-                "37 · Indre-et-Loire",
-                "41 · Loir-et-Cher",
-                "61 · Orne",
-                "14 · Calvados",
-                "18 · Cher",
-              ].map((z, idx) => (
-                <li
-                  key={z}
-                  className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card hover:translate-x-1 transition-all"
-                  style={{ transitionDelay: `${idx * 40}ms` }}
-                >
-                  <Check className="h-3 w-3 text-primary" strokeWidth={3} /> {z}
-                </li>
-              ))}
-            </ul>
-          </div>
-
-          {/* Sous-bloc : couverture France */}
-          <div className="mt-10 grid md:grid-cols-3 gap-px bg-border border border-border rounded-sm overflow-hidden">
-            <div className="bg-card p-6 flex items-start gap-4">
-              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
-                <MapPin className="h-4 w-4" />
-              </span>
-              <div>
-                <div className="text-mono text-primary mb-1">Zone principale</div>
-                <div className="font-medium">Grand Ouest élargi</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Départements prioritaires + régions voisines autour de Nantes.
-                </p>
-              </div>
-            </div>
-            <div className="bg-card p-6 flex items-start gap-4">
-              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
-                <Clock className="h-4 w-4" />
-              </span>
-              <div>
-                <div className="text-mono text-primary mb-1">Zone élargie</div>
-                <div className="font-medium">Jusqu&apos;à ~250 km autour de Nantes</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Distance et temps de trajet étudiés selon le type de chantier.
-                </p>
-              </div>
-            </div>
-            <div className="bg-card p-6 flex items-start gap-4">
-              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
-                <Zap className="h-4 w-4" />
-              </span>
-              <div>
-                <div className="text-mono text-primary mb-1">Règle commerciale</div>
-                <div className="font-medium">Décision à la rentabilité globale</div>
-                <p className="text-sm text-muted-foreground mt-1">
-                  Montant, nombre de bornes, frais, regroupement d&apos;interventions et rentabilité du déplacement.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
+      {!homeCompact && (
+      <>
       {/* MAINTENANCE / ABONNEMENTS */}
-      <section id="maintenance" className="py-28 md:py-32 border-t border-border bg-secondary/40">
+      <section id="maintenance" className="py-16 sm:py-20 md:py-24 border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-6xl px-6">
           {/* Header centré */}
           <div className="text-center max-w-3xl mx-auto mb-12">
@@ -768,8 +455,332 @@ function Index() {
       </section>
 
 
+      {/* SERVICES */}
+      <section id="services" className="py-16 sm:py-20 border-t border-border">
+        <div
+          ref={services_r.ref}
+          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${services_r.shown ? "reveal-visible" : ""}`}
+        >
+          <div className="flex items-center gap-3 text-mono text-primary mb-6">
+            <span className="h-px w-10 bg-primary" /> Nos services
+          </div>
+          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+            Une offre complète,{" "}
+            <span className="text-muted-foreground/60">pas juste une pose de borne.</span>
+          </h2>
+          <p className="mt-6 max-w-2xl text-muted-foreground">
+            Vous n'achetez pas seulement une borne — vous obtenez une installation fiable,
+            conforme, propre et suivie. Un seul interlocuteur technique, du devis à la maintenance.
+          </p>
+
+          <div className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-px bg-border border border-border rounded-sm overflow-hidden">
+            {services.map((s, idx) => (
+              <div
+                key={s.code}
+                className="bg-card p-8 hover:bg-secondary/50 transition-all duration-300 group relative overflow-hidden"
+                style={{ transitionDelay: `${idx * 30}ms` }}
+              >
+                <div className="absolute inset-x-0 top-0 h-px bg-primary scale-x-0 group-hover:scale-x-100 transition-transform origin-left duration-500" />
+                <div className="flex justify-between items-start mb-10">
+                  <span className="text-mono text-muted-foreground">{s.code}</span>
+                  <s.icon className="h-5 w-5 text-primary group-hover:scale-125 group-hover:rotate-6 transition-transform duration-300" strokeWidth={1.5} />
+                </div>
+                <h3 className="text-xl font-medium tracking-tight group-hover:text-primary transition">{s.title}</h3>
+                <p className="mt-3 text-sm text-muted-foreground leading-relaxed">{s.body}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      </>
+      )}
+
+      {/* RÉALISATIONS — diaporama */}
+      <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
+        <div
+          ref={real_r.ref}
+          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${real_r.shown ? "reveal-visible" : ""}`}
+        >
+          <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
+            <div>
+              <div className="flex items-center gap-3 text-mono text-primary mb-6">
+                <span className="h-px w-10 bg-primary" /> Réalisations récentes
+              </div>
+              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
+                Nos installations{" "}
+                <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
+              </h2>
+            </div>
+          </div>
+          <RealisationsSlider items={realisations} />
+        </div>
+      </section>
+
+      <section className="border-t border-border bg-card/35 py-5">
+        <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Mode compact actif pour raccourcir la page d&apos;accueil.
+          </p>
+          <button
+            type="button"
+            onClick={() => setHomeCompact((v) => !v)}
+            className="text-mono text-xs px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition"
+          >
+            {homeCompact ? "Afficher toutes les sections" : "Revenir au mode compact"}
+          </button>
+        </div>
+      </section>
+
+      {!homeCompact && (
+      <>
+      {/* AVIS */}
+      <section id="avis" className="py-16 sm:py-20 border-t border-border">
+        <div className="mx-auto max-w-7xl px-6 grid gap-10 lg:grid-cols-2">
+          <div>
+            <div className="flex items-center gap-3 text-mono text-primary mb-6">
+              <span className="h-px w-10 bg-primary" /> Avis clients & partenaires
+            </div>
+            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              Vos retours terrain,{" "}
+              <span className="text-muted-foreground/60">directement depuis l&apos;écran.</span>
+            </h2>
+            <p className="mt-5 text-muted-foreground max-w-xl">
+              Après une intervention, le client peut laisser un avis ici. Nous pouvons ainsi valoriser le
+              travail réalisé, y compris pour des chantiers effectués au nom d&apos;un partenaire.
+            </p>
+            <div className="mt-7 space-y-3">
+              {(avisQuery.data ?? []).slice(0, 4).map((a) => (
+                <article key={a.id} className="rounded-sm border border-border bg-card/50 p-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <p className="font-semibold">{a.nom}</p>
+                    <span className="text-mono text-xs text-primary">
+                      {"★".repeat(a.note)}
+                      {"☆".repeat(Math.max(0, 5 - a.note))}
+                    </span>
+                  </div>
+                  <p className="mt-2 text-sm text-muted-foreground">{a.avis}</p>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    {a.partenaire ? `Intervention via partenaire ${a.partenaire}` : "Intervention directe"} ·{" "}
+                    {a.code_postal}
+                  </p>
+                </article>
+              ))}
+              {avisQuery.isLoading && <p className="text-sm text-muted-foreground">Chargement des avis…</p>}
+            </div>
+          </div>
+
+          <div className="rounded-sm border border-border bg-card p-6">
+            <p className="text-mono text-primary">Laisser un avis</p>
+            <form className="mt-4 space-y-4" onSubmit={onSubmitAvis}>
+              <input
+                name="website"
+                tabIndex={-1}
+                autoComplete="off"
+                defaultValue=""
+                className="absolute -left-[10000px] top-auto h-px w-px overflow-hidden"
+                aria-hidden="true"
+              />
+              <div className="grid gap-4 sm:grid-cols-2">
+                <label className="text-sm">
+                  Nom complet
+                  <input name="nom" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Email
+                  <input name="email" type="email" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Téléphone
+                  <input name="telephone" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+                <label className="text-sm">
+                  Code postal
+                  <input name="code_postal" required className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5" />
+                </label>
+              </div>
+              <label className="text-sm block">
+                Société partenaire (optionnel)
+                <input
+                  name="partenaire"
+                  placeholder="Ex: concession partenaire"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              <label className="text-sm block">
+                Type d&apos;intervention
+                <input
+                  name="intervention"
+                  placeholder="Ex: borne 7,4 kW en maison"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              <label className="text-sm block">
+                Note
+                <select name="note" defaultValue="5" className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5">
+                  <option value="5">5 / 5 — Excellent</option>
+                  <option value="4">4 / 5 — Très bien</option>
+                  <option value="3">3 / 5 — Bien</option>
+                  <option value="2">2 / 5 — Correct</option>
+                  <option value="1">1 / 5 — À améliorer</option>
+                </select>
+              </label>
+              <label className="text-sm block">
+                Avis
+                <textarea
+                  name="avis"
+                  required
+                  minLength={10}
+                  rows={4}
+                  placeholder="Décrivez votre retour d'expérience"
+                  className="mt-1 w-full bg-input border border-border rounded-sm px-3 py-2.5"
+                />
+              </label>
+              {avisError && <p className="text-sm text-destructive">{avisError}</p>}
+              {avisSent && <p className="text-sm text-primary">Merci, votre avis a bien été envoyé.</p>}
+              <button
+                type="submit"
+                disabled={avisBusy}
+                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+              >
+                {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
+              </button>
+            </form>
+          </div>
+        </div>
+      </section>
+
+      {/* PARCOURS */}
+      <section id="parcours" className="py-16 sm:py-20 border-t border-border">
+        <div
+          ref={parcours_r.ref}
+          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${parcours_r.shown ? "reveal-visible" : ""}`}
+        >
+          <div className="flex items-center gap-3 text-mono text-primary mb-6">
+            <span className="h-px w-10 bg-primary" /> Parcours client
+          </div>
+          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+            Devis clair,{" "}
+            <span className="text-muted-foreground/60">chantier maîtrisé.</span>
+          </h2>
+
+          <ol className="mt-16 grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {steps.map((s, idx) => (
+              <li
+                key={s.n}
+                className="relative p-6 border border-border rounded-sm bg-card/50 hover:border-primary hover:-translate-y-1 transition-all duration-300"
+                style={{ transitionDelay: `${idx * 60}ms` }}
+              >
+                <div className="text-mono text-primary mb-6">{s.n}</div>
+                <div className="font-medium">{s.t}</div>
+                <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{s.d}</p>
+              </li>
+            ))}
+          </ol>
+        </div>
+      </section>
+
+      {/* ZONES */}
+      <section id="zones" className="py-16 sm:py-20 border-t border-border">
+        <div
+          ref={zones_r.ref}
+          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${zones_r.shown ? "reveal-visible" : ""}`}
+        >
+          <div className="grid lg:grid-cols-2 gap-12">
+            <div>
+              <div className="flex items-center gap-3 text-mono text-primary mb-6">
+                <span className="h-px w-10 bg-primary" /> Zones d'intervention
+              </div>
+              <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+                Nantes au centre,{" "}
+                <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
+              </h2>
+              <p className="mt-6 text-muted-foreground max-w-lg">
+                Borne de l&apos;Ouest intervient principalement dans le Grand Ouest et étend ses
+                interventions dans les régions voisines, jusqu&apos;à environ 250 km autour de Nantes.
+                Pour les projets professionnels, copropriétés et installations multi-bornes, nous
+                pouvons également étudier des interventions au-delà selon la nature et la
+                rentabilité du chantier.
+              </p>
+            </div>
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 self-end">
+              {[
+                "44 · Loire-Atlantique",
+                "49 · Maine-et-Loire",
+                "85 · Vendée",
+                "53 · Mayenne",
+                "72 · Sarthe",
+                "35 · Ille-et-Vilaine",
+                "56 · Morbihan",
+                "22 · Côtes-d'Armor",
+                "29 · Finistère",
+                "79 · Deux-Sèvres",
+                "86 · Vienne",
+                "16 · Charente",
+                "17 · Charente-Maritime",
+                "37 · Indre-et-Loire",
+                "41 · Loir-et-Cher",
+                "61 · Orne",
+                "14 · Calvados",
+                "18 · Cher",
+              ].map((z, idx) => (
+                <li
+                  key={z}
+                  className="text-mono flex items-center gap-3 border border-border p-4 rounded-sm bg-card/50 hover:border-primary hover:bg-card hover:translate-x-1 transition-all"
+                  style={{ transitionDelay: `${idx * 40}ms` }}
+                >
+                  <Check className="h-3 w-3 text-primary" strokeWidth={3} /> {z}
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          {/* Sous-bloc : couverture France */}
+          <div className="mt-10 grid md:grid-cols-3 gap-px bg-border border border-border rounded-sm overflow-hidden">
+            <div className="bg-card p-6 flex items-start gap-4">
+              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
+                <MapPin className="h-4 w-4" />
+              </span>
+              <div>
+                <div className="text-mono text-primary mb-1">Zone principale</div>
+                <div className="font-medium">Grand Ouest élargi</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Départements prioritaires + régions voisines autour de Nantes.
+                </p>
+              </div>
+            </div>
+            <div className="bg-card p-6 flex items-start gap-4">
+              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
+                <Clock className="h-4 w-4" />
+              </span>
+              <div>
+                <div className="text-mono text-primary mb-1">Zone élargie</div>
+                <div className="font-medium">Jusqu&apos;à ~250 km autour de Nantes</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Distance et temps de trajet étudiés selon le type de chantier.
+                </p>
+              </div>
+            </div>
+            <div className="bg-card p-6 flex items-start gap-4">
+              <span className="hero-grad text-primary-foreground p-2 rounded-sm shrink-0">
+                <Zap className="h-4 w-4" />
+              </span>
+              <div>
+                <div className="text-mono text-primary mb-1">Règle commerciale</div>
+                <div className="font-medium">Décision à la rentabilité globale</div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Montant, nombre de bornes, frais, regroupement d&apos;interventions et rentabilité du déplacement.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+      </>
+      )}
+
+
       {/* CTA */}
-      <section className="py-24 border-t border-border relative overflow-hidden">
+      <section className="py-16 sm:py-20 border-t border-border relative overflow-hidden">
         <div className="absolute inset-0 hero-grad opacity-[0.03]" aria-hidden />
         <div className="mx-auto max-w-5xl px-6 text-center relative">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tight">
