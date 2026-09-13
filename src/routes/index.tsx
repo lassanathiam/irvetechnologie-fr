@@ -216,7 +216,7 @@ function Index() {
         <div className="pointer-events-none absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[#050b12] text-white shadow-[0_35px_90px_-50px_rgba(0,0,0,.9)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(38,211,167,.25),transparent_45%),radial-gradient(circle_at_20%_100%,rgba(56,189,248,.22),transparent_42%)]" />
+            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(38,211,167,.25),transparent_45%),radial-gradient(circle_at_20%_100%,rgba(34,197,94,.18),transparent_42%)]" />
             <div className="pointer-events-none absolute inset-0 opacity-30 bg-[linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
             <div className="relative z-10 grid gap-7 p-6 sm:p-8 lg:grid-cols-12 lg:p-10">
               <div className="lg:col-span-7">
@@ -260,11 +260,11 @@ function Index() {
                     <p className="mt-1 text-lg font-semibold">Étude technique</p>
                   </div>
                   <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "120ms" }}>
-                    <p className="text-mono text-[11px] text-sky-200">ÉTAPE 02</p>
+                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 02</p>
                     <p className="mt-1 text-lg font-semibold">Devis validé</p>
                   </div>
                   <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "240ms" }}>
-                    <p className="text-mono text-[11px] text-cyan-200">ÉTAPE 03</p>
+                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 03</p>
                     <p className="mt-1 text-lg font-semibold">Pose & mise en service</p>
                   </div>
                   <div className="grid grid-cols-3 gap-2">
