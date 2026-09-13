@@ -10,7 +10,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
-import { COMPANY, GARANTIES } from "@/lib/company";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -154,6 +153,8 @@ function Index() {
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
   const [homeCompact, setHomeCompact] = useState(true);
+  const [aideProfil, setAideProfil] = useState<"particulier" | "copro" | "entreprise">("particulier");
+  const [aideBornes, setAideBornes] = useState(1);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -289,60 +290,76 @@ function Index() {
         </div>
       </section>
 
-      {!homeCompact && (
-      <>
       {/* MAINTENANCE / ABONNEMENTS */}
       <section id="maintenance" className="py-16 sm:py-20 md:py-24 border-t border-border bg-secondary/40">
         <div className="mx-auto max-w-6xl px-6">
           {/* Header centré */}
-          <div className="text-center max-w-3xl mx-auto mb-12">
+          <div className="text-center max-w-3xl mx-auto mb-10">
             <div className="inline-flex items-center gap-3 text-mono text-primary mb-6">
-              <span className="h-px w-10 bg-primary" /> Garanties & entretien <span className="h-px w-10 bg-primary" />
+              <span className="h-px w-10 bg-primary" /> Aides & entretien <span className="h-px w-10 bg-primary" />
             </div>
             <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
-              Vos garanties légales,{" "}
-              <span className="text-muted-foreground/60">et la formule Sérénité pour la suite.</span>
+              Prime Advenir & crédit d&apos;impôt,{" "}
+              <span className="text-muted-foreground/60">puis formule Sérénité.</span>
             </h2>
-            <p className="mt-6 text-muted-foreground text-lg leading-relaxed">
-              Toute installation bénéficie des <strong className="text-foreground">garanties prévues par la loi</strong> et
-              de celles du fabricant. Pour l'entretien dans le temps, choisissez la formule Sérénité qui vous convient.
+            <p className="mt-5 text-muted-foreground text-base leading-relaxed">
+              Nous vous aidons à estimer les aides mobilisables selon votre profil
+              et le nombre de bornes, puis à choisir la bonne formule d&apos;entretien.
             </p>
           </div>
 
-
-
-          {/* Cadre légal des garanties */}
-          <div className="mb-16">
-            <div className="text-center mb-8">
-              <h3 className="text-2xl md:text-3xl font-medium tracking-tight">
-                Vos garanties, en clair
-              </h3>
-              <p className="mt-3 text-muted-foreground">
-                Ce que la loi et le fabricant vous garantissent sur une borne de recharge.
-              </p>
-              <div className="mt-4 inline-flex items-center gap-2 border border-primary/30 bg-card rounded-sm px-4 py-2">
-                <ShieldCheck className="h-4 w-4 text-primary" />
-                <span className="text-mono text-primary">{COMPANY.qualifications}</span>
-              </div>
+          <div className={`rounded-2xl border border-border bg-card/70 p-4 sm:p-6 ${homeCompact ? "mb-8" : "mb-12"}`}>
+            <p className="text-mono text-primary">Simulateur rapide d&apos;aides (indicatif)</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+              <button
+                type="button"
+                onClick={() => setAideProfil("particulier")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "particulier" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+              >
+                Particulier
+              </button>
+              <button
+                type="button"
+                onClick={() => setAideProfil("copro")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+              >
+                Copropriété
+              </button>
+              <button
+                type="button"
+                onClick={() => setAideProfil("entreprise")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "entreprise" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+              >
+                Entreprise
+              </button>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
-              {GARANTIES.map((g) => (
-                <div key={g.titre} className="border border-border bg-card rounded-sm p-6">
-                  <div className="text-mono text-primary mb-2">{g.duree}</div>
-                  <div className="font-semibold leading-snug mb-2">{g.titre}</div>
-                  <p className="text-sm text-muted-foreground leading-relaxed">{g.texte}</p>
-                </div>
-              ))}
+            <div className="mt-3 flex flex-wrap items-center gap-3">
+              <label className="text-sm text-muted-foreground">Nombre de bornes</label>
+              <input
+                type="number"
+                min={1}
+                max={20}
+                value={aideBornes}
+                onChange={(e) => setAideBornes(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
+                className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+              />
             </div>
-            <p className="mt-5 text-xs text-muted-foreground text-center max-w-3xl mx-auto">
-              Information générale à jour de la réglementation française ; les garanties légales
-              s'appliquent sans supplément et ne remplacent pas les conditions du fabricant.
+            <p className="mt-3 text-sm text-muted-foreground">
+              {aideProfil === "particulier"
+                ? "Crédit d'impôt possible pour la résidence principale (montant et conditions à confirmer selon votre situation fiscale)."
+                : "Prime Advenir potentielle selon le type de site, le nombre de points de charge et le dossier d'éligibilité."}
+            </p>
+            <p className="mt-1 text-sm font-semibold">
+              Projet estimatif : à partir de {new Intl.NumberFormat("fr-FR").format(aideBornes * 1290)} € TTC
+            </p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Estimation indicative. Validation finale après étude technique et dossier administratif.
             </p>
           </div>
 
 
           {/* Toggle audience */}
-          <div className="flex flex-col items-center gap-3 mb-14">
+          <div className={`flex flex-col items-center gap-3 ${homeCompact ? "mb-8" : "mb-14"}`}>
             <span className="text-mono text-muted-foreground">Choisissez votre profil</span>
             <div className="inline-flex border border-border rounded-sm bg-card p-1">
               <button
@@ -368,7 +385,7 @@ function Index() {
 
           {/* Cartes formules */}
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-            {maintenancePlans.map((p, idx) => {
+            {(homeCompact ? maintenancePlans.slice(0, 2) : maintenancePlans).map((p, idx) => {
               const raw = isClient ? p.client : p.external;
               const isQuote = raw === "Sur devis";
               return (
@@ -421,7 +438,7 @@ function Index() {
 
                   {/* Features */}
                   <ul className="mt-8 space-y-4 flex-1">
-                    {p.features.map((f) => (
+                    {(homeCompact ? p.features.slice(0, 3) : p.features).map((f) => (
                       <li key={f} className="flex items-start gap-3 text-sm leading-relaxed">
                         <span className={`mt-0.5 p-0.5 rounded-full shrink-0 ${p.featured ? "bg-primary/15" : "bg-secondary"}`}>
                           <Check className="h-3.5 w-3.5 text-primary" strokeWidth={3} />
@@ -448,18 +465,20 @@ function Index() {
             })}
           </div>
 
-          <p className="mt-12 text-xs text-muted-foreground text-center max-w-2xl mx-auto">
+          <p className={`text-xs text-muted-foreground text-center max-w-2xl mx-auto ${homeCompact ? "mt-7" : "mt-12"}`}>
             Sérénité et Sérénité+ : tarifs forfaitaires annuels, sans engagement de durée. Pro / Flotte établi sur devis selon le parc. Pièces de remplacement facturées en sus.
           </p>
         </div>
       </section>
 
 
+      {!homeCompact && (
+      <>
       {/* SERVICES */}
       <section id="services" className="py-16 sm:py-20 border-t border-border">
         <div
           ref={services_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${services_r.shown ? "reveal-visible" : ""}`}
+          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
         >
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Nos services
@@ -499,7 +518,7 @@ function Index() {
       <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
         <div
           ref={real_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${real_r.shown ? "reveal-visible" : ""}`}
+          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
         >
           <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
             <div>
@@ -508,7 +527,7 @@ function Index() {
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
                 Nos installations{" "}
-                <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
+                <span className="text-muted-foreground/60">réalisées.</span>
               </h2>
             </div>
           </div>
@@ -653,7 +672,7 @@ function Index() {
       <section id="parcours" className="py-16 sm:py-20 border-t border-border">
         <div
           ref={parcours_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${parcours_r.shown ? "reveal-visible" : ""}`}
+          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
         >
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Parcours client
@@ -683,7 +702,7 @@ function Index() {
       <section id="zones" className="py-16 sm:py-20 border-t border-border">
         <div
           ref={zones_r.ref}
-          className={`mx-auto max-w-7xl px-6 reveal-on-scroll ${zones_r.shown ? "reveal-visible" : ""}`}
+          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
         >
           <div className="grid lg:grid-cols-2 gap-12">
             <div>

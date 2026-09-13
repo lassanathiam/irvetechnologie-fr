@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { ChevronLeft, ChevronRight, MapPin } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 
 type Item = { src: string; title: string; place: string; spec: string };
 
@@ -33,8 +33,6 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
   }
 
   const go = (d: number) => setI((v) => (v + d + safeItems.length) % safeItems.length);
-  const active = safeItems[i]!;
-
   return (
     <div
       className="relative overflow-hidden rounded-2xl border border-border bg-card"
@@ -61,28 +59,19 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
           <ChevronRight className="h-4 w-4" />
         </button>
       </div>
-
-      <div key={active.title} className="absolute inset-x-0 bottom-0 p-3 sm:p-4 animate-fade-up">
-        <div className="rounded-lg border border-border/70 bg-background/70 backdrop-blur-sm p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="text-mono text-primary flex items-center gap-2">
-              <MapPin className="h-3 w-3" /> {active.place}
-            </div>
-            <div className="text-mono text-primary">
-              {String(i + 1).padStart(2, "0")} / {String(safeItems.length).padStart(2, "0")}
-            </div>
-          </div>
-          <h3 className="mt-2 text-base sm:text-xl font-medium tracking-tight">{active.title}</h3>
-          <div className="mt-2 flex gap-1.5">
-            {safeItems.map((_, idx) => (
-              <button
-                key={idx}
-                onClick={() => setI(idx)}
-                aria-label={`Réalisation ${idx + 1}`}
-                className={`h-1.5 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"}`}
-              />
-            ))}
-          </div>
+      <div className="flex items-center justify-center gap-2 border-t border-border/70 bg-background/70 px-3 py-2.5">
+        <span className="text-mono text-[11px] text-primary">
+          {String(i + 1).padStart(2, "0")} / {String(safeItems.length).padStart(2, "0")}
+        </span>
+        <div className="flex gap-1.5">
+          {safeItems.map((_, idx) => (
+            <button
+              key={idx}
+              onClick={() => setI(idx)}
+              aria-label={`Réalisation ${idx + 1}`}
+              className={`h-1.5 rounded-full transition-all ${idx === i ? "w-6 bg-primary" : "w-1.5 bg-border hover:bg-muted-foreground"}`}
+            />
+          ))}
         </div>
       </div>
     </div>
