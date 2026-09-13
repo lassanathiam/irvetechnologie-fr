@@ -62,8 +62,8 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
         </button>
       </div>
 
-      <div key={active.title} className="absolute inset-x-0 bottom-0 p-4 sm:p-5 animate-fade-up">
-        <div className="rounded-xl border border-border/70 bg-background/75 backdrop-blur-sm p-3 sm:p-4">
+      <div key={active.title} className="absolute inset-x-0 bottom-0 p-3 sm:p-4 animate-fade-up">
+        <div className="rounded-lg border border-border/70 bg-background/70 backdrop-blur-sm p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="text-mono text-primary flex items-center gap-2">
               <MapPin className="h-3 w-3" /> {active.place}
@@ -72,9 +72,8 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
               {String(i + 1).padStart(2, "0")} / {String(safeItems.length).padStart(2, "0")}
             </div>
           </div>
-          <h3 className="mt-2 text-lg sm:text-2xl font-medium tracking-tight">{active.title}</h3>
-          <p className="mt-2 text-sm text-muted-foreground">{active.spec}</p>
-          <div className="mt-3 flex gap-1.5">
+          <h3 className="mt-2 text-base sm:text-xl font-medium tracking-tight">{active.title}</h3>
+          <div className="mt-2 flex gap-1.5">
             {safeItems.map((_, idx) => (
               <button
                 key={idx}

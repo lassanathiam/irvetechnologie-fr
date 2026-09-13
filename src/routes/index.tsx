@@ -217,7 +217,7 @@ function Index() {
               <h1 className="mt-5 font-display text-[2.2rem] sm:text-5xl lg:text-7xl font-semibold leading-[0.98] tracking-tight">
                 Installation de borne de recharge
                 <span className="mt-1 block text-primary [text-shadow:0_8px_36px_color-mix(in_oklab,var(--primary)_35%,transparent)]">
-                  workflow express et intervention qualifiée IRVE.
+                  pour particuliers, entreprises et collectivités.
                 </span>
               </h1>
 
@@ -240,8 +240,11 @@ function Index() {
                   <Phone className="h-4 w-4" /> Parler à un conseiller
                 </a>
               </div>
+              <p className="mt-4 text-mono text-xs text-muted-foreground">
+                Études techniques · Devis validés · Pose et mise en service
+              </p>
 
-              <div className="mt-8 grid gap-3 md:grid-cols-3 text-left">
+              <div className="mt-8 grid gap-3 md:grid-cols-2 text-left">
                 <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft">
                   <p className="text-mono text-primary">Installation de borne de recharge</p>
                   <p className="mt-1 text-3xl sm:text-4xl font-semibold tracking-tight">À partir de 1 290 € TTC</p>
@@ -251,23 +254,7 @@ function Index() {
                     distance entre le tableau électrique et la borne, la puissance choisie et les travaux nécessaires.
                   </p>
                 </div>
-
                 <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "120ms" }}>
-                  <p className="text-mono text-primary">Workflow express</p>
-                  <ul className="mt-2 space-y-2 text-sm">
-                    <li className="inline-flex items-center gap-2">
-                      <Check className="h-4 w-4 text-primary" /> Études techniques
-                    </li>
-                    <li className="inline-flex items-center gap-2">
-                      <Clock className="h-4 w-4 text-primary" /> Devis validés
-                    </li>
-                    <li className="inline-flex items-center gap-2">
-                      <Zap className="h-4 w-4 text-primary" /> Pose et mise en service
-                    </li>
-                  </ul>
-                </div>
-
-                <div className="rounded-2xl border border-border/75 bg-card/80 p-4 sm:p-5 animate-fade-soft" style={{ animationDelay: "220ms" }}>
                   <p className="text-mono text-primary">Repères</p>
                   <div className="mt-2 grid grid-cols-3 gap-2">
                     <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
@@ -280,7 +267,7 @@ function Index() {
                     </div>
                     <div className="rounded-lg border border-border/70 bg-background/80 p-2 text-center">
                       <p className="text-lg font-semibold tracking-tight">IRVE</p>
-                      <p className="text-[10px] text-mono text-muted-foreground">Qualifiée</p>
+                      <p className="text-[10px] text-mono text-muted-foreground">Qualifiées</p>
                     </div>
                   </div>
                 </div>
@@ -515,11 +502,10 @@ function Index() {
                 <span className="h-px w-10 bg-primary" /> Réalisations récentes
               </div>
               <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
-                Chantiers livrés{" "}
+                Nos installations{" "}
                 <span className="text-muted-foreground/60">dans l&apos;Ouest élargi.</span>
               </h2>
             </div>
-            <p className="text-mono text-muted-foreground">défilement automatique · cliquez pour explorer</p>
           </div>
           <RealisationsSlider items={realisations} />
         </div>

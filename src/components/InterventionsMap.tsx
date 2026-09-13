@@ -44,6 +44,7 @@ export function InterventionsMap({
   selectedIds = [],
   onToggleSelect,
   lienCoords,
+  visible = true,
 }: {
   markers: MapMarker[];
   activeId?: string | null;
@@ -63,6 +64,8 @@ export function InterventionsMap({
   onToggleSelect?: (id: string) => void;
   /** Tracé routier d'un chantier coché au suivant. */
   lienCoords?: [number, number][] | null;
+  /** Indique si la carte est actuellement visible à l'écran (mobile accordéon). */
+  visible?: boolean;
 }) {
 
   const el = useRef<HTMLDivElement | null>(null);
@@ -81,6 +84,15 @@ export function InterventionsMap({
   /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
   const fitRef = useRef<string>("");
 
+  function refreshSize() {
+    if (!map.current) return;
+    requestAnimationFrame(() => {
+      map.current?.invalidateSize(false);
+    });
+    window.setTimeout(() => {
+      map.current?.invalidateSize(false);
+    }, 160);
+  }
 
   useEffect(() => {
     let cancelled = false;
@@ -105,6 +117,7 @@ export function InterventionsMap({
       routeLayer.current = leaflet.layerGroup().addTo(map.current);
       drawMarkers();
       drawRoutes();
+      refreshSize();
     })();
     return () => {
       cancelled = true;
@@ -114,6 +127,25 @@ export function InterventionsMap({
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    if (!map.current || !visible) return;
+    refreshSize();
+  }, [visible, height]);
+
+  useEffect(() => {
+    if (!el.current || !map.current) return;
+    const onResize = () => refreshSize();
+    window.addEventListener("resize", onResize);
+    window.addEventListener("orientationchange", onResize);
+    const ro = new ResizeObserver(() => refreshSize());
+    ro.observe(el.current);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      window.removeEventListener("orientationchange", onResize);
+      ro.disconnect();
+    };
   }, []);
 
   function dot(
