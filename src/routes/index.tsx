@@ -208,7 +208,7 @@ function Index() {
   }
 
   return (
-    <div className="min-h-screen overflow-x-hidden">
+    <div className="dark min-h-screen overflow-x-hidden bg-background text-foreground">
       <SiteNav />
 
       {/* HERO */}
@@ -289,7 +289,7 @@ function Index() {
       </section>
 
       {/* MARQUEE partenaires */}
-      <section className="border-y border-border py-6 overflow-hidden bg-card/30">
+      <section className="border-y border-border py-6 overflow-hidden bg-white/[0.03]">
         <div className="flex gap-12 animate-marquee whitespace-nowrap text-mono text-muted-foreground">
           {[...partenaires, ...partenaires].map((p, i) => (
             <span key={i} className="flex items-center gap-3">
@@ -300,7 +300,7 @@ function Index() {
       </section>
 
       {/* MAINTENANCE / ABONNEMENTS */}
-      <section id="maintenance" className="py-16 sm:py-20 md:py-24 border-t border-border bg-secondary/40">
+      <section id="maintenance" className="py-16 sm:py-20 md:py-24 border-t border-border bg-white/[0.02]">
         <div className="mx-auto max-w-6xl px-6">
           {/* Header centré */}
           <div className="text-center max-w-3xl mx-auto mb-10">
@@ -559,7 +559,7 @@ function Index() {
       </>
       )}
 
-      <section className="border-t border-border bg-card/35 py-5">
+      <section className="border-t border-border bg-white/[0.03] py-5">
         <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
           <p className="text-sm text-muted-foreground">
             Mode compact actif pour raccourcir la page d&apos;accueil.
@@ -823,7 +823,7 @@ function Index() {
 
 
       {/* CTA */}
-      <section className="py-16 sm:py-20 border-t border-border relative overflow-hidden">
+      <section className="py-16 sm:py-20 border-t border-border relative overflow-hidden bg-white/[0.02]">
         <div className="absolute inset-0 hero-grad opacity-[0.03]" aria-hidden />
         <div className="mx-auto max-w-5xl px-6 text-center relative">
           <h2 className="text-4xl md:text-6xl font-medium tracking-tight">
@@ -844,7 +844,7 @@ function Index() {
       </section>
 
       {/* RÉALISATIONS — diaporama */}
-      <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
+      <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-white/[0.02]">
         <div
           ref={real_r.ref}
           className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
