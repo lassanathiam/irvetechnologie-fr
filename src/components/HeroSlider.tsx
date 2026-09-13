@@ -35,7 +35,7 @@ export function HeroSlider({ slides, interval = 5000 }: { slides: Slide[]; inter
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
-      <div className="absolute inset-0 -m-4 border border-primary/20 rounded-sm animate-glow" aria-hidden />
+      <div className="absolute inset-0 border border-primary/20 rounded-sm animate-glow md:-m-4" aria-hidden />
       <div className="relative rounded-sm w-full aspect-square overflow-hidden bg-card border border-border">
         {slides.map((s, idx) => (
           <img

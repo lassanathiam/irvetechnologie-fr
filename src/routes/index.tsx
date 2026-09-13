@@ -208,16 +208,16 @@ function Index() {
 
       {/* HERO */}
       <section className="relative pt-32 pb-24">
-        <div className="mx-auto max-w-7xl px-6 grid lg:grid-cols-2 gap-12 items-center">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-12 items-center">
           <div className="animate-fade-up">
             <div className="flex items-center gap-3 text-mono text-primary mb-8">
               <span className="h-px w-10 bg-primary" />
-              <span className="relative flex items-center gap-2">
+              <span className="relative flex items-center gap-2 break-words">
                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse" />
                 IRVE · Bretagne & Pays de la Loire
               </span>
             </div>
-            <h1 className="font-display text-5xl md:text-7xl font-medium tracking-tight leading-[1.02]">
+            <h1 className="font-display text-4xl sm:text-5xl md:text-7xl font-medium tracking-tight leading-[1.02] break-words">
               <span className="block animate-fade-up" style={{ animationDelay: "80ms" }}>Borne de</span>
               <span className="block animate-fade-up" style={{ animationDelay: "180ms" }}>
                 <em className="not-italic text-primary font-light italic">l'Ouest</em>{" "}
@@ -233,7 +233,7 @@ function Index() {
               une équipe locale, un seul interlocuteur, du devis à la mise en service.
             </p>
             <div
-              className="mt-6 max-w-xl rounded-sm border border-border bg-card/70 p-4 animate-fade-up"
+              className="mt-6 max-w-full sm:max-w-xl rounded-sm border border-border bg-card/70 p-4 animate-fade-up"
               style={{ animationDelay: "460ms" }}
             >
               <p className="text-mono text-primary">Installation de borne de recharge</p>
@@ -250,33 +250,33 @@ function Index() {
               </p>
             </div>
             <div className="mt-10 flex flex-wrap gap-3 animate-fade-up" style={{ animationDelay: "500ms" }}>
-              <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.02] transition">
+              <Link to="/demande" className="hero-grad text-primary-foreground text-mono px-5 py-3.5 rounded-sm inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:opacity-90 hover:scale-[1.02] transition">
                 Demande de raccordement <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="tel:+33633657840" className="border border-border text-mono px-5 py-3.5 rounded-sm inline-flex items-center gap-2 hover:border-primary hover:text-primary transition">
+              <a href="tel:+33633657840" className="border border-border text-mono px-5 py-3.5 rounded-sm inline-flex w-full sm:w-auto justify-center items-center gap-2 hover:border-primary hover:text-primary transition">
                 <Phone className="h-4 w-4" /> 06 33 65 78 40
               </a>
             </div>
 
-            <div className="mt-16 grid grid-cols-3 gap-6 max-w-md border-t border-border pt-8 animate-fade-up" style={{ animationDelay: "600ms" }}>
+            <div className="mt-16 grid grid-cols-3 gap-3 sm:gap-6 max-w-full sm:max-w-md border-t border-border pt-8 animate-fade-up" style={{ animationDelay: "600ms" }}>
               <div>
                 <div className="text-3xl font-medium tracking-tight">
                   <AnimatedCounter to={7} />
                 </div>
-                <div className="text-mono text-muted-foreground mt-2">Départements</div>
+                <div className="text-mono text-muted-foreground mt-2 text-[11px] sm:text-xs">Départements</div>
               </div>
               <div>
                 <div className="text-3xl font-medium tracking-tight">
                   <AnimatedCounter to={48} suffix="h" />
                 </div>
-                <div className="text-mono text-muted-foreground mt-2">Étude tech.</div>
+                <div className="text-mono text-muted-foreground mt-2 text-[11px] sm:text-xs">Étude tech.</div>
               </div>
               <div>
                 <div className="text-3xl font-medium tracking-tight flex items-center gap-1">
                   <AnimatedCounter to={10} />
                   <Star className="h-5 w-5 text-primary fill-primary" />
                 </div>
-                <div className="text-mono text-muted-foreground mt-2">Avis clients</div>
+                <div className="text-mono text-muted-foreground mt-2 text-[11px] sm:text-xs">Avis clients</div>
               </div>
             </div>
           </div>
