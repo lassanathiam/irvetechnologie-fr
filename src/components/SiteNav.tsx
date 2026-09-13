@@ -23,6 +23,7 @@ export function SiteNav() {
           <Link to="/" hash="realisations" className="hover:text-foreground transition">Réalisations</Link>
           <Link to="/" hash="maintenance" className="hover:text-foreground transition">Maintenance</Link>
           <Link to="/" hash="zones" className="hover:text-foreground transition">Zones</Link>
+          <Link to="/a-propos" className="hover:text-foreground transition">À propos</Link>
         </nav>
         <div className="flex items-center gap-3">
           <Link

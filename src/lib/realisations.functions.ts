@@ -42,8 +42,15 @@ function publicPhotoUrl(path: string) {
   return `/api/public/photo/${path.split("/").map(encodeURIComponent).join("/")}`;
 }
 
+function canUseSupabasePublicRead() {
+  return Boolean(process.env.SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 /** Galerie publique du site (réalisations publiées uniquement). */
 export const listPublicRealisations = createServerFn({ method: "GET" }).handler(async () => {
+  if (!canUseSupabasePublicRead()) {
+    return [] as { id: string; titre: string; lieu: string; description: string; url: string }[];
+  }
   try {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { data, error } = await supabaseAdmin
