@@ -51,7 +51,6 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
             }`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-background/90 via-background/20 to-transparent" aria-hidden />
         <button onClick={() => go(-1)} className="absolute left-3 top-1/2 -translate-y-1/2 bg-background/75 backdrop-blur border border-border p-2 rounded-sm hover:border-primary hover:text-primary transition" aria-label="Précédent">
           <ChevronLeft className="h-4 w-4" />
         </button>

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin } from "lucide-react";
+import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
@@ -153,8 +153,9 @@ function Index() {
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
   const [homeCompact, setHomeCompact] = useState(true);
-  const [aideProfil, setAideProfil] = useState<"particulier" | "copro" | "entreprise">("particulier");
+  const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
   const [aideBornes, setAideBornes] = useState(1);
+  const [aideMontantHt, setAideMontantHt] = useState(1500);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -164,6 +165,14 @@ function Index() {
     staleTime: 60_000,
   });
   const isClient = audience === "client";
+  const baseHt = Math.max(0, aideMontantHt);
+  const nbBornes = Math.max(1, aideBornes);
+  const aideTotale =
+    aideProfil === "copro-individuelle"
+      ? Math.min(baseHt * 0.5, 1000) * nbBornes
+      : aideProfil === "copro-partagee"
+        ? Math.min(baseHt * 0.5, 1660) * nbBornes
+        : 0;
 
   async function onSubmitAvis(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -217,7 +226,7 @@ function Index() {
                 </div>
                 <h1 className="mt-5 font-display text-[2.2rem] leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
                   Bornes installées
-                  <span className="block text-emerald-300">vite, proprement, sans stress.</span>
+                  <span className="mt-1 block text-white">fiables, conformes et prêtes pour l&apos;avenir.</span>
                 </h1>
                 <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
                   Particuliers, entreprises, copropriétés : audit, devis, pose, raccordement
@@ -310,27 +319,34 @@ function Index() {
 
           <div className={`rounded-2xl border border-border bg-card/70 p-4 sm:p-6 ${homeCompact ? "mb-8" : "mb-12"}`}>
             <p className="text-mono text-primary">Simulateur rapide d&apos;aides (indicatif)</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="mt-3 grid gap-3 sm:grid-cols-4">
               <button
                 type="button"
-                onClick={() => setAideProfil("particulier")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "particulier" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                onClick={() => setAideProfil("maison")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
               >
-                Particulier
+                Maison individuelle
               </button>
               <button
                 type="button"
-                onClick={() => setAideProfil("copro")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                onClick={() => setAideProfil("copro-individuelle")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
               >
-                Copropriété
+                Copro · borne individuelle
               </button>
               <button
                 type="button"
-                onClick={() => setAideProfil("entreprise")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "entreprise" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                onClick={() => setAideProfil("copro-partagee")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
               >
-                Entreprise
+                Copro · borne partagée
+              </button>
+              <button
+                type="button"
+                onClick={() => setAideProfil("pro")}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+              >
+                Pro / flotte
               </button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -343,17 +359,46 @@ function Index() {
                 onChange={(e) => setAideBornes(Math.min(20, Math.max(1, Number(e.target.value) || 1)))}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
+              <label className="text-sm text-muted-foreground">Coût HT / borne</label>
+              <input
+                type="number"
+                min={0}
+                step={50}
+                value={aideMontantHt}
+                onChange={(e) => setAideMontantHt(Math.max(0, Number(e.target.value) || 0))}
+                className="w-28 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+              />
             </div>
-            <p className="mt-3 text-sm text-muted-foreground">
-              {aideProfil === "particulier"
-                ? "Crédit d'impôt possible pour la résidence principale (montant et conditions à confirmer selon votre situation fiscale)."
-                : "Prime Advenir potentielle selon le type de site, le nombre de points de charge et le dossier d'éligibilité."}
-            </p>
-            <p className="mt-1 text-sm font-semibold">
-              Projet estimatif : à partir de {new Intl.NumberFormat("fr-FR").format(aideBornes * 1290)} € TTC
-            </p>
-            <p className="mt-1 text-xs text-muted-foreground">
-              Estimation indicative. Validation finale après étude technique et dossier administratif.
+            {aideProfil === "maison" ? (
+              <>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  En 2026, le crédit d&apos;impôt borne est supprimé pour les dépenses payées en 2026
+                  (source : Service-Public). Pour une facture payée en 2025, le crédit était de 75% plafonné à 500 € par système pilotable.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  Aides restantes : TVA réduite (si éligible) + aides locales selon votre commune.
+                </p>
+              </>
+            ) : aideProfil === "pro" ? (
+              <>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Les barèmes professionnels Advenir dépendent du type de parking, de l&apos;usage et du dossier CEE.
+                </p>
+                <p className="mt-1 text-sm font-semibold">Estimation : étude personnalisée obligatoire.</p>
+              </>
+            ) : (
+              <>
+                <p className="mt-3 text-sm text-muted-foreground">
+                  Estimation Advenir : 50% du coût HT, plafonné à{" "}
+                  {aideProfil === "copro-individuelle" ? "1 000 € HT" : "1 660 € HT"} par point de charge.
+                </p>
+                <p className="mt-1 text-sm font-semibold">
+                  Aide estimée totale : {new Intl.NumberFormat("fr-FR").format(Math.round(aideTotale))} € HT
+                </p>
+              </>
+            )}
+            <p className="mt-2 text-xs text-muted-foreground">
+              Montants donnés à titre indicatif. Validation finale selon dossier, devis signé et règles en vigueur.
             </p>
           </div>
 
@@ -513,27 +558,6 @@ function Index() {
       </section>
       </>
       )}
-
-      {/* RÉALISATIONS — diaporama */}
-      <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
-        <div
-          ref={real_r.ref}
-          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
-        >
-          <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
-            <div>
-              <div className="flex items-center gap-3 text-mono text-primary mb-6">
-                <span className="h-px w-10 bg-primary" /> Réalisations récentes
-              </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
-                Nos installations{" "}
-                <span className="text-muted-foreground/60">réalisées.</span>
-              </h2>
-            </div>
-          </div>
-          <RealisationsSlider items={realisations} />
-        </div>
-      </section>
 
       <section className="border-t border-border bg-card/35 py-5">
         <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
@@ -812,8 +836,34 @@ function Index() {
           <Link to="/demande" className="mt-10 hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.03] transition">
             Démarrer ma demande <ArrowRight className="h-4 w-4" />
           </Link>
+          <a href="#realisations" className="mt-6 inline-flex items-center gap-2 text-mono text-xs text-primary hover:opacity-80">
+            Voir nos réalisations
+            <ChevronDown className="h-4 w-4 animate-arrow-blink" />
+          </a>
         </div>
       </section>
+
+      {/* RÉALISATIONS — diaporama */}
+      <section id="realisations" className="py-16 sm:py-20 border-t border-border bg-card/20">
+        <div
+          ref={real_r.ref}
+          className="mx-auto max-w-7xl px-6 reveal-on-scroll reveal-visible"
+        >
+          <div className="flex items-end justify-between flex-wrap gap-6 mb-12">
+            <div>
+              <div className="flex items-center gap-3 text-mono text-primary mb-6">
+                <span className="h-px w-10 bg-primary" /> Réalisations récentes
+              </div>
+              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
+                Nos installations{" "}
+                <span className="text-muted-foreground/60">réalisées.</span>
+              </h2>
+            </div>
+          </div>
+          <RealisationsSlider items={realisations} />
+        </div>
+      </section>
+
 
       <SiteFooter />
     </div>
