@@ -441,15 +441,15 @@
 }
 
 .premium-primary-cta {
-  background: var(--premium-night);
-  color: var(--premium-foreground);
+  background: oklch(0.72 0.16 154);
+  color: oklch(0.985 0.004 250);
   box-shadow: 8px 8px 0 color-mix(in oklab, var(--premium-blue) 72%, transparent);
   transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
-.premium-primary-cta:hover { background: var(--premium-blue); transform: translate(-2px, -2px); box-shadow: 11px 11px 0 color-mix(in oklab, var(--premium-blue) 82%, transparent); }
+.premium-primary-cta:hover { background: oklch(0.78 0.15 154); transform: translate(-2px, -2px); box-shadow: 11px 11px 0 color-mix(in oklab, var(--premium-blue) 82%, transparent); }
 .premium-secondary-cta { border: 2px solid color-mix(in oklab, currentColor 35%, transparent); color: inherit; transition: border-color 180ms ease, background-color 180ms ease; }
-.premium-secondary-cta:hover { border-color: var(--premium-blue); background: color-mix(in oklab, var(--premium-blue) 14%, transparent); }
-.dark .premium-primary-cta { background: var(--premium-foreground); color: var(--premium-night); }
+.premium-secondary-cta:hover { border-color: oklch(0.72 0.16 154); background: color-mix(in oklab, oklch(0.72 0.16 154) 14%, transparent); }
+.dark .premium-primary-cta { background: oklch(0.76 0.15 154); color: oklch(0.18 0.02 248); }
 .premium-photo-frame { box-shadow: 18px 18px 0 color-mix(in oklab, var(--premium-blue) 32%, transparent); transform: rotate(1deg); }
 
 @media (max-width: 640px) {
