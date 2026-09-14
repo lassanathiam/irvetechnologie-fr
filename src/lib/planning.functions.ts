@@ -323,10 +323,10 @@ async function envoyerEmailRendezVousConfirmation(rdv: {
     }
   };
 
-  // Priorité à Brevo quand la clé existe (évite les blocages recipient_mismatch).
-  if (getBrevoApiKey()) {
-    return sendAvecBrevo("Envoi direct Brevo");
-  }
+  // Priorité au système d'e-mails intégré (domaine vérifié). Brevo n'est
+  // utilisé qu'en secours : la clé disponible ici est une clé de passerelle,
+  // refusée par api.brevo.com (401 « Key not found »).
+
 
   try {
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
