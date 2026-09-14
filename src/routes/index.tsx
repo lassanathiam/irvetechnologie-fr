@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown } from "lucide-react";
+import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown, BadgeCheck } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
@@ -10,6 +10,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
+import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -152,7 +153,7 @@ function Index() {
   const [avisSent, setAvisSent] = useState(false);
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
-  const [homeCompact, setHomeCompact] = useState(true);
+  const [homeCompact] = useState(false);
   const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
   const PRIX_DEMARRAGE_TTC = 1290;
   const PRIX_DEMARRAGE_HT = Math.round((PRIX_DEMARRAGE_TTC / 1.2) * 100) / 100;
@@ -210,80 +211,52 @@ function Index() {
   }
 
   return (
-    <div className="dark min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="public-premium min-h-screen overflow-x-hidden bg-background text-foreground">
       <SiteNav />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-14">
-        <div className="pointer-events-none absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[#07120d] text-white shadow-[0_35px_90px_-50px_rgba(0,0,0,.9)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(38,211,167,.25),transparent_45%),radial-gradient(circle_at_20%_100%,rgba(34,197,94,.18),transparent_42%)]" />
-            <div className="pointer-events-none absolute inset-0 opacity-30 bg-[linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
-            <div className="relative z-10 grid gap-7 p-6 sm:p-8 lg:grid-cols-12 lg:p-10">
-              <div className="lg:col-span-7">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-mono text-[11px] text-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                  Équipe IRVE · Nantes & régions voisines
+      <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16 text-premium-foreground">
+        <img src={borneHero} alt="Borne de recharge installée par Borne de l'Ouest" className="absolute inset-0 h-full w-full object-cover object-center" />
+        <div className="absolute inset-0 premium-hero-veil" aria-hidden />
+        <div className="absolute inset-0 premium-tech-grid opacity-30" aria-hidden />
+        <div className="relative mx-auto grid min-h-[calc(92svh-4rem)] max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-20">
+          <div className="animate-fade-up lg:col-span-7">
+            <div className="inline-flex items-center gap-2 border border-premium-blue/50 bg-premium-night/65 px-3 py-2 text-xs font-semibold uppercase text-premium-blue backdrop-blur-md">
+              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-energy opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-energy" /></span>
+              Expertise IRVE certifiée P1 · P2 · P3
+            </div>
+            <h1 className="mt-7 font-display text-5xl font-bold leading-[0.9] sm:text-7xl lg:text-8xl">
+              BORNE DE<br /><span className="premium-title-accent">L&apos;OUEST</span>
+            </h1>
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-premium-foreground/75 sm:text-xl">
+              Installation et maintenance de solutions de recharge fiables. Nous accompagnons particuliers, copropriétés et entreprises dans tout le Grand Ouest.
+            </p>
+            <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+              <Link to="/demande" className="premium-primary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
+                Demander un devis <ArrowRight className="h-5 w-5" />
+              </Link>
+              <a href="tel:+33768084367" className="premium-secondary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
+                <Phone className="h-5 w-5" /> 07 68 08 43 67
+              </a>
+            </div>
+            <div className="mt-10 grid max-w-2xl grid-cols-1 gap-px border-y border-premium-foreground/20 bg-premium-foreground/20 sm:grid-cols-3">
+              {["Étude technique", "Pose & raccordement", "Maintenance suivie"].map((label) => (
+                <div key={label} className="flex items-center gap-3 bg-premium-night/80 px-4 py-4 text-sm font-semibold backdrop-blur-md">
+                  <BadgeCheck className="h-5 w-5 shrink-0 text-premium-energy" /> {label}
                 </div>
-                <h1 className="mt-5 font-display text-[2.2rem] leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
-                  Bornes installées
-                  <span className="mt-1 block text-white">fiables, conformes et prêtes pour l&apos;avenir.</span>
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
-                  Particuliers, entreprises, copropriétés : audit, devis, pose, raccordement
-                  et mise en service par des techniciens qualifiés IRVE.
-                </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    to="/demande"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3.5 text-mono text-slate-950 transition hover:bg-emerald-300 animate-cta-attention"
-                  >
-                    Demander un devis <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href="tel:+33633657840"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-mono text-white transition hover:bg-white/20"
-                  >
-                    <Phone className="h-4 w-4" /> Appeler
-                  </a>
-                </div>
-                <div className="mt-6 rounded-2xl border border-white/20 bg-white/8 p-4 backdrop-blur-sm">
-                  <p className="text-mono text-emerald-200">Installation de borne de recharge</p>
-                  <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">À partir de 1 290 € TTC</p>
-                  <p className="mt-1 text-sm text-white/75">Borne + installation par un professionnel IRVE.</p>
-                </div>
+              ))}
+            </div>
+          </div>
+          <div className="relative hidden lg:col-span-5 lg:block animate-fade-soft">
+            <div className="premium-photo-frame relative ml-auto aspect-[4/5] w-full max-w-md border border-premium-blue/50">
+              <img src={borneHero} alt="Détail d'une installation de recharge électrique" className="h-full w-full object-cover" />
+              <div className="absolute right-5 top-5 border border-premium-blue/60 bg-premium-night/85 p-4 backdrop-blur-md">
+                <p className="text-xs font-semibold uppercase text-premium-blue">Installation maîtrisée</p>
+                <p className="mt-1 font-display text-2xl font-bold">7 · 11 · 22 kW</p>
               </div>
-
-              <div className="lg:col-span-5">
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft">
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 01</p>
-                    <p className="mt-1 text-lg font-semibold">Étude technique</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "120ms" }}>
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 02</p>
-                    <p className="mt-1 text-lg font-semibold">Devis validé</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "240ms" }}>
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 03</p>
-                    <p className="mt-1 text-lg font-semibold">Pose & mise en service</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold"><AnimatedCounter to={7} /></p>
-                      <p className="text-[10px] text-white/70">Départements</p>
-                    </div>
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold"><AnimatedCounter to={48} suffix="h" /></p>
-                      <p className="text-[10px] text-white/70">Étude</p>
-                    </div>
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold">IRVE</p>
-                      <p className="text-[10px] text-white/70">Qualifiée</p>
-                    </div>
-                  </div>
-                </div>
+              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-premium-night p-6 pt-20">
+                <p className="text-xs uppercase text-premium-foreground/60">IRVE Technologie</p>
+                <p className="mt-1 text-lg font-semibold">Une installation nette, conforme et documentée.</p>
               </div>
             </div>
           </div>
@@ -559,21 +532,6 @@ function Index() {
       </section>
       </>
       )}
-
-      <section className="border-t border-border bg-white/[0.03] py-5">
-        <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Mode compact actif pour raccourcir la page d&apos;accueil.
-          </p>
-          <button
-            type="button"
-            onClick={() => setHomeCompact((v) => !v)}
-            className="text-mono text-xs px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition"
-          >
-            {homeCompact ? "Afficher toutes les sections" : "Revenir au mode compact"}
-          </button>
-        </div>
-      </section>
 
       {!homeCompact && (
       <>
