@@ -214,67 +214,67 @@ function Index() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-14">
-        <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
+      <section className="relative overflow-hidden bg-[#edf4ff] pt-20 pb-12 sm:pt-24 sm:pb-14">
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-[#5b9bff]/20 blur-3xl animate-hero-drift" />
         <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="rounded-[2rem] border border-primary/20 bg-gradient-to-b from-[#f7fbff] to-[#eff7ff] p-6 shadow-[0_35px_90px_-65px_rgba(14,165,124,.45)] sm:p-8 lg:p-10">
+          <div className="rounded-[2rem] border border-[#cbdcff] bg-gradient-to-b from-[#f8fbff] to-[#eef5ff] p-6 shadow-[0_35px_90px_-65px_rgba(63,119,229,.35)] sm:p-8 lg:p-10">
             <div className="mx-auto max-w-4xl text-center">
-              <p className="text-mono text-primary">Installation IRVE · Nantes & régions voisines</p>
-              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+              <p className="text-mono text-[#2b6ee8]">Installation IRVE · Nantes & régions voisines</p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-[#102f58] sm:text-5xl md:text-6xl">
                 Bornes installées, conformes,
-                <span className="block text-slate-500">et prêtes pour l&apos;avenir.</span>
+                <span className="block text-[#6f829f]">et prêtes pour l&apos;avenir.</span>
               </h1>
-              <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-slate-600">
+              <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-[#6b7f9d]">
                 Particuliers, entreprises et copropriétés : étude technique, devis validé,
                 installation et mise en service avec des techniciens qualifiés IRVE.
               </p>
             </div>
 
-            <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-primary/20 bg-white/85 p-4 shadow-sm sm:p-6">
+            <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-[#c9dcff] bg-white/90 p-4 shadow-sm sm:p-6">
               <div className="grid gap-3 sm:grid-cols-3">
-                <div className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-center text-sm font-medium text-primary">
+                <div className="rounded-lg border border-[#5e95ff] bg-[#eaf2ff] px-3 py-2 text-center text-sm font-medium text-[#2c71ea]">
                   Étude technique
                 </div>
-                <div className="rounded-lg border border-primary/20 bg-white px-3 py-2 text-center text-sm font-medium text-slate-700">
+                <div className="rounded-lg border border-[#c9dcff] bg-white px-3 py-2 text-center text-sm font-medium text-[#2f4668]">
                   Devis validé
                 </div>
-                <div className="rounded-lg border border-primary/20 bg-white px-3 py-2 text-center text-sm font-medium text-slate-700">
+                <div className="rounded-lg border border-[#c9dcff] bg-white px-3 py-2 text-center text-sm font-medium text-[#2f4668]">
                   Pose & mise en service
                 </div>
               </div>
 
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
-                  <p className="text-xl font-semibold text-slate-900"><AnimatedCounter to={7} /></p>
-                  <p className="mt-0.5 text-xs text-slate-500">Départements prioritaires</p>
+                <div className="rounded-xl border border-[#c9dcff] bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-[#102f58]"><AnimatedCounter to={7} /></p>
+                  <p className="mt-0.5 text-xs text-[#6f829f]">Départements prioritaires</p>
                 </div>
-                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
-                  <p className="text-xl font-semibold text-slate-900"><AnimatedCounter to={48} suffix="h" /></p>
-                  <p className="mt-0.5 text-xs text-slate-500">Étude de faisabilité</p>
+                <div className="rounded-xl border border-[#c9dcff] bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-[#102f58]"><AnimatedCounter to={48} suffix="h" /></p>
+                  <p className="mt-0.5 text-xs text-[#6f829f]">Étude de faisabilité</p>
                 </div>
-                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
-                  <p className="text-xl font-semibold text-slate-900">IRVE</p>
-                  <p className="mt-0.5 text-xs text-slate-500">Équipe qualifiée</p>
+                <div className="rounded-xl border border-[#c9dcff] bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-[#102f58]">IRVE</p>
+                  <p className="mt-0.5 text-xs text-[#6f829f]">Équipe qualifiée</p>
                 </div>
               </div>
 
               <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
                 <Link
                   to="/demande"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-mono text-primary-foreground transition hover:opacity-90 animate-cta-attention"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#2b6ee8] px-6 py-3 text-mono text-white transition hover:bg-[#245fc8] animate-cta-attention"
                 >
                   Demander un devis <ArrowRight className="h-4 w-4" />
                 </Link>
                 <a
                   href="tel:+33633657840"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-white px-6 py-3 text-mono text-slate-700 transition hover:border-primary hover:text-primary"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-[#c9dcff] bg-white px-6 py-3 text-mono text-[#2f4668] transition hover:border-[#2b6ee8] hover:text-[#2b6ee8]"
                 >
                   <Phone className="h-4 w-4" /> Appeler
                 </a>
               </div>
 
-              <p className="mt-4 text-center text-sm text-slate-600">
-                Installation de borne de recharge à partir de <span className="font-semibold text-slate-900">1 290 € TTC</span>.
+              <p className="mt-4 text-center text-sm text-[#6b7f9d]">
+                Installation de borne de recharge à partir de <span className="font-semibold text-[#102f58]">1 290 € TTC</span>.
               </p>
             </div>
           </div>
