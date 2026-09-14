@@ -438,8 +438,8 @@
 }
 
 .premium-title-accent {
-  color: var(--premium-energy);
-  text-shadow: 0 0 38px color-mix(in oklab, var(--premium-energy) 24%, transparent);
+  color: var(--premium-blue);
+  text-shadow: 0 0 28px color-mix(in oklab, var(--premium-blue) 20%, transparent);
 }
 
 .premium-primary-cta {
@@ -448,7 +448,7 @@
   box-shadow: 8px 8px 0 color-mix(in oklab, var(--premium-blue) 72%, transparent);
   transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
 }
-.premium-primary-cta:hover { background: var(--premium-energy); transform: translate(-2px, -2px); box-shadow: 11px 11px 0 color-mix(in oklab, var(--premium-blue) 82%, transparent); }
+.premium-primary-cta:hover { background: var(--premium-blue); transform: translate(-2px, -2px); box-shadow: 11px 11px 0 color-mix(in oklab, var(--premium-blue) 82%, transparent); }
 .premium-secondary-cta { border: 2px solid color-mix(in oklab, currentColor 35%, transparent); color: inherit; transition: border-color 180ms ease, background-color 180ms ease; }
 .premium-secondary-cta:hover { border-color: var(--premium-blue); background: color-mix(in oklab, var(--premium-blue) 14%, transparent); }
 .dark .premium-primary-cta { background: var(--premium-foreground); color: var(--premium-night); }

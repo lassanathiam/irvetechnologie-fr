@@ -11,5 +11,5 @@
 
 - [x] Uniformiser les pages publiques avec le style premium, mode jour/nuit et réalisations accélérées (14/09/2026)
 - [x] Corriger le simulateur ADVENIR, le message photos et le mode jour du bandeau d’accueil (14/09/2026)
-- [ ] Unifier le haut, le bas et les boutons publics avec la palette sobre existante, sans vert fluorescent
-- [ ] Rendre le parcours des avis visible et compréhensible après envoi
+- [x] Unifier le haut, le bas et les boutons publics avec la palette sobre existante, sans vert fluorescent
+- [x] Rendre le parcours des avis visible et compréhensible après envoi

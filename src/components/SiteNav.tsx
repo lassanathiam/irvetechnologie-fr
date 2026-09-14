@@ -20,18 +20,19 @@ export function SiteNav() {
           </span>
         </Link>
         <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-premium-foreground/65">
-          <Link to="/" hash="services" className="hover:text-premium-energy transition">Services</Link>
-          <Link to="/" hash="realisations" className="hover:text-premium-energy transition">Réalisations</Link>
-          <Link to="/" hash="maintenance" className="hover:text-premium-energy transition">Maintenance</Link>
-          <Link to="/" hash="zones" className="hover:text-premium-energy transition">Zones</Link>
-          <Link to="/a-propos" className="hover:text-premium-energy transition">À propos</Link>
+          <Link to="/" hash="services" className="hover:text-premium-blue transition">Services</Link>
+          <Link to="/" hash="realisations" className="hover:text-premium-blue transition">Réalisations</Link>
+          <Link to="/" hash="maintenance" className="hover:text-premium-blue transition">Maintenance</Link>
+          <Link to="/" hash="zones" className="hover:text-premium-blue transition">Zones</Link>
+          <Link to="/" hash="avis" className="hover:text-premium-blue transition">Avis</Link>
+          <Link to="/a-propos" className="hover:text-premium-blue transition">À propos</Link>
         </nav>
         <div className="flex items-center gap-3">
-          <ThemeToggle className="h-10 w-10 border-premium-foreground/25 bg-premium-night/70 text-premium-foreground hover:border-premium-energy hover:text-premium-energy" />
+          <ThemeToggle className="h-10 w-10 border-premium-foreground/25 bg-premium-night/70 text-premium-foreground hover:border-premium-blue hover:text-premium-blue" />
           <Link
             to="/espace"
             aria-label="Espace pro"
-            className="inline-flex min-h-10 items-center gap-1.5 border border-premium-foreground/20 px-2.5 py-2 text-xs text-premium-foreground/70 transition hover:text-premium-energy"
+            className="inline-flex min-h-10 items-center gap-1.5 border border-premium-foreground/20 px-2.5 py-2 text-xs text-premium-foreground/70 transition hover:text-premium-blue"
           >
             <Lock className="h-3.5 w-3.5" />
             <span className="hidden xs:inline sm:inline">Espace pro</span>
@@ -46,7 +47,7 @@ export function SiteNav() {
 
           <Link
             to="/demande"
-          className="bg-premium-energy text-premium-night text-xs font-bold uppercase px-4 py-2.5 hover:bg-premium-blue transition animate-cta-attention"
+          className="bg-premium-blue text-premium-foreground text-xs font-bold uppercase px-4 py-2.5 hover:opacity-90 transition animate-cta-attention"
           >
             Demande
           </Link>
