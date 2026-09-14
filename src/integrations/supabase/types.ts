@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      app_settings: {
+        Row: {
+          cle: string
+          created_at: string
+          id: string
+          updated_at: string
+          valeur: string | null
+        }
+        Insert: {
+          cle: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          valeur?: string | null
+        }
+        Update: {
+          cle?: string
+          created_at?: string
+          id?: string
+          updated_at?: string
+          valeur?: string | null
+        }
+        Relationships: []
+      }
       demande_photos: {
         Row: {
           created_at: string
@@ -479,6 +503,45 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          lien: string | null
+          lu_at: string | null
+          message: string | null
+          meta: Json
+          montant: number | null
+          titre: string
+          type: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lien?: string | null
+          lu_at?: string | null
+          message?: string | null
+          meta?: Json
+          montant?: number | null
+          titre: string
+          type: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lien?: string | null
+          lu_at?: string | null
+          message?: string | null
+          meta?: Json
+          montant?: number | null
+          titre?: string
+          type?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       partenaire_sessions: {
         Row: {
           created_at: string
@@ -820,7 +883,13 @@ export type Database = {
           partenaire_id: string | null
           paye_at: string | null
           phase_installation: string | null
+          photos_zip_downloaded_at: string | null
+          public_token: string
           puissance_borne: string | null
+          rdv_client_message: string | null
+          rdv_confirme_at: string | null
+          rdv_propose_at: string | null
+          rdv_refuse_at: string | null
           retour_complete_at: string | null
           retour_delestage: boolean
           retour_observations: string | null
@@ -882,7 +951,13 @@ export type Database = {
           partenaire_id?: string | null
           paye_at?: string | null
           phase_installation?: string | null
+          photos_zip_downloaded_at?: string | null
+          public_token?: string
           puissance_borne?: string | null
+          rdv_client_message?: string | null
+          rdv_confirme_at?: string | null
+          rdv_propose_at?: string | null
+          rdv_refuse_at?: string | null
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
@@ -944,7 +1019,13 @@ export type Database = {
           partenaire_id?: string | null
           paye_at?: string | null
           phase_installation?: string | null
+          photos_zip_downloaded_at?: string | null
+          public_token?: string
           puissance_borne?: string | null
+          rdv_client_message?: string | null
+          rdv_confirme_at?: string | null
+          rdv_propose_at?: string | null
+          rdv_refuse_at?: string | null
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null

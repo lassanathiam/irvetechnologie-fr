@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
 import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
@@ -23,6 +24,7 @@ import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
 import { Route as AuthenticatedPartenairesIndexRouteImport } from './routes/_authenticated/partenaires.index'
+import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications.index'
 import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
 import { Route as AuthenticatedFacturationIndexRouteImport } from './routes/_authenticated/facturation.index'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
@@ -33,6 +35,7 @@ import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
+import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -67,6 +70,11 @@ const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RdvTokenRoute = RdvTokenRouteImport.update({
+  id: '/rdv/$token',
+  path: '/rdv/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
@@ -106,6 +114,12 @@ const AuthenticatedPartenairesIndexRoute =
   AuthenticatedPartenairesIndexRouteImport.update({
     id: '/partenaires/',
     path: '/partenaires/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotificationsIndexRoute =
+  AuthenticatedNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedFacturesIndexRoute =
@@ -164,6 +178,11 @@ const LovableEmailTransactionalPreviewRoute =
     path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicRetourSplatRoute = ApiPublicRetourSplatRouteImport.update({
+  id: '/api/public/retour/$',
+  path: '/api/public/retour/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   id: '/api/public/photo/$',
   path: '/api/public/photo/$',
@@ -180,6 +199,7 @@ export interface FileRoutesByFullPath {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rdv/$token': typeof RdvTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -189,11 +209,13 @@ export interface FileRoutesByFullPath {
   '/espace/': typeof AuthenticatedEspaceIndexRoute
   '/facturation/': typeof AuthenticatedFacturationIndexRoute
   '/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
@@ -206,6 +228,7 @@ export interface FileRoutesByTo {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rdv/$token': typeof RdvTokenRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -215,11 +238,13 @@ export interface FileRoutesByTo {
   '/espace': typeof AuthenticatedEspaceIndexRoute
   '/facturation': typeof AuthenticatedFacturationIndexRoute
   '/factures': typeof AuthenticatedFacturesIndexRoute
+  '/notifications': typeof AuthenticatedNotificationsIndexRoute
   '/partenaires': typeof AuthenticatedPartenairesIndexRoute
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
@@ -234,6 +259,7 @@ export interface FileRoutesById {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rdv/$token': typeof RdvTokenRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -243,11 +269,13 @@ export interface FileRoutesById {
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
   '/_authenticated/facturation/': typeof AuthenticatedFacturationIndexRoute
   '/_authenticated/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/_authenticated/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/_authenticated/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
+  '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
@@ -262,6 +290,7 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rdv/$token'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
@@ -271,11 +300,13 @@ export interface FileRouteTypes {
     | '/espace/'
     | '/facturation/'
     | '/factures/'
+    | '/notifications/'
     | '/partenaires/'
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
     | '/api/public/photo/$'
+    | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -288,6 +319,7 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rdv/$token'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
@@ -297,11 +329,13 @@ export interface FileRouteTypes {
     | '/espace'
     | '/facturation'
     | '/factures'
+    | '/notifications'
     | '/partenaires'
     | '/planning'
     | '/rapports'
     | '/realisations'
     | '/api/public/photo/$'
+    | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
   id:
     | '__root__'
@@ -315,6 +349,7 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rdv/$token'
     | '/_authenticated/devis/$id'
     | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
@@ -324,11 +359,13 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/'
     | '/_authenticated/facturation/'
     | '/_authenticated/factures/'
+    | '/_authenticated/notifications/'
     | '/_authenticated/partenaires/'
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
     | '/api/public/photo/$'
+    | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
@@ -343,7 +380,9 @@ export interface RootRouteChildren {
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
   PartenaireTokenRoute: typeof PartenaireTokenRoute
+  RdvTokenRoute: typeof RdvTokenRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
+  ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
@@ -398,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/rdv/$token': {
+      id: '/rdv/$token'
+      path: '/rdv/$token'
+      fullPath: '/rdv/$token'
+      preLoaderRoute: typeof RdvTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/partenaire/$token': {
       id: '/partenaire/$token'
       path: '/partenaire/$token'
@@ -445,6 +491,13 @@ declare module '@tanstack/react-router' {
       path: '/partenaires'
       fullPath: '/partenaires/'
       preLoaderRoute: typeof AuthenticatedPartenairesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications/': {
+      id: '/_authenticated/notifications/'
+      path: '/notifications'
+      fullPath: '/notifications/'
+      preLoaderRoute: typeof AuthenticatedNotificationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/factures/': {
@@ -517,6 +570,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/retour/$': {
+      id: '/api/public/retour/$'
+      path: '/api/public/retour/$'
+      fullPath: '/api/public/retour/$'
+      preLoaderRoute: typeof ApiPublicRetourSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/photo/$': {
       id: '/api/public/photo/$'
       path: '/api/public/photo/$'
@@ -537,6 +597,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
   AuthenticatedFacturationIndexRoute: typeof AuthenticatedFacturationIndexRoute
   AuthenticatedFacturesIndexRoute: typeof AuthenticatedFacturesIndexRoute
+  AuthenticatedNotificationsIndexRoute: typeof AuthenticatedNotificationsIndexRoute
   AuthenticatedPartenairesIndexRoute: typeof AuthenticatedPartenairesIndexRoute
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
@@ -553,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
   AuthenticatedFacturationIndexRoute: AuthenticatedFacturationIndexRoute,
   AuthenticatedFacturesIndexRoute: AuthenticatedFacturesIndexRoute,
+  AuthenticatedNotificationsIndexRoute: AuthenticatedNotificationsIndexRoute,
   AuthenticatedPartenairesIndexRoute: AuthenticatedPartenairesIndexRoute,
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
@@ -573,7 +635,9 @@ const rootRouteChildren: RootRouteChildren = {
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
   PartenaireTokenRoute: PartenaireTokenRoute,
+  RdvTokenRoute: RdvTokenRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
+  ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport

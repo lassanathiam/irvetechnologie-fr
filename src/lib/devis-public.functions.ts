@@ -196,6 +196,16 @@ export const signerDevisPublic = createServerFn({ method: "POST" })
     if (updateError) throw new Error(updateError.message);
     await assurerRendezVousDepuisDevis(supabaseAdmin, devis);
 
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(supabaseAdmin, {
+      type: "devis_accepte",
+      titre: `Devis ${devis.numero} accepté — ${devis.client_nom}`,
+      message: `Signé par ${data.signataire_nom} le ${new Date(signedAt).toLocaleString("fr-FR")}${devis.objet ? ` · ${devis.objet}` : ""}`,
+      lien: `/devis/${devis.id}`,
+      montant: Number(devis.total_ht ?? 0) + Number(devis.total_tva ?? 0),
+      meta: { devis_id: devis.id },
+    });
+
     return { ok: true, already: false };
   });
 
@@ -229,6 +239,16 @@ export const accepterDevisPublic = createServerFn({ method: "POST" })
       .eq("id", devis.id);
     if (updateError) throw new Error(updateError.message);
     await assurerRendezVousDepuisDevis(supabaseAdmin, devis);
+
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(supabaseAdmin, {
+      type: "devis_accepte",
+      titre: `Devis ${devis.numero} accepté — ${devis.client_nom}`,
+      message: `Signé par ${data.signataire_nom} le ${new Date(signedAt).toLocaleString("fr-FR")}${devis.objet ? ` · ${devis.objet}` : ""}`,
+      lien: `/devis/${devis.id}`,
+      montant: Number(devis.total_ht ?? 0) + Number(devis.total_tva ?? 0),
+      meta: { devis_id: devis.id },
+    });
 
     return { ok: true, already: false };
   });

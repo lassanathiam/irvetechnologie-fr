@@ -654,7 +654,7 @@ export const archiverRendezVous = createServerFn({ method: "POST" })
       const { data: rdv } = await context.supabase
         .from("rendezvous")
         .select(
-          "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, date_debut, demarre_at, termine_at, metrage_m, puissance_borne, phase_installation, type_pose, montant_ht, notif_archive_at",
+          "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, date_debut, demarre_at, termine_at, metrage_m, puissance_borne, phase_installation, type_pose, montant_ht, notif_archive_at",
         )
         .eq("id", data.id)
         .single();
@@ -699,6 +699,7 @@ export const archiverRendezVous = createServerFn({ method: "POST" })
         phase_installation: rdv.phase_installation,
         type_pose: rdv.type_pose,
         photos: urls,
+        zip_url: urls.length ? lienDossierPhotos(rdv.public_token) : null,
       };
 
       const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
@@ -919,6 +920,86 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/** Lien public et unique du dossier photos d'un chantier (archive ZIP). */
+function lienDossierPhotos(token: string): string {
+  const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
+  return `${base.replace(/\/$/, "")}/api/public/retour/${token}.zip`;
+}
+
+/** Lien privé du client pour confirmer son rendez-vous. */
+function lienConfirmationRdv(token: string): string {
+  const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
+  return `${base.replace(/\/$/, "")}/rdv/${token}`;
+}
+
+/**
+ * Envoie au client la proposition de rendez-vous (date choisie par l'équipe).
+ * Le client confirme ou demande un autre créneau depuis son lien privé.
+ */
+export const envoyerPropositionRdv = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; date_debut?: string | null; relance?: boolean }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        date_debut: z.string().min(10).max(40).optional().nullable(),
+        relance: z.boolean().default(false),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select(
+        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, date_debut, duree_min",
+      )
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+
+    const email = rdv.client_email?.trim();
+    if (!email) throw new Error("Ce chantier n'a pas d'adresse e-mail client.");
+
+    const dateProposee = data.date_debut ? new Date(data.date_debut).toISOString() : rdv.date_debut;
+    const maintenant = new Date().toISOString();
+
+    const { error: upErr } = await context.supabase
+      .from("rendezvous")
+      .update({
+        date_debut: dateProposee,
+        rdv_propose_at: maintenant,
+        rdv_confirme_at: null,
+        rdv_refuse_at: null,
+        rdv_client_message: null,
+        date_a_confirmer: true,
+      })
+      .eq("id", data.id);
+    if (upErr) throw new Error(upErr.message);
+
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const result = await sendTemplateEmail("rdv-proposition", email, {
+      idempotencyKey: `rdv-proposition-${data.id}-${dateProposee}-${data.relance ? "relance" : "envoi"}`,
+      templateData: {
+        client_nom: rdv.client_nom,
+        date_debut: dateProposee,
+        duree_min: rdv.duree_min,
+        adresse: rdv.adresse,
+        cp_ville: rdv.cp_ville,
+        objet: rdv.designation || rdv.titre,
+        lien: lienConfirmationRdv(rdv.public_token),
+      },
+    });
+
+    if (!result.sent) {
+      throw new Error(
+        result.reason === "recipient_suppressed"
+          ? "Cette adresse e-mail est bloquée (désinscription ou rejet précédent)."
+          : "L'envoi d'e-mail n'est pas disponible pour le moment.",
+      );
+    }
+    return { ok: true as const, destinataire: email, date_debut: dateProposee };
+  });
+
 /* ------------------------------------------------------------------ */
 /* Suivi en direct du chantier : démarrage, fin, notification         */
 /* ------------------------------------------------------------------ */
@@ -955,7 +1036,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
+        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
       )
       .eq("id", data.id)
       .single();
@@ -1014,21 +1095,8 @@ export const terminerChantier = createServerFn({ method: "POST" })
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         const { COMPANY } = await import("@/lib/company");
         const destinataire = rdv.client_email?.trim() || COMPANY.email;
-        // Photos du retour de travaux, en liens signés 7 jours.
-        const chemins = (photosRows ?? []).map((p) => p.path).slice(0, 8);
-        let photos: { url: string; libelle: string }[] = [];
-        if (chemins.length) {
-          const { data: signed } = await context.supabase.storage
-            .from("chantier-photos")
-            .createSignedUrls(chemins, 60 * 60 * 24 * 7);
-          photos = (signed ?? [])
-            .map((sg, i) => ({
-              url: sg?.signedUrl ?? "",
-              libelle:
-                RETOUR_CATEGORIES_LABELS[(photosRows ?? [])[i]?.categorie ?? ""] ?? "Photo de chantier",
-            }))
-            .filter((p) => p.url);
-        }
+        // Toutes les photos du retour de travaux en un seul lien de téléchargement.
+        const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
         const inclus = Number(rdv.metrage_inclus_m ?? 5);
         const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
         const res = await sendTemplateEmail("chantier-termine", destinataire, {
@@ -1044,7 +1112,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
             supplement_m: reel == null ? null : Math.max(0, reel - inclus),
             observations: rdv.retour_observations,
             delestage: rdv.retour_delestage,
-            photos,
+            zip_url: zipUrl,
           },
           idempotencyKey: `chantier-termine-${data.id}`,
         });
@@ -1057,6 +1125,17 @@ export const terminerChantier = createServerFn({ method: "POST" })
         .update({ notif_fin_at: notifie ? fin.toISOString() : null })
         .eq("id", data.id);
     }
+
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(context.supabase, {
+      type: "chantier_termine",
+      titre: `Chantier terminé — ${rdv.client_nom}`,
+      message: `À facturer, échéance au ${echeance.toLocaleDateString("fr-FR")}.`,
+      lien: "/facturation",
+      montant: rdv.montant_ht == null ? null : Number(rdv.montant_ht),
+      meta: { rendezvous_id: data.id },
+    });
+
     return { ok: true, notifie, duree_min: dureeMin };
   });
 

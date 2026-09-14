@@ -688,5 +688,16 @@ export const proposerMontantPartenaire = createServerFn({ method: "POST" })
       })
       .eq("id", data.rendezvous_id);
     if (error) throw new Error(error.message);
+
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(supabaseAdmin, {
+      type: "partenaire_montant",
+      titre: `${partenaire.nom} propose un montant révisé`,
+      message: data.note?.trim() || "À valider avant facturation.",
+      lien: "/facturation",
+      montant: data.montant_ht,
+      meta: { rendezvous_id: data.rendezvous_id, partenaire_id: partenaire.id },
+    });
+
     return { ok: true as const };
   });
