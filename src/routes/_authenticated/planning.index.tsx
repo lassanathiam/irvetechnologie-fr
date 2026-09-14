@@ -200,6 +200,15 @@ const FACTU_LABEL: Record<string, string> = {
   paye: "payé",
 };
 
+const TYPES_INTERVENTION = ["visite", "installation", "maintenance", "sav", "controle"] as const;
+const STATUTS_DOSSIER = ["planifie", "confirme", "en_cours", "termine", "realise", "annule"] as const;
+const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
+const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
+
+function optionValue<const T extends readonly string[]>(value: string, options: T, fallback: T[number]): T[number] {
+  return options.includes(value) ? (value as T[number]) : fallback;
+}
+
 const ETIQUETTES_SUGGEREES = [
   "Borne 7,4 kW (monophasé 32A)",
   "Borne 11 kW",
@@ -2062,8 +2071,8 @@ function PlanningPage() {
                               setDossierComplet.mutate({
                                 id: r.id,
                                 titre: g("titre"),
-                                type: g("type"),
-                                statut: g("statut"),
+                                type: optionValue(g("type"), TYPES_INTERVENTION, "installation"),
+                                statut: optionValue(g("statut"), STATUTS_DOSSIER, "planifie"),
                                 client_nom: g("client_nom"),
                                 client_telephone: g("client_telephone") || null,
                                 client_email: g("client_email") || null,
@@ -2073,11 +2082,11 @@ function PlanningPage() {
                                 duree_min: Number(g("duree_min") || 120),
                                 technicien: g("technicien") || null,
                                 notes: g("notes") || null,
-                                origine: g("origine"),
+                                origine: optionValue(g("origine"), ORIGINES_DOSSIER, "direct"),
                                 partenaire: g("partenaire") || null,
                                 montant_ht: Number(g("montant_ht") || 0),
                                 tva_pct: Number(g("tva_pct") || 20),
-                                statut_facturation: g("statut_facturation"),
+                                statut_facturation: optionValue(g("statut_facturation"), STATUTS_FACTURATION, "a_facturer"),
                                 designation: g("designation") || null,
                                 etiquettes: parseEtiquettes(g("etiquettes")),
                                 metrage_m: Number(g("metrage_m") || 0),
