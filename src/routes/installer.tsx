@@ -68,8 +68,9 @@ function Installer() {
           <div>
             <h1 className="text-2xl font-semibold">Installer l'application</h1>
             <p className="text-sm text-muted-foreground">
-              Borne de l'Ouest — espace pro IRVE Technologie
+              Borne de l'Ouest — marque de la société IRVE Technologie
             </p>
+            <p className="mt-1 text-xs font-semibold text-primary">Qualifications IRVE P1 · P2 · P3</p>
           </div>
         </div>
 
