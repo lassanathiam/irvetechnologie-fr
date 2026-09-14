@@ -53,6 +53,10 @@
   --color-sidebar-active: var(--sidebar-active);
   --color-sidebar-accent: var(--sidebar-accent);
   --color-overlay: var(--overlay);
+  --color-premium-night: var(--premium-night);
+  --color-premium-blue: var(--premium-blue);
+  --color-premium-energy: var(--premium-energy);
+  --color-premium-foreground: var(--premium-foreground);
   --font-display: "Space Grotesk", system-ui, sans-serif;
   --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
@@ -98,6 +102,10 @@
   --neon-yellow: oklch(0.93 0.20 105);
   --neon-magenta: oklch(0.66 0.30 335);
   --neon-cyan: oklch(0.80 0.13 200);
+  --premium-night: oklch(0.20 0.055 250);
+  --premium-blue: oklch(0.58 0.24 257);
+  --premium-energy: oklch(0.91 0.25 125);
+  --premium-foreground: oklch(0.98 0.006 245);
 }
 
 .dark {
@@ -370,6 +378,57 @@
 
 @utility hero-grad {
   background: linear-gradient(135deg, var(--primary) 0%, oklch(0.72 0.14 168) 52%, oklch(0.68 0.12 154) 100%);
+}
+
+.public-premium {
+  --background: oklch(0.975 0.008 245);
+  --foreground: oklch(0.20 0.055 250);
+  --card: oklch(0.995 0.003 245);
+  --card-foreground: oklch(0.20 0.055 250);
+  --primary: oklch(0.58 0.24 257);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.94 0.018 245);
+  --muted: oklch(0.94 0.015 245);
+  --muted-foreground: oklch(0.48 0.04 250);
+  --border: oklch(0.86 0.025 245);
+  --input: oklch(0.98 0.006 245);
+  font-family: "Figtree", system-ui, sans-serif;
+}
+
+.public-premium h1,
+.public-premium h2,
+.public-premium h3 {
+  font-family: "Outfit", system-ui, sans-serif;
+}
+
+.premium-hero-veil {
+  background: linear-gradient(90deg, color-mix(in oklab, var(--premium-night) 97%, transparent) 0%, color-mix(in oklab, var(--premium-night) 88%, transparent) 48%, color-mix(in oklab, var(--premium-night) 40%, transparent) 100%);
+}
+
+.premium-tech-grid {
+  background-image: linear-gradient(color-mix(in oklab, var(--premium-blue) 18%, transparent) 1px, transparent 1px), linear-gradient(90deg, color-mix(in oklab, var(--premium-blue) 18%, transparent) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: linear-gradient(to right, black, transparent 70%);
+}
+
+.premium-title-accent {
+  color: var(--premium-energy);
+  text-shadow: 0 0 38px color-mix(in oklab, var(--premium-energy) 24%, transparent);
+}
+
+.premium-primary-cta {
+  background: var(--premium-foreground);
+  color: var(--premium-night);
+  box-shadow: 8px 8px 0 color-mix(in oklab, var(--premium-blue) 72%, transparent);
+  transition: transform 180ms ease, background-color 180ms ease, box-shadow 180ms ease;
+}
+.premium-primary-cta:hover { background: var(--premium-energy); transform: translate(-2px, -2px); box-shadow: 11px 11px 0 color-mix(in oklab, var(--premium-blue) 82%, transparent); }
+.premium-secondary-cta { border: 2px solid color-mix(in oklab, var(--premium-foreground) 35%, transparent); color: var(--premium-foreground); transition: border-color 180ms ease, background-color 180ms ease; }
+.premium-secondary-cta:hover { border-color: var(--premium-blue); background: color-mix(in oklab, var(--premium-blue) 14%, transparent); }
+.premium-photo-frame { box-shadow: 18px 18px 0 color-mix(in oklab, var(--premium-blue) 32%, transparent); transform: rotate(1deg); }
+
+@media (max-width: 640px) {
+  .premium-hero-veil { background: linear-gradient(180deg, color-mix(in oklab, var(--premium-night) 78%, transparent), color-mix(in oklab, var(--premium-night) 98%, transparent)); }
 }
 
 @keyframes kenburns {
