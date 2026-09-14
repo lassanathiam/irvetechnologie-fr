@@ -19,7 +19,7 @@ export function SiteNav() {
             <span className="hidden text-[9px] font-semibold uppercase text-premium-blue sm:block">
               Société IRVE Technologie
             </span>
-            <span className="mt-0.5 block text-[9px] font-bold text-premium-foreground/65 sm:hidden">
+            <span className="mt-0.5 block text-[9px] font-bold text-muted-foreground sm:hidden dark:text-premium-foreground/65">
               IRVE Technologie · P1 · P2 · P3
             </span>
           </span>
