@@ -215,76 +215,67 @@ function Index() {
 
       {/* HERO */}
       <section className="relative overflow-hidden pt-20 pb-12 sm:pt-24 sm:pb-14">
-        <div className="pointer-events-none absolute -top-28 left-1/2 h-80 w-80 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="relative overflow-hidden rounded-[2rem] border border-border/70 bg-[#07120d] text-white shadow-[0_35px_90px_-50px_rgba(0,0,0,.9)]">
-            <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_80%_10%,rgba(38,211,167,.25),transparent_45%),radial-gradient(circle_at_20%_100%,rgba(34,197,94,.18),transparent_42%)]" />
-            <div className="pointer-events-none absolute inset-0 opacity-30 bg-[linear-gradient(to_right,rgba(255,255,255,.08)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,.08)_1px,transparent_1px)] bg-[size:32px_32px]" />
-            <div className="relative z-10 grid gap-7 p-6 sm:p-8 lg:grid-cols-12 lg:p-10">
-              <div className="lg:col-span-7">
-                <div className="inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-mono text-[11px] text-emerald-200">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-300 animate-pulse" />
-                  Équipe IRVE · Nantes & régions voisines
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-primary/20 blur-3xl animate-hero-drift" />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="rounded-[2rem] border border-primary/20 bg-gradient-to-b from-[#f7fbff] to-[#eff7ff] p-6 shadow-[0_35px_90px_-65px_rgba(14,165,124,.45)] sm:p-8 lg:p-10">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="text-mono text-primary">Installation IRVE · Nantes & régions voisines</p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-slate-900 sm:text-5xl md:text-6xl">
+                Bornes installées, conformes,
+                <span className="block text-slate-500">et prêtes pour l&apos;avenir.</span>
+              </h1>
+              <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-slate-600">
+                Particuliers, entreprises et copropriétés : étude technique, devis validé,
+                installation et mise en service avec des techniciens qualifiés IRVE.
+              </p>
+            </div>
+
+            <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-primary/20 bg-white/85 p-4 shadow-sm sm:p-6">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-primary/25 bg-primary/10 px-3 py-2 text-center text-sm font-medium text-primary">
+                  Étude technique
                 </div>
-                <h1 className="mt-5 font-display text-[2.2rem] leading-[0.98] tracking-tight sm:text-5xl lg:text-6xl">
-                  Bornes installées
-                  <span className="mt-1 block text-white">fiables, conformes et prêtes pour l&apos;avenir.</span>
-                </h1>
-                <p className="mt-4 max-w-2xl text-sm text-white/80 sm:text-base">
-                  Particuliers, entreprises, copropriétés : audit, devis, pose, raccordement
-                  et mise en service par des techniciens qualifiés IRVE.
-                </p>
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                  <Link
-                    to="/demande"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl bg-emerald-400 px-6 py-3.5 text-mono text-slate-950 transition hover:bg-emerald-300 animate-cta-attention"
-                  >
-                    Demander un devis <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href="tel:+33633657840"
-                    className="inline-flex items-center justify-center gap-2 rounded-xl border border-white/30 bg-white/10 px-6 py-3.5 text-mono text-white transition hover:bg-white/20"
-                  >
-                    <Phone className="h-4 w-4" /> Appeler
-                  </a>
+                <div className="rounded-lg border border-primary/20 bg-white px-3 py-2 text-center text-sm font-medium text-slate-700">
+                  Devis validé
                 </div>
-                <div className="mt-6 rounded-2xl border border-white/20 bg-white/8 p-4 backdrop-blur-sm">
-                  <p className="text-mono text-emerald-200">Installation de borne de recharge</p>
-                  <p className="mt-1 text-3xl font-semibold tracking-tight sm:text-4xl">À partir de 1 290 € TTC</p>
-                  <p className="mt-1 text-sm text-white/75">Borne + installation par un professionnel IRVE.</p>
+                <div className="rounded-lg border border-primary/20 bg-white px-3 py-2 text-center text-sm font-medium text-slate-700">
+                  Pose & mise en service
                 </div>
               </div>
 
-              <div className="lg:col-span-5">
-                <div className="grid gap-3">
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft">
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 01</p>
-                    <p className="mt-1 text-lg font-semibold">Étude technique</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "120ms" }}>
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 02</p>
-                    <p className="mt-1 text-lg font-semibold">Devis validé</p>
-                  </div>
-                  <div className="rounded-2xl border border-white/20 bg-white/10 p-4 backdrop-blur-sm animate-fade-soft" style={{ animationDelay: "240ms" }}>
-                    <p className="text-mono text-[11px] text-emerald-200">ÉTAPE 03</p>
-                    <p className="mt-1 text-lg font-semibold">Pose & mise en service</p>
-                  </div>
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold"><AnimatedCounter to={7} /></p>
-                      <p className="text-[10px] text-white/70">Départements</p>
-                    </div>
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold"><AnimatedCounter to={48} suffix="h" /></p>
-                      <p className="text-[10px] text-white/70">Étude</p>
-                    </div>
-                    <div className="rounded-xl border border-white/20 bg-emerald-950/35 p-3 text-center">
-                      <p className="text-xl font-semibold">IRVE</p>
-                      <p className="text-[10px] text-white/70">Qualifiée</p>
-                    </div>
-                  </div>
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900"><AnimatedCounter to={7} /></p>
+                  <p className="mt-0.5 text-xs text-slate-500">Départements prioritaires</p>
+                </div>
+                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900"><AnimatedCounter to={48} suffix="h" /></p>
+                  <p className="mt-0.5 text-xs text-slate-500">Étude de faisabilité</p>
+                </div>
+                <div className="rounded-xl border border-primary/20 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-slate-900">IRVE</p>
+                  <p className="mt-0.5 text-xs text-slate-500">Équipe qualifiée</p>
                 </div>
               </div>
+
+              <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to="/demande"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-mono text-primary-foreground transition hover:opacity-90 animate-cta-attention"
+                >
+                  Demander un devis <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="tel:+33633657840"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-primary/25 bg-white px-6 py-3 text-mono text-slate-700 transition hover:border-primary hover:text-primary"
+                >
+                  <Phone className="h-4 w-4" /> Appeler
+                </a>
+              </div>
+
+              <p className="mt-4 text-center text-sm text-slate-600">
+                Installation de borne de recharge à partir de <span className="font-semibold text-slate-900">1 290 € TTC</span>.
+              </p>
             </div>
           </div>
         </div>
