@@ -13,3 +13,4 @@
 - [x] Corriger le simulateur ADVENIR, le message photos et le mode jour du bandeau d’accueil (14/09/2026)
 - [x] Unifier le haut, le bas et les boutons publics avec la palette sobre existante, sans vert fluorescent
 - [x] Rendre le parcours des avis visible et compréhensible après envoi
+- [x] Clarifier marque, société et qualifications dans l’en-tête, puis remplacer l’icône installée
