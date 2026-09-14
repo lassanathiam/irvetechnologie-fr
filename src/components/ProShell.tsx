@@ -13,6 +13,7 @@ import {
   Inbox,
   LayoutDashboard,
   LogOut,
+  Bell,
   Menu,
   Receipt,
   Sparkles,
@@ -24,9 +25,13 @@ import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY } from "@/lib/company";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { Button } from "@/components/ui/button";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { compterNotificationsNonLues } from "@/lib/notifications.functions";
 
 const LINKS = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
+  { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/planning", label: "Planning", icon: CalendarClock },
   { to: "/demandes", label: "Demandes", icon: Inbox },
   { to: "/devis", label: "Devis", icon: FileText },
@@ -41,6 +46,13 @@ export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [reduit, setReduit] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
+  const compter = useServerFn(compterNotificationsNonLues);
+  const { data: nonLues } = useQuery({
+    queryKey: ["notifications-non-lues"],
+    queryFn: () => compter(),
+    refetchInterval: 60_000,
+  });
+  const nbNonLues = nonLues?.nb ?? 0;
 
   useEffect(() => {
     const key = "irve-mobile-welcome-dismissed";
@@ -96,6 +108,11 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             >
               <Icon className="h-5 w-5 shrink-0" />
               {!reduit && <span>{label}</span>}
+              {to === "/notifications" && nbNonLues > 0 && (
+                <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-[11px] font-bold text-sidebar">
+                  {nbNonLues > 99 ? "99+" : nbNonLues}
+                </span>
+              )}
             </Link>
           ))}
         </nav>
