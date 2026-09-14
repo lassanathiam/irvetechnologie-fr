@@ -354,9 +354,10 @@ function Demande() {
           <div>
             <SectionHeading n="04" title="Photos du chantier" />
             <p className="text-sm text-muted-foreground mt-3 max-w-xl">
-              Ces photos nous permettent d'évaluer la faisabilité sans déplacement.
-              Le cheminement du câble peut comporter plusieurs vues — ajoutez-en autant
-              que nécessaire (jusqu'à {MAX_CHEMINEMENT}).
+              Nous vous demandons de photographier soigneusement les éléments du chantier afin que notre bureau
+              d&apos;études puisse analyser votre installation à distance. Des photos précises permettent d&apos;éviter
+              un déplacement d&apos;étude inutile et nous aident à limiter les frais pour vous proposer un devis au plus juste.
+              Le cheminement du câble peut comporter plusieurs vues — ajoutez-en autant que nécessaire (jusqu&apos;à {MAX_CHEMINEMENT}).
             </p>
 
             <div className="grid md:grid-cols-2 gap-4 mt-8">
