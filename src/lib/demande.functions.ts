@@ -147,6 +147,15 @@ export const submitDemande = createServerFn({ method: "POST" })
         if (r.error) console.error("rate limit write error", r.error);
       });
 
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(supabaseAdmin, {
+      type: "demande",
+      titre: `Nouvelle demande — ${data.nom}`,
+      message: `${data.type_demande} · ${data.code_postal} · ${data.telephone} · ${data.email}`,
+      lien: "/demandes",
+      meta: { demande_id: row.id },
+    });
+
     return { ok: true as const, id: row.id };
   });
 

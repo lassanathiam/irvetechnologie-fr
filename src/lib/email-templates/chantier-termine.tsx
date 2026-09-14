@@ -27,6 +27,8 @@ export type ChantierTermineData = {
   observations?: string | null;
   delestage?: boolean | null;
   photos?: { url: string; libelle: string }[] | null;
+  /** Lien de téléchargement du dossier photos complet (ZIP). */
+  zip_url?: string | null;
 };
 
 const dureeFr = (min?: number | null) => {
@@ -81,21 +83,35 @@ function ChantierTermineEmail(data: ChantierTermineData) {
               <Text style={{ fontSize: 14, margin: "8px 0" }}>Observations : {data.observations}</Text>
             ) : null}
           </Section>
-          {data.photos?.length ? (
+          {data.zip_url ? (
             <>
               <Hr />
-              <Section>
+              <Section style={{ margin: "16px 0" }}>
                 <Text style={{ fontSize: 14, fontWeight: "bold", margin: "8px 0" }}>
-                  Photos de fin d&apos;intervention (liens valables 7 jours)
+                  Photos de fin d&apos;intervention
                 </Text>
-                {data.photos.map((p, i) => (
-                  <Text key={i} style={{ fontSize: 13, margin: "4px 0" }}>
-                    {p.libelle} : <Link href={p.url}>voir la photo</Link>
-                  </Text>
-                ))}
+                <Link
+                  href={data.zip_url}
+                  style={{
+                    display: "inline-block",
+                    backgroundColor: "#1d4ed8",
+                    color: "#ffffff",
+                    borderRadius: 8,
+                    padding: "12px 20px",
+                    fontSize: 15,
+                    fontWeight: "bold",
+                    textDecoration: "none",
+                  }}
+                >
+                  Télécharger le dossier photos (ZIP)
+                </Link>
+                <Text style={{ fontSize: 12, color: "#667", margin: "10px 0 0" }}>
+                  Un seul fichier contenant toutes les photos du chantier. Lien valable 30 jours.
+                </Text>
               </Section>
             </>
           ) : null}
+
           <Hr />
           <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>
             Une question ? {COMPANY.telephone} · {COMPANY.telephone2}
@@ -130,5 +146,6 @@ export const template: TemplateEntry = {
     observations: "Délestage paramétré, essais conformes.",
     delestage: true,
     photos: [{ url: "https://example.com/photo.jpg", libelle: "Borne posée" }],
+    zip_url: "https://www.irvetechnologie.fr/api/public/retour/exemple.zip",
   },
 };

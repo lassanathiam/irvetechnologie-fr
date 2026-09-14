@@ -79,7 +79,9 @@ export async function sendTemplateEmail(
         purpose: 'transactional',
         label: templateName,
         idempotency_key: options.idempotencyKey || crypto.randomUUID(),
-        reply_to: options.replyTo,
+        // Par défaut, les réponses arrivent chez nous et non sur une boîte « noreply ».
+        reply_to: options.replyTo || 'contacts@irvetechnologie.fr',
+
       },
       { apiKey, sendUrl: process.env['LOVABLE_SEND_URL'] }
     )

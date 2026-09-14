@@ -7,6 +7,7 @@ import {
   Hr,
   Html,
   Img,
+  Link,
   Preview,
   Section,
   Text,
@@ -30,6 +31,8 @@ export type ChantierArchiveData = {
   /** Montant HT — transmis uniquement au donneur d'ordre. */
   montant_ht?: number | null;
   photos?: string[];
+  /** Lien de téléchargement du dossier photos complet (ZIP). */
+  zip_url?: string | null;
   /** « client » ou « partenaire » : adapte le texte d'introduction. */
   destinataire?: "client" | "partenaire";
 };
@@ -116,11 +119,31 @@ function ChantierArchiveEmail(data: ChantierArchiveData) {
                   />
                 ))}
               </Section>
+              {data.zip_url ? (
+                <Text style={{ fontSize: 13, margin: "0 0 8px" }}>
+                  <Link
+                    href={data.zip_url}
+                    style={{
+                      display: "inline-block",
+                      backgroundColor: "#1d4ed8",
+                      color: "#ffffff",
+                      borderRadius: 8,
+                      padding: "12px 20px",
+                      fontSize: 15,
+                      fontWeight: "bold",
+                      textDecoration: "none",
+                    }}
+                  >
+                    Télécharger toutes les photos (ZIP)
+                  </Link>
+                </Text>
+              ) : null}
               <Text style={{ fontSize: 12, color: "#667", margin: "0 0 8px" }}>
-                Les photos restent accessibles pendant 7 jours. Pensez à les enregistrer.
+                Un seul fichier contenant tout le dossier photos. Lien valable 30 jours.
               </Text>
             </>
           ) : null}
+
           <Hr />
           <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>
             Une question ? {COMPANY.telephone} · {COMPANY.telephone2}
@@ -157,6 +180,7 @@ export const template = {
     type_pose: "Murale extérieure",
     montant_ht: 1290,
     photos: [],
+    zip_url: "https://www.irvetechnologie.fr/api/public/retour/exemple.zip",
     destinataire: "client",
   },
 } satisfies TemplateEntry;
