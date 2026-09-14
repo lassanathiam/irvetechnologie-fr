@@ -61,7 +61,7 @@ function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="public-premium min-h-screen bg-background text-foreground">
       <SiteNav />
       <section className="pt-40 pb-24">
         <div className="mx-auto max-w-md px-6">

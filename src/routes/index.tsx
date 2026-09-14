@@ -249,7 +249,7 @@ function Index() {
           </div>
           <div className="relative hidden lg:col-span-5 lg:block animate-fade-soft">
             <div className="premium-photo-frame relative ml-auto aspect-[4/5] w-full max-w-md border border-premium-blue/50">
-              <img src={borneHero} alt="Détail d'une installation de recharge électrique" className="h-full w-full object-cover" />
+              <img src={realisations[0]?.src ?? borneHero} alt={realisations[0]?.title ?? "Réalisation de recharge électrique par Borne de l'Ouest"} className="h-full w-full object-cover" />
               <div className="absolute right-5 top-5 border border-premium-blue/60 bg-premium-night/85 p-4 backdrop-blur-md">
                 <p className="text-xs font-semibold uppercase text-premium-blue">Installation maîtrisée</p>
                 <p className="mt-1 font-display text-2xl font-bold">7 · 11 · 22 kW</p>

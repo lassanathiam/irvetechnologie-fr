@@ -212,7 +212,7 @@ function Demande() {
 
   if (submitted) {
     return (
-      <div className="min-h-screen">
+      <div className="public-premium min-h-screen bg-background text-foreground">
         <SiteNav />
         <section className="pt-40 pb-24">
           <div className="mx-auto max-w-2xl px-6 text-center">
@@ -243,7 +243,7 @@ function Demande() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="public-premium min-h-screen bg-background text-foreground">
       <SiteNav />
 
       <section className="pt-32 pb-12 border-b border-border">

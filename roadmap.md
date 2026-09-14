@@ -9,4 +9,4 @@
 - [x] Retour de travaux : photos essentielles obligatoires, métrage réel/plus-value, email de fin enrichi (10/09/2026)
 - [x] Refaire la page d’accueil dans la direction Premium Industrial Tech choisie (14/09/2026)
 
-- [ ] Uniformiser les pages publiques avec le style premium, mode jour/nuit et réalisations accélérées (14/09/2026)
+- [x] Uniformiser les pages publiques avec le style premium, mode jour/nuit et réalisations accélérées (14/09/2026)

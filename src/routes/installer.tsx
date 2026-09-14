@@ -1,5 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
+import { SiteNav } from "@/components/SiteNav";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/installer")({
   head: () => ({
@@ -42,7 +44,9 @@ function Installer() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-background text-foreground px-4 py-10">
+    <div className="public-premium min-h-screen bg-background text-foreground">
+      <SiteNav />
+      <main className="px-4 pb-10 pt-32">
       <div className="mx-auto max-w-2xl space-y-8">
         <nav className="flex flex-wrap items-center gap-3 text-mono text-xs">
           <Link to="/" className="text-muted-foreground hover:text-primary underline-offset-2 hover:underline">
@@ -121,6 +125,8 @@ function Installer() {
           </Link>
         </p>
       </div>
+      </main>
+      <SiteFooter />
     </div>
   );
 }
