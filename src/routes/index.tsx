@@ -157,8 +157,8 @@ function Index() {
   const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
   const PRIX_DEMARRAGE_TTC = 1290;
   const PRIX_DEMARRAGE_HT = Math.round((PRIX_DEMARRAGE_TTC / 1.2) * 100) / 100;
-  const [aideBornes, setAideBornes] = useState(0);
-  const [aideMontantHt, setAideMontantHt] = useState(PRIX_DEMARRAGE_HT);
+  const [aideBornes, setAideBornes] = useState("");
+  const [aideMontantHt, setAideMontantHt] = useState("");
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -168,8 +168,8 @@ function Index() {
     staleTime: 60_000,
   });
   const isClient = audience === "client";
-  const baseHt = Math.max(0, aideMontantHt);
-  const nbBornes = Math.max(0, aideBornes);
+  const baseHt = Math.max(0, Number(aideMontantHt) || 0);
+  const nbBornes = Math.max(0, Number(aideBornes) || 0);
   const aideTotale =
     aideProfil === "copro-individuelle"
       ? Math.min(baseHt * 0.5, 1000) * nbBornes
@@ -215,7 +215,7 @@ function Index() {
       <SiteNav />
 
       {/* HERO */}
-      <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16 text-premium-foreground">
+      <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16">
         <img src={borneHero} alt="Borne de recharge installée par Borne de l'Ouest" className="absolute inset-0 h-full w-full object-cover object-center" />
         <div className="absolute inset-0 premium-hero-veil" aria-hidden />
         <div className="absolute inset-0 premium-tech-grid opacity-30" aria-hidden />
@@ -228,7 +228,7 @@ function Index() {
             <h1 className="mt-7 font-display text-5xl font-bold leading-[0.9] sm:text-7xl lg:text-8xl">
               BORNE DE<br /><span className="premium-title-accent">L&apos;OUEST</span>
             </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-premium-foreground/75 sm:text-xl">
+            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-current opacity-75 sm:text-xl">
               Installation et maintenance de solutions de recharge fiables. Nous accompagnons particuliers, copropriétés et entreprises dans tout le Grand Ouest.
             </p>
             <div className="mt-9 flex flex-col gap-4 sm:flex-row">
@@ -328,9 +328,11 @@ function Index() {
               <label className="text-sm text-muted-foreground">Nombre de bornes</label>
               <input
                 type="number"
-                min={0}
+                min={1}
+                inputMode="numeric"
+                placeholder="Ex. 1"
                 value={aideBornes}
-                onChange={(e) => setAideBornes(Math.max(0, Number(e.target.value) || 0))}
+                onChange={(e) => setAideBornes(e.target.value)}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
               <label className="text-sm text-muted-foreground">Coût HT / borne</label>
@@ -338,9 +340,11 @@ function Index() {
                 type="number"
                 min={0}
                 step={50}
+                inputMode="decimal"
+                placeholder="Ex. 1 075"
                 value={aideMontantHt}
-                onChange={(e) => setAideMontantHt(Math.max(0, Number(e.target.value) || 0))}
-                className="w-28 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                onChange={(e) => setAideMontantHt(e.target.value)}
+                className="w-32 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
             </div>
             {aideProfil === "maison" ? (
@@ -366,9 +370,15 @@ function Index() {
                   Estimation Advenir : 50% du coût HT, plafonné à{" "}
                   {aideProfil === "copro-individuelle" ? "1 000 € HT" : "1 660 € HT"} par point de charge.
                 </p>
-                <p className="mt-1 text-sm font-semibold">
-                  Aide estimée totale : {new Intl.NumberFormat("fr-FR").format(Math.round(aideTotale))} € HT
-                </p>
+                {baseHt > 0 && nbBornes > 0 ? (
+                  <p className="mt-1 text-sm font-semibold">
+                    Aide estimée totale : {new Intl.NumberFormat("fr-FR").format(Math.round(aideTotale))} € HT
+                  </p>
+                ) : (
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    Renseignez le nombre de bornes et le coût HT pour afficher l&apos;estimation.
+                  </p>
+                )}
               </>
             )}
             <p className="mt-2 text-xs text-muted-foreground">

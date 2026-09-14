@@ -10,3 +10,4 @@
 - [x] Refaire la page d’accueil dans la direction Premium Industrial Tech choisie (14/09/2026)
 
 - [x] Uniformiser les pages publiques avec le style premium, mode jour/nuit et réalisations accélérées (14/09/2026)
+- [x] Corriger le simulateur ADVENIR, le message photos et le mode jour du bandeau d’accueil (14/09/2026)
