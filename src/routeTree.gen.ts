@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -38,11 +37,6 @@ import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/l
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const InstallerRoute = InstallerRouteImport.update({
   id: '/installer',
   path: '/installer',
@@ -195,7 +189,6 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -224,7 +217,6 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -255,7 +247,6 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
-  '/sitemap.xml': typeof SitemapDotxmlRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -286,7 +277,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/installer'
-    | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -315,7 +305,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/installer'
-    | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -345,7 +334,6 @@ export interface FileRouteTypes {
     | '/auth'
     | '/demande'
     | '/installer'
-    | '/sitemap.xml'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -376,7 +364,6 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   DemandeRoute: typeof DemandeRoute
   InstallerRoute: typeof InstallerRoute
-  SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
   PartenaireTokenRoute: typeof PartenaireTokenRoute
@@ -388,13 +375,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/installer': {
       id: '/installer'
       path: '/installer'
@@ -631,7 +611,6 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   DemandeRoute: DemandeRoute,
   InstallerRoute: InstallerRoute,
-  SitemapDotxmlRoute: SitemapDotxmlRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
   PartenaireTokenRoute: PartenaireTokenRoute,
