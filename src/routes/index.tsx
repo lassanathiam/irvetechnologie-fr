@@ -659,7 +659,7 @@ function Index() {
               <button
                 type="submit"
                 disabled={avisBusy}
-                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                className="bg-premium-blue text-premium-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 transition hover:opacity-90 disabled:opacity-60"
               >
                 {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
               </button>
