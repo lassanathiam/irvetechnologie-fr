@@ -102,7 +102,7 @@
   --neon-yellow: oklch(0.93 0.20 105);
   --neon-magenta: oklch(0.66 0.30 335);
   --neon-cyan: oklch(0.80 0.13 200);
-  --premium-night: oklch(0.20 0.055 250);
+  --premium-night: oklch(0.1604 0.0307 251);
   --premium-blue: oklch(0.58 0.24 257);
   --premium-energy: oklch(0.91 0.25 125);
   --premium-foreground: oklch(0.98 0.006 245);
@@ -420,12 +420,10 @@
 }
 
 .premium-hero-veil {
-  background: linear-gradient(90deg, color-mix(in oklab, var(--background) 96%, transparent) 0%, color-mix(in oklab, var(--background) 88%, transparent) 48%, color-mix(in oklab, var(--background) 26%, transparent) 100%);
+  background: linear-gradient(90deg, color-mix(in oklab, var(--premium-night) 97%, transparent) 0%, color-mix(in oklab, var(--premium-night) 88%, transparent) 48%, color-mix(in oklab, var(--premium-night) 40%, transparent) 100%);
 }
 
-.premium-hero { color: var(--foreground); }
-
-.dark .premium-hero { color: var(--premium-foreground); }
+.premium-hero { color: var(--premium-foreground); }
 
 .dark .premium-hero-veil {
   background: linear-gradient(90deg, color-mix(in oklab, var(--premium-night) 97%, transparent) 0%, color-mix(in oklab, var(--premium-night) 88%, transparent) 48%, color-mix(in oklab, var(--premium-night) 40%, transparent) 100%);
@@ -455,7 +453,7 @@
 .premium-photo-frame { box-shadow: 18px 18px 0 color-mix(in oklab, var(--premium-blue) 32%, transparent); transform: rotate(1deg); }
 
 @media (max-width: 640px) {
-  .premium-hero-veil { background: linear-gradient(180deg, color-mix(in oklab, var(--background) 72%, transparent), color-mix(in oklab, var(--background) 97%, transparent)); }
+  .premium-hero-veil { background: linear-gradient(180deg, color-mix(in oklab, var(--premium-night) 78%, transparent), color-mix(in oklab, var(--premium-night) 98%, transparent)); }
   .dark .premium-hero-veil { background: linear-gradient(180deg, color-mix(in oklab, var(--premium-night) 78%, transparent), color-mix(in oklab, var(--premium-night) 98%, transparent)); }
 }
 
