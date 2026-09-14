@@ -27,6 +27,7 @@ import {
   Trophy,
   Camera,
   ShieldCheck,
+  Mail,
   Trash2,
   Upload,
   Smartphone,
