@@ -235,10 +235,10 @@ function Index() {
                 <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
                   Étude technique
                 </div>
-                <div className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-center text-sm font-medium text-emerald-900/80">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-center text-sm font-medium text-emerald-700">
                   Devis validé
                 </div>
-                <div className="rounded-lg border border-emerald-200 bg-white px-3 py-2 text-center text-sm font-medium text-emerald-900/80">
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-center text-sm font-medium text-emerald-700">
                   Pose & mise en service
                 </div>
               </div>
@@ -267,7 +267,7 @@ function Index() {
                 </Link>
                 <a
                   href="tel:+33633657840"
-                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-200 bg-white px-6 py-3 text-mono text-emerald-900/80 transition hover:border-primary hover:text-primary"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-6 py-3 text-mono text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-100"
                 >
                   <Phone className="h-4 w-4" /> Appeler
                 </a>
@@ -316,28 +316,28 @@ function Index() {
               <button
                 type="button"
                 onClick={() => setAideProfil("maison")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Maison individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-individuelle")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Copro · borne individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-partagee")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Copro · borne partagée
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("pro")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Pro / flotte
               </button>
@@ -397,13 +397,13 @@ function Index() {
 
           {/* Toggle audience */}
           <div className={`flex flex-col items-center gap-3 ${homeCompact ? "mb-8" : "mb-14"}`}>
-            <span className="text-mono text-muted-foreground">Choisissez votre profil</span>
-            <div className="inline-flex border border-border rounded-sm bg-card p-1">
+            <span className="text-mono text-emerald-900/70">Choisissez votre profil</span>
+            <div className="inline-flex border border-emerald-200 rounded-sm bg-card p-1">
               <button
                 type="button"
                 onClick={() => setAudience("client")}
                 className={`text-mono px-5 py-2.5 rounded-sm transition ${
-                  isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  isClient ? "bg-primary text-primary-foreground" : "text-emerald-900/65 hover:text-primary"
                 }`}
               >
                 Client Borne de l'Ouest
@@ -412,7 +412,7 @@ function Index() {
                 type="button"
                 onClick={() => setAudience("external")}
                 className={`text-mono px-5 py-2.5 rounded-sm transition ${
-                  !isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  !isClient ? "bg-primary text-primary-foreground" : "text-emerald-900/65 hover:text-primary"
                 }`}
               >
                 Borne installée ailleurs
