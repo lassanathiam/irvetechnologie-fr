@@ -1,7 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, ShieldCheck, Users, Wrench } from "lucide-react";
-import { SiteNav } from "@/components/SiteNav";
-import { SiteFooter } from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/a-propos")({
   head: () => ({
@@ -12,10 +10,6 @@ export const Route = createFileRoute("/a-propos")({
         content:
           "Découvrez Borne de l'Ouest : spécialiste IRVE pour particuliers, copropriétés et professionnels, avec une zone d'intervention flexible autour de Nantes.",
       },
-      { property: "og:title", content: "À propos | Borne de l'Ouest" },
-      { property: "og:description", content: "Découvrez l'équipe IRVE Technologie, ses qualifications P1, P2 et P3 et sa méthode d'accompagnement." },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: AboutPage,
@@ -23,9 +17,7 @@ export const Route = createFileRoute("/a-propos")({
 
 function AboutPage() {
   return (
-    <div className="public-premium min-h-screen bg-background text-foreground">
-      <SiteNav />
-      <main className="pt-28">
+    <main className="min-h-screen bg-background text-foreground pt-28">
       <section className="border-b border-border bg-white/[0.02]">
         <div className="mx-auto max-w-5xl px-6 py-14 sm:py-20">
           <p className="text-mono text-primary">À propos</p>
@@ -118,8 +110,6 @@ function AboutPage() {
           </Link>
         </div>
       </section>
-      </main>
-      <SiteFooter />
-    </div>
+    </main>
   );
 }

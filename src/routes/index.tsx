@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown, BadgeCheck } from "lucide-react";
+import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { RealisationsSlider } from "@/components/RealisationsSlider";
@@ -10,7 +10,6 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
-import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -153,12 +152,12 @@ function Index() {
   const [avisSent, setAvisSent] = useState(false);
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
-  const [homeCompact] = useState(false);
+  const [homeCompact, setHomeCompact] = useState(true);
   const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
   const PRIX_DEMARRAGE_TTC = 1290;
   const PRIX_DEMARRAGE_HT = Math.round((PRIX_DEMARRAGE_TTC / 1.2) * 100) / 100;
-  const [aideBornes, setAideBornes] = useState("");
-  const [aideMontantHt, setAideMontantHt] = useState("");
+  const [aideBornes, setAideBornes] = useState(0);
+  const [aideMontantHt, setAideMontantHt] = useState(PRIX_DEMARRAGE_HT);
   const avisMountedAt = useRef<number>(Date.now());
   const envoyerAvis = useServerFn(submitAvisClient);
   const fetchAvis = useServerFn(listPublicAvis);
@@ -168,8 +167,8 @@ function Index() {
     staleTime: 60_000,
   });
   const isClient = audience === "client";
-  const baseHt = Math.max(0, Number(aideMontantHt) || 0);
-  const nbBornes = Math.max(0, Number(aideBornes) || 0);
+  const baseHt = Math.max(0, aideMontantHt);
+  const nbBornes = Math.max(0, aideBornes);
   const aideTotale =
     aideProfil === "copro-individuelle"
       ? Math.min(baseHt * 0.5, 1000) * nbBornes
@@ -211,53 +210,72 @@ function Index() {
   }
 
   return (
-    <div className="public-premium min-h-screen overflow-x-hidden bg-background text-foreground">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground">
       <SiteNav />
 
       {/* HERO */}
-      <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16">
-        <img src={borneHero} alt="Borne de recharge installée par Borne de l'Ouest" className="absolute inset-0 h-full w-full object-cover object-center" />
-        <div className="absolute inset-0 premium-hero-veil" aria-hidden />
-        <div className="absolute inset-0 premium-tech-grid opacity-30" aria-hidden />
-        <div className="relative mx-auto grid min-h-[calc(92svh-4rem)] max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-20">
-          <div className="animate-fade-up lg:col-span-7">
-            <div className="inline-flex items-center gap-2 border border-premium-blue/50 bg-premium-night/65 px-3 py-2 text-xs font-semibold uppercase text-premium-blue backdrop-blur-md">
-               <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-blue opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-blue" /></span>
-              Expertise IRVE certifiée P1 · P2 · P3
+      <section className="relative overflow-hidden bg-[#eef8f3] pt-20 pb-12 sm:pt-24 sm:pb-14">
+        <div className="pointer-events-none absolute -top-20 left-1/2 h-72 w-72 -translate-x-1/2 rounded-full bg-emerald-400/20 blur-3xl animate-hero-drift" />
+        <div className="mx-auto max-w-6xl px-4 sm:px-6">
+          <div className="rounded-[2rem] border border-emerald-200 bg-gradient-to-b from-[#f9fdfb] to-[#eff9f4] p-6 shadow-[0_35px_90px_-65px_rgba(16,185,129,.35)] sm:p-8 lg:p-10">
+            <div className="mx-auto max-w-4xl text-center">
+              <p className="text-mono text-emerald-700">Installation IRVE · Nantes & régions voisines</p>
+              <h1 className="mt-4 text-4xl font-semibold tracking-tight text-emerald-950 sm:text-5xl md:text-6xl">
+                Bornes installées, conformes,
+                <span className="block text-emerald-700/60">et prêtes pour l&apos;avenir.</span>
+              </h1>
+              <p className="mx-auto mt-5 max-w-3xl text-base leading-relaxed text-emerald-900/65">
+                Particuliers, entreprises et copropriétés : étude technique, devis validé,
+                installation et mise en service avec des techniciens qualifiés IRVE.
+              </p>
             </div>
-            <h1 className="mt-7 font-display text-4xl font-bold leading-none sm:text-6xl lg:text-7xl">
-              BORNE DE<br /><span className="premium-title-accent">L&apos;OUEST</span>
-            </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-current opacity-75 sm:text-xl">
-              Installation et maintenance de solutions de recharge fiables. Nous accompagnons particuliers, copropriétés et entreprises dans tout le Grand Ouest.
-            </p>
-            <div className="mt-9 flex flex-col gap-4 sm:flex-row">
-              <Link to="/demande" className="premium-primary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
-                Demander un devis <ArrowRight className="h-5 w-5" />
-              </Link>
-              <a href="tel:+33768084367" className="premium-secondary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
-                <Phone className="h-5 w-5" /> 07 68 08 43 67
-              </a>
-            </div>
-            <div className="mt-10 grid max-w-2xl grid-cols-1 gap-px border-y border-premium-foreground/20 bg-premium-foreground/20 sm:grid-cols-3">
-              {["Étude technique", "Pose & raccordement", "Maintenance suivie"].map((label) => (
-                <div key={label} className="flex items-center gap-3 bg-premium-night/90 px-4 py-4 text-sm font-semibold text-premium-foreground backdrop-blur-md">
-                  <BadgeCheck className="h-5 w-5 shrink-0 text-premium-blue" /> {label}
+
+            <div className="mx-auto mt-8 max-w-5xl rounded-2xl border border-emerald-200 bg-white/90 p-4 shadow-sm sm:p-6">
+              <div className="grid gap-3 sm:grid-cols-3">
+                <div className="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-center text-sm font-medium text-emerald-700">
+                  Étude technique
                 </div>
-              ))}
-            </div>
-          </div>
-          <div className="relative hidden lg:col-span-5 lg:block animate-fade-soft">
-            <div className="premium-photo-frame relative ml-auto aspect-[4/5] w-full max-w-md border border-premium-blue/50">
-              <img src={realisations[0]?.src ?? borneHero} alt={realisations[0]?.title ?? "Réalisation de recharge électrique par Borne de l'Ouest"} className="h-full w-full object-cover" />
-              <div className="absolute right-5 top-5 border border-premium-blue/60 bg-premium-night/85 p-4 backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase text-premium-blue">Installation maîtrisée</p>
-                <p className="mt-1 font-display text-2xl font-bold text-premium-foreground">7 · 11 · 22 kW</p>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-center text-sm font-medium text-emerald-700">
+                  Devis validé
+                </div>
+                <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-center text-sm font-medium text-emerald-700">
+                  Pose & mise en service
+                </div>
               </div>
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-premium-night p-6 pt-20">
-                <p className="text-xs uppercase text-premium-foreground/60">IRVE Technologie</p>
-                <p className="mt-1 text-lg font-semibold text-premium-foreground">Une installation nette, conforme et documentée.</p>
+
+              <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-emerald-950"><AnimatedCounter to={7} /></p>
+                  <p className="mt-0.5 text-xs text-emerald-900/55">Départements prioritaires</p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-emerald-950"><AnimatedCounter to={48} suffix="h" /></p>
+                  <p className="mt-0.5 text-xs text-emerald-900/55">Étude de faisabilité</p>
+                </div>
+                <div className="rounded-xl border border-emerald-200 bg-white px-4 py-3 text-center">
+                  <p className="text-xl font-semibold text-emerald-950">IRVE</p>
+                  <p className="mt-0.5 text-xs text-emerald-900/55">Équipe qualifiée</p>
+                </div>
               </div>
+
+              <div className="mt-5 flex flex-col items-center justify-center gap-3 sm:flex-row">
+                <Link
+                  to="/demande"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-mono text-primary-foreground transition hover:opacity-90 animate-cta-attention"
+                >
+                  Demander un devis <ArrowRight className="h-4 w-4" />
+                </Link>
+                <a
+                  href="tel:+33633657840"
+                  className="inline-flex items-center justify-center gap-2 rounded-xl border border-emerald-300 bg-emerald-50 px-6 py-3 text-mono text-emerald-700 transition hover:border-emerald-500 hover:bg-emerald-100"
+                >
+                  <Phone className="h-4 w-4" /> Appeler
+                </a>
+              </div>
+
+              <p className="mt-4 text-center text-sm text-emerald-900/65">
+                Installation de borne de recharge à partir de <span className="font-semibold text-emerald-950">1 290 € TTC</span>.
+              </p>
             </div>
           </div>
         </div>
@@ -298,28 +316,28 @@ function Index() {
               <button
                 type="button"
                 onClick={() => setAideProfil("maison")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Maison individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-individuelle")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Copro · borne individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-partagee")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Copro · borne partagée
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("pro")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-emerald-200 text-emerald-900/75 hover:border-emerald-400"}`}
               >
                 Pro / flotte
               </button>
@@ -328,11 +346,9 @@ function Index() {
               <label className="text-sm text-muted-foreground">Nombre de bornes</label>
               <input
                 type="number"
-                min={1}
-                inputMode="numeric"
-                placeholder="Ex. 1"
+                min={0}
                 value={aideBornes}
-                onChange={(e) => setAideBornes(e.target.value)}
+                onChange={(e) => setAideBornes(Math.max(0, Number(e.target.value) || 0))}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
               <label className="text-sm text-muted-foreground">Coût HT / borne</label>
@@ -340,11 +356,9 @@ function Index() {
                 type="number"
                 min={0}
                 step={50}
-                inputMode="decimal"
-                placeholder="Ex. 1 075"
                 value={aideMontantHt}
-                onChange={(e) => setAideMontantHt(e.target.value)}
-                className="w-32 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
+                onChange={(e) => setAideMontantHt(Math.max(0, Number(e.target.value) || 0))}
+                className="w-28 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
             </div>
             {aideProfil === "maison" ? (
@@ -370,15 +384,9 @@ function Index() {
                   Estimation Advenir : 50% du coût HT, plafonné à{" "}
                   {aideProfil === "copro-individuelle" ? "1 000 € HT" : "1 660 € HT"} par point de charge.
                 </p>
-                {baseHt > 0 && nbBornes > 0 ? (
-                  <p className="mt-1 text-sm font-semibold">
-                    Aide estimée totale : {new Intl.NumberFormat("fr-FR").format(Math.round(aideTotale))} € HT
-                  </p>
-                ) : (
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    Renseignez le nombre de bornes et le coût HT pour afficher l&apos;estimation.
-                  </p>
-                )}
+                <p className="mt-1 text-sm font-semibold">
+                  Aide estimée totale : {new Intl.NumberFormat("fr-FR").format(Math.round(aideTotale))} € HT
+                </p>
               </>
             )}
             <p className="mt-2 text-xs text-muted-foreground">
@@ -389,13 +397,13 @@ function Index() {
 
           {/* Toggle audience */}
           <div className={`flex flex-col items-center gap-3 ${homeCompact ? "mb-8" : "mb-14"}`}>
-            <span className="text-mono text-muted-foreground">Choisissez votre profil</span>
-            <div className="inline-flex border border-border rounded-sm bg-card p-1">
+            <span className="text-mono text-emerald-900/70">Choisissez votre profil</span>
+            <div className="inline-flex border border-emerald-200 rounded-sm bg-card p-1">
               <button
                 type="button"
                 onClick={() => setAudience("client")}
                 className={`text-mono px-5 py-2.5 rounded-sm transition ${
-                  isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  isClient ? "bg-primary text-primary-foreground" : "text-emerald-900/65 hover:text-primary"
                 }`}
               >
                 Client Borne de l'Ouest
@@ -404,7 +412,7 @@ function Index() {
                 type="button"
                 onClick={() => setAudience("external")}
                 className={`text-mono px-5 py-2.5 rounded-sm transition ${
-                  !isClient ? "hero-grad text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+                  !isClient ? "bg-primary text-primary-foreground" : "text-emerald-900/65 hover:text-primary"
                 }`}
               >
                 Borne installée ailleurs
@@ -543,6 +551,21 @@ function Index() {
       </>
       )}
 
+      <section className="border-t border-border bg-white/[0.03] py-5">
+        <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">
+            Mode compact actif pour raccourcir la page d&apos;accueil.
+          </p>
+          <button
+            type="button"
+            onClick={() => setHomeCompact((v) => !v)}
+            className="text-mono text-xs px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition"
+          >
+            {homeCompact ? "Afficher toutes les sections" : "Revenir au mode compact"}
+          </button>
+        </div>
+      </section>
+
       {!homeCompact && (
       <>
       {/* AVIS */}
@@ -648,18 +671,11 @@ function Index() {
                 />
               </label>
               {avisError && <p className="text-sm text-destructive">{avisError}</p>}
-              {avisSent && (
-                <div className="border border-primary/30 bg-primary/10 p-4 text-sm" role="status">
-                  <p className="font-semibold text-foreground">Merci, votre avis a bien été reçu.</p>
-                  <p className="mt-1 text-muted-foreground">
-                    Il sera vérifié par notre équipe avant d&apos;apparaître dans la liste des avis publiés ci-contre.
-                  </p>
-                </div>
-              )}
+              {avisSent && <p className="text-sm text-primary">Merci, votre avis a bien été envoyé.</p>}
               <button
                 type="submit"
                 disabled={avisBusy}
-                className="bg-premium-blue text-premium-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 transition hover:opacity-90 disabled:opacity-60"
+                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
               >
                 {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
               </button>
@@ -809,7 +825,7 @@ function Index() {
           <p className="mt-6 text-muted-foreground max-w-xl mx-auto">
             Envoyez-nous quelques photos et nous étudions la faisabilité sous 48h.
           </p>
-          <Link to="/demande" className="mt-10 bg-premium-blue text-premium-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.03] transition">
+          <Link to="/demande" className="mt-10 hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.03] transition">
             Démarrer ma demande <ArrowRight className="h-4 w-4" />
           </Link>
           <a href="#realisations" className="mt-6 inline-flex items-center gap-2 text-mono text-xs text-primary hover:opacity-80">
