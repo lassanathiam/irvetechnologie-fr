@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { Lock, PhoneCall } from "lucide-react";
 import { BrandLogo } from "@/components/BrandLogo";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export function SiteNav() {
   return (
@@ -26,10 +27,11 @@ export function SiteNav() {
           <Link to="/a-propos" className="hover:text-premium-energy transition">À propos</Link>
         </nav>
         <div className="flex items-center gap-3">
+          <ThemeToggle className="h-10 w-10 border-premium-foreground/25 bg-premium-night/70 text-premium-foreground hover:border-premium-energy hover:text-premium-energy" />
           <Link
             to="/espace"
             aria-label="Espace pro"
-            className="inline-flex items-center gap-1.5 text-xs text-premium-foreground/70 hover:text-premium-energy border border-premium-foreground/20 px-2.5 py-2"
+            className="inline-flex min-h-10 items-center gap-1.5 border border-premium-foreground/20 px-2.5 py-2 text-xs text-premium-foreground/70 transition hover:text-premium-energy"
           >
             <Lock className="h-3.5 w-3.5" />
             <span className="hidden xs:inline sm:inline">Espace pro</span>

@@ -395,6 +395,24 @@
   font-family: "Figtree", system-ui, sans-serif;
 }
 
+.dark .public-premium {
+  --background: oklch(0.17 0.04 250);
+  --foreground: oklch(0.96 0.008 245);
+  --card: oklch(0.22 0.04 250);
+  --card-foreground: oklch(0.96 0.008 245);
+  --popover: oklch(0.22 0.04 250);
+  --popover-foreground: oklch(0.96 0.008 245);
+  --primary: oklch(0.68 0.2 252);
+  --primary-foreground: oklch(0.99 0 0);
+  --secondary: oklch(0.26 0.035 250);
+  --secondary-foreground: oklch(0.94 0.008 245);
+  --muted: oklch(0.25 0.03 250);
+  --muted-foreground: oklch(0.74 0.025 245);
+  --border: oklch(0.34 0.04 250);
+  --input: oklch(0.23 0.035 250);
+  --ring: oklch(0.68 0.2 252);
+}
+
 .public-premium h1,
 .public-premium h2,
 .public-premium h3 {
