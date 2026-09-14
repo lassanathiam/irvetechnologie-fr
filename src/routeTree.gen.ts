@@ -24,6 +24,7 @@ import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
 import { Route as AuthenticatedPartenairesIndexRouteImport } from './routes/_authenticated/partenaires.index'
+import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications.index'
 import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
 import { Route as AuthenticatedFacturationIndexRouteImport } from './routes/_authenticated/facturation.index'
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
@@ -115,6 +116,12 @@ const AuthenticatedPartenairesIndexRoute =
     path: '/partenaires/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedNotificationsIndexRoute =
+  AuthenticatedNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFacturesIndexRoute =
   AuthenticatedFacturesIndexRouteImport.update({
     id: '/factures/',
@@ -202,6 +209,7 @@ export interface FileRoutesByFullPath {
   '/espace/': typeof AuthenticatedEspaceIndexRoute
   '/facturation/': typeof AuthenticatedFacturationIndexRoute
   '/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
@@ -230,6 +238,7 @@ export interface FileRoutesByTo {
   '/espace': typeof AuthenticatedEspaceIndexRoute
   '/facturation': typeof AuthenticatedFacturationIndexRoute
   '/factures': typeof AuthenticatedFacturesIndexRoute
+  '/notifications': typeof AuthenticatedNotificationsIndexRoute
   '/partenaires': typeof AuthenticatedPartenairesIndexRoute
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
@@ -260,6 +269,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
   '/_authenticated/facturation/': typeof AuthenticatedFacturationIndexRoute
   '/_authenticated/factures/': typeof AuthenticatedFacturesIndexRoute
+  '/_authenticated/notifications/': typeof AuthenticatedNotificationsIndexRoute
   '/_authenticated/partenaires/': typeof AuthenticatedPartenairesIndexRoute
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/espace/'
     | '/facturation/'
     | '/factures/'
+    | '/notifications/'
     | '/partenaires/'
     | '/planning/'
     | '/rapports/'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/espace'
     | '/facturation'
     | '/factures'
+    | '/notifications'
     | '/partenaires'
     | '/planning'
     | '/rapports'
@@ -347,6 +359,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/'
     | '/_authenticated/facturation/'
     | '/_authenticated/factures/'
+    | '/_authenticated/notifications/'
     | '/_authenticated/partenaires/'
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
@@ -480,6 +493,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedPartenairesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/notifications/': {
+      id: '/_authenticated/notifications/'
+      path: '/notifications'
+      fullPath: '/notifications/'
+      preLoaderRoute: typeof AuthenticatedNotificationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/factures/': {
       id: '/_authenticated/factures/'
       path: '/factures'
@@ -577,6 +597,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
   AuthenticatedFacturationIndexRoute: typeof AuthenticatedFacturationIndexRoute
   AuthenticatedFacturesIndexRoute: typeof AuthenticatedFacturesIndexRoute
+  AuthenticatedNotificationsIndexRoute: typeof AuthenticatedNotificationsIndexRoute
   AuthenticatedPartenairesIndexRoute: typeof AuthenticatedPartenairesIndexRoute
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
@@ -593,6 +614,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
   AuthenticatedFacturationIndexRoute: AuthenticatedFacturationIndexRoute,
   AuthenticatedFacturesIndexRoute: AuthenticatedFacturesIndexRoute,
+  AuthenticatedNotificationsIndexRoute: AuthenticatedNotificationsIndexRoute,
   AuthenticatedPartenairesIndexRoute: AuthenticatedPartenairesIndexRoute,
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
