@@ -17,7 +17,7 @@ export const Route = createFileRoute("/a-propos")({
 
 function AboutPage() {
   return (
-    <main className="dark min-h-screen bg-background text-foreground pt-28">
+    <main className="min-h-screen bg-background text-foreground pt-28">
       <section className="border-b border-border bg-white/[0.02]">
         <div className="mx-auto max-w-5xl px-6 py-14 sm:py-20">
           <p className="text-mono text-primary">À propos</p>
