@@ -16,3 +16,5 @@
 - [x] Clarifier marque, société et qualifications dans l’en-tête, puis remplacer l’icône installée
 
 - [x] Utiliser exactement le logo officiel IRVE Technologie pour toutes les icônes de l’application
+
+- [ ] Boîte de réception interne dans l espace pro (acceptations devis, confirmations de rendez-vous, réponses clients) sans dépendre d une adresse mail externe
