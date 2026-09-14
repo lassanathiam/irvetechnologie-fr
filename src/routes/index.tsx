@@ -222,10 +222,10 @@ function Index() {
         <div className="relative mx-auto grid min-h-[calc(92svh-4rem)] max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-20">
           <div className="animate-fade-up lg:col-span-7">
             <div className="inline-flex items-center gap-2 border border-premium-blue/50 bg-premium-night/65 px-3 py-2 text-xs font-semibold uppercase text-premium-blue backdrop-blur-md">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-energy opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-energy" /></span>
+               <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-blue opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-blue" /></span>
               Expertise IRVE certifiée P1 · P2 · P3
             </div>
-            <h1 className="mt-7 font-display text-5xl font-bold leading-[0.9] sm:text-7xl lg:text-8xl">
+            <h1 className="mt-7 font-display text-4xl font-bold leading-none sm:text-6xl lg:text-7xl">
               BORNE DE<br /><span className="premium-title-accent">L&apos;OUEST</span>
             </h1>
             <p className="mt-7 max-w-2xl text-lg leading-relaxed text-current opacity-75 sm:text-xl">
@@ -241,8 +241,8 @@ function Index() {
             </div>
             <div className="mt-10 grid max-w-2xl grid-cols-1 gap-px border-y border-premium-foreground/20 bg-premium-foreground/20 sm:grid-cols-3">
               {["Étude technique", "Pose & raccordement", "Maintenance suivie"].map((label) => (
-                <div key={label} className="flex items-center gap-3 bg-premium-night/80 px-4 py-4 text-sm font-semibold backdrop-blur-md">
-                  <BadgeCheck className="h-5 w-5 shrink-0 text-premium-energy" /> {label}
+                <div key={label} className="flex items-center gap-3 bg-premium-night/90 px-4 py-4 text-sm font-semibold text-premium-foreground backdrop-blur-md">
+                  <BadgeCheck className="h-5 w-5 shrink-0 text-premium-blue" /> {label}
                 </div>
               ))}
             </div>
@@ -252,11 +252,11 @@ function Index() {
               <img src={realisations[0]?.src ?? borneHero} alt={realisations[0]?.title ?? "Réalisation de recharge électrique par Borne de l'Ouest"} className="h-full w-full object-cover" />
               <div className="absolute right-5 top-5 border border-premium-blue/60 bg-premium-night/85 p-4 backdrop-blur-md">
                 <p className="text-xs font-semibold uppercase text-premium-blue">Installation maîtrisée</p>
-                <p className="mt-1 font-display text-2xl font-bold">7 · 11 · 22 kW</p>
+                <p className="mt-1 font-display text-2xl font-bold text-premium-foreground">7 · 11 · 22 kW</p>
               </div>
               <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-premium-night p-6 pt-20">
                 <p className="text-xs uppercase text-premium-foreground/60">IRVE Technologie</p>
-                <p className="mt-1 text-lg font-semibold">Une installation nette, conforme et documentée.</p>
+                <p className="mt-1 text-lg font-semibold text-premium-foreground">Une installation nette, conforme et documentée.</p>
               </div>
             </div>
           </div>
@@ -648,11 +648,18 @@ function Index() {
                 />
               </label>
               {avisError && <p className="text-sm text-destructive">{avisError}</p>}
-              {avisSent && <p className="text-sm text-primary">Merci, votre avis a bien été envoyé.</p>}
+              {avisSent && (
+                <div className="border border-primary/30 bg-primary/10 p-4 text-sm" role="status">
+                  <p className="font-semibold text-foreground">Merci, votre avis a bien été reçu.</p>
+                  <p className="mt-1 text-muted-foreground">
+                    Il sera vérifié par notre équipe avant d&apos;apparaître dans la liste des avis publiés ci-contre.
+                  </p>
+                </div>
+              )}
               <button
                 type="submit"
                 disabled={avisBusy}
-                className="hero-grad text-primary-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-60"
+                className="bg-premium-blue text-premium-foreground text-mono px-5 py-3 rounded-sm inline-flex items-center gap-2 transition hover:opacity-90 disabled:opacity-60"
               >
                 {avisBusy ? "Envoi…" : "Envoyer l'avis"} <ArrowRight className="h-4 w-4" />
               </button>
@@ -802,7 +809,7 @@ function Index() {
           <p className="mt-6 text-muted-foreground max-w-xl mx-auto">
             Envoyez-nous quelques photos et nous étudions la faisabilité sous 48h.
           </p>
-          <Link to="/demande" className="mt-10 hero-grad text-primary-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.03] transition">
+          <Link to="/demande" className="mt-10 bg-premium-blue text-premium-foreground text-mono px-6 py-4 rounded-sm inline-flex items-center gap-2 hover:opacity-90 hover:scale-[1.03] transition">
             Démarrer ma demande <ArrowRight className="h-4 w-4" />
           </Link>
           <a href="#realisations" className="mt-6 inline-flex items-center gap-2 text-mono text-xs text-primary hover:opacity-80">
