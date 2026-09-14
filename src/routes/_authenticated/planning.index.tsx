@@ -37,6 +37,7 @@ import {
   archiverRendezVous,
   createRendezVous,
   demarrerChantier,
+  envoyerPropositionRdv,
   terminerChantier,
   deleteRendezVous,
   listChantiersRealises,
@@ -426,6 +427,16 @@ function PlanningPage() {
   const removeVoirie = useMutation({
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
     onSuccess: refresh,
+  });
+  const propositionFn = useServerFn(envoyerPropositionRdv);
+  const proposerRdv = useMutation({
+    mutationFn: (p: { id: string; relance: boolean }) => propositionFn({ data: p }),
+    onSuccess: (r) => {
+      refresh();
+      toast.success(`Proposition envoyée à ${r.destinataire}`);
+    },
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Envoi impossible pour le moment."),
   });
   const archiveFn = useServerFn(archiverRendezVous);
   const archiver = useMutation({
@@ -1970,6 +1981,33 @@ function PlanningPage() {
                                   <CalendarClock className="h-3 w-3" />{" "}
                                   {r.date_a_confirmer ? "Fixer la date" : "Modifier la date"}
                                 </button>
+                                {r.client_email ? (
+                                  <button
+                                    type="button"
+                                    onClick={() =>
+                                      proposerRdv.mutate({
+                                        id: r.id,
+                                        relance: Boolean(r.rdv_propose_at),
+                                      })
+                                    }
+                                    disabled={proposerRdv.isPending}
+                                    className={`text-mono text-[11px] min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1 disabled:opacity-50 ${
+                                      r.rdv_confirme_at
+                                        ? "border-emerald-500/60 text-emerald-600 dark:text-emerald-400"
+                                        : "border-border hover:border-primary hover:text-primary"
+                                    }`}
+                                    title="Envoyer au client une proposition de rendez-vous à confirmer"
+                                  >
+                                    <Mail className="h-3 w-3" />{" "}
+                                    {r.rdv_confirme_at
+                                      ? `Confirmé le ${new Date(r.rdv_confirme_at).toLocaleDateString("fr-FR")}`
+                                      : r.rdv_refuse_at
+                                        ? "Nouveau créneau demandé — renvoyer"
+                                        : r.rdv_propose_at
+                                          ? `Proposé le ${new Date(r.rdv_propose_at).toLocaleDateString("fr-FR")} — relancer`
+                                          : "Proposer au client"}
+                                  </button>
+                                ) : null}
                                 <button
                                   type="button"
                                   onClick={() =>
