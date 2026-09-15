@@ -58,7 +58,7 @@ export function SiteNav() {
 
           <Link
             to="/demande"
-          className="bg-premium-blue text-premium-foreground text-xs font-bold uppercase px-4 py-2.5 hover:opacity-90 transition animate-cta-attention"
+          className="hero-grad text-premium-foreground text-xs font-bold uppercase px-4 py-2.5 hover:brightness-110 transition animate-cta-attention"
           >
             Demande
           </Link>
