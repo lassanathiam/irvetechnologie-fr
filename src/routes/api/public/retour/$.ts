@@ -36,7 +36,13 @@ export const Route = createFileRoute("/api/public/retour/$")({
 
         const reference = rdv.termine_at ?? rdv.archive_at;
         if (!reference) return new Response("Dossier non disponible", { status: 404 });
-        const limite = new Date(reference).getTime() + VALIDITE_JOURS * 24 * 60 * 60 * 1000;
+        // La validité court à partir du dernier envoi (fin de chantier ou archivage),
+        // sinon un dossier archivé après le délai de paiement arriverait déjà expiré.
+        const dernierEnvoi = Math.max(
+          new Date(rdv.termine_at ?? reference).getTime(),
+          new Date(rdv.archive_at ?? reference).getTime(),
+        );
+        const limite = dernierEnvoi + VALIDITE_JOURS * 24 * 60 * 60 * 1000;
         if (Date.now() > limite) {
           return new Response("Ce lien de téléchargement a expiré.", { status: 410 });
         }
