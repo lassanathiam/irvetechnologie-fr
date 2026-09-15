@@ -22,5 +22,4 @@
 - [x] Uniformiser toute la façade publique avec le dégradé cyan-vert du bouton « Souscrire la formule » (15/09/2026)
 - [x] Ajouter les attachements de travaux fibre, avec ticket, numéro d’affaire, bon de commande, autoliquidation et conversion en facture
 
-- [ ] Réponse express aux leads : 3 bornes préconfigurées, prix ajusté au métrage de câble, envoi en un clic (15/09/2026)
 - [x] Réponse express aux leads : 3 bornes préconfigurées, prix ajusté au métrage de câble, envoi en un clic (15/09/2026) — prix Hager Witty et 22 kW à confirmer
