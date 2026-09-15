@@ -16,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
+import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
 import { createDevis, deleteDevis, listDevis, listPrestations } from "@/lib/devis.functions";
@@ -205,12 +206,15 @@ function DevisPage() {
             Catalogue, quantités, remise, dates et acompte — totaux recalculés en direct.
           </p>
         </div>
-        <Link
-          to="/factures"
-          className="text-mono text-xs border border-border rounded-sm px-4 py-2.5 hover:border-primary hover:text-primary inline-flex items-center gap-2"
-        >
-          <Receipt className="h-3.5 w-3.5" /> Factures
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <ReponseExpressButton />
+          <Link
+            to="/factures"
+            className="text-mono text-xs border border-border rounded-sm px-4 py-2.5 hover:border-primary hover:text-primary inline-flex items-center gap-2"
+          >
+            <Receipt className="h-3.5 w-3.5" /> Factures
+          </Link>
+        </div>
       </div>
 
       <div className="mt-8 grid lg:grid-cols-[1fr_340px] gap-6 items-start">
