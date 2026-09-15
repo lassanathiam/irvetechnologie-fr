@@ -17,6 +17,7 @@ import {
 import { getDashboard, getSuiviFacturation } from "@/lib/planning.functions";
 import { updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
+import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { euro } from "@/lib/company";
 import { Button } from "@/components/ui/button";
 
@@ -104,6 +105,7 @@ function EspacePage() {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <ReponseExpressButton />
           <Link
             to="/planning"
             className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground shadow-sm transition hover:border-primary hover:text-primary"
