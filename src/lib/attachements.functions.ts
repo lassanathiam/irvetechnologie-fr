@@ -72,9 +72,9 @@ export const createAttachement = createServerFn({ method: "POST" })
     const items = data.items.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
     const totals = computeTotals(items, 0);
     const numero = await nextNumber(context.supabase, Number(data.date_emission.slice(0, 4)));
+    const { items: _items, ...attachmentData } = data;
     const { data: row, error } = await context.supabase.from("attachements_travaux").insert({
-      ...data,
-      items: undefined,
+      ...attachmentData,
       numero,
       activite: "fibre",
       total_ht: totals.total_ht,

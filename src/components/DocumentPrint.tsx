@@ -25,6 +25,10 @@ export type DocHeader = {
   acompte_pct?: number | string | null;
   conditions_paiement?: string | null;
   notes?: string | null;
+  numero_ticket?: string | null;
+  numero_affaire?: string | null;
+  bon_commande?: string | null;
+  autoliquidation?: boolean;
 };
 
 export type DocSignature = {
@@ -128,6 +132,13 @@ export function DocumentPrint({
       <div className="mt-4 text-[13px] font-extrabold tracking-tight">
         Objet : {doc.objet || "Installation de borne de recharge"}
       </div>
+      {(doc.numero_ticket || doc.numero_affaire || doc.bon_commande) && (
+        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-[12px]">
+          {doc.numero_ticket && <div><span className="text-muted-foreground">Ticket : </span><strong>{doc.numero_ticket}</strong></div>}
+          {doc.numero_affaire && <div><span className="text-muted-foreground">Affaire : </span><strong>{doc.numero_affaire}</strong></div>}
+          {doc.bon_commande && <div><span className="text-muted-foreground">Bon de commande : </span><strong>{doc.bon_commande}</strong></div>}
+        </div>
+      )}
 
       {/* Lignes */}
       <table className="mt-5 w-full border-collapse">
@@ -181,6 +192,11 @@ export function DocumentPrint({
           {totals.tva_par_taux.map((t) => (
             <TotalRow key={t.taux} label={`TVA (${t.taux} %)`} value={euro(t.montant)} />
           ))}
+          {doc.autoliquidation && (
+            <p className="border border-border p-2 text-[11px] font-bold">
+              Autoliquidation — TVA due par le preneur (article 283-2 nonies du CGI).
+            </p>
+          )}
           <div className="mt-2 bg-muted border border-border rounded-sm px-3 py-2.5 flex items-baseline justify-between">
             <span className="font-extrabold uppercase text-mono text-[11px] tracking-[0.14em]">
               Total TTC
