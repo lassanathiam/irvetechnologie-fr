@@ -11,6 +11,7 @@ export const NOTIF_LABELS: Record<string, string> = {
   partenaire_montant: "Montant proposé",
   chantier_termine: "Chantier terminé",
   photos_telechargees: "Photos téléchargées",
+  attachement_reponse: "Réponse à un attachement",
 };
 
 /** Liste la boîte de réception de l'équipe (100 derniers événements). */
