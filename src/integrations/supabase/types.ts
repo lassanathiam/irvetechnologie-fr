@@ -38,6 +38,173 @@ export type Database = {
         }
         Relationships: []
       }
+      attachement_items: {
+        Row: {
+          attachement_id: string
+          created_at: string
+          description: string | null
+          id: string
+          libelle: string
+          ordre: number
+          prix_unitaire: number
+          quantite: number
+        }
+        Insert: {
+          attachement_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+        }
+        Update: {
+          attachement_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_unitaire?: number
+          quantite?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachement_items_attachement_id_fkey"
+            columns: ["attachement_id"]
+            isOneToOne: false
+            referencedRelation: "attachements_travaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      attachements_travaux: {
+        Row: {
+          accepted_at: string | null
+          activite: string
+          autoliquidation: boolean
+          bon_commande: string | null
+          client_adresse: string | null
+          client_cp_ville: string | null
+          client_email: string | null
+          client_nom: string
+          client_telephone: string | null
+          created_at: string
+          created_by: string | null
+          date_echeance: string
+          date_emission: string
+          facture_id: string | null
+          id: string
+          last_viewed_at: string | null
+          notes: string | null
+          numero: string
+          numero_affaire: string | null
+          numero_ticket: string
+          objet: string | null
+          public_token: string
+          refused_at: string | null
+          rendezvous_id: string | null
+          sent_at: string | null
+          signataire_nom: string | null
+          statut: string
+          total_ht: number
+          total_ttc: number
+          total_tva: number
+          updated_at: string
+          validation_requise: boolean
+          view_count: number
+          viewed_at: string | null
+        }
+        Insert: {
+          accepted_at?: string | null
+          activite?: string
+          autoliquidation?: boolean
+          bon_commande?: string | null
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom: string
+          client_telephone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_echeance?: string
+          date_emission?: string
+          facture_id?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          notes?: string | null
+          numero: string
+          numero_affaire?: string | null
+          numero_ticket: string
+          objet?: string | null
+          public_token?: string
+          refused_at?: string | null
+          rendezvous_id?: string | null
+          sent_at?: string | null
+          signataire_nom?: string | null
+          statut?: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+          validation_requise?: boolean
+          view_count?: number
+          viewed_at?: string | null
+        }
+        Update: {
+          accepted_at?: string | null
+          activite?: string
+          autoliquidation?: boolean
+          bon_commande?: string | null
+          client_adresse?: string | null
+          client_cp_ville?: string | null
+          client_email?: string | null
+          client_nom?: string
+          client_telephone?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_echeance?: string
+          date_emission?: string
+          facture_id?: string | null
+          id?: string
+          last_viewed_at?: string | null
+          notes?: string | null
+          numero?: string
+          numero_affaire?: string | null
+          numero_ticket?: string
+          objet?: string | null
+          public_token?: string
+          refused_at?: string | null
+          rendezvous_id?: string | null
+          sent_at?: string | null
+          signataire_nom?: string | null
+          statut?: string
+          total_ht?: number
+          total_ttc?: number
+          total_tva?: number
+          updated_at?: string
+          validation_requise?: boolean
+          view_count?: number
+          viewed_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachements_travaux_facture_id_fkey"
+            columns: ["facture_id"]
+            isOneToOne: false
+            referencedRelation: "factures"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachements_travaux_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demande_photos: {
         Row: {
           created_at: string
@@ -399,6 +566,10 @@ export type Database = {
       factures: {
         Row: {
           acompte_pct: number
+          activite: string
+          attachement_id: string | null
+          autoliquidation: boolean
+          bon_commande: string | null
           client_adresse: string | null
           client_cp_ville: string | null
           client_email: string | null
@@ -414,6 +585,8 @@ export type Database = {
           last_viewed_at: string | null
           notes: string | null
           numero: string
+          numero_affaire: string | null
+          numero_ticket: string | null
           objet: string | null
           paid_at: string | null
           public_token: string
@@ -431,6 +604,10 @@ export type Database = {
         }
         Insert: {
           acompte_pct?: number
+          activite?: string
+          attachement_id?: string | null
+          autoliquidation?: boolean
+          bon_commande?: string | null
           client_adresse?: string | null
           client_cp_ville?: string | null
           client_email?: string | null
@@ -446,6 +623,8 @@ export type Database = {
           last_viewed_at?: string | null
           notes?: string | null
           numero: string
+          numero_affaire?: string | null
+          numero_ticket?: string | null
           objet?: string | null
           paid_at?: string | null
           public_token?: string
@@ -463,6 +642,10 @@ export type Database = {
         }
         Update: {
           acompte_pct?: number
+          activite?: string
+          attachement_id?: string | null
+          autoliquidation?: boolean
+          bon_commande?: string | null
           client_adresse?: string | null
           client_cp_ville?: string | null
           client_email?: string | null
@@ -478,6 +661,8 @@ export type Database = {
           last_viewed_at?: string | null
           notes?: string | null
           numero?: string
+          numero_affaire?: string | null
+          numero_ticket?: string | null
           objet?: string | null
           paid_at?: string | null
           public_token?: string
@@ -494,6 +679,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "factures_attachement_id_fkey"
+            columns: ["attachement_id"]
+            isOneToOne: false
+            referencedRelation: "attachements_travaux"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "factures_devis_id_fkey"
             columns: ["devis_id"]

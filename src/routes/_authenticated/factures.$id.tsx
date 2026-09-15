@@ -277,6 +277,10 @@ function FactureDetail() {
             acompte_pct: 0,
             conditions_paiement: facture.conditions_paiement,
             notes: facture.notes,
+            numero_ticket: facture.numero_ticket,
+            numero_affaire: facture.numero_affaire,
+            bon_commande: facture.bon_commande,
+            autoliquidation: facture.autoliquidation,
           }}
           items={items}
         />

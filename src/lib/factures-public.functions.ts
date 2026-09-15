@@ -13,7 +13,7 @@ export const getFacturePublic = createServerFn({ method: "GET" })
     const { data: facture, error } = await supabaseAdmin
       .from("factures")
       .select(
-        "id, numero, date_emission, date_echeance, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, remise_pct, conditions_paiement, notes, statut, paid_at, viewed_at, view_count",
+        "id, numero, date_emission, date_echeance, client_nom, client_email, client_telephone, client_adresse, client_cp_ville, objet, remise_pct, conditions_paiement, notes, statut, paid_at, viewed_at, view_count, numero_ticket, numero_affaire, bon_commande, autoliquidation, activite",
       )
       .eq("public_token", data.token)
       .maybeSingle();

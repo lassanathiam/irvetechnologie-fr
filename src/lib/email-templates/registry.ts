@@ -5,6 +5,7 @@ import { template as chantierTermineTemplate } from './chantier-termine'
 import { template as chantierArchiveTemplate } from './chantier-archive'
 import { template as rdvConfirmeTemplate } from './rdv-confirme'
 import { template as rdvPropositionTemplate } from './rdv-proposition'
+import { template as attachementTravauxTemplate } from './attachement-travaux'
 
 
 
@@ -32,6 +33,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'chantier-archive': chantierArchiveTemplate,
   'rdv-confirme': rdvConfirmeTemplate,
   'rdv-proposition': rdvPropositionTemplate,
+  'attachement-travaux': attachementTravauxTemplate,
 }
 
 
