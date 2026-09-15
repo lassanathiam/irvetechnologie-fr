@@ -35,32 +35,71 @@ function NotFoundComponent() {
   );
 }
 
+function estSessionExpiree(error: Error): boolean {
+  const message = `${error?.message ?? ""} ${(error as { statusText?: string })?.statusText ?? ""}`;
+  const status = (error as { status?: number; statusCode?: number })?.status ??
+    (error as { statusCode?: number })?.statusCode;
+  if (status === 401 || status === 403) return true;
+  return /unauthorized|non autoris|401|jwt|token (expired|invalide)|invalid claim/i.test(message);
+}
+
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
   console.error(error);
   const router = useRouter();
+  const sessionExpiree = estSessionExpiree(error);
+
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
   }, [error]);
+
+  // Session expirée : on nettoie la session locale et on renvoie vers la connexion.
+  useEffect(() => {
+    if (!sessionExpiree || typeof window === "undefined") return;
+    let annule = false;
+    void (async () => {
+      try {
+        const { supabase } = await import("../integrations/supabase/client");
+        await supabase.auth.signOut();
+      } catch {
+        // ignoré : on redirige quand même vers la page de connexion
+      }
+      if (!annule) window.location.replace("/auth");
+    })();
+    return () => {
+      annule = true;
+    };
+  }, [sessionExpiree]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-xl font-semibold tracking-tight text-foreground">
-          Cette page n'a pas pu être chargée
+          {sessionExpiree ? "Votre session a expiré" : "Cette page n'a pas pu être chargée"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          Une erreur s'est produite. Vous pouvez réessayer sans quitter cette page.
+          {sessionExpiree
+            ? "Reconnectez-vous pour retrouver votre espace professionnel. Redirection en cours…"
+            : "Une erreur s'est produite. Vous pouvez réessayer sans quitter cette page."}
         </p>
         <div className="mt-6 flex flex-wrap justify-center gap-2">
-          <button
-            onClick={() => {
-              router.invalidate();
-              reset();
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-          >
-            Réessayer
-          </button>
+          {sessionExpiree ? (
+            <Link
+              to="/auth"
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Se reconnecter
+            </Link>
+          ) : (
+            <button
+              onClick={() => {
+                router.invalidate();
+                reset();
+              }}
+              className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              Réessayer
+            </button>
+          )}
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md border border-input bg-background px-4 py-2 text-sm font-medium text-foreground transition-colors hover:bg-accent"
@@ -72,6 +111,7 @@ function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
     </div>
   );
 }
+
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
   head: () => ({
