@@ -134,6 +134,10 @@ export const envoyerFacture = createServerFn({ method: "POST" })
         total_ttc: Number(facture.total_ttc),
         acompte_pct: 0,
         conditions_paiement: facture.conditions_paiement,
+        numero_ticket: facture.numero_ticket,
+        numero_affaire: facture.numero_affaire,
+        bon_commande: facture.bon_commande,
+        autoliquidation: facture.autoliquidation,
         items: (items ?? []).map((i) => ({
           libelle: i.libelle,
           description: i.description,

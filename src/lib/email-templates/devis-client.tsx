@@ -41,6 +41,10 @@ export type DevisEmailData = {
   total_ttc: number;
   acompte_pct: number;
   conditions_paiement?: string | null;
+  numero_ticket?: string | null;
+  numero_affaire?: string | null;
+  bon_commande?: string | null;
+  autoliquidation?: boolean;
   items: Item[];
 };
 
@@ -113,6 +117,13 @@ export function DevisClientEmail(data: DevisEmailData) {
           )}
 
           <Section style={{ padding: "16px 32px" }}>
+            {(data.numero_ticket || data.numero_affaire || data.bon_commande) && (
+              <Text style={{ color: ink, fontSize: 12, lineHeight: "20px", margin: "0 0 12px" }}>
+                {data.numero_ticket ? `Ticket : ${data.numero_ticket}\n` : ""}
+                {data.numero_affaire ? `Affaire : ${data.numero_affaire}\n` : ""}
+                {data.bon_commande ? `Bon de commande : ${data.bon_commande}` : ""}
+              </Text>
+            )}
             {items.map((item, i) => (
               <Row key={i} style={{ borderBottom: "1px solid #eef2f1" }}>
                 <Column style={{ padding: "10px 0" }}>
@@ -137,6 +148,11 @@ export function DevisClientEmail(data: DevisEmailData) {
             )}
             <Line label="Total HT net" value={euro(data.total_ht)} />
             <Line label="TVA" value={euro(data.total_tva)} />
+            {data.autoliquidation && (
+              <Text style={{ color: ink, fontSize: 11, fontWeight: 700, lineHeight: "18px" }}>
+                Autoliquidation — TVA due par le preneur (article 283-2 nonies du CGI).
+              </Text>
+            )}
             <Hr style={{ borderColor: "#dfe6e3", margin: "12px 0" }} />
             <Row>
               <Column>

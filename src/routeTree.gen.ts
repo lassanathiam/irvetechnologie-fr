@@ -30,6 +30,7 @@ import { Route as AuthenticatedFacturationIndexRouteImport } from './routes/_aut
 import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
 import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
+import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
@@ -151,6 +152,12 @@ const AuthenticatedDemandesIndexRoute =
     path: '/demandes/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedAttachementsIndexRoute =
+  AuthenticatedAttachementsIndexRouteImport.update({
+    id: '/attachements/',
+    path: '/attachements/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
   id: '/rapports/$id',
   path: '/rapports/$id',
@@ -204,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/attachements/': typeof AuthenticatedAttachementsIndexRoute
   '/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/devis/': typeof AuthenticatedDevisIndexRoute
   '/espace/': typeof AuthenticatedEspaceIndexRoute
@@ -233,6 +241,7 @@ export interface FileRoutesByTo {
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/attachements': typeof AuthenticatedAttachementsIndexRoute
   '/demandes': typeof AuthenticatedDemandesIndexRoute
   '/devis': typeof AuthenticatedDevisIndexRoute
   '/espace': typeof AuthenticatedEspaceIndexRoute
@@ -264,6 +273,7 @@ export interface FileRoutesById {
   '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/_authenticated/attachements/': typeof AuthenticatedAttachementsIndexRoute
   '/_authenticated/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
   '/_authenticated/espace/': typeof AuthenticatedEspaceIndexRoute
@@ -295,6 +305,7 @@ export interface FileRouteTypes {
     | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
+    | '/attachements/'
     | '/demandes/'
     | '/devis/'
     | '/espace/'
@@ -324,6 +335,7 @@ export interface FileRouteTypes {
     | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
+    | '/attachements'
     | '/demandes'
     | '/devis'
     | '/espace'
@@ -354,6 +366,7 @@ export interface FileRouteTypes {
     | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
+    | '/_authenticated/attachements/'
     | '/_authenticated/demandes/'
     | '/_authenticated/devis/'
     | '/_authenticated/espace/'
@@ -535,6 +548,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDemandesIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/attachements/': {
+      id: '/_authenticated/attachements/'
+      path: '/attachements'
+      fullPath: '/attachements/'
+      preLoaderRoute: typeof AuthenticatedAttachementsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rapports/$id': {
       id: '/_authenticated/rapports/$id'
       path: '/rapports/$id'
@@ -592,6 +612,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedEspaceDashboardRoute: typeof AuthenticatedEspaceDashboardRoute
   AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
   AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
+  AuthenticatedAttachementsIndexRoute: typeof AuthenticatedAttachementsIndexRoute
   AuthenticatedDemandesIndexRoute: typeof AuthenticatedDemandesIndexRoute
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
   AuthenticatedEspaceIndexRoute: typeof AuthenticatedEspaceIndexRoute
@@ -609,6 +630,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedEspaceDashboardRoute: AuthenticatedEspaceDashboardRoute,
   AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,
   AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
+  AuthenticatedAttachementsIndexRoute: AuthenticatedAttachementsIndexRoute,
   AuthenticatedDemandesIndexRoute: AuthenticatedDemandesIndexRoute,
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
   AuthenticatedEspaceIndexRoute: AuthenticatedEspaceIndexRoute,
