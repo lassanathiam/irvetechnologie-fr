@@ -214,7 +214,7 @@ function Index() {
 
       {/* HERO */}
       <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_85%_12%,rgba(88,130,255,.22),transparent_42%),linear-gradient(140deg,#090f1f_0%,#0c1324_55%,#111c35_100%)]" aria-hidden />
+        <div className="premium-hero-atmosphere absolute inset-0" aria-hidden />
         <div className="absolute inset-0 premium-hero-veil" aria-hidden />
         <div className="absolute inset-0 premium-tech-grid opacity-30" aria-hidden />
         <div className="relative mx-auto grid min-h-[calc(92svh-4rem)] max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-20">
