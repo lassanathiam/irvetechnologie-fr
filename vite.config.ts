@@ -40,10 +40,6 @@ export default defineConfig({
     server: { entry: "server" },
   },
   vite: {
-    define: {
-      "import.meta.env.VITE_SUPABASE_URL": JSON.stringify(supabaseUrl),
-      "import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY": JSON.stringify(supabasePublishableKey),
-    },
     resolve: {
       alias: {
         "entities/lib/decode.js": path.resolve(process.cwd(), "node_modules/entities/lib/decode.js"),
