@@ -300,28 +300,28 @@ function Index() {
               <button
                 type="button"
                 onClick={() => setAideProfil("maison")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-border text-muted-foreground hover:border-primary"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "maison" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"}`}
               >
                 Maison individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-individuelle")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-border text-muted-foreground hover:border-primary"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-individuelle" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"}`}
               >
                 Copro · borne individuelle
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("copro-partagee")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-border text-muted-foreground hover:border-primary"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "copro-partagee" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"}`}
               >
                 Copro · borne partagée
               </button>
               <button
                 type="button"
                 onClick={() => setAideProfil("pro")}
-                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-emerald-500 bg-emerald-500/10 text-emerald-600" : "border-border text-muted-foreground hover:border-primary"}`}
+                className={`rounded-lg border px-3 py-2 text-sm ${aideProfil === "pro" ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"}`}
               >
                 Pro / flotte
               </button>

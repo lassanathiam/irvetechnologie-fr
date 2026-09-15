@@ -18,3 +18,4 @@
 - [x] Utiliser exactement le logo officiel IRVE Technologie pour toutes les icônes de l’application
 
 - [ ] Boîte de réception interne dans l espace pro (acceptations devis, confirmations de rendez-vous, réponses clients) sans dépendre d une adresse mail externe
+- [x] Fixer le site public en mode sombre et retirer sa bascule jour/nuit, sans modifier celle de l’espace professionnel (15/09/2026)
