@@ -16,6 +16,19 @@ import {
   envoyerReponseExpress,
 } from "@/lib/leads.functions";
 
+type EnvoiPayload = {
+  prenom: string | null;
+  nom: string;
+  email: string | null;
+  telephone: string | null;
+  adresse: string | null;
+  cp_ville: string | null;
+  offre_id: string;
+  metrage_m: number;
+  option: boolean;
+  message: string | null;
+};
+
 const INPUT =
   "mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary";
 
@@ -72,7 +85,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   }, [config, offreChoisie, metrageNum, option]);
 
   const envoi = useMutation({
-    mutationFn: (payload: Parameters<typeof envoyer>[0]["data"]) => envoyer({ data: payload }),
+    mutationFn: (payload: EnvoiPayload) => envoyer({ data: payload } as never),
     onSuccess: (r, payload) => {
       qc.invalidateQueries({ queryKey: ["devis"] });
       qc.invalidateQueries({ queryKey: ["dashboard"] });
