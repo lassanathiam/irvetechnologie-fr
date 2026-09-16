@@ -33,8 +33,11 @@ function AttachementsPage() {
   const [search, setSearch] = useState(""); const [open, setOpen] = useState(false); const [error, setError] = useState<string | null>(null);
   const [catalogue, setCatalogue] = useState("");
   const [form, setForm] = useState({ client_nom: "", client_email: "", client_telephone: "", client_adresse: "", client_cp_ville: "", numero_ticket: "", numero_affaire: "", bon_commande: "", objet: "Travaux fibre optique", date_emission: today(), date_echeance: plusJours(60), autoliquidation: true, validation_requise: true, notes: "" });
+  const [delai, setDelai] = useState(60);
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
+  const setDateEmission = (value: string) => setForm((f) => ({ ...f, date_emission: value, date_echeance: addDays(value, delai) }));
+  const setDelaiJours = (value: number) => { setDelai(value); setForm((f) => ({ ...f, date_echeance: addDays(f.date_emission, value) })); };
 
   const appliquerDonneur = (id: string) => {
     const d = (donneurs.data ?? []).find((x: any) => x.id === id);
