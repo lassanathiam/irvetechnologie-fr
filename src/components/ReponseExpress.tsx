@@ -306,7 +306,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {o.prix_ht > 0
                       ? `${euro(o.prix_ht)} HT — forfait ${config.metrage_inclus_m} m de câble inclus`
-                      : "Prix à renseigner dans les réglages"}
+                      : "Prix à saisir ci-dessous (mémorisé pour la suite)"}
                   </p>
                 </button>
               ))}
