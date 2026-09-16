@@ -66,6 +66,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
 
   const [offreId, setOffreId] = useState<string | null>(null);
   const [metrage, setMetrage] = useState<string>("");
+  const [prixDirecte, setPrixDirecte] = useState<string>("");
   const [option, setOption] = useState(false);
   const [reglages, setReglages] = useState(false);
   const [resultat, setResultat] = useState<{
@@ -79,10 +80,18 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   const offreChoisie = config.offres.find((o) => o.id === offreId) ?? null;
   const metrageNum = Number(metrage.replace(",", ".")) || config.metrage_inclus_m;
 
+  const prixDirecteNum = Number(prixDirecte.replace(",", ".")) || 0;
+  const offreAperçu =
+    offreChoisie && offreChoisie.prix_ht > 0
+      ? offreChoisie
+      : offreChoisie && prixDirecteNum > 0
+        ? { ...offreChoisie, prix_ht: prixDirecteNum }
+        : offreChoisie;
+
   const totaux = useMemo(() => {
-    if (!offreChoisie) return null;
-    return computeTotals(lignesExpress(config, offreChoisie, metrageNum, option), 0);
-  }, [config, offreChoisie, metrageNum, option]);
+    if (!offreAperçu) return null;
+    return computeTotals(lignesExpress(config, offreAperçu, metrageNum, option), 0);
+  }, [config, offreAperçu, metrageNum, option]);
 
   const envoi = useMutation({
     mutationFn: (payload: EnvoiPayload) => envoyer({ data: payload } as never),
@@ -106,11 +115,33 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
       toast.error(e instanceof Error ? e.message : "Envoi impossible pour le moment."),
   });
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!offreChoisie) {
       toast.error("Choisissez une borne.");
       return;
+    }
+    // Offre sans prix : le prix saisi ici devient le nouveau tarif, puis l'envoi part.
+    if (!(offreChoisie.prix_ht > 0)) {
+      const prix = Number(prixDirecte.replace(",", ".")) || 0;
+      if (!(prix > 0)) {
+        toast.error("Renseignez le prix HT de cette borne avant l'envoi.");
+        return;
+      }
+      try {
+        await enregistrerConfig({
+          data: {
+            ...config,
+            offres: config.offres.map((o) =>
+              o.id === offreChoisie.id ? { ...o, prix_ht: prix } : o,
+            ),
+          },
+        } as never);
+        qc.invalidateQueries({ queryKey: ["reponse-express-config"] });
+      } catch {
+        toast.error("Impossible d'enregistrer le prix — réessayez.");
+        return;
+      }
     }
     const fd = new FormData(e.currentTarget);
     const get = (k: string) => String(fd.get(k) ?? "").trim();
@@ -275,11 +306,27 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
                   <p className="mt-1 text-xs text-muted-foreground">
                     {o.prix_ht > 0
                       ? `${euro(o.prix_ht)} HT — forfait ${config.metrage_inclus_m} m de câble inclus`
-                      : "Prix à renseigner dans les réglages"}
+                      : "Prix à saisir ci-dessous (mémorisé pour la suite)"}
                   </p>
                 </button>
               ))}
             </div>
+
+            {offreChoisie && !(offreChoisie.prix_ht > 0) && (
+              <label className="block rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+                <span className="text-mono text-xs font-bold text-amber-600">
+                  Prix HT de « {offreChoisie.libelle} » (€) — à renseigner une fois, il sera mémorisé
+                </span>
+                <input
+                  value={prixDirecte}
+                  onChange={(e) => setPrixDirecte(e.target.value)}
+                  inputMode="decimal"
+                  required
+                  placeholder="Ex. 1450"
+                  className={INPUT}
+                />
+              </label>
+            )}
 
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
