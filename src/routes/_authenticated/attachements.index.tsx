@@ -17,7 +17,9 @@ export const Route = createFileRoute("/_authenticated/attachements/")({
 });
 
 const today = () => new Date().toISOString().slice(0, 10);
-const plusJours = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
+const plusJours = (n: number) => addDays(today(), n);
+const diffDays = (from: string, to: string) => { const n = Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
 type Line = { key: string; libelle: string; description: string; quantite: string; prix: string };
 const newLine = (init?: Partial<Line>): Line => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "", ...init });
 
