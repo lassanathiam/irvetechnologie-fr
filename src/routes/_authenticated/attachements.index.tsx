@@ -42,6 +42,8 @@ function AttachementsPage() {
   const appliquerDonneur = (id: string) => {
     const d = (donneurs.data ?? []).find((x: any) => x.id === id);
     if (!d) return;
+    const jours = Number(d.delai_paiement_jours) || 60;
+    setDelai(jours);
     setForm((f) => ({
       ...f,
       client_nom: d.raison_sociale || d.nom,
@@ -50,7 +52,7 @@ function AttachementsPage() {
       client_adresse: d.adresse || "",
       client_cp_ville: d.cp_ville || "",
       autoliquidation: Boolean(d.autoliquidation),
-      date_echeance: plusJours(Number(d.delai_paiement_jours) || 60),
+      date_echeance: addDays(f.date_emission, jours),
     }));
   };
 
