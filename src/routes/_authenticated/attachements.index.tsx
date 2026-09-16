@@ -17,7 +17,9 @@ export const Route = createFileRoute("/_authenticated/attachements/")({
 });
 
 const today = () => new Date().toISOString().slice(0, 10);
-const plusJours = (n: number) => new Date(Date.now() + n * 864e5).toISOString().slice(0, 10);
+const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
+const plusJours = (n: number) => addDays(today(), n);
+const diffDays = (from: string, to: string) => { const n = Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
 type Line = { key: string; libelle: string; description: string; quantite: string; prix: string };
 const newLine = (init?: Partial<Line>): Line => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "", ...init });
 
@@ -31,12 +33,17 @@ function AttachementsPage() {
   const [search, setSearch] = useState(""); const [open, setOpen] = useState(false); const [error, setError] = useState<string | null>(null);
   const [catalogue, setCatalogue] = useState("");
   const [form, setForm] = useState({ client_nom: "", client_email: "", client_telephone: "", client_adresse: "", client_cp_ville: "", numero_ticket: "", numero_affaire: "", bon_commande: "", objet: "Travaux fibre optique", date_emission: today(), date_echeance: plusJours(60), autoliquidation: true, validation_requise: true, notes: "" });
+  const [delai, setDelai] = useState(60);
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
+  const setDateEmission = (value: string) => setForm((f) => ({ ...f, date_emission: value, date_echeance: addDays(value, delai) }));
+  const setDelaiJours = (value: number) => { setDelai(value); setForm((f) => ({ ...f, date_echeance: addDays(f.date_emission, value) })); };
 
   const appliquerDonneur = (id: string) => {
     const d = (donneurs.data ?? []).find((x: any) => x.id === id);
     if (!d) return;
+    const jours = Number(d.delai_paiement_jours) || 60;
+    setDelai(jours);
     setForm((f) => ({
       ...f,
       client_nom: d.raison_sociale || d.nom,
@@ -45,7 +52,7 @@ function AttachementsPage() {
       client_adresse: d.adresse || "",
       client_cp_ville: d.cp_ville || "",
       autoliquidation: Boolean(d.autoliquidation),
-      date_echeance: plusJours(Number(d.delai_paiement_jours) || 60),
+      date_echeance: addDays(f.date_emission, jours),
     }));
   };
 
@@ -71,7 +78,7 @@ function AttachementsPage() {
         {(donneurs.data ?? []).map((d: any) => <option key={d.id} value={d.id}>{d.nom}{d.charge_affaires_nom ? ` — ${d.charge_affaires_nom}` : ""}</option>)}
       </select>
     </label>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} /><Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} /><Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} /><Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} /><Field label="Code postal / ville" value={form.client_cp_ville} onChange={(v) => setForm({ ...form, client_cp_ville: v })} /><Field label="Numéro de ticket *" value={form.numero_ticket} onChange={(v) => setForm({ ...form, numero_ticket: v })} /><Field label="Numéro d’affaire" value={form.numero_affaire} onChange={(v) => setForm({ ...form, numero_affaire: v })} /><Field label="Bon de commande" value={form.bon_commande} onChange={(v) => setForm({ ...form, bon_commande: v })} /><Field label="Objet" value={form.objet} onChange={(v) => setForm({ ...form, objet: v })} /><Field label="Date" type="date" value={form.date_emission} onChange={(v) => setForm({ ...form, date_emission: v })} /><Field label="Échéance" type="date" value={form.date_echeance} onChange={(v) => setForm({ ...form, date_echeance: v })} /></div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} /><Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} /><Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} /><Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} /><Field label="Code postal / ville" value={form.client_cp_ville} onChange={(v) => setForm({ ...form, client_cp_ville: v })} /><Field label="Numéro de ticket *" value={form.numero_ticket} onChange={(v) => setForm({ ...form, numero_ticket: v })} /><Field label="Numéro d’affaire" value={form.numero_affaire} onChange={(v) => setForm({ ...form, numero_affaire: v })} /><Field label="Bon de commande" value={form.bon_commande} onChange={(v) => setForm({ ...form, bon_commande: v })} /><Field label="Objet" value={form.objet} onChange={(v) => setForm({ ...form, objet: v })} /><Field label="Date de l’attachement" type="date" value={form.date_emission} onChange={setDateEmission} /><label className="text-xs text-muted-foreground">Délai de paiement (jours)<Input className="mt-1.5" type="number" min="0" max="365" value={String(delai)} onChange={(e) => setDelaiJours(Number(e.target.value) || 0)} /></label><Field label="Échéance (calculée)" type="date" value={form.date_echeance} onChange={(v) => { setForm({ ...form, date_echeance: v }); setDelai(diffDays(form.date_emission, v)); }} /></div>
     <div className="flex flex-wrap gap-5"><Check label="Autoliquidation de TVA" checked={form.autoliquidation} onChange={(v) => setForm({ ...form, autoliquidation: v })} /><Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} /></div>
     <label className="block text-xs text-muted-foreground">Ajouter une prestation du bordereau {bordereau.isLoading ? "(chargement…)" : `(${catalogueOptions.length} prix)`}
       <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={catalogue} onChange={(e) => ajouterDepuisCatalogue(e.target.value)}>
