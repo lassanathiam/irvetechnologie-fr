@@ -95,6 +95,53 @@ export const createAttachement = createServerFn({ method: "POST" })
     return { id: row.id };
   });
 
+export const updateAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => attachmentSchema.extend({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { id, items: rawItems, ...attachmentData } = data;
+    const existing = await context.supabase.from("attachements_travaux").select("facture_id").eq("id", id).maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (!existing.data) throw new Error("Attachement introuvable.");
+    if (existing.data.facture_id) throw new Error("Cet attachement est déjà facturé : modifiez la facture.");
+    const items = rawItems.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
+    const totals = computeTotals(items, 0);
+    const { error } = await context.supabase.from("attachements_travaux").update({
+      ...attachmentData,
+      total_ht: totals.total_ht,
+      total_tva: totals.total_tva,
+      total_ttc: totals.total_ttc,
+    }).eq("id", id);
+    if (error) throw new Error(error.message);
+    const del = await context.supabase.from("attachement_items").delete().eq("attachement_id", id);
+    if (del.error) throw new Error(del.error.message);
+    const { error: lineError } = await context.supabase.from("attachement_items").insert(items.map((item, index) => ({
+      attachement_id: id,
+      libelle: item.libelle,
+      description: item.description ?? null,
+      quantite: item.quantite,
+      prix_unitaire: item.prix_unitaire,
+      ordre: index + 1,
+    })));
+    if (lineError) throw new Error(lineError.message);
+    return { id };
+  });
+
+export const supprimerAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => {
+    const existing = await context.supabase.from("attachements_travaux").select("facture_id").eq("id", data.id).maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (!existing.data) throw new Error("Attachement introuvable.");
+    if (existing.data.facture_id) throw new Error("Impossible de supprimer un attachement déjà facturé.");
+    const del = await context.supabase.from("attachement_items").delete().eq("attachement_id", data.id);
+    if (del.error) throw new Error(del.error.message);
+    const { error } = await context.supabase.from("attachements_travaux").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 export const envoyerAttachement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), message: z.string().trim().max(2000).optional().nullable() }).parse(data))
