@@ -107,11 +107,33 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
       toast.error(e instanceof Error ? e.message : "Envoi impossible pour le moment."),
   });
 
-  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (!offreChoisie) {
       toast.error("Choisissez une borne.");
       return;
+    }
+    // Offre sans prix : le prix saisi ici devient le nouveau tarif, puis l'envoi part.
+    if (!(offreChoisie.prix_ht > 0)) {
+      const prix = Number(prixDirecte.replace(",", ".")) || 0;
+      if (!(prix > 0)) {
+        toast.error("Renseignez le prix HT de cette borne avant l'envoi.");
+        return;
+      }
+      try {
+        await enregistrerConfig({
+          data: {
+            ...config,
+            offres: config.offres.map((o) =>
+              o.id === offreChoisie.id ? { ...o, prix_ht: prix } : o,
+            ),
+          },
+        } as never);
+        qc.invalidateQueries({ queryKey: ["reponse-express-config"] });
+      } catch {
+        toast.error("Impossible d'enregistrer le prix — réessayez.");
+        return;
+      }
     }
     const fd = new FormData(e.currentTarget);
     const get = (k: string) => String(fd.get(k) ?? "").trim();
