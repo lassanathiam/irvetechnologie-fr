@@ -66,6 +66,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
 
   const [offreId, setOffreId] = useState<string | null>(null);
   const [metrage, setMetrage] = useState<string>("");
+  const [prixDirecte, setPrixDirecte] = useState<string>("");
   const [option, setOption] = useState(false);
   const [reglages, setReglages] = useState(false);
   const [resultat, setResultat] = useState<{
