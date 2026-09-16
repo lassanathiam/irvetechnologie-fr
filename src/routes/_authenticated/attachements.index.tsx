@@ -70,6 +70,20 @@ function AttachementsPage() {
   const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search]);
 
+  const totaux = useMemo(() => {
+    const parStatut = new Map<string, { nb: number; ht: number; tva: number; ttc: number }>();
+    for (const a of list.data ?? []) {
+      const s = a.statut || "brouillon";
+      const cur = parStatut.get(s) ?? { nb: 0, ht: 0, tva: 0, ttc: 0 };
+      cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.tva += Number(a.total_tva) || 0; cur.ttc += Number(a.total_ttc) || 0;
+      parStatut.set(s, cur);
+    }
+    const ordre = ["brouillon", "envoye", "accepte", "refuse", "facture"];
+    const lignes = [...parStatut.entries()].sort((a, b) => ordre.indexOf(a[0]) - ordre.indexOf(b[0]));
+    const global = lignes.reduce((acc, [, v]) => ({ nb: acc.nb + v.nb, ht: acc.ht + v.ht, tva: acc.tva + v.tva, ttc: acc.ttc + v.ttc }), { nb: 0, ht: 0, tva: 0, ttc: 0 });
+    return { lignes, global };
+  }, [list.data]);
+
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => setOpen((v) => !v)}><Plus /> Nouvel attachement</Button></div></header>
   {open && <section className="rounded-md border border-border bg-card p-5 space-y-5">
     <label className="block text-xs text-muted-foreground">Donneur d’ordre enregistré
