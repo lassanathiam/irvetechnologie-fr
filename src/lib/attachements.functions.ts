@@ -46,7 +46,7 @@ export const listAttachements = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("attachements_travaux")
-      .select("id, numero, client_nom, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_ttc, autoliquidation, date_emission, facture_id")
+      .select("id, numero, client_nom, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id")
       .order("created_at", { ascending: false })
       .limit(250);
     if (error) throw new Error(error.message);
