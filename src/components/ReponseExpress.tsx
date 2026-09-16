@@ -80,10 +80,18 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   const offreChoisie = config.offres.find((o) => o.id === offreId) ?? null;
   const metrageNum = Number(metrage.replace(",", ".")) || config.metrage_inclus_m;
 
+  const prixDirecteNum = Number(prixDirecte.replace(",", ".")) || 0;
+  const offreAperçu =
+    offreChoisie && offreChoisie.prix_ht > 0
+      ? offreChoisie
+      : offreChoisie && prixDirecteNum > 0
+        ? { ...offreChoisie, prix_ht: prixDirecteNum }
+        : offreChoisie;
+
   const totaux = useMemo(() => {
-    if (!offreChoisie) return null;
-    return computeTotals(lignesExpress(config, offreChoisie, metrageNum, option), 0);
-  }, [config, offreChoisie, metrageNum, option]);
+    if (!offreAperçu) return null;
+    return computeTotals(lignesExpress(config, offreAperçu, metrageNum, option), 0);
+  }, [config, offreAperçu, metrageNum, option]);
 
   const envoi = useMutation({
     mutationFn: (payload: EnvoiPayload) => envoyer({ data: payload } as never),
