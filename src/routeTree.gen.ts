@@ -36,6 +36,7 @@ import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authentic
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
+import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
@@ -186,6 +187,12 @@ const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
   path: '/devis/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedAttachementsBordereauRoute =
+  AuthenticatedAttachementsBordereauRouteImport.update({
+    id: '/attachements/bordereau',
+    path: '/attachements/bordereau',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAttachementsIdRoute =
   AuthenticatedAttachementsIdRouteImport.update({
     id: '/attachements/$id',
@@ -222,6 +229,7 @@ export interface FileRoutesByFullPath {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -254,6 +262,7 @@ export interface FileRoutesByTo {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -288,6 +297,7 @@ export interface FileRoutesById {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
@@ -322,6 +332,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rdv/$token'
     | '/attachements/$id'
+    | '/attachements/bordereau'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
@@ -354,6 +365,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rdv/$token'
     | '/attachements/$id'
+    | '/attachements/bordereau'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
@@ -387,6 +399,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rdv/$token'
     | '/_authenticated/attachements/$id'
+    | '/_authenticated/attachements/bordereau'
     | '/_authenticated/devis/$id'
     | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
@@ -616,6 +629,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedDevisIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/attachements/bordereau': {
+      id: '/_authenticated/attachements/bordereau'
+      path: '/attachements/bordereau'
+      fullPath: '/attachements/bordereau'
+      preLoaderRoute: typeof AuthenticatedAttachementsBordereauRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/attachements/$id': {
       id: '/_authenticated/attachements/$id'
       path: '/attachements/$id'
@@ -649,6 +669,7 @@ declare module '@tanstack/react-router' {
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
+  AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
   AuthenticatedEspaceDashboardRoute: typeof AuthenticatedEspaceDashboardRoute
   AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
@@ -668,6 +689,8 @@ interface AuthenticatedRouteRouteChildren {
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
+  AuthenticatedAttachementsBordereauRoute:
+    AuthenticatedAttachementsBordereauRoute,
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
   AuthenticatedEspaceDashboardRoute: AuthenticatedEspaceDashboardRoute,
   AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,

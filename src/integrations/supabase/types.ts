@@ -205,6 +205,51 @@ export type Database = {
           },
         ]
       }
+      bordereau_prestations: {
+        Row: {
+          actif: boolean
+          categorie: string
+          created_at: string
+          donneur_ordre: string
+          id: string
+          libelle: string
+          ordre: number
+          prix_unitaire: number
+          reference: string | null
+          section: string | null
+          unite: string
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          categorie: string
+          created_at?: string
+          donneur_ordre?: string
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_unitaire?: number
+          reference?: string | null
+          section?: string | null
+          unite?: string
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          categorie?: string
+          created_at?: string
+          donneur_ordre?: string
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_unitaire?: number
+          reference?: string | null
+          section?: string | null
+          unite?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       demande_photos: {
         Row: {
           created_at: string
@@ -518,6 +563,72 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      donneurs_ordre: {
+        Row: {
+          actif: boolean
+          adresse: string | null
+          adresse_livraison: string | null
+          autoliquidation: boolean
+          charge_affaires_email: string | null
+          charge_affaires_nom: string | null
+          charge_affaires_telephone: string | null
+          cp_ville: string | null
+          created_at: string
+          delai_paiement_jours: number
+          id: string
+          nom: string
+          notes: string | null
+          numero_fournisseur: string | null
+          pays: string
+          raison_sociale: string | null
+          siret: string | null
+          tva_intracom: string | null
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          adresse?: string | null
+          adresse_livraison?: string | null
+          autoliquidation?: boolean
+          charge_affaires_email?: string | null
+          charge_affaires_nom?: string | null
+          charge_affaires_telephone?: string | null
+          cp_ville?: string | null
+          created_at?: string
+          delai_paiement_jours?: number
+          id?: string
+          nom: string
+          notes?: string | null
+          numero_fournisseur?: string | null
+          pays?: string
+          raison_sociale?: string | null
+          siret?: string | null
+          tva_intracom?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          adresse?: string | null
+          adresse_livraison?: string | null
+          autoliquidation?: boolean
+          charge_affaires_email?: string | null
+          charge_affaires_nom?: string | null
+          charge_affaires_telephone?: string | null
+          cp_ville?: string | null
+          created_at?: string
+          delai_paiement_jours?: number
+          id?: string
+          nom?: string
+          notes?: string | null
+          numero_fournisseur?: string | null
+          pays?: string
+          raison_sociale?: string | null
+          siret?: string | null
+          tva_intracom?: string | null
+          updated_at?: string
+        }
+        Relationships: []
       }
       facture_items: {
         Row: {
