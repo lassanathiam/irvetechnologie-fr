@@ -312,6 +312,22 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
               ))}
             </div>
 
+            {offreChoisie && !(offreChoisie.prix_ht > 0) && (
+              <label className="block rounded-md border border-amber-500/40 bg-amber-500/10 p-3">
+                <span className="text-mono text-xs font-bold text-amber-600">
+                  Prix HT de « {offreChoisie.libelle} » (€) — à renseigner une fois, il sera mémorisé
+                </span>
+                <input
+                  value={prixDirecte}
+                  onChange={(e) => setPrixDirecte(e.target.value)}
+                  inputMode="decimal"
+                  required
+                  placeholder="Ex. 1450"
+                  className={INPUT}
+                />
+              </label>
+            )}
+
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">
