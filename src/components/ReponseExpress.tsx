@@ -117,6 +117,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
 
   async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    const form = e.currentTarget;
     if (!offreChoisie) {
       toast.error("Choisissez une borne.");
       return;
@@ -143,7 +144,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
         return;
       }
     }
-    const fd = new FormData(e.currentTarget);
+    const fd = new FormData(form);
     const get = (k: string) => String(fd.get(k) ?? "").trim();
     if (!get("nom")) {
       toast.error("Le nom est obligatoire.");
