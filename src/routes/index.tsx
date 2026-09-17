@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
-import { BORNES_CATALOGUE } from "@/lib/bornes-catalogue";
+import { BORNES_CATALOGUE, BORNES_VEDETTES } from "@/lib/bornes-catalogue";
 
 export const Route = createFileRoute("/")({
   head: () => ({
