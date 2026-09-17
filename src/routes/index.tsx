@@ -9,6 +9,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
+import borneHager from "@/assets/borne-hager.png";
+import borneSchneider from "@/assets/borne-schneider.png";
+import borneWallbox from "@/assets/borne-wallbox.png";
+import borneTesla from "@/assets/borne-tesla.png";
+import borneLegrand from "@/assets/borne-legrand.png";
+import borneEvbox from "@/assets/borne-evbox.png";
 
 export const Route = createFileRoute("/")({
   head: () => ({
