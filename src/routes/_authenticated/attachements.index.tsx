@@ -78,7 +78,7 @@ function AttachementsPage() {
       cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.tva += Number(a.total_tva) || 0; cur.ttc += Number(a.total_ttc) || 0;
       parStatut.set(s, cur);
     }
-    const ordre = ["brouillon", "envoye", "accepte", "refuse", "facture"];
+    const ordre = ["brouillon", "envoye", "propose", "accepte", "refuse", "facture", "annule"];
     const lignes = [...parStatut.entries()].sort((a, b) => ordre.indexOf(a[0]) - ordre.indexOf(b[0]));
     const global = lignes.reduce((acc, [, v]) => ({ nb: acc.nb + v.nb, ht: acc.ht + v.ht, tva: acc.tva + v.tva, ttc: acc.ttc + v.ttc }), { nb: 0, ht: 0, tva: 0, ttc: 0 });
     return { lignes, global };
