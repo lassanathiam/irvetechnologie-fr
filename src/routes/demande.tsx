@@ -25,10 +25,13 @@ const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/demande")({
-  validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string } => {
+    const out: { formule?: Formule; borne?: string } = {};
     const f = search.formule;
-    if (f === "serenite" || f === "premium" || f === "pro") return { formule: f };
-    return {};
+    if (f === "serenite" || f === "premium" || f === "pro") out.formule = f;
+    const b = search.borne;
+    if (typeof b === "string" && trouverBorne(b)) out.borne = b;
+    return out;
   },
   head: () => ({
     meta: [
