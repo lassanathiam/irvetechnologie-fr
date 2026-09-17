@@ -36,8 +36,10 @@ function PublicAttachment() {
   if (!query.data) return <main className="grid min-h-screen place-items-center px-6 text-center"><div><BrandLogo className="mx-auto h-16 w-16" /><h1 className="mt-5 text-2xl font-bold">Lien invalide</h1><p className="text-muted-foreground">Contactez {COMPANY.raisonSociale} au {COMPANY.telephone}.</p></div></main>;
   const { attachement: a, items, proposition } = query.data as any;
   const answered = ["accepte", "refuse", "facture"].includes(a.statut);
+  const annule = a.statut === "annule";
+  const majApresEnvoi = Boolean(a.sent_at && a.updated_at && new Date(a.updated_at).getTime() > new Date(a.sent_at).getTime() + 120000);
   const pending = proposition && proposition.statut === "en_attente";
-  const canPropose = Boolean(a.proposition_autorisee) && !answered && !pending;
+  const canPropose = Boolean(a.proposition_autorisee) && !answered && !annule && !pending;
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
   const openEditor = () => { setLines((items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)) })) as EditLine[]); setMode(true); };
   const patch = (key: string, field: keyof EditLine, value: string) => setLines((ls) => ls.map((l) => l.key === key ? { ...l, [field]: value } : l));
