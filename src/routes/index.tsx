@@ -279,12 +279,15 @@ function Index() {
       </section>
 
       {/* MARQUEE partenaires */}
-      <section className="border-y border-border py-6 overflow-hidden bg-white/[0.03]">
-        <div className="flex gap-12 animate-marquee whitespace-nowrap text-mono text-muted-foreground">
+      <section className="border-y border-border py-8 overflow-hidden bg-white/[0.03]">
+        <div className="flex gap-10 animate-marquee">
           {[...partenaires, ...partenaires].map((p, i) => (
-            <span key={i} className="flex items-center gap-3">
-              <span className="h-1 w-1 rounded-full bg-primary" /> {p}
-            </span>
+            <div key={i} className="flex shrink-0 flex-col items-center gap-3">
+              <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-premium-night/60 p-2">
+                <img src={p.img} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} className="h-full w-full object-contain" />
+              </div>
+              <span className="text-mono text-xs text-muted-foreground">{p.nom}</span>
+            </div>
           ))}
         </div>
       </section>
