@@ -196,7 +196,15 @@ function Demande() {
           type_compteur: get("type_compteur") || null,
           phase: get("phase") || null,
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
-          notes: get("notes") || null,
+          notes:
+            [
+              borneChoisie
+                ? `Borne souhaitée : ${borneChoisie.nom} (${borneChoisie.puissance} · ${borneChoisie.phase})`
+                : null,
+              get("notes") || null,
+            ]
+              .filter(Boolean)
+              .join("\n") || null,
           formule: formule ?? null,
           type_demande: typeDemande,
           nb_bornes: nb && Number.isFinite(nb) && nb > 0 ? Math.round(nb) : null,
@@ -314,7 +322,12 @@ function Demande() {
                 onChange={setKva}
               />
               <Select label="Type de compteur" name="type_compteur" options={["Linky", "Ancien compteur", "Je ne sais pas"]} />
-              <Select label="Alimentation" name="phase" options={["Monophasé", "Triphasé", "Je ne sais pas"]} />
+              <Select
+                label="Alimentation"
+                name="phase"
+                options={["Monophasé", "Triphasé", "Je ne sais pas"]}
+                defaultValue={borneChoisie?.phase}
+              />
               <SelectControlled
                 label="Puissance de borne souhaitée"
                 name="puissance"
@@ -444,11 +457,11 @@ function Field({ label, name, type = "text", required, defaultValue }: { label: 
   );
 }
 
-function Select({ label, name, options }: { label: string; name: string; options: string[] }) {
+function Select({ label, name, options, defaultValue }: { label: string; name: string; options: string[]; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}</span>
-      <select name={name} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+      <select name={name} defaultValue={defaultValue} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
     </label>
