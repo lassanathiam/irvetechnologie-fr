@@ -54,6 +54,8 @@ function AttachementDetail() {
   });
   const remove = useMutation({ mutationFn: () => deleteFn({ data: { id } }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements" }); }, onError: (e) => setError(e instanceof Error ? e.message : "Suppression impossible.") });
   const traiter = useMutation({ mutationFn: (v: { proposition_id: string; decision: "accepter" | "refuser" }) => traiterFn({ data: v }), onSuccess: (r) => { setError(null); setFeedback(r.decision === "accepter" ? "Valorisation du client acceptée : l’attachement est mis à jour." : "Proposition refusée : votre valorisation reste applicable."); refresh(); }, onError: (e) => setError(e instanceof Error ? e.message : "Traitement impossible.") });
+  const statutFn = useServerFn(changerStatutAttachement);
+  const statutM = useMutation({ mutationFn: (action: "annuler" | "reactiver") => statutFn({ data: { id, action } }), onSuccess: (r) => { setError(null); setFeedback(r.statut === "annule" ? "Attachement annulé : le client voit l’annulation sur son lien." : "Attachement réactivé."); refresh(); }, onError: (e) => setError(e instanceof Error ? e.message : "Changement de statut impossible.") });
 
   if (query.isLoading) return <ProShell><Loader2 className="animate-spin text-primary" /></ProShell>;
   if (!query.data || query.error) return <ProShell><p className="text-destructive">Attachement introuvable.</p></ProShell>;
