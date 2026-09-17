@@ -2,13 +2,13 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
+import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
