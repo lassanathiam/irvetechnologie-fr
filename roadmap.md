@@ -25,4 +25,4 @@
 - [x] Réponse express aux leads : 3 bornes préconfigurées, prix ajusté au métrage de câble, envoi en un clic (15/09/2026) — prix Hager Witty et 22 kW à confirmer
 
 ## Attachements — suivi côté client
-- [ ] Afficher sur le lien public la date de derniere modification, les changements de statut (modifie, annule, facture) et un bandeau clair
+- [x] Afficher sur le lien public la date de derniere modification, les changements de statut (modifie, annule, facture) et un bandeau clair
