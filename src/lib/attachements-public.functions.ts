@@ -31,6 +31,7 @@ export const repondreAttachementPublic = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!attachment) throw new Error("Ce lien d’attachement n’est plus valide.");
     if (!attachment.validation_requise) throw new Error("Cet attachement ne demande pas de validation en ligne.");
+    if (attachment.statut === "annule") throw new Error("Cet attachement a été annulé par IRVE Technologie.");
     if (["accepte", "refuse", "facture"].includes(attachment.statut)) return { ok: true, already: true };
     const now = new Date().toISOString();
     const update = data.decision === "accepte"
@@ -73,6 +74,7 @@ export const proposerValorisationPublic = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (!attachment) throw new Error("Ce lien d’attachement n’est plus valide.");
     if (!attachment.proposition_autorisee) throw new Error("Cet attachement n’accepte pas de proposition de valorisation.");
+    if (attachment.statut === "annule") throw new Error("Cet attachement a été annulé par IRVE Technologie.");
     if (attachment.facture_id || ["accepte", "facture"].includes(attachment.statut)) throw new Error("Cet attachement est déjà validé : contactez IRVE Technologie.");
     const pending = await supabaseAdmin.from("attachement_propositions").select("id").eq("attachement_id", attachment.id).eq("statut", "en_attente").limit(1);
     if (pending.data?.length) throw new Error("Une proposition est déjà en attente de validation.");
