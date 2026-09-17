@@ -8,6 +8,7 @@ import { submitDemande } from "@/lib/demande.functions";
 import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
+import { trouverBorne } from "@/lib/bornes-catalogue";
 
 type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -25,10 +26,13 @@ const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/demande")({
-  validateSearch: (search: Record<string, unknown>): { formule?: Formule } => {
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string } => {
+    const out: { formule?: Formule; borne?: string } = {};
     const f = search.formule;
-    if (f === "serenite" || f === "premium" || f === "pro") return { formule: f };
-    return {};
+    if (f === "serenite" || f === "premium" || f === "pro") out.formule = f;
+    const b = search.borne;
+    if (typeof b === "string" && trouverBorne(b)) out.borne = b;
+    return out;
   },
   head: () => ({
     meta: [
@@ -69,10 +73,13 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const { formule } = Route.useSearch();
+  const { formule, borne: borneId } = Route.useSearch();
+  const borneChoisie = trouverBorne(borneId);
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
-  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!);
+  const [puissanceBorne, setPuissanceBorne] = useState(
+    borneChoisie?.puissance ?? PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!,
+  );
   const alerte = alerteAbonnement(kva, puissanceBorne);
   const [typeDemande, setTypeDemande] = useState<TypeDemande>(
     formule ? "souscription" : "raccordement",
@@ -189,7 +196,15 @@ function Demande() {
           type_compteur: get("type_compteur") || null,
           phase: get("phase") || null,
           distance_m: Number.isFinite(distance as number) ? (distance as number) : null,
-          notes: get("notes") || null,
+          notes:
+            [
+              borneChoisie
+                ? `Borne souhaitée : ${borneChoisie.nom} (${borneChoisie.puissance} · ${borneChoisie.phase})`
+                : null,
+              get("notes") || null,
+            ]
+              .filter(Boolean)
+              .join("\n") || null,
           formule: formule ?? null,
           type_demande: typeDemande,
           nb_bornes: nb && Number.isFinite(nb) && nb > 0 ? Math.round(nb) : null,
@@ -266,6 +281,26 @@ function Demande() {
               <span className="text-sm text-muted-foreground">{formuleInfo.price}</span>
             </div>
           )}
+          {borneChoisie && (
+            <div className="mt-8 flex items-center gap-4 rounded-xl border border-primary/40 bg-card px-4 py-3">
+              <img
+                src={borneChoisie.img}
+                alt={`Borne ${borneChoisie.nom}`}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-lg border border-border bg-premium-night/60 object-contain p-1"
+              />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Borne sélectionnée : {borneChoisie.nom}</p>
+                <p className="mt-1 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {borneChoisie.puissance} · {borneChoisie.phase} · {borneChoisie.atout}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Il ne reste qu&apos;à indiquer vos coordonnées, le métrage et vos photos.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
@@ -307,7 +342,12 @@ function Demande() {
                 onChange={setKva}
               />
               <Select label="Type de compteur" name="type_compteur" options={["Linky", "Ancien compteur", "Je ne sais pas"]} />
-              <Select label="Alimentation" name="phase" options={["Monophasé", "Triphasé", "Je ne sais pas"]} />
+              <Select
+                label="Alimentation"
+                name="phase"
+                options={["Monophasé", "Triphasé", "Je ne sais pas"]}
+                defaultValue={borneChoisie?.phase}
+              />
               <SelectControlled
                 label="Puissance de borne souhaitée"
                 name="puissance"
@@ -437,11 +477,11 @@ function Field({ label, name, type = "text", required, defaultValue }: { label: 
   );
 }
 
-function Select({ label, name, options }: { label: string; name: string; options: string[] }) {
+function Select({ label, name, options, defaultValue }: { label: string; name: string; options: string[]; defaultValue?: string }) {
   return (
     <label className="block">
       <span className="text-mono text-muted-foreground">{label}</span>
-      <select name={name} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
+      <select name={name} defaultValue={defaultValue} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition">
         {options.map((o) => <option key={o}>{o}</option>)}
       </select>
     </label>
