@@ -24,6 +24,8 @@ const attachmentSchema = z.object({
   date_echeance: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   autoliquidation: z.boolean(),
   validation_requise: z.boolean(),
+  proposition_autorisee: z.boolean().optional().default(true),
+
   notes: z.string().trim().max(2000).optional().nullable(),
   rendezvous_id: z.string().uuid().optional().nullable(),
   items: z.array(lineSchema).min(1).max(100),
@@ -62,8 +64,65 @@ export const getAttachement = createServerFn({ method: "GET" })
     if (!result.data) throw new Error("Attachement introuvable.");
     const lines = await context.supabase.from("attachement_items").select("*").eq("attachement_id", data.id).order("ordre");
     if (lines.error) throw new Error(lines.error.message);
-    return { attachement: result.data, items: lines.data ?? [] };
+    const props = await context.supabase
+      .from("attachement_propositions")
+      .select("id, signataire_nom, commentaire, total_ht, statut, lignes, created_at, traite_at")
+      .eq("attachement_id", data.id)
+      .order("created_at", { ascending: false });
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [] };
   });
+
+export const traiterPropositionAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ proposition_id: z.string().uuid(), decision: z.enum(["accepter", "refuser"]) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const prop = await context.supabase.from("attachement_propositions").select("*").eq("id", data.proposition_id).maybeSingle();
+    if (prop.error) throw new Error(prop.error.message);
+    if (!prop.data) throw new Error("Proposition introuvable.");
+    if (prop.data.statut !== "en_attente") throw new Error("Cette proposition a déjà été traitée.");
+    const att = await context.supabase.from("attachements_travaux").select("id, facture_id, autoliquidation").eq("id", prop.data.attachement_id).maybeSingle();
+    if (att.error) throw new Error(att.error.message);
+    if (!att.data) throw new Error("Attachement introuvable.");
+    if (att.data.facture_id) throw new Error("Cet attachement est déjà facturé.");
+    const cible = att.data;
+    const now = new Date().toISOString();
+    if (data.decision === "refuser") {
+      const upd = await context.supabase.from("attachement_propositions").update({ statut: "refusee", traite_at: now }).eq("id", data.proposition_id);
+      if (upd.error) throw new Error(upd.error.message);
+      const back = await context.supabase.from("attachements_travaux").update({ statut: "envoye" }).eq("id", cible.id);
+      if (back.error) throw new Error(back.error.message);
+      return { ok: true, decision: "refuser" as const };
+    }
+    const lignes = (Array.isArray(prop.data.lignes) ? prop.data.lignes : []) as Array<{ libelle: string; description?: string | null; quantite: number; prix_unitaire: number }>;
+    if (!lignes.length) throw new Error("La proposition ne contient aucune ligne.");
+    const items = lignes.map((l) => ({ ...l, quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire), tva: cible.autoliquidation ? 0 : 20 }));
+    const totals = computeTotals(items, 0);
+    const del = await context.supabase.from("attachement_items").delete().eq("attachement_id", cible.id);
+    if (del.error) throw new Error(del.error.message);
+    const ins = await context.supabase.from("attachement_items").insert(items.map((item, index) => ({
+      attachement_id: cible.id,
+      libelle: item.libelle,
+      description: item.description ?? null,
+      quantite: item.quantite,
+      prix_unitaire: item.prix_unitaire,
+      ordre: index + 1,
+    })));
+    if (ins.error) throw new Error(ins.error.message);
+    const upd = await context.supabase.from("attachements_travaux").update({
+      total_ht: totals.total_ht,
+      total_tva: totals.total_tva,
+      total_ttc: totals.total_ttc,
+      statut: "accepte",
+      accepted_at: now,
+      refused_at: null,
+      signataire_nom: prop.data.signataire_nom,
+    }).eq("id", cible.id);
+    if (upd.error) throw new Error(upd.error.message);
+    const done = await context.supabase.from("attachement_propositions").update({ statut: "acceptee", traite_at: now }).eq("id", data.proposition_id);
+    if (done.error) throw new Error(done.error.message);
+    return { ok: true, decision: "accepter" as const };
+  });
+
 
 export const createAttachement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -235,4 +294,18 @@ export const convertirAttachementEnFacture = createServerFn({ method: "POST" })
     }
     await context.supabase.from("attachements_travaux").update({ facture_id: invoice.id, statut: "facture" }).eq("id", attachment.id);
     return { id: invoice.id, existing: false };
+  });
+
+export const changerStatutAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), action: z.enum(["annuler", "reactiver"]) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const existing = await context.supabase.from("attachements_travaux").select("id, facture_id, sent_at").eq("id", data.id).maybeSingle();
+    if (existing.error) throw new Error(existing.error.message);
+    if (!existing.data) throw new Error("Attachement introuvable.");
+    if (existing.data.facture_id) throw new Error("Cet attachement est déjà facturé : annulez plutôt la facture.");
+    const statut = data.action === "annuler" ? "annule" : (existing.data.sent_at ? "envoye" : "brouillon");
+    const { error } = await context.supabase.from("attachements_travaux").update({ statut }).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { statut };
   });

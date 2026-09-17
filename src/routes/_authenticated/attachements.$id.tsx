@@ -8,7 +8,7 @@ import { AttachementPrint } from "@/components/AttachementPrint";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, updateAttachement } from "@/lib/attachements.functions";
+import { convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
@@ -24,7 +24,7 @@ const diffDays = (from: string, to: string) => { const a = new Date(`${from}T00:
 function AttachementDetail() {
   const { id } = Route.useParams(); const qc = useQueryClient(); const navigate = useNavigate();
   const getFn = useServerFn(getAttachement); const sendFn = useServerFn(envoyerAttachement); const convertFn = useServerFn(convertirAttachementEnFacture);
-  const updateFn = useServerFn(updateAttachement); const deleteFn = useServerFn(supprimerAttachement);
+  const updateFn = useServerFn(updateAttachement); const deleteFn = useServerFn(supprimerAttachement); const traiterFn = useServerFn(traiterPropositionAttachement);
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [edit, setEdit] = useState(false); const [delai, setDelai] = useState(60);
@@ -38,7 +38,7 @@ function AttachementDetail() {
       client_adresse: a.client_adresse ?? "", client_cp_ville: a.client_cp_ville ?? "", numero_ticket: a.numero_ticket ?? "",
       numero_affaire: a.numero_affaire ?? "", bon_commande: a.bon_commande ?? "", objet: a.objet ?? "",
       date_emission: a.date_emission, date_echeance: a.date_echeance, autoliquidation: Boolean(a.autoliquidation),
-      validation_requise: Boolean(a.validation_requise), notes: a.notes ?? "",
+      validation_requise: Boolean(a.validation_requise), proposition_autorisee: a.proposition_autorisee !== false, notes: a.notes ?? "",
     });
     setDelai(diffDays(a.date_emission, a.date_echeance));
     setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)) })));
@@ -53,10 +53,12 @@ function AttachementDetail() {
     onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
   const remove = useMutation({ mutationFn: () => deleteFn({ data: { id } }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements" }); }, onError: (e) => setError(e instanceof Error ? e.message : "Suppression impossible.") });
+  const traiter = useMutation({ mutationFn: (v: { proposition_id: string; decision: "accepter" | "refuser" }) => traiterFn({ data: v }), onSuccess: (r) => { setError(null); setFeedback(r.decision === "accepter" ? "Valorisation du client acceptée : l’attachement est mis à jour." : "Proposition refusée : votre valorisation reste applicable."); refresh(); }, onError: (e) => setError(e instanceof Error ? e.message : "Traitement impossible.") });
 
   if (query.isLoading) return <ProShell><Loader2 className="animate-spin text-primary" /></ProShell>;
   if (!query.data || query.error) return <ProShell><p className="text-destructive">Attachement introuvable.</p></ProShell>;
-  const { attachement: a, items } = query.data as any;
+  const { attachement: a, items, propositions } = query.data as any;
+  const enAttente = (propositions ?? []).find((p: any) => p.statut === "en_attente");
   const origin = typeof window === "undefined" ? "" : window.location.origin; const link = `${origin}/attachement/${a.public_token}`;
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
   const setDate = (value: string) => setForm((f: any) => ({ ...f, date_emission: value, date_echeance: addDays(value, delai) }));
@@ -73,6 +75,18 @@ function AttachementDetail() {
         {!a.facture_id && <Button variant="destructive" disabled={remove.isPending} onClick={() => { if (window.confirm(`Supprimer définitivement l’attachement ${a.numero} ?`)) remove.mutate(); }}><Trash2 /> Supprimer</Button>}
       </div>
     </header>
+
+    {enAttente ? <section className="rounded-md border-2 border-primary bg-primary/5 p-5 space-y-4">
+      <h2 className="text-sm font-bold uppercase text-primary">Valorisation proposée par le client</h2>
+      <p className="text-sm">Proposée par <strong>{enAttente.signataire_nom}</strong> le {new Date(enAttente.created_at).toLocaleString("fr-FR")}</p>
+      {enAttente.commentaire ? <p className="whitespace-pre-line rounded-md border border-border bg-card p-3 text-sm">{enAttente.commentaire}</p> : null}
+      <div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="text-left text-[10px] uppercase text-muted-foreground"><th className="p-2">Travaux</th><th className="p-2 text-right">Qté</th><th className="p-2 text-right">Prix HT proposé</th><th className="p-2 text-right">Total HT</th></tr></thead><tbody>
+        {(Array.isArray(enAttente.lignes) ? enAttente.lignes : []).map((l: any, index: number) => <tr key={index} className="border-t border-border"><td className="p-2">{l.libelle}{l.description ? <div className="text-xs text-muted-foreground">{l.description}</div> : null}</td><td className="p-2 text-right">{Number(l.quantite)}</td><td className="p-2 text-right">{euro(Number(l.prix_unitaire))}</td><td className="p-2 text-right font-semibold">{euro(Number(l.quantite) * Number(l.prix_unitaire))}</td></tr>)}
+      </tbody></table></div>
+      <div className="grid gap-3 sm:grid-cols-3"><Stat label="Votre total HT" value={euro(Number(a.total_ht))} /><Stat label="Total proposé HT" value={euro(Number(enAttente.total_ht))} /><Stat label="Écart" value={`${Number(enAttente.total_ht) - Number(a.total_ht) >= 0 ? "+" : ""}${euro(Number(enAttente.total_ht) - Number(a.total_ht))}`} /></div>
+      <div className="flex flex-wrap gap-2"><Button disabled={traiter.isPending} onClick={() => traiter.mutate({ proposition_id: enAttente.id, decision: "accepter" })}><CheckCircle2 /> Accepter sa valorisation</Button><Button variant="outline" disabled={traiter.isPending} onClick={() => traiter.mutate({ proposition_id: enAttente.id, decision: "refuser" })}><X /> Refuser</Button></div>
+    </section> : null}
+
 
     {edit && form ? <section className="rounded-md border border-primary/40 bg-card p-5 space-y-5">
       <h2 className="text-sm font-bold uppercase text-primary">Modification en direct</h2>
@@ -93,6 +107,7 @@ function AttachementDetail() {
       <div className="flex flex-wrap gap-5">
         <Check label="Autoliquidation de TVA" checked={form.autoliquidation} onChange={(v) => setForm({ ...form, autoliquidation: v })} />
         <Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} />
+        <Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} />
       </div>
       <div className="space-y-3">{lines.map((line) => <div key={line.key} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[1.4fr_1.5fr_.5fr_.7fr_auto]">
         <Input aria-label="Travaux" placeholder="Travaux réalisés" value={line.libelle} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, libelle: e.target.value } : l))} />
