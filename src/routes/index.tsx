@@ -9,7 +9,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
-import { BORNES_CATALOGUE } from "@/lib/bornes-catalogue";
+import { BORNES_CATALOGUE, BORNES_VEDETTES } from "@/lib/bornes-catalogue";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -271,7 +271,7 @@ function Index() {
           Cliquez sur une borne : votre demande s&apos;ouvre déjà préremplie avec le modèle et sa puissance.
         </p>
         <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused]">
-          {[...BORNES_CATALOGUE, ...BORNES_CATALOGUE].map((p, i) => (
+          {[...BORNES_VEDETTES, ...BORNES_VEDETTES].map((p, i) => (
             <Link
               key={i}
               to="/demande"
@@ -296,6 +296,15 @@ function Index() {
               </span>
             </Link>
           ))}
+        </div>
+        <div className="mx-auto max-w-6xl px-6 pt-8 text-center">
+          <Link
+            to="/bornes"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20"
+          >
+            Plus de choix — voir les {BORNES_CATALOGUE.length} modèles
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 

@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as DemandeRouteImport } from './routes/demande'
+import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
@@ -55,6 +56,11 @@ const InstallerRoute = InstallerRouteImport.update({
 const DemandeRoute = DemandeRouteImport.update({
   id: '/demande',
   path: '/demande',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BornesRoute = BornesRouteImport.update({
+  id: '/bornes',
+  path: '/bornes',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -220,6 +226,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/bornes': typeof BornesRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -253,6 +260,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/bornes': typeof BornesRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -288,6 +296,7 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/bornes': typeof BornesRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -323,6 +332,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/auth'
+    | '/bornes'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -356,6 +366,7 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/auth'
+    | '/bornes'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -390,6 +401,7 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/a-propos'
     | '/auth'
+    | '/bornes'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -425,6 +437,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AProposRoute: typeof AProposRoute
   AuthRoute: typeof AuthRoute
+  BornesRoute: typeof BornesRoute
   DemandeRoute: typeof DemandeRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -459,6 +472,13 @@ declare module '@tanstack/react-router' {
       path: '/demande'
       fullPath: '/demande'
       preLoaderRoute: typeof DemandeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/bornes': {
+      id: '/bornes'
+      path: '/bornes'
+      fullPath: '/bornes'
+      preLoaderRoute: typeof BornesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/auth': {
@@ -716,6 +736,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AProposRoute: AProposRoute,
   AuthRoute: AuthRoute,
+  BornesRoute: BornesRoute,
   DemandeRoute: DemandeRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
