@@ -8,6 +8,7 @@ import { submitDemande } from "@/lib/demande.functions";
 import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
+import { trouverBorne } from "@/lib/bornes-catalogue";
 
 type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -72,10 +73,13 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const { formule } = Route.useSearch();
+  const { formule, borne: borneId } = Route.useSearch();
+  const borneChoisie = trouverBorne(borneId);
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
-  const [puissanceBorne, setPuissanceBorne] = useState(PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!);
+  const [puissanceBorne, setPuissanceBorne] = useState(
+    borneChoisie?.puissance ?? PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!,
+  );
   const alerte = alerteAbonnement(kva, puissanceBorne);
   const [typeDemande, setTypeDemande] = useState<TypeDemande>(
     formule ? "souscription" : "raccordement",
