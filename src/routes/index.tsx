@@ -129,14 +129,6 @@ const maintenancePlans: Plan[] = [
   },
 ];
 
-const partenaires = [
-  { nom: "Hager Witty", img: borneHager },
-  { nom: "Schneider EVlink", img: borneSchneider },
-  { nom: "Wallbox Pulsar", img: borneWallbox },
-  { nom: "Tesla Wall Connector", img: borneTesla },
-  { nom: "Legrand Green'up", img: borneLegrand },
-  { nom: "EVBox", img: borneEvbox },
-];
 
 function Index() {
   const services_r = useReveal<HTMLDivElement>();
