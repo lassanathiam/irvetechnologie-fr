@@ -74,6 +74,9 @@ function AttachementDetail() {
         {!a.facture_id && <Button variant={edit ? "secondary" : "outline"} onClick={() => setEdit((v) => !v)}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>}
         <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimer / PDF</Button>
         {a.facture_id ? <Button asChild><Link to="/factures/$id" params={{ id: a.facture_id }}><CheckCircle2 /> Voir la facture</Link></Button> : <Button onClick={() => convert.mutate()} disabled={convert.isPending}><Receipt /> Convertir en facture</Button>}
+        {!a.facture_id && (a.statut === "annule"
+          ? <Button variant="outline" disabled={statutM.isPending} onClick={() => statutM.mutate("reactiver")}><RotateCcw /> Réactiver</Button>
+          : <Button variant="outline" disabled={statutM.isPending} onClick={() => { if (window.confirm(`Annuler l’attachement ${a.numero} ? Le client verra l’annulation sur son lien.`)) statutM.mutate("annuler"); }}><Ban /> Annuler</Button>)}
         {!a.facture_id && <Button variant="destructive" disabled={remove.isPending} onClick={() => { if (window.confirm(`Supprimer définitivement l’attachement ${a.numero} ?`)) remove.mutate(); }}><Trash2 /> Supprimer</Button>}
       </div>
     </header>
