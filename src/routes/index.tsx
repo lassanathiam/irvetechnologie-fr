@@ -236,13 +236,13 @@ function Index() {
               <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-blue opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-blue" /></span>
               Expertise IRVE certifiée P1 · P2 · P3
             </div>
-            <h1 className="mt-7 font-display text-4xl font-bold leading-none sm:text-6xl lg:text-7xl">
-              BORNE DE<br /><span className="premium-title-accent">L&apos;OUEST</span>
+            <h1 className="mt-7 font-display text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
+              Installation de bornes de recharge
             </h1>
-            <p className="mt-7 max-w-2xl text-lg leading-relaxed text-current opacity-75 sm:text-xl">
-              Installation et maintenance de solutions de recharge fiables. Nous accompagnons particuliers, copropriétés et entreprises dans tout le Grand Ouest.
+            <p className="mt-5 max-w-2xl text-base leading-relaxed text-current opacity-70 sm:text-lg">
+              Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels dans le Grand Ouest.
             </p>
-            <div className="mt-9 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
               <Link to="/demande" className="premium-primary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
                 Demander un devis <ArrowRight className="h-5 w-5" />
               </Link>
