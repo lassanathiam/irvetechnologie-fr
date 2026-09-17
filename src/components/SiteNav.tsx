@@ -33,6 +33,7 @@ export function SiteNav() {
         </div>
         <nav className="hidden items-center gap-5 text-xs font-semibold text-premium-foreground/65 xl:flex">
           <Link to="/" hash="services" className="hover:text-premium-blue transition">Services</Link>
+          <Link to="/bornes" className="hover:text-premium-blue transition">Nos bornes</Link>
           <Link to="/" hash="realisations" className="hover:text-premium-blue transition">Réalisations</Link>
           <Link to="/" hash="maintenance" className="hover:text-premium-blue transition">Maintenance</Link>
           <Link to="/" hash="zones" className="hover:text-premium-blue transition">Zones</Link>
