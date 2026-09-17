@@ -278,16 +278,36 @@ function Index() {
         </div>
       </section>
 
-      {/* MARQUEE partenaires */}
+      {/* MARQUEE bornes — cliquables vers la demande préremplie */}
       <section className="border-y border-border py-8 overflow-hidden bg-white/[0.03]">
-        <div className="flex gap-10 animate-marquee">
-          {[...partenaires, ...partenaires].map((p, i) => (
-            <div key={i} className="flex shrink-0 flex-col items-center gap-3">
+        <p className="mx-auto max-w-6xl px-6 pb-6 text-center text-sm text-muted-foreground">
+          Cliquez sur une borne : votre demande s&apos;ouvre déjà préremplie avec le modèle et sa puissance.
+        </p>
+        <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused]">
+          {[...BORNES_CATALOGUE, ...BORNES_CATALOGUE].map((p, i) => (
+            <Link
+              key={i}
+              to="/demande"
+              search={{ borne: p.id }}
+              className="group flex w-44 shrink-0 flex-col items-center gap-3 rounded-xl border border-border bg-card/70 p-4 transition hover:border-primary hover:bg-card"
+            >
               <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-premium-night/60 p-2">
                 <img src={p.img} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} className="h-full w-full object-contain" />
               </div>
-              <span className="text-mono text-xs text-muted-foreground">{p.nom}</span>
-            </div>
+              <span className="text-center text-sm font-semibold text-foreground">{p.nom}</span>
+              <span className="hero-grad rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground">
+                {p.puissance} · {p.phase}
+              </span>
+              <span className="text-center text-xs text-muted-foreground">{p.atout}</span>
+              {p.badge && (
+                <span className="rounded-full border border-primary/50 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                  {p.badge}
+                </span>
+              )}
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
+                Demander un devis <ArrowRight className="h-3 w-3" />
+              </span>
+            </Link>
           ))}
         </div>
       </section>
