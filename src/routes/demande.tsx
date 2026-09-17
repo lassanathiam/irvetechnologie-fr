@@ -281,6 +281,26 @@ function Demande() {
               <span className="text-sm text-muted-foreground">{formuleInfo.price}</span>
             </div>
           )}
+          {borneChoisie && (
+            <div className="mt-8 flex items-center gap-4 rounded-xl border border-primary/40 bg-card px-4 py-3">
+              <img
+                src={borneChoisie.img}
+                alt={`Borne ${borneChoisie.nom}`}
+                width={64}
+                height={64}
+                className="h-16 w-16 rounded-lg border border-border bg-premium-night/60 object-contain p-1"
+              />
+              <div>
+                <p className="text-sm font-semibold text-foreground">Borne sélectionnée : {borneChoisie.nom}</p>
+                <p className="mt-1 inline-flex rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
+                  {borneChoisie.puissance} · {borneChoisie.phase} · {borneChoisie.atout}
+                </p>
+                <p className="mt-2 text-sm text-muted-foreground">
+                  Il ne reste qu&apos;à indiquer vos coordonnées, le métrage et vos photos.
+                </p>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
