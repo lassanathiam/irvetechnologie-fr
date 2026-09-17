@@ -271,7 +271,7 @@ function Index() {
           Cliquez sur une borne : votre demande s&apos;ouvre déjà préremplie avec le modèle et sa puissance.
         </p>
         <div className="flex gap-6 animate-marquee hover:[animation-play-state:paused]">
-          {[...BORNES_CATALOGUE, ...BORNES_CATALOGUE].map((p, i) => (
+          {[...BORNES_VEDETTES, ...BORNES_VEDETTES].map((p, i) => (
             <Link
               key={i}
               to="/demande"
