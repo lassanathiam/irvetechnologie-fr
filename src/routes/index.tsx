@@ -297,6 +297,15 @@ function Index() {
             </Link>
           ))}
         </div>
+        <div className="mx-auto max-w-6xl px-6 pt-8 text-center">
+          <Link
+            to="/bornes"
+            className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20"
+          >
+            Plus de choix — voir les {BORNES_CATALOGUE.length} modèles
+            <ArrowRight className="h-4 w-4" />
+          </Link>
+        </div>
       </section>
 
       {/* MAINTENANCE / ABONNEMENTS */}
