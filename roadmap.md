@@ -23,3 +23,6 @@
 - [x] Ajouter les attachements de travaux fibre, avec ticket, numéro d’affaire, bon de commande, autoliquidation et conversion en facture
 
 - [x] Réponse express aux leads : 3 bornes préconfigurées, prix ajusté au métrage de câble, envoi en un clic (15/09/2026) — prix Hager Witty et 22 kW à confirmer
+
+## Attachements — suivi côté client
+- [x] Afficher sur le lien public la date de derniere modification, les changements de statut (modifie, annule, facture) et un bandeau clair

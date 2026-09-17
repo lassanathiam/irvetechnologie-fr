@@ -12,7 +12,8 @@ export type NotificationType =
   | "partenaire_montant"
   | "chantier_termine"
   | "photos_telechargees"
-  | "attachement_reponse";
+  | "attachement_reponse"
+  | "attachement_proposition";
 
 export type NouvelleNotification = {
   type: NotificationType;

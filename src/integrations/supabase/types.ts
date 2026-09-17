@@ -79,6 +79,53 @@ export type Database = {
           },
         ]
       }
+      attachement_propositions: {
+        Row: {
+          attachement_id: string
+          commentaire: string | null
+          created_at: string
+          id: string
+          lignes: Json
+          signataire_nom: string
+          statut: string
+          total_ht: number
+          traite_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          attachement_id: string
+          commentaire?: string | null
+          created_at?: string
+          id?: string
+          lignes?: Json
+          signataire_nom: string
+          statut?: string
+          total_ht?: number
+          traite_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          attachement_id?: string
+          commentaire?: string | null
+          created_at?: string
+          id?: string
+          lignes?: Json
+          signataire_nom?: string
+          statut?: string
+          total_ht?: number
+          traite_at?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "attachement_propositions_attachement_id_fkey"
+            columns: ["attachement_id"]
+            isOneToOne: false
+            referencedRelation: "attachements_travaux"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attachements_travaux: {
         Row: {
           accepted_at: string | null
@@ -102,6 +149,7 @@ export type Database = {
           numero_affaire: string | null
           numero_ticket: string
           objet: string | null
+          proposition_autorisee: boolean
           public_token: string
           refused_at: string | null
           rendezvous_id: string | null
@@ -138,6 +186,7 @@ export type Database = {
           numero_affaire?: string | null
           numero_ticket: string
           objet?: string | null
+          proposition_autorisee?: boolean
           public_token?: string
           refused_at?: string | null
           rendezvous_id?: string | null
@@ -174,6 +223,7 @@ export type Database = {
           numero_affaire?: string | null
           numero_ticket?: string
           objet?: string | null
+          proposition_autorisee?: boolean
           public_token?: string
           refused_at?: string | null
           rendezvous_id?: string | null
