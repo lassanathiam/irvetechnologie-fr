@@ -32,8 +32,27 @@ type EnvoiPayload = {
 const INPUT =
   "mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary";
 
+/** Coordonnées préremplies (ex. depuis une demande client reçue). */
+export type ReponseExpressPrefill = {
+  prenom?: string | null;
+  nom?: string | null;
+  email?: string | null;
+  telephone?: string | null;
+  adresse?: string | null;
+  cp_ville?: string | null;
+  metrage_m?: number | null;
+};
+
 /** Bouton « Réponse express » : proposition chiffrée envoyée en un clic. */
-export function ReponseExpressButton({ className }: { className?: string }) {
+export function ReponseExpressButton({
+  className,
+  label,
+  prefill,
+}: {
+  className?: string;
+  label?: string;
+  prefill?: ReponseExpressPrefill;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -45,14 +64,20 @@ export function ReponseExpressButton({ className }: { className?: string }) {
           "inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         }
       >
-        <Zap className="h-4 w-4" /> Réponse express
+        <Zap className="h-4 w-4" /> {label ?? "Réponse express"}
       </button>
-      {open && <ReponseExpressPanel onClose={() => setOpen(false)} />}
+      {open && <ReponseExpressPanel onClose={() => setOpen(false)} prefill={prefill} />}
     </>
   );
 }
 
-function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
+function ReponseExpressPanel({
+  onClose,
+  prefill,
+}: {
+  onClose: () => void;
+  prefill?: ReponseExpressPrefill;
+}) {
   const qc = useQueryClient();
   const chargerConfig = useServerFn(getReponseExpressConfig);
   const enregistrerConfig = useServerFn(updateReponseExpressConfig);
@@ -65,7 +90,9 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   const config: ReponseExpressConfig = configQuery.data ?? CONFIG_DEFAUT;
 
   const [offreId, setOffreId] = useState<string | null>(null);
-  const [metrage, setMetrage] = useState<string>("");
+  const [metrage, setMetrage] = useState<string>(
+    prefill?.metrage_m ? String(prefill.metrage_m) : "",
+  );
   const [prixDirecte, setPrixDirecte] = useState<string>("");
   const [option, setOption] = useState(false);
   const [reglages, setReglages] = useState(false);
@@ -78,6 +105,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   } | null>(null);
 
   const offreChoisie = config.offres.find((o) => o.id === offreId) ?? null;
+
   const metrageNum = Number(metrage.replace(",", ".")) || config.metrage_inclus_m;
 
   const prixDirecteNum = Number(prixDirecte.replace(",", ".")) || 0;
