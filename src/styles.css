@@ -627,7 +627,7 @@
     break-inside: auto;
     display: table !important;
     width: 100% !important;
-    table-layout: fixed;
+    table-layout: auto;
   }
   .print-doc thead,
   .print-sheet thead {
@@ -650,9 +650,12 @@
   .print-sheet td,
   .print-sheet th {
     display: table-cell !important;
-    width: auto !important;
     overflow-wrap: anywhere;
     word-break: normal;
+  }
+  .print-doc th:nth-child(2),
+  .print-doc td:nth-child(2) {
+    width: auto !important;
   }
   .print-doc td::before,
   .print-sheet td::before {
