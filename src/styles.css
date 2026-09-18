@@ -522,6 +522,61 @@
   transform: translateY(0);
 }
 
+/* Documents clients : lecture compacte sur téléphone, tableau A4 complet à l'impression. */
+@media (max-width: 640px) {
+  .print-doc {
+    overflow-wrap: anywhere;
+  }
+  .print-doc > div:first-child {
+    align-items: stretch;
+  }
+  .print-doc > div:first-child > div {
+    min-width: 0;
+    width: 100%;
+  }
+  .document-lines,
+  .document-lines tbody,
+  .document-lines tr,
+  .document-lines td {
+    display: block;
+    width: 100%;
+  }
+  .document-lines thead {
+    display: none;
+  }
+  .document-lines tr {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+  }
+  .document-lines td {
+    display: grid;
+    grid-template-columns: minmax(6.5rem, 42%) minmax(0, 1fr);
+    gap: 0.75rem;
+    padding: 0.3rem 0;
+    text-align: right;
+  }
+  .document-lines td::before {
+    content: attr(data-label);
+    color: var(--muted-foreground);
+    font-family: var(--font-mono);
+    font-size: 0.62rem;
+    font-weight: 700;
+    text-align: left;
+    text-transform: uppercase;
+  }
+  .document-lines td:nth-child(2) {
+    display: block;
+    padding-bottom: 0.65rem;
+    text-align: left;
+  }
+  .document-lines td:nth-child(2)::before {
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+}
+
 /* Feuilles imprimées (devis, factures, rapports) — fond blanc, couleurs conservées */
 @media print {
   @page {
@@ -554,6 +609,11 @@
     border: 0 !important;
     box-shadow: none !important;
     padding: 0 !important;
+    width: 100% !important;
+    max-width: 186mm !important;
+    margin-right: auto !important;
+    margin-left: auto !important;
+    overflow: visible !important;
   }
   .print-doc img {
     max-width: 100%;
@@ -565,10 +625,38 @@
   .print-doc table,
   .print-sheet table {
     break-inside: auto;
+    display: table !important;
+    width: 100% !important;
+    table-layout: fixed;
+  }
+  .print-doc thead,
+  .print-sheet thead {
+    display: table-header-group !important;
+  }
+  .print-doc tbody,
+  .print-sheet tbody {
+    display: table-row-group !important;
   }
   .print-doc tr,
   .print-sheet tr {
+    display: table-row !important;
     break-inside: avoid;
+    margin: 0 !important;
+    padding: 0 !important;
+    border-radius: 0 !important;
+  }
+  .print-doc td,
+  .print-doc th,
+  .print-sheet td,
+  .print-sheet th {
+    display: table-cell !important;
+    width: auto !important;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .print-doc td::before,
+  .print-sheet td::before {
+    display: none !important;
   }
 }
 

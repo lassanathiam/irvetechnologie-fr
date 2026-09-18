@@ -63,7 +63,7 @@ export function DocumentPrint({
   const accent = accentColor || "#1459d9";
 
   return (
-    <div className="print-doc bg-card border border-border rounded-sm p-6 sm:p-8 text-[13px] leading-relaxed">
+    <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-8 text-[13px] leading-relaxed">
       {/* En-tête : émetteur à gauche, client en face à droite */}
       <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2" style={{ borderColor: accent }}>
         <div className="flex items-start gap-4">
@@ -141,7 +141,7 @@ export function DocumentPrint({
       )}
 
       {/* Lignes */}
-      <table className="mt-5 w-full border-collapse">
+      <table className="document-lines mt-5 w-full border-collapse">
         <thead>
           <tr className="bg-muted text-mono text-[10px] font-bold uppercase tracking-[0.14em]">
             <th className="text-left py-2.5 px-3 w-8">#</th>
@@ -155,17 +155,17 @@ export function DocumentPrint({
         <tbody>
           {lines.map((line, i) => (
             <tr key={i} className="border-b border-border align-top">
-              <td className="py-3 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
-              <td className="py-3 px-3">
-                <div className="font-bold">{line.libelle}</div>
+              <td data-label="N°" className="py-3 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
+              <td data-label="Prestation" className="min-w-0 py-3 px-3">
+                <div className="break-words font-bold">{line.libelle}</div>
                 {line.description && (
-                  <div className="text-muted-foreground text-[12px] mt-0.5 whitespace-pre-line">{line.description}</div>
+                  <div className="mt-0.5 whitespace-pre-line break-words text-[12px] text-muted-foreground">{line.description}</div>
                 )}
               </td>
-              <td className="py-3 px-3 text-right text-mono font-semibold">{line.quantite}</td>
-              <td className="py-3 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
-              <td className="py-3 px-3 text-right text-mono">{line.tva} %</td>
-              <td className="py-3 px-3 text-right text-mono font-bold">
+              <td data-label="Quantité" className="py-3 px-3 text-right text-mono font-semibold">{line.quantite}</td>
+              <td data-label="Prix unitaire HT" className="py-3 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
+              <td data-label="TVA" className="py-3 px-3 text-right text-mono">{line.tva} %</td>
+              <td data-label="Total HT" className="py-3 px-3 text-right text-mono font-bold">
                 {euro(line.quantite * line.prix_unitaire)}
               </td>
             </tr>
