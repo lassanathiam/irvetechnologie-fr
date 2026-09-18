@@ -324,12 +324,17 @@ function Info({ label, value }: { label: string; value?: string | null }) {
 function SignatureBlock({
   title,
   image,
+  signedAt = null,
   withCompanySeal = false,
 }: {
   title: string;
   image?: string | null;
+  signedAt?: string | null;
   withCompanySeal?: boolean;
 }) {
+  const signedLabel = signedAt
+    ? `Signé le ${dateFr(signedAt.slice(0, 10))} à ${new Date(signedAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`
+    : "Date et signature";
   return (
     <div className="border border-border rounded-sm p-4">
       <div className="text-mono text-xs text-muted-foreground">{title}</div>
@@ -341,7 +346,7 @@ function SignatureBlock({
           <CompanySeal className="w-full max-w-[280px] mx-auto" />
         </div>
       )}
-      <div className="text-[11px] text-muted-foreground mt-2">Date et signature</div>
+      <div className="text-[11px] text-muted-foreground mt-2">{signedLabel}</div>
     </div>
   );
 }
