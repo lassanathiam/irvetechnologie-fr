@@ -32,8 +32,27 @@ type EnvoiPayload = {
 const INPUT =
   "mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary";
 
+/** Coordonnées préremplies (ex. depuis une demande client reçue). */
+export type ReponseExpressPrefill = {
+  prenom?: string | null;
+  nom?: string | null;
+  email?: string | null;
+  telephone?: string | null;
+  adresse?: string | null;
+  cp_ville?: string | null;
+  metrage_m?: number | null;
+};
+
 /** Bouton « Réponse express » : proposition chiffrée envoyée en un clic. */
-export function ReponseExpressButton({ className }: { className?: string }) {
+export function ReponseExpressButton({
+  className,
+  label,
+  prefill,
+}: {
+  className?: string;
+  label?: string;
+  prefill?: ReponseExpressPrefill;
+}) {
   const [open, setOpen] = useState(false);
   return (
     <>
@@ -45,14 +64,20 @@ export function ReponseExpressButton({ className }: { className?: string }) {
           "inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
         }
       >
-        <Zap className="h-4 w-4" /> Réponse express
+        <Zap className="h-4 w-4" /> {label ?? "Réponse express"}
       </button>
-      {open && <ReponseExpressPanel onClose={() => setOpen(false)} />}
+      {open && <ReponseExpressPanel onClose={() => setOpen(false)} prefill={prefill} />}
     </>
   );
 }
 
-function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
+function ReponseExpressPanel({
+  onClose,
+  prefill,
+}: {
+  onClose: () => void;
+  prefill?: ReponseExpressPrefill;
+}) {
   const qc = useQueryClient();
   const chargerConfig = useServerFn(getReponseExpressConfig);
   const enregistrerConfig = useServerFn(updateReponseExpressConfig);
@@ -65,7 +90,9 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   const config: ReponseExpressConfig = configQuery.data ?? CONFIG_DEFAUT;
 
   const [offreId, setOffreId] = useState<string | null>(null);
-  const [metrage, setMetrage] = useState<string>("");
+  const [metrage, setMetrage] = useState<string>(
+    prefill?.metrage_m ? String(prefill.metrage_m) : "",
+  );
   const [prixDirecte, setPrixDirecte] = useState<string>("");
   const [option, setOption] = useState(false);
   const [reglages, setReglages] = useState(false);
@@ -78,6 +105,7 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
   } | null>(null);
 
   const offreChoisie = config.offres.find((o) => o.id === offreId) ?? null;
+
   const metrageNum = Number(metrage.replace(",", ".")) || config.metrage_inclus_m;
 
   const prixDirecteNum = Number(prixDirecte.replace(",", ".")) || 0;
@@ -271,24 +299,52 @@ function ReponseExpressPanel({ onClose }: { onClose: () => void }) {
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Prénom</span>
-                <input name="prenom" className={INPUT} autoComplete="off" />
+                <input
+                  name="prenom"
+                  defaultValue={prefill?.prenom ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Nom *</span>
-                <input name="nom" required className={INPUT} autoComplete="off" />
+                <input
+                  name="nom"
+                  required
+                  defaultValue={prefill?.nom ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">E-mail</span>
-                <input name="email" type="email" className={INPUT} autoComplete="off" />
+                <input
+                  name="email"
+                  type="email"
+                  defaultValue={prefill?.email ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Téléphone</span>
-                <input name="telephone" type="tel" className={INPUT} autoComplete="off" />
+                <input
+                  name="telephone"
+                  type="tel"
+                  defaultValue={prefill?.telephone ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
             </div>
             <div className="grid gap-3">
-              <AdresseFields />
+              <AdresseFields
+                defaultAdresse={prefill?.adresse ?? undefined}
+                defaultCpVille={prefill?.cp_ville ?? undefined}
+              />
             </div>
+
+
 
             <div className="grid gap-2">
               <span className="text-mono text-xs text-muted-foreground">Borne proposée</span>
