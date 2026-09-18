@@ -273,11 +273,13 @@ function RapportDetail() {
             <SignatureBlock
               title={`Technicien — ${r.technicien || COMPANY.raisonSociale}`}
               image={r.signature_technicien}
+              signedAt={r.signature_technicien ? r.updated_at : null}
               withCompanySeal
             />
             <SignatureBlock
               title={`Client — ${r.signataire_client || r.client_nom}`}
               image={r.signature_client}
+              signedAt={r.signature_client ? r.updated_at : null}
             />
           </section>
 
