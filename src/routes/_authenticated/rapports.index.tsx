@@ -347,7 +347,9 @@ function RapportsPage() {
       devis_id: linked.devis_id,
       rendezvous_id: linked.rendezvous_id,
       
-      checklist: checks,
+      // En mode « Essentiel », le document imprimé affiche la checklist complète :
+      // on enregistre aussi les points complets sur « Conforme » pour éviter des cases vides.
+      checklist: mode === "essentiel" ? { ...allOk(checklistFor(type)), ...checks } : checks,
       observations: get("observations") || null,
       reserves: get("reserves") || null,
       signature_technicien: sigTech,
