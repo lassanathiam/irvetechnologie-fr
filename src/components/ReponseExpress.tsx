@@ -299,24 +299,52 @@ function ReponseExpressPanel({
             <div className="grid gap-3 sm:grid-cols-2">
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Prénom</span>
-                <input name="prenom" className={INPUT} autoComplete="off" />
+                <input
+                  name="prenom"
+                  defaultValue={prefill?.prenom ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Nom *</span>
-                <input name="nom" required className={INPUT} autoComplete="off" />
+                <input
+                  name="nom"
+                  required
+                  defaultValue={prefill?.nom ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">E-mail</span>
-                <input name="email" type="email" className={INPUT} autoComplete="off" />
+                <input
+                  name="email"
+                  type="email"
+                  defaultValue={prefill?.email ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
               <label className="block">
                 <span className="text-mono text-xs text-muted-foreground">Téléphone</span>
-                <input name="telephone" type="tel" className={INPUT} autoComplete="off" />
+                <input
+                  name="telephone"
+                  type="tel"
+                  defaultValue={prefill?.telephone ?? ""}
+                  className={INPUT}
+                  autoComplete="off"
+                />
               </label>
             </div>
             <div className="grid gap-3">
-              <AdresseFields />
+              <AdresseFields
+                defaultAdresse={prefill?.adresse ?? undefined}
+                defaultCpVille={prefill?.cp_ville ?? undefined}
+              />
             </div>
+
+
 
             <div className="grid gap-2">
               <span className="text-mono text-xs text-muted-foreground">Borne proposée</span>
