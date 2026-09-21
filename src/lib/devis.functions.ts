@@ -189,7 +189,7 @@ export const listDevis = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("devis")
       .select(
-        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_expiration, sent_at, facture_id, rendezvous_id",
+        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_expiration, sent_at, facture_id, rendezvous_id, viewed_at, last_viewed_at, view_count",
       )
       .order("created_at", { ascending: false })
       .limit(200);

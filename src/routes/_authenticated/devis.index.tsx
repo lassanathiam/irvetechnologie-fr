@@ -510,6 +510,19 @@ function DevisPage() {
               <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground">
                 {STATUT_LABEL[d.statut] ?? d.statut}
               </span>
+              {d.viewed_at ? (
+                <span
+                  title={`Dernière consultation le ${new Date(d.last_viewed_at ?? d.viewed_at).toLocaleString("fr-FR")}`}
+                  className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/50 bg-primary/10 text-primary"
+                >
+                  Lu le {new Date(d.viewed_at).toLocaleDateString("fr-FR")}
+                  {Number(d.view_count) > 1 ? ` · ${d.view_count}×` : ""}
+                </span>
+              ) : d.sent_at ? (
+                <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground">
+                  Non consulté
+                </span>
+              ) : null}
               {d.facture_id && (
                 <Link
                   to="/factures/$id"
