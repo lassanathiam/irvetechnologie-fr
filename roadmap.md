@@ -26,3 +26,5 @@
 
 ## Attachements — suivi côté client
 - [x] Afficher sur le lien public la date de derniere modification, les changements de statut (modifie, annule, facture) et un bandeau clair
+
+- [x] Refaire et stabiliser l’espace professionnel dans la direction sombre vitrée choisie, avec modes jour/nuit et affichage mobile (25/09/2026)
