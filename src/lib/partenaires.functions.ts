@@ -409,7 +409,7 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
-        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, materiel_statut, materiel_maj_at, demarre_at, termine_at, created_at, metrage_inclus_m, metrage_reel_m, retour_delestage, retour_observations, statut_facturation, echeance_paiement, montant_propose_ht, montant_propose_note, montant_propose_at, montant_valide_at",
+        "id, titre, designation, client_nom, client_telephone, adresse, cp_ville, date_debut, date_a_confirmer, statut, montant_ht, notes, metrage_m, puissance_borne, phase_installation, type_pose, materiel_statut, materiel_maj_at, nature_dossier, materiel_fourni, demarre_at, termine_at, created_at, metrage_inclus_m, metrage_reel_m, retour_delestage, retour_observations, statut_facturation, echeance_paiement, montant_propose_ht, montant_propose_note, montant_propose_at, montant_valide_at",
       )
       .eq("partenaire_id", partenaire.id)
       .order("created_at", { ascending: false })
@@ -456,6 +456,11 @@ const dossierSchema = tokenSchema.extend({
     .default(0),
   notes: z.string().trim().max(2000).optional().nullable(),
   materiel_statut: z.enum(MATERIEL_STATUTS).default("en_cours"),
+  nature_dossier: z.enum(["installation", "remplacement", "maintenance"]).optional().nullable(),
+  materiel_fourni: z
+    .array(z.object({ libelle: z.string().trim().min(1).max(120), quantite: z.number().min(0).max(10000) }))
+    .max(40)
+    .default([]),
 });
 
 export const creerDossierPartenaire = createServerFn({ method: "POST" })
@@ -483,7 +488,9 @@ export const creerDossierPartenaire = createServerFn({ method: "POST" })
       puissance_borne: data.puissance_borne ?? null,
       phase_installation: data.phase_installation ?? null,
       type_pose: data.type_pose ?? null,
-      type: "installation",
+      type: data.nature_dossier === "maintenance" ? "maintenance" : "installation",
+      nature_dossier: data.nature_dossier ?? null,
+      materiel_fourni: data.materiel_fourni,
       statut: "planifie",
       client_nom: data.client_nom,
       client_telephone: data.client_telephone ?? null,

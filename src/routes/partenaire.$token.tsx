@@ -57,6 +57,25 @@ export const Route = createFileRoute("/partenaire/$token")({
   component: PagePartenaire,
 });
 
+const NATURE_LABELS = {
+  installation: "Installation neuve",
+  remplacement: "Remplacement borne",
+  maintenance: "Maintenance",
+} as const;
+
+const MATERIEL_FOURNI_OPTIONS = [
+  "Borne de recharge",
+  "Disjoncteur différentiel",
+  "Disjoncteur divisionnaire",
+  "Parafoudre",
+  "Interrupteur différentiel 30 mA type A/F",
+  "Coffret / tableau électrique",
+  "Câble d'alimentation",
+  "Gaine / goulotte",
+  "Délesteur / module de pilotage",
+  "Pied / support de borne",
+];
+
 const INPUT =
   "mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary";
 
@@ -314,6 +333,8 @@ function EspacePartenaire({
   const [envoi, setEnvoi] = useState<string | null>(null);
   /** Dossier dont l'état du matériel est en cours d'enregistrement. */
   const [materielBusy, setMaterielBusy] = useState<string | null>(null);
+  const [materielFourni, setMaterielFourni] = useState<Record<string, number>>({});
+  const [materielAutre, setMaterielAutre] = useState("");
   /** Dossier dont le montant valorisé est en cours d'envoi. */
   const [montantBusy, setMontantBusy] = useState<string | null>(null);
   /** Affichage complet d'une section (sinon limité pour éviter les longues pages). */
@@ -438,12 +459,31 @@ function EspacePartenaire({
           notes: get("notes") || null,
           materiel_statut: (get("materiel_statut") ||
             "en_cours") as (typeof MATERIEL_STATUTS)[number],
+          nature_dossier: (get("nature_dossier") || null) as
+            | "installation"
+            | "remplacement"
+            | "maintenance"
+            | null,
+          materiel_fourni: Object.entries(materielFourni)
+            .filter(([, q]) => q > 0)
+            .map(([libelle, quantite]) => ({ libelle, quantite }))
+            .concat(
+              materielAutre.trim()
+                ? materielAutre
+                    .split(",")
+                    .map((x) => x.trim())
+                    .filter(Boolean)
+                    .map((libelle) => ({ libelle, quantite: 1 }))
+                : [],
+            ),
         },
       });
       if (!resultat?.ok) throw new Error("Le dossier n'a pas pu être enregistré.");
       setNotice("Dossier transmis à IRVE Technologie.");
       setForm(false);
       setRdvAPrendre(true);
+      setMaterielFourni({});
+      setMaterielAutre("");
       formElement.reset();
       void espace.refetch();
     } catch (err) {
@@ -508,6 +548,23 @@ function EspacePartenaire({
             <span className="text-mono">{eurosFr(Number(d.montant_ht))} HT</span>
           )}
         </p>
+        {(d.nature_dossier || (Array.isArray(d.materiel_fourni) && d.materiel_fourni.length > 0)) && (
+          <p className="text-[11px] mt-2 flex flex-wrap items-center gap-1.5">
+            {d.nature_dossier && (
+              <span className="rounded-full border border-primary/40 px-2 py-0.5 font-semibold text-primary">
+                {NATURE_LABELS[d.nature_dossier as keyof typeof NATURE_LABELS] ?? d.nature_dossier}
+              </span>
+            )}
+            {Array.isArray(d.materiel_fourni) && d.materiel_fourni.length > 0 && (
+              <span className="text-muted-foreground">
+                Fourni :{" "}
+                {(d.materiel_fourni as { libelle: string; quantite: number }[])
+                  .map((m) => (m.quantite > 1 ? `${m.quantite}× ${m.libelle}` : m.libelle))
+                  .join(", ")}
+              </span>
+            )}
+          </p>
+        )}
         <p className="text-[11px] text-mono mt-2 text-primary uppercase">
           {d.termine_at
             ? `Terminé le ${new Date(d.termine_at).toLocaleString("fr-FR")}`
@@ -797,6 +854,20 @@ function EspacePartenaire({
           <form onSubmit={submit} className="bg-card border border-border rounded-xl p-5 grid gap-4">
             <h1 className="font-semibold text-sm">Nouveau dossier d'intervention</h1>
 
+            <div>
+              <span className="text-mono text-xs text-muted-foreground">Nature du dossier</span>
+              <div className="mt-2 grid grid-cols-3 gap-2">
+                {(Object.keys(NATURE_LABELS) as (keyof typeof NATURE_LABELS)[]).map((k) => (
+                  <label key={k} className="cursor-pointer">
+                    <input type="radio" name="nature_dossier" value={k} defaultChecked={k === "installation"} className="peer sr-only" />
+                    <span className="block text-center text-xs font-semibold rounded-sm px-2 py-2.5 border border-border text-muted-foreground peer-checked:border-primary peer-checked:text-primary peer-checked:bg-muted">
+                      {NATURE_LABELS[k]}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+
             <label className="block">
               <span className="text-mono text-xs text-muted-foreground">Nom du client</span>
               <input name="client_nom" required className={INPUT} placeholder="M. Dupont" />
@@ -904,6 +975,30 @@ function EspacePartenaire({
                 ))}
               </select>
             </label>
+
+            <details className="rounded-lg border border-border/70 bg-muted/20">
+              <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-primary">
+                Matériel fourni par vos soins (facultatif)
+                {Object.values(materielFourni).some((q) => q > 0) &&
+                  ` · ${Object.values(materielFourni).filter((q) => q > 0).length} élément(s)`}
+              </summary>
+              <div className="border-t border-border px-3 py-3 space-y-2">
+                {MATERIEL_FOURNI_OPTIONS.map((libelle) => {
+                  const q = materielFourni[libelle] ?? 0;
+                  return (
+                    <div key={libelle} className="flex items-center justify-between gap-2 text-sm">
+                      <span className={q > 0 ? "text-foreground" : "text-muted-foreground"}>{libelle}</span>
+                      <div className="flex items-center gap-1">
+                        <button type="button" aria-label={`Retirer ${libelle}`} onClick={() => setMaterielFourni((m) => ({ ...m, [libelle]: Math.max(0, q - 1) }))} className="h-7 w-7 rounded-sm border border-border text-sm">−</button>
+                        <span className="w-6 text-center text-mono text-xs">{q}</span>
+                        <button type="button" aria-label={`Ajouter ${libelle}`} onClick={() => setMaterielFourni((m) => ({ ...m, [libelle]: q + 1 }))} className="h-7 w-7 rounded-sm border border-border text-sm">+</button>
+                      </div>
+                    </div>
+                  );
+                })}
+                <input value={materielAutre} onChange={(e) => setMaterielAutre(e.target.value)} className={INPUT} placeholder="Autre matériel (séparer par des virgules)" />
+              </div>
+            </details>
 
             <label className="block">
               <span className="text-mono text-xs text-muted-foreground">Informations complémentaires</span>

@@ -1217,6 +1217,7 @@ export type Database = {
           id: string
           lat: number | null
           lng: number | null
+          materiel_fourni: Json
           materiel_maj_at: string | null
           materiel_statut: string
           metrage_inclus_m: number
@@ -1228,6 +1229,7 @@ export type Database = {
           montant_propose_note: string | null
           montant_propose_par: string | null
           montant_valide_at: string | null
+          nature_dossier: string | null
           notes: string | null
           notif_archive_at: string | null
           notif_fin_at: string | null
@@ -1285,6 +1287,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          materiel_fourni?: Json
           materiel_maj_at?: string | null
           materiel_statut?: string
           metrage_inclus_m?: number
@@ -1296,6 +1299,7 @@ export type Database = {
           montant_propose_note?: string | null
           montant_propose_par?: string | null
           montant_valide_at?: string | null
+          nature_dossier?: string | null
           notes?: string | null
           notif_archive_at?: string | null
           notif_fin_at?: string | null
@@ -1353,6 +1357,7 @@ export type Database = {
           id?: string
           lat?: number | null
           lng?: number | null
+          materiel_fourni?: Json
           materiel_maj_at?: string | null
           materiel_statut?: string
           metrage_inclus_m?: number
@@ -1364,6 +1369,7 @@ export type Database = {
           montant_propose_note?: string | null
           montant_propose_par?: string | null
           montant_valide_at?: string | null
+          nature_dossier?: string | null
           notes?: string | null
           notif_archive_at?: string | null
           notif_fin_at?: string | null
