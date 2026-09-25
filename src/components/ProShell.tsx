@@ -70,19 +70,19 @@ export function ProShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="pro-shell flex min-h-screen w-full bg-background text-foreground">
       <aside
-        className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-sidebar-line bg-sidebar text-sidebar-foreground transition-transform duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
+        className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-sidebar-line bg-sidebar/90 text-sidebar-foreground backdrop-blur-xl transition-[width,transform] duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           menuOuvert ? "translate-x-0" : "-translate-x-full"
         } ${reduit ? "md:w-[4.5rem]" : "md:w-64"}`}
       >
         <div className="flex h-20 items-center justify-between gap-2 border-b border-sidebar-line px-4">
           <Link to="/" className="flex min-w-0 items-center gap-3" onClick={() => setMenuOuvert(false)}>
-            <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-sidebar-accent shadow-[0_0_16px_-4px_var(--sidebar-accent)]">
+            <span className="pro-logo-tile flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sidebar-accent">
               <BrandLogo className="h-8 w-8" />
             </span>
             {!reduit && (
               <span className="min-w-0 leading-tight">
-                <span className="block truncate font-display text-base font-bold text-sidebar-title">Borne de l’Ouest</span>
-                <span className="block truncate text-[9px] font-bold uppercase text-sidebar-accent">IRVE Technologie</span>
+                <span className="block truncate font-display text-sm font-bold text-sidebar-title">Borne de l’Ouest</span>
+                <span className="block truncate text-[9px] font-bold uppercase text-sidebar-accent">IRVE Technologie · Pro</span>
               </span>
             )}
           </Link>
@@ -98,14 +98,14 @@ export function ProShell({ children }: { children: React.ReactNode }) {
           </Button>
         </div>
 
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-6" aria-label="Navigation de l’espace professionnel">
+        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Navigation de l’espace professionnel">
           {LINKS.map(({ to, label, icon: Icon }) => (
             <Link
               key={to}
               to={to}
               onClick={() => setMenuOuvert(false)}
               title={reduit ? label : undefined}
-              className={`pro-nav-link flex min-h-11 items-center rounded-full px-4 text-sm font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
+              className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
               activeProps={{ className: "pro-nav-active" }}
             >
               <Icon className="h-5 w-5 shrink-0" />
@@ -121,7 +121,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
 
         <div className="border-t border-sidebar-line p-3">
           {!reduit && (
-            <div className="mb-3 rounded-2xl border border-sidebar-line bg-sidebar-hover p-3">
+            <div className="pro-certification mb-3 rounded-lg border border-sidebar-line bg-sidebar-hover p-3">
               <div className="flex items-center gap-2 text-sidebar-accent">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
                 <span className="text-xs font-bold">{COMPANY.qualifications}</span>
@@ -175,7 +175,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             >
               {reduit ? <ChevronRight /> : <ChevronLeft />}
             </Button>
-            <span className="hidden text-sm font-semibold text-muted-foreground sm:block">Espace professionnel</span>
+             <span className="hidden text-sm font-semibold text-muted-foreground sm:block">Centre de pilotage</span>
           </div>
           <div className="flex items-center gap-1.5">
             <Link
@@ -193,7 +193,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
             </span>
           </div>
         </header>
-        <main className="pro-main w-full max-w-full overflow-x-hidden p-3 sm:p-6 lg:p-8">
+        <main className="pro-main w-full max-w-full overflow-x-hidden p-3 sm:p-5 lg:p-6">
           {showWelcome && (
             <div className="mb-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 md:hidden">
               <div className="flex items-start gap-3">
@@ -201,9 +201,9 @@ export function ProShell({ children }: { children: React.ReactNode }) {
                   <Sparkles className="h-4 w-4" />
                 </span>
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold">Bienvenue sur IRVE Technologies Pro</p>
+                   <p className="text-sm font-semibold">Bienvenue sur IRVE Technologie Pro</p>
                   <p className="mt-0.5 text-xs text-muted-foreground">
-                    Planning, clients, devis et interventions dans une seule application.
+                     Planning, demandes, devis et interventions dans une seule application.
                   </p>
                 </div>
                 <button

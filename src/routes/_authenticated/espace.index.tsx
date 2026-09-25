@@ -97,24 +97,25 @@ function EspacePage() {
   return (
     <ProShell>
       <div className="pro-workspace neo-dashboard">
-      <div className="grid gap-5 pb-6 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <div className="grid gap-4 pb-5 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-end">
         <div className="min-w-0">
-          <h1 className="pro-heading text-3xl font-bold leading-tight sm:text-4xl">Tableau de bord</h1>
-          <p className="neo-dashboard-muted mt-2 text-sm">
+          <p className="mb-1 text-mono text-[10px] text-primary">IRVE Technologie · Pilotage en direct</p>
+          <h1 className="pro-heading text-2xl font-bold leading-tight sm:text-3xl">Tableau de bord</h1>
+          <p className="neo-dashboard-muted mt-1 text-sm">
             Activité, chiffre d'affaires et interventions en un coup d'œil
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <ReponseExpressButton />
+        <div className="flex flex-wrap gap-2 lg:justify-end">
+          <ReponseExpressButton className="inline-flex min-h-10 items-center gap-2 rounded-lg bg-primary px-4 py-2 text-xs font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90" />
           <Link
             to="/planning"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md border border-dashboard-line bg-dashboard-panel px-4 py-2.5 text-xs font-bold text-dashboard-foreground shadow-sm transition hover:border-primary hover:text-primary"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-dashboard-line bg-dashboard-panel/80 px-4 py-2 text-xs font-bold text-dashboard-foreground shadow-sm backdrop-blur-xl transition hover:border-primary hover:text-primary"
           >
             <CalendarClock className="h-4 w-4" /> Planifier un rendez-vous
           </Link>
           <Link
             to="/devis"
-            className="inline-flex min-h-11 items-center gap-2 rounded-md bg-primary px-4 py-2.5 text-xs font-bold text-primary-foreground shadow-sm transition hover:bg-primary/90"
+            className="inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/40 bg-primary/15 px-4 py-2 text-xs font-bold text-primary transition hover:bg-primary/25"
           >
             <FileText className="h-3.5 w-3.5" /> Nouveau devis
           </Link>
@@ -156,7 +157,7 @@ function EspacePage() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
             <SimpleStat
               icon={Euro}
               label="Encaissé"
@@ -187,8 +188,8 @@ function EspacePage() {
             />
           </div>
 
-          <div className="mt-6 grid gap-5 lg:grid-cols-3">
-            <section className="neo-dashboard-panel p-5 lg:col-span-2">
+          <div className="mt-4 grid gap-4 lg:grid-cols-3">
+            <section className="neo-dashboard-panel p-4 lg:col-span-2">
               <div className="mb-3 flex items-center justify-between gap-3">
                 <h2 className="pro-heading text-base font-bold">Devis récents</h2>
                 <Link to="/devis" className="text-mono text-xs text-dashboard-muted hover:text-primary">
@@ -206,7 +207,7 @@ function EspacePage() {
                         <Link
                           to="/devis/$id"
                           params={{ id: d.id }}
-                          className="flex flex-wrap items-center justify-between gap-2 px-1 py-3 transition hover:bg-dashboard-raised/50 sm:flex-nowrap"
+                           className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-2.5 transition hover:bg-dashboard-raised/60 sm:flex-nowrap"
                         >
                           <span className="min-w-0">
                             <span className="block truncate text-sm font-semibold text-dashboard-foreground">
@@ -218,7 +219,7 @@ function EspacePage() {
                             <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${badge.cls}`}>
                               {badge.label}
                             </span>
-                            <span className="text-mono text-xs font-bold text-dashboard-foreground whitespace-nowrap">
+                            <span className="font-mono text-xs font-bold text-dashboard-foreground whitespace-nowrap">
                               {euro(Number(d.total_ttc))}
                             </span>
                           </span>
@@ -248,7 +249,7 @@ function EspacePage() {
                           search={{ rdv: r.id }}
                           className="flex items-center gap-4 rounded-md px-1 py-3 transition hover:bg-dashboard-raised/60"
                         >
-                          <span className="flex h-12 w-12 flex-shrink-0 flex-col items-center justify-center rounded-2xl bg-primary/15 text-primary">
+                           <span className="flex h-11 w-11 flex-shrink-0 flex-col items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
                             <span className="text-xl font-bold leading-none">{dj.jour}</span>
                             <span className="text-[9px] font-bold uppercase leading-none">{dj.mois}</span>
                           </span>
@@ -279,7 +280,7 @@ function EspacePage() {
                   {nouvelles.map((d) => (
                     <li
                       key={d.id}
-                      className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashboard-line/60 bg-dashboard-raised/60 p-4"
+                       className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-dashboard-line/60 bg-dashboard-raised/60 p-3"
                     >
                       <div className="min-w-0">
                         <p className="truncate text-sm font-bold">
@@ -364,14 +365,17 @@ function SimpleStat({
 }) {
   const contenu = (
     <div className="space-y-2">
-      <p className="neo-dashboard-muted flex items-center gap-2 text-mono text-[10px] uppercase tracking-[0.12em]">
-          <Icon className="h-4 w-4" /> {label}
+      <span className="pro-stat-icon inline-flex h-9 w-9 items-center justify-center rounded-lg border border-primary/20 bg-primary/10 text-primary">
+        <Icon className="h-4 w-4" />
+      </span>
+      <p className="neo-dashboard-muted text-mono text-[9px] uppercase">
+        {label}
       </p>
-      <p className="truncate font-mono text-2xl font-bold text-dashboard-foreground">{value}</p>
+      <p className="truncate font-mono text-xl font-bold text-dashboard-foreground xl:text-2xl">{value}</p>
       {hint && <p className="text-xs text-dashboard-muted">{hint}</p>}
     </div>
   );
-  const cls = "group block rounded-md border border-dashboard-line bg-dashboard-panel p-5";
+  const cls = "pro-stat group block rounded-lg border border-dashboard-line bg-dashboard-panel/85 p-4 backdrop-blur-xl transition hover:border-primary/50";
   if (!to) return <div className={cls}>{contenu}</div>;
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -394,7 +398,7 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <section className="neo-dashboard-panel rounded-md p-5">
+    <section className="neo-dashboard-panel rounded-lg p-4">
       <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
         <h2 className="text-sm font-bold flex items-center gap-2">
           <Icon className="h-4 w-4 text-dashboard-foreground" /> {title}
