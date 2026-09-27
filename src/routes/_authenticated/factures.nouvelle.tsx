@@ -4,12 +4,14 @@ import { FactureEditor } from "@/components/FactureEditor";
 import { CONDITIONS_DEFAUT } from "@/lib/billing";
 
 export const Route = createFileRoute("/_authenticated/factures/nouvelle")({
+  validateSearch: (s: Record<string, unknown>): { rdv?: string } => (typeof s.rdv === "string" ? { rdv: s.rdv } : {}),
   head: () => ({ meta: [{ title: "Nouvelle facture — IRVE Technologie" }, { name: "robots", content: "noindex" }] }),
   component: NouvelleFacture,
 });
 
 function NouvelleFacture() {
   const navigate = useNavigate();
+  const { rdv } = Route.useSearch();
   return (
     <ProShell>
       <div className="pro-workspace space-y-4">
@@ -19,6 +21,7 @@ function NouvelleFacture() {
             objet: null, remise_pct: 0, conditions_paiement: CONDITIONS_DEFAUT, notes: null, autoliquidation: false }}
           items={[{ libelle: "", description: null, quantite: 1, prix_unitaire: 0, tva: 20 }]}
           onDone={() => navigate({ to: "/factures" })}
+          rdvInitiaux={rdv ? rdv.split(",") : []}
           onCreated={(id) => navigate({ to: "/factures/$id", params: { id } })}
         />
       </div>

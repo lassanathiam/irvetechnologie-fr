@@ -1002,6 +1002,15 @@ function PlanningPage() {
                             <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Retour de travaux (photos + métrage)</span>
                           </button>
                         )}
+                        {r.termine_at && r.statut_facturation === "a_facturer" && (
+                          <Link
+                            to="/factures/nouvelle"
+                            search={{ rdv: r.id }}
+                            className="col-span-2 grid min-h-11 place-items-center rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground"
+                          >
+                            Facturer le chantier
+                          </Link>
+                        )}
                         {r.demarre_at && (
                           <Link
                             to="/chantier-rapport/$rdvId"
@@ -1843,6 +1852,15 @@ function PlanningPage() {
                                   {new Date(r.termine_at).toLocaleString("fr-FR")}
                                   {r.notif_fin_at ? " · client prévenu" : ""}
                                 </span>
+                              )}
+                              {r.termine_at && r.statut_facturation === "a_facturer" && (
+                                <Link
+                                  to="/factures/nouvelle"
+                                  search={{ rdv: r.id }}
+                                  className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
+                                >
+                                  Facturer le chantier
+                                </Link>
                               )}
                             </div>
 
