@@ -83,7 +83,7 @@ export function FactureEditor({ facture, items, onDone, onCreated, rdvInitiaux =
       if (!f.client_nom.trim() && clientsQ.data) {
         const norm = (x: string | null) => (x ?? "").normalize("NFD").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
         const cl = clientsQ.data.find((k) => k.cle === `p-${c.partenaire_id}`) ??
-          (c.partenaire ? clientsQ.data.find((k) => norm(k.nom) === norm(c.partenaire)) : undefined);
+          (c.partenaire ? clientsQ.data.find((k) => norm(k.nom) === norm(c.partenaire) || (norm(k.nom).slice(0, 6) === norm(c.partenaire).slice(0, 6) && norm(k.nom).length > 5)) : undefined);
         if (cl) remplirClient(cl);
       }
     } else {
