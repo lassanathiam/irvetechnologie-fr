@@ -95,6 +95,8 @@ export type DossierRendezVousInput = {
   date_debut: string;
   duree_min?: number;
   technicien?: string | null;
+  sous_traitant_id?: string | null;
+  montant_sous_traitant_ht?: number | null;
   notes?: string | null;
   origine?: "direct" | "sous_traitance";
   partenaire?: string | null;
@@ -495,6 +497,8 @@ const dossierSchema = z.object({
   puissance_borne: z.string().trim().max(40).optional().nullable(),
   phase_installation: z.string().trim().max(40).optional().nullable(),
   type_pose: z.string().trim().max(80).optional().nullable(),
+  sous_traitant_id: z.string().uuid().optional().nullable(),
+  montant_sous_traitant_ht: z.number().min(0).max(1_000_000).optional().nullable(),
 });
 
 export const updateDossierRendezVous = createServerFn({ method: "POST" })
@@ -513,11 +517,23 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
 
     const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
     const tech = technicienByNom(data.technicien);
-    const trajet = geo
-      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
-      : null;
+    let baseDepart: { lat: number; lng: number } | undefined = tech
+      ? { lat: tech.lat, lng: tech.lng }
+      : undefined;
+    if (data.sous_traitant_id) {
+      const { data: st } = await context.supabase
+        .from("partenaires")
+        .select("base_lat, base_lng")
+        .eq("id", data.sous_traitant_id)
+        .maybeSingle();
+      if (st?.base_lat != null && st?.base_lng != null)
+        baseDepart = { lat: Number(st.base_lat), lng: Number(st.base_lng) };
+    }
+    const trajet = geo ? trajetDepuisBase(geo.lat, geo.lng, baseDepart) : null;
 
     const patch = {
+      sous_traitant_id: data.sous_traitant_id ?? null,
+      montant_sous_traitant_ht: data.montant_sous_traitant_ht ?? null,
       titre: data.titre,
       type: data.type,
       statut: data.statut,

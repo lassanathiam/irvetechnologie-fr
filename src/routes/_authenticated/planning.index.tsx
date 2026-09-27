@@ -2165,6 +2165,10 @@ function PlanningPage() {
                                 puissance_borne: g("puissance_borne") || null,
                                 phase_installation: g("phase_installation") || null,
                                 type_pose: g("type_pose") || null,
+                                sous_traitant_id: g("sous_traitant_id") || null,
+                                montant_sous_traitant_ht: g("montant_sous_traitant_ht")
+                                  ? Number(g("montant_sous_traitant_ht").replace(",", "."))
+                                  : null,
                               });
                             }}
                             className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
@@ -2232,6 +2236,10 @@ function PlanningPage() {
                                 ))}
                               </select>
                             </label>
+                            <SousTraitantFields
+                              defaultId={(r as { sous_traitant_id?: string | null }).sous_traitant_id ?? ""}
+                              defaultMontant={(r as { montant_sous_traitant_ht?: number | null }).montant_sous_traitant_ht ?? null}
+                            />
                             <div className="sm:col-span-2">
                               <AdresseFields
                                 required
@@ -3108,5 +3116,39 @@ function Field({
         className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
       />
     </label>
+  );
+}
+
+
+/** Affectation d'un dossier à un sous-traitant (qui ne voit que ses dossiers). */
+function SousTraitantFields({ defaultId, defaultMontant }: { defaultId: string; defaultMontant: number | null }) {
+  const lister = useServerFn(listPartenaires);
+  const q = useQuery({ queryKey: ["partenaires"], queryFn: () => lister() });
+  const sts = (q.data ?? []).filter((p) => p.type === "sous_traitant" && p.actif);
+  return (
+    <>
+      <label className="block">
+        <span className="text-mono text-xs text-muted-foreground">Sous-traitant affecté</span>
+        <select
+          name="sous_traitant_id"
+          defaultValue={defaultId}
+          key={`${defaultId}-${sts.length}`}
+          className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+        >
+          <option value="">Aucun (réalisé par nous)</option>
+          {sts.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nom}{p.base_adresse ? "" : " — base non définie"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Field
+        label="Montant payé au sous-traitant (HT €)"
+        name="montant_sous_traitant_ht"
+        type="number"
+        defaultValue={defaultMontant != null ? String(defaultMontant) : ""}
+      />
+    </>
   );
 }
