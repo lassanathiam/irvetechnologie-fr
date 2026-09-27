@@ -65,8 +65,8 @@ export function DocumentPrint({
   return (
     <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-8 text-[13px] leading-relaxed">
       {/* En-tête : émetteur à gauche, client en face à droite */}
-      <div className="flex flex-wrap items-start justify-between gap-6 pb-4 border-b-2" style={{ borderColor: accent }}>
-        <div className="flex items-start gap-4">
+      <div className="doc-header grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,38%)] items-start gap-4 pb-4 border-b-2" style={{ borderColor: accent }}>
+        <div className="flex min-w-0 items-start gap-4">
           <BrandLogo className="h-16 w-16" />
           <div>
             <div className="text-xl font-extrabold tracking-tight uppercase">
@@ -94,7 +94,7 @@ export function DocumentPrint({
         </div>
 
         {/* Client en face, à droite */}
-        <div className="bg-muted/40 border border-border rounded-sm p-4 min-w-[240px]">
+        <div className="min-w-0 break-words bg-muted/40 border border-border rounded-sm p-4">
           <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
             {isFacture ? "Facturé à" : "Client"}
           </div>
@@ -135,8 +135,8 @@ export function DocumentPrint({
       {(doc.numero_ticket || doc.numero_affaire || doc.bon_commande) && (
         <div className="mt-3 grid gap-2 sm:grid-cols-3 text-[12px]">
           {doc.numero_ticket && <div><span className="text-muted-foreground">Ticket : </span><strong>{doc.numero_ticket}</strong></div>}
-          {doc.numero_affaire && <div><span className="text-muted-foreground">Affaire : </span><strong>{doc.numero_affaire}</strong></div>}
           {doc.bon_commande && <div><span className="text-muted-foreground">Bon de commande : </span><strong>{doc.bon_commande}</strong></div>}
+          {doc.numero_affaire && <div><span className="text-muted-foreground">Affaire : </span><strong>{doc.numero_affaire}</strong></div>}
         </div>
       )}
 
