@@ -19,6 +19,7 @@ import {
 import { BrandLogo } from "@/components/BrandLogo";
 import { AdresseFields } from "@/components/AdresseFields";
 import { compressImage } from "@/lib/image-compress";
+import { EspaceSousTraitant } from "@/components/EspaceSousTraitant";
 import {
   comptePhotosPartenaire,
   connexionPartenaire,
@@ -285,7 +286,7 @@ function PagePartenaire() {
   }
 
   return (
-    <EspacePartenaire
+    <AiguillageEspace
       token={token}
       session={session!}
       onDeconnexion={() => {
@@ -294,6 +295,20 @@ function PagePartenaire() {
       }}
     />
   );
+}
+
+/** Sous-traitant → espace missions ; partenaire → espace de saisie. */
+function AiguillageEspace(props: { token: string; session: string; onDeconnexion: () => void }) {
+  const charger = useServerFn(getEspacePartenaire);
+  const espace = useQuery({
+    queryKey: ["espace-partenaire", props.token],
+    queryFn: () => charger({ data: { token: props.token, session: props.session } }),
+    retry: 2,
+  });
+  if (espace.data?.type === "sous_traitant") {
+    return <EspaceSousTraitant {...props} espace={espace.data} />;
+  }
+  return <EspacePartenaire {...props} />;
 }
 
 function EspacePartenaire({
