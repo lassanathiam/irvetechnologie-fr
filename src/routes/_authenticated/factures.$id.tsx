@@ -7,6 +7,7 @@ import { ProShell } from "@/components/ProShell";
 import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
+import { FactureEditor } from "@/components/FactureEditor";
 import {
   envoyerFacture,
   getFacture,
@@ -44,6 +45,7 @@ function FactureDetail() {
   const refsFn = useServerFn(updateFactureReferences);
 
   const [message, setMessage] = useState("");
+  const [edition, setEdition] = useState(false);
   const [feedback, setFeedback] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -168,6 +170,25 @@ function FactureDetail() {
             <Printer className="h-3.5 w-3.5" /> Imprimer / PDF
           </button>
         </div>
+
+        {edition ? (
+          <FactureEditor
+            facture={facture}
+            items={items}
+            onDone={() => {
+              setEdition(false);
+              invalidate();
+            }}
+          />
+        ) : (
+          <button
+            type="button"
+            onClick={() => setEdition(true)}
+            className="border border-primary text-primary rounded-sm px-4 py-2 text-mono text-xs hover:bg-primary hover:text-primary-foreground"
+          >
+            Modifier la facture (client, lignes, prix…)
+          </button>
+        )}
 
         <div className="grid sm:grid-cols-2 gap-4">
           <label className="block">
