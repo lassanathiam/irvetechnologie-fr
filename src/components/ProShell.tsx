@@ -109,7 +109,7 @@ export function ProShell({ children }: { children: React.ReactNode }) {
                 target="_blank"
                 rel="noreferrer"
                 title={reduit ? label : undefined}
-                className="pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title"
+                className={`pro-nav-link flex min-h-10 items-center gap-3 rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : ""}`}
               >
                 <Icon className="h-5 w-5 shrink-0" />
                 {!reduit && <span className="flex-1">{label}</span>}
