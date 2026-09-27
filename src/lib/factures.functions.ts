@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 
-const STATUTS = ["brouillon", "envoyee", "payee", "annulee"] as const;
+const STATUTS = ["brouillon", "validee", "envoyee", "payee", "annulee"] as const;
 
 export const listFactures = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])

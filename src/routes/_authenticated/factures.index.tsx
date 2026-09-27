@@ -19,6 +19,7 @@ export const Route = createFileRoute("/_authenticated/factures/")({
 
 const STATUT_LABEL: Record<string, string> = {
   brouillon: "Brouillon",
+  validee: "Validée",
   envoyee: "Envoyée",
   payee: "Payée",
   annulee: "Annulée",

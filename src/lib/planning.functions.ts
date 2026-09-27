@@ -805,10 +805,10 @@ export const getDashboard = createServerFn({ method: "GET" })
       .filter((f) => f.statut === "payee")
       .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
     const caEnAttente = factureRows
-      .filter((f) => f.statut === "envoyee")
+      .filter((f) => f.statut === "envoyee" || f.statut === "validee")
       .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
     const aEncaisser = factureRows
-      .filter((f) => f.statut === "envoyee")
+      .filter((f) => f.statut === "envoyee" || f.statut === "validee")
       .sort((a, b) => String(a.date_echeance).localeCompare(String(b.date_echeance)));
     const encaissees = factureRows
       .filter((f) => f.statut === "payee")
