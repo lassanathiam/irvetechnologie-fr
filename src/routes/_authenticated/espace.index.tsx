@@ -481,7 +481,7 @@ function SuiviEncaissements({
             <Link
               to="/factures/$id"
               params={{ id: f.id }}
-              className="block truncate text-base font-bold text-dashboard-foreground hover:text-primary"
+              className="block break-words text-base font-bold leading-snug text-dashboard-foreground hover:text-primary"
               title={f.client_nom}
             >
               {f.client_nom}
@@ -576,7 +576,7 @@ function SuiviEncaissements({
                   <Link
                     to="/factures/$id"
                     params={{ id: f.id }}
-                    className="block truncate text-base font-bold text-dashboard-foreground hover:text-primary"
+                    className="block break-words text-base font-bold leading-snug text-dashboard-foreground hover:text-primary"
                     title={f.client_nom}
                   >
                     {f.client_nom}
