@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { TECHNICIENS } from "@/lib/geo";
 
 export type MapMarker = {
   id: string;
@@ -14,7 +15,12 @@ export type MapMarker = {
   couleur?: string | null;
 };
 
-const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
+/** Bases de départ : une par intervenant (domicile de chacun). */
+const BASES = TECHNICIENS.map((t) => ({
+  lat: t.lat,
+  lng: t.lng,
+  label: `${t.nom.split(" ")[0]} · ${t.label}`,
+}));
 
 /** Couleurs de statut : orange = programmé, vert = réalisé / validé. */
 export const STATUT_COLORS: Record<string, string> = {
@@ -174,17 +180,19 @@ export function InterventionsMap({
     layer.current.clearLayers();
     byId.current = {};
 
-    leaflet
-      .marker([BASE.lat, BASE.lng], {
-        icon: leaflet.divIcon({
-          className: "",
-          iconSize: [18, 18],
-          iconAnchor: [9, 9],
-          html: `<span style="display:block;width:18px;height:18px;border-radius:4px;background:#0f172a;border:3px solid #fff;box-shadow:0 0 0 3px #0f172a33"></span>`,
-        }),
-      })
-      .addTo(layer.current)
-      .bindTooltip(`Base · ${BASE.label}`, { direction: "top" });
+    BASES.forEach((b) => {
+      leaflet
+        .marker([b.lat, b.lng], {
+          icon: leaflet.divIcon({
+            className: "",
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+            html: `<span style="display:block;width:18px;height:18px;border-radius:4px;background:#0f172a;border:3px solid #fff;box-shadow:0 0 0 3px #0f172a33"></span>`,
+          }),
+        })
+        .addTo(layer.current)
+        .bindTooltip(`Base · ${escapeHtml(b.label)}`, { direction: "top" });
+    });
 
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
@@ -221,7 +229,7 @@ export function InterventionsMap({
     if (markers.length && fitRef.current !== cle) {
       fitRef.current = cle;
       const bounds = leaflet.latLngBounds([
-        [BASE.lat, BASE.lng],
+        ...BASES.map((b) => [b.lat, b.lng] as [number, number]),
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
       ]);
       map.current.fitBounds(bounds, { padding: [34, 34], maxZoom: 9 });
