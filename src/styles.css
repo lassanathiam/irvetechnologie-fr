@@ -628,6 +628,17 @@
   .print-doc img {
     max-width: 100%;
   }
+  /* Blocs (en-tête, totaux, signatures, conditions) jamais coupés en deux */
+  .print-doc > *:not(table),
+  .print-doc > * > *:not(table):not(tbody):not(thead),
+  .print-avoid {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+  .print-doc h2,
+  .print-doc h3 {
+    break-after: avoid;
+  }
   .print-doc,
   .print-sheet {
     break-inside: auto;
