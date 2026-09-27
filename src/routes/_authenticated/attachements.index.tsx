@@ -64,7 +64,7 @@ function AttachementsPage() {
       client_cp_ville: d.cp_ville || "",
       autoliquidation: Boolean(d.autoliquidation),
       date_echeance: echeance(f.date_emission, jours, fm),
-      ...(k === "ensio" ? { objet: "Installation de bornes IRVE", validation_requise: true } : {}),
+      ...(k === "ensio" ? { validation_requise: true } : {}),
     }));
   };
 
