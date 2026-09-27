@@ -1,0 +1,28 @@
+INSERT INTO public.bordereau_prestations (donneur_ordre,categorie,section,reference,libelle,unite,prix_unitaire,ordre) VALUES
+('ensio','Bornes IRVE — B2C','1 — @home','1.1','Installation borne (7.4 kW) — Câble 3G10 sous gaine DN32 jusqu''à 15 m, 2 passages muraux, LS + RCD, câble data 15 m, mise en service, formation, documentation ENSIO','forfait',300,1),
+('ensio','Bornes IRVE — B2C','1 — @home','1.2','Installation borne (11 - 22 kW) — Câble 5G10 sous gaine DN32 jusqu''à 15 m, 2 passages muraux, LS + RCD, câble data 15 m, mise en service, formation, documentation ENSIO','forfait',300,2),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.1','Création d''un départ de ligne dans le sous-distributeur électrique existant','u',65,3),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.2','Création d''un départ de ligne dans le sous-répartiteur électrique existant','u',55,4),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.3','Traversée murale supplémentaire vers l''intérieur — Ø 40 mm max, carottage et peinture exclus','u',39,5),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.4','Traversée murale supplémentaire vers l''extérieur — Ø 40 mm max, profondeur 40 cm max','u',42,6),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.5','Livraison et installation du compteur intermédiaire','u',10,7),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.6','Longueur de câble 3G10 mm² supplémentaire','m',2.5,8),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.7','Passage enterré : traversée de mur avec trou de tête sol non stabilisé — Ø 80 mm max, profondeur 400 mm max','u',150,9),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.8','Passage enterré : traversée de mur avec trou de tête sol pavé — Ø 80 mm max, profondeur 400 mm max','u',180,10),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.9','Traversée de mur souterraine avec trou de tête sol asphalté — Ø 80 mm max, profondeur 400 mm max','u',220,11),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.10','Longueur de câble 5G10 mm² supplémentaire','m',2,12),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.11','Pose d''une ligne de données','m',2,13),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.12','Traversée de mur coupe-feu supplémentaire vers l''intérieur — Ø 50 mm max, rebouchage compris','u',50,14),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.13','Traversée de mur coupe-feu supplémentaire vers l''extérieur — Ø 50 mm max, rebouchage compris','u',70,15),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.14','Créer et fermer une tranchée en terrain naturel — Minimum 10 mL, largeur 30 cm, profondeur 30 cm max, fourreaux fournis par ENSIO','m',36,16),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.15','Créer et fermer une tranchée en sol pavé — Minimum 10 mL, fourreaux fournis par ENSIO','m',50,17),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.16','Créer et fermer une tranchée en chaussée ou trottoir — Minimum 10 mL, BRH non inclus, enrobé 3 cm max','m',65,18),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.17','Support pour Wallbox (pelouse) — Socle fourni par DKV, fouille 500×500×500 incluse','pièce',70,19),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.18','Support pour Wallbox sans fondation — Fixation sur massif existant','u',15,20),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.19','Support pour Wallbox (pavé) — Socle fourni par DKV','u',100,21),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.20','Support pour Wallbox (asphalte) — Socle fourni par DKV, réfection enrobé noir','u',150,22),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.21','Réalisation d''un carottage — Ø 80 mm max, profondeur 400 mm max','u',150,23),
+('ensio','Bornes IRVE — B2C','2 — Travaux supplémentaires','2.22','Habillage individuel des chemins de câbles (intérieur)','m',18,24);
+INSERT INTO public.donneurs_ordre (nom,raison_sociale,adresse,cp_ville,pays,siret,delai_paiement_jours,autoliquidation,notes,actif)
+VALUES ('ENSIO','ENSIO SAS (anciennement SAD Télécom)','12 avenue Morane Saulnier, bâtiment Le Breguet','78140 Vélizy-Villacoublay','France','RCS Versailles 310 505 771',45,true,
+'Contrat de sous-traitance (Conditions particulières 2024) — client final 50FIVE. Installation de bornes IRVE. Prix fermes suivant devis validés par les deux parties. Marché privé, pas de délégation de paiement, caution bancaire fournie. Règlement : virement à 45 jours fin de mois date de facture, sur situation validée. Attachement hebdomadaire chaque fin de semaine. Contrat de 12 mois. Représentant : M. Bruno SILVESTRI, Directeur Régional.',true);

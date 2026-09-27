@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createAttachement, listAttachements } from "@/lib/attachements.functions";
-import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
+import { listBordereau, listChantiersPeriode, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
@@ -17,6 +17,12 @@ export const Route = createFileRoute("/_authenticated/attachements/")({
 });
 
 const today = () => new Date().toISOString().slice(0, 10);
+const cleBordereau = (nom: string) => (/ensio/i.test(nom) ? "ensio" : "axians");
+/** Lundi et dimanche de la semaine d'une date. */
+const semaine = (date: string) => { const d = new Date(`${date}T12:00:00`); const j = (d.getDay() + 6) % 7; d.setDate(d.getDate() - j); const lundi = d.toISOString().slice(0, 10); d.setDate(d.getDate() + 6); return { lundi, dimanche: d.toISOString().slice(0, 10) }; };
+const numSemaine = (date: string) => { const d = new Date(`${date}T12:00:00`); d.setDate(d.getDate() + 3 - ((d.getDay() + 6) % 7)); const w1 = new Date(d.getFullYear(), 0, 4); return 1 + Math.round(((d.getTime() - w1.getTime()) / 864e5 - 3 + ((w1.getDay() + 6) % 7)) / 7); };
+/** « 45 jours fin de mois » : date + délai, puis dernier jour du mois. */
+const finDeMois = (date: string) => { const d = new Date(`${date}T12:00:00`); return new Date(d.getFullYear(), d.getMonth() + 1, 0, 12).toISOString().slice(0, 10); };
 const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
 const plusJours = (n: number) => addDays(today(), n);
 const diffDays = (from: string, to: string) => { const n = Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
@@ -26,7 +32,8 @@ const newLine = (init?: Partial<Line>): Line => ({ key: crypto.randomUUID(), lib
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
   const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement);
-  const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau);
+  const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersPeriode);
+  const [cle, setCle] = useState<"axians" | "ensio">("axians"); const [finMois, setFinMois] = useState(false); const [semaineDu, setSemaineDu] = useState(today()); const [importEnCours, setImportEnCours] = useState(false);
   const list = useQuery({ queryKey: ["attachements"], queryFn: () => listFn() });
   const donneurs = useQuery({ queryKey: ["donneurs-ordre"], queryFn: () => donneursFn() });
   const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
@@ -36,14 +43,18 @@ function AttachementsPage() {
   const [delai, setDelai] = useState(60);
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
-  const setDateEmission = (value: string) => setForm((f) => ({ ...f, date_emission: value, date_echeance: addDays(value, delai) }));
-  const setDelaiJours = (value: number) => { setDelai(value); setForm((f) => ({ ...f, date_echeance: addDays(f.date_emission, value) })); };
+  const echeance = (date: string, jours: number, fm = finMois) => (fm ? finDeMois(addDays(date, jours)) : addDays(date, jours));
+  const setDateEmission = (value: string) => setForm((f) => ({ ...f, date_emission: value, date_echeance: echeance(value, delai) }));
+  const setDelaiJours = (value: number) => { setDelai(value); setForm((f) => ({ ...f, date_echeance: echeance(f.date_emission, value) })); };
 
   const appliquerDonneur = (id: string) => {
     const d = (donneurs.data ?? []).find((x: any) => x.id === id);
     if (!d) return;
     const jours = Number(d.delai_paiement_jours) || 60;
+    const k = cleBordereau(d.nom); const fm = /fin de mois/i.test(d.notes ?? "");
+    setCle(k); setFinMois(fm);
     setDelai(jours);
+    if (k === "ensio") choisirSemaine(semaineDu);
     setForm((f) => ({
       ...f,
       client_nom: d.raison_sociale || d.nom,
@@ -52,11 +63,41 @@ function AttachementsPage() {
       client_adresse: d.adresse || "",
       client_cp_ville: d.cp_ville || "",
       autoliquidation: Boolean(d.autoliquidation),
-      date_echeance: addDays(f.date_emission, jours),
+      date_echeance: echeance(f.date_emission, jours, fm),
+      ...(k === "ensio" ? { validation_requise: true } : {}),
     }));
   };
 
-  const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif), [bordereau.data]);
+  const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
+  function choisirSemaine(date: string) {
+    setSemaineDu(date);
+    const { lundi, dimanche } = semaine(date);
+    const n = numSemaine(date);
+    const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
+    setForm((f) => ({ ...f, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, objet: `Attachement semaine ${n} — du ${fr(lundi)} au ${fr(dimanche)}` }));
+  }
+  async function importerSemaine() {
+    const { lundi, dimanche } = semaine(semaineDu);
+    setImportEnCours(true); setError(null);
+    try {
+      const rows = await chantiersFn({ data: { du: lundi, au: dimanche, motcle: cle } });
+      if (!rows.length) { setError("Aucun chantier ENSIO planifié cette semaine."); return; }
+      const base = catalogueOptions;
+      const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
+      const cable = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "2.10" : "2.6"));
+      const nouvelles: Line[] = [];
+      for (const r of rows) {
+        const f = forfait(r.puissance_borne);
+        const lieu = [r.client_nom, r.cp_ville].filter(Boolean).join(" — ");
+        const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
+        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", description: `${jour} · ${lieu}${r.termine_at ? "" : " (non terminé)"}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
+        const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
+        const c = cable(r.puissance_borne);
+        if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
+      }
+      setLines((cur) => [...cur.filter((l) => l.libelle.trim() || Number(l.prix) > 0), ...nouvelles]);
+    } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }
+  }
   const ajouterDepuisCatalogue = (id: string) => {
     const ligne = catalogueOptions.find((l: any) => l.id === id);
     if (!ligne) return;
@@ -93,10 +134,18 @@ function AttachementsPage() {
       </select>
     </label>
     <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} /><Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} /><Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} /><Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} /><Field label="Code postal / ville" value={form.client_cp_ville} onChange={(v) => setForm({ ...form, client_cp_ville: v })} /><Field label="Numéro de ticket *" value={form.numero_ticket} onChange={(v) => setForm({ ...form, numero_ticket: v })} /><Field label="Numéro d’affaire" value={form.numero_affaire} onChange={(v) => setForm({ ...form, numero_affaire: v })} /><Field label="Bon de commande" value={form.bon_commande} onChange={(v) => setForm({ ...form, bon_commande: v })} /><Field label="Objet" value={form.objet} onChange={(v) => setForm({ ...form, objet: v })} /><Field label="Date de l’attachement" type="date" value={form.date_emission} onChange={setDateEmission} /><label className="text-xs text-muted-foreground">Délai de paiement (jours)<Input className="mt-1.5" type="number" min="0" max="365" value={String(delai)} onChange={(e) => setDelaiJours(Number(e.target.value) || 0)} /></label><Field label="Échéance (calculée)" type="date" value={form.date_echeance} onChange={(v) => { setForm({ ...form, date_echeance: v }); setDelai(diffDays(form.date_emission, v)); }} /></div>
+    {cle === "ensio" && <div className="rounded-md border border-primary/40 bg-primary/5 p-3 space-y-2">
+      <p className="text-sm font-semibold">Attachement de la semaine ENSIO</p>
+      <div className="flex flex-wrap items-end gap-2">
+        <label className="text-xs text-muted-foreground">Un jour de la semaine<Input className="mt-1.5" type="date" value={semaineDu} onChange={(e) => choisirSemaine(e.target.value)} /></label>
+        <Button type="button" variant="outline" disabled={importEnCours} onClick={() => void importerSemaine()}>{importEnCours ? <Loader2 className="animate-spin" /> : <ClipboardList />} Ajouter les chantiers de la semaine</Button>
+      </div>
+      <p className="text-xs text-muted-foreground">Chaque chantier ENSIO de la semaine devient une ligne au prix du bordereau (+ câble au-delà de 15 m). Échéance : {delai} jours fin de mois.</p>
+    </div>}
     <div className="flex flex-wrap gap-5"><Check label="Autoliquidation de TVA" checked={form.autoliquidation} onChange={(v) => setForm({ ...form, autoliquidation: v })} /><Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} /><Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} /></div>
     <label className="block text-xs text-muted-foreground">Ajouter une prestation du bordereau {bordereau.isLoading ? "(chargement…)" : `(${catalogueOptions.length} prix)`}
       <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={catalogue} onChange={(e) => ajouterDepuisCatalogue(e.target.value)}>
-        <option value="">Rechercher dans le bordereau Axians…</option>
+        <option value="">{`Rechercher dans le bordereau ${cle === "ensio" ? "ENSIO" : "Axians"}…`}</option>
         {catalogueOptions.map((l: any) => <option key={l.id} value={l.id}>{`${l.libelle} — ${euro(Number(l.prix_unitaire))} / ${l.unite}`}</option>)}
       </select>
     </label>

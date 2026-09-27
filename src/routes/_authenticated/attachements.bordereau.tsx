@@ -32,6 +32,7 @@ function BordereauPage() {
   const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [nouvelle, setNouvelle] = useState({ libelle: "", unite: "u", prix: "", section: "Ajouts IRVE Technologie" });
   const [donneur, setDonneur] = useState<DonneurForm>(vide);
+  const [cle, setCle] = useState<"axians" | "ensio">("axians");
 
   const enregistrerPrix = useMutation({
     mutationFn: async (id: string) => updateFn({ data: { id, prix_unitaire: Number(prix[id]) } }),
@@ -39,7 +40,7 @@ function BordereauPage() {
     onError: (e) => setError(e instanceof Error ? e.message : "Modification impossible."),
   });
   const ajouterLigne = useMutation({
-    mutationFn: () => createFn({ data: { categorie: "Travaux et génie civil", section: nouvelle.section, libelle: nouvelle.libelle, unite: nouvelle.unite, prix_unitaire: Number(nouvelle.prix) } }),
+    mutationFn: () => createFn({ data: { donneur_ordre: cle, categorie: cle === "ensio" ? "Bornes IRVE — B2C" : "Travaux et génie civil", section: nouvelle.section, libelle: nouvelle.libelle, unite: nouvelle.unite, prix_unitaire: Number(nouvelle.prix) } }),
     onSuccess: () => { setNouvelle({ libelle: "", unite: "u", prix: "", section: "Ajouts IRVE Technologie" }); setFeedback("Prestation ajoutée au bordereau."); void qc.invalidateQueries({ queryKey: ["bordereau"] }); },
     onError: (e) => setError(e instanceof Error ? e.message : "Ajout impossible."),
   });
@@ -49,7 +50,7 @@ function BordereauPage() {
     onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
 
-  const rows = useMemo(() => (bordereau.data ?? []).filter((l: any) => `${l.libelle} ${l.section ?? ""}`.toLowerCase().includes(search.toLowerCase())).slice(0, 400), [bordereau.data, search]);
+  const rows = useMemo(() => (bordereau.data ?? []).filter((l: any) => (l.donneur_ordre ?? "axians") === cle).filter((l: any) => `${l.libelle} ${l.section ?? ""}`.toLowerCase().includes(search.toLowerCase())).slice(0, 400), [bordereau.data, search, cle]);
 
   return <ProShell><div className="space-y-6">
     <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><h1 className="text-2xl font-semibold">Bordereau de prix &amp; donneurs d’ordre</h1></header>
@@ -78,6 +79,7 @@ function BordereauPage() {
 
     <section className="rounded-md border border-border bg-card p-5 space-y-4">
       <div><h2 className="text-sm font-bold uppercase text-primary">Prix du bordereau ({(bordereau.data ?? []).length})</h2><p className="text-sm text-muted-foreground">Modifiez un prix quand le bordereau évolue : les nouveaux attachements l’utilisent aussitôt.</p></div>
+      <div className="flex gap-2">{(["axians", "ensio"] as const).map((k) => <Button key={k} size="sm" variant={cle === k ? "default" : "outline"} onClick={() => setCle(k)}>{k === "ensio" ? "ENSIO (bornes IRVE)" : "Axians (fibre)"}</Button>)}</div>
       <div className="relative max-w-xl"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Rechercher une prestation" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
       <div className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[2fr_.5fr_.7fr_auto]"><Input placeholder="Nouvelle prestation" value={nouvelle.libelle} onChange={(e) => setNouvelle({ ...nouvelle, libelle: e.target.value })} /><Input placeholder="Unité" value={nouvelle.unite} onChange={(e) => setNouvelle({ ...nouvelle, unite: e.target.value })} /><Input type="number" min="0" step="0.01" placeholder="Prix HT" value={nouvelle.prix} onChange={(e) => setNouvelle({ ...nouvelle, prix: e.target.value })} /><Button variant="outline" disabled={ajouterLigne.isPending || !nouvelle.libelle.trim()} onClick={() => ajouterLigne.mutate()}><Plus /> Ajouter</Button></div>
       {bordereau.isLoading ? <Loader2 className="animate-spin text-primary" /> : <div className="divide-y divide-border">{rows.map((l: any) => <div key={l.id} className="flex flex-wrap items-center gap-3 py-2 text-sm"><div className="min-w-0 flex-1"><div className="font-medium">{l.libelle}</div><div className="text-xs text-muted-foreground">{l.section} · unité {l.unite} · {euro(Number(l.prix_unitaire))}</div></div><Input className="w-28" type="number" min="0" step="0.01" aria-label={`Prix ${l.libelle}`} value={prix[l.id] ?? String(Number(l.prix_unitaire))} onChange={(e) => setPrix({ ...prix, [l.id]: e.target.value })} /><Button size="sm" variant="outline" disabled={enregistrerPrix.isPending || (prix[l.id] ?? String(Number(l.prix_unitaire))) === String(Number(l.prix_unitaire))} onClick={() => enregistrerPrix.mutate(l.id)}><Save /> Enregistrer</Button></div>)}</div>}
