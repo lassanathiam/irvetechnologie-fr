@@ -373,6 +373,9 @@ function RapportsPage() {
         <p className="mt-2 max-w-2xl text-sm text-muted-foreground">
           Une saisie guidée, enregistrée automatiquement sur votre appareil.
         </p>
+        <Link to="/rapports/modeles" className="mt-3 inline-flex min-h-10 items-center gap-2 rounded-lg border border-primary/60 px-3 text-sm font-semibold text-primary">
+          <ClipboardCheck className="h-4 w-4" /> Modèles de rapport donneurs d'ordre (Ensio, TotalEnergies…)
+        </Link>
       </div>
       </div>
 

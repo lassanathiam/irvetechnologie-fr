@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Loader2, Printer, Save, Send } from "lucide-react";
 import { toast } from "sonner";
+import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -33,6 +34,14 @@ export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")(
 type Val = string | boolean | null;
 
 function RapportChantierPage() {
+  return (
+    <ProShell>
+      <RapportChantierPageInner />
+    </ProShell>
+  );
+}
+
+function RapportChantierPageInner() {
   const { rdvId } = Route.useParams();
   const qc = useQueryClient();
   const getFn = useServerFn(getRapportChantier);

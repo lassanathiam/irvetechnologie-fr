@@ -4,6 +4,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { ArrowLeft, Camera, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
+import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { compressImage } from "@/lib/image-compress";
@@ -49,6 +50,14 @@ const vide = (): Edit => ({
 });
 
 function ModelesPage() {
+  return (
+    <ProShell>
+      <ModelesPageInner />
+    </ProShell>
+  );
+}
+
+function ModelesPageInner() {
   const qc = useQueryClient();
   const listFn = useServerFn(listModelesRapport);
   const analyseFn = useServerFn(analyserFeuilleRapport);
