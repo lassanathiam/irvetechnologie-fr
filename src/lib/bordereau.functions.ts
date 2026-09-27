@@ -10,13 +10,13 @@ export const listBordereau = createServerFn({ method: "GET" })
     const read = async () =>
       context.supabase
         .from("bordereau_prestations")
-        .select("id, categorie, section, libelle, unite, prix_unitaire, actif, ordre")
-        .eq("donneur_ordre", "axians")
+        .select("id, donneur_ordre, categorie, section, reference, libelle, unite, prix_unitaire, actif, ordre")
+        .order("donneur_ordre")
         .order("ordre");
 
     let { data, error } = await read();
     if (error) throw new Error(error.message);
-    if (!data?.length) {
+    if (!data?.some((l) => l.donneur_ordre === "axians")) {
       const seed = BORDEREAU_AXIANS.map((line, index) => ({
         donneur_ordre: "axians",
         categorie: line.categorie,
@@ -65,13 +65,14 @@ export const createBordereauLigne = createServerFn({ method: "POST" })
         libelle: z.string().trim().min(1).max(300),
         unite: z.string().trim().min(1).max(12),
         prix_unitaire: z.number().min(0).max(1_000_000),
+        donneur_ordre: z.enum(["axians", "ensio"]).optional().default("axians"),
       })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
     const { error } = await context.supabase
       .from("bordereau_prestations")
-      .insert({ ...data, donneur_ordre: "axians", ordre: 9999 });
+      .insert({ ...data, ordre: 9999 });
     if (error) throw new Error(error.message);
     return { ok: true };
   });
@@ -113,7 +114,7 @@ export const listDonneurs = createServerFn({ method: "GET" })
     const read = async () => context.supabase.from("donneurs_ordre").select("*").order("nom");
     let { data, error } = await read();
     if (error) throw new Error(error.message);
-    if (!data?.length) {
+    if (!data?.some((l) => l.donneur_ordre === "axians")) {
       const inserted = await context.supabase.from("donneurs_ordre").insert(DONNEURS_DEFAUT);
       if (inserted.error) throw new Error(inserted.error.message);
       const again = await read();
@@ -156,4 +157,22 @@ export const upsertDonneur = createServerFn({ method: "POST" })
     const { data: row, error } = await context.supabase.from("donneurs_ordre").insert(insert).select("id").single();
     if (error) throw new Error(error.message);
     return { id: row.id as string };
+  });
+
+/** Chantiers terminés sur une période pour un donneur d'ordre (attachement de la semaine). */
+export const listChantiersPeriode = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ du: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), motcle: z.string().trim().min(2).max(80) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, client_nom, adresse, cp_ville, date_debut, termine_at, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, partenaire, designation, titre")
+      .gte("date_debut", `${data.du}T00:00:00`)
+      .lte("date_debut", `${data.au}T23:59:59`)
+      .ilike("partenaire", `%${data.motcle}%`)
+      .order("date_debut");
+    if (error) throw new Error(error.message);
+    return rows ?? [];
   });
