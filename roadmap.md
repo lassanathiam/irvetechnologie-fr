@@ -29,5 +29,5 @@
 
 - [x] Refaire et stabiliser l’espace professionnel dans la direction sombre vitrée choisie, avec modes jour/nuit et affichage mobile (25/09/2026)
 
-- [ ] Modèles de rapport par donneur d ordre (Ensio, TotalEnergies…) : photo unique -> modèle mémorisé, rempli sur mobile en fin de chantier, signatures, envoi avec photos
+- [x] Modèles de rapport par donneur d ordre (Ensio, TotalEnergies…) : photo unique -> modèle mémorisé, rempli sur mobile en fin de chantier, signatures, envoi avec photos
 - [ ] BPU Ensio (en attente du document)
