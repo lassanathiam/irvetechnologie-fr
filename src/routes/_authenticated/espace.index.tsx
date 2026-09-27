@@ -422,129 +422,107 @@ function SuiviEncaissements({
   const estEnRetard = (f: FactureSuivi) => Boolean(f.date_echeance && f.date_echeance < auj);
   const nbRetard = aEncaisser.filter(estEnRetard).length;
 
-  const Carte = ({ f }: { f: FactureSuivi }) => {
+  const LIMITE = 6;
+
+  const Ligne = ({ f }: { f: FactureSuivi }) => {
     const retard = estEnRetard(f);
     return (
-      <li className="rounded-lg border border-dashboard-line bg-dashboard-raised p-4">
-        <div className="flex items-start justify-between gap-3">
-          <div className="min-w-0">
-            <Link
-              to="/factures/$id"
-              params={{ id: f.id }}
-              className="block break-words text-base font-bold leading-snug text-dashboard-foreground hover:text-primary"
-              title={f.client_nom}
-            >
+      <li>
+        <div className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-2.5 transition hover:bg-dashboard-raised/60 sm:flex-nowrap">
+          <Link to="/factures/$id" params={{ id: f.id }} className="min-w-0" title={f.client_nom}>
+            <span className="block truncate text-sm font-semibold text-dashboard-foreground hover:text-primary">
               {f.client_nom}
-            </Link>
-            <p className="mt-0.5 truncate text-xs text-dashboard-muted">
+            </span>
+            <span className="block truncate text-mono text-[11px] text-dashboard-muted">
               {f.numero}
               {f.bon_commande ? ` · Cde ${f.bon_commande}` : ""}
               {f.numero_affaire ? ` · Affaire ${f.numero_affaire}` : ""}
-            </p>
-          </div>
-          <span className={`shrink-0 text-mono text-lg font-bold ${retard ? "text-destructive" : "text-dashboard-foreground"}`}>
-            {euro(Number(f.total_ttc ?? 0))}
+              {onglet === "encaissees" && f.paid_at ? ` · payée le ${new Date(f.paid_at).toLocaleDateString("fr-FR")}` : ""}
+            </span>
+          </Link>
+          <span className="flex min-w-0 items-center gap-2">
+            {f.date_echeance && (
+              <span
+                className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${
+                  retard
+                    ? "border-destructive/40 bg-destructive/10 text-destructive"
+                    : "border-dashboard-line bg-dashboard-panel text-dashboard-muted"
+                }`}
+              >
+                {retard ? "En retard · " : "Éch. "}
+                {new Date(f.date_echeance).toLocaleDateString("fr-FR")}
+              </span>
+            )}
+            <span className={`font-mono text-xs font-bold whitespace-nowrap ${retard ? "text-destructive" : "text-dashboard-foreground"}`}>
+              {euro(Number(f.total_ttc ?? 0))}
+            </span>
+            {onglet === "a_encaisser" && (
+              <Button size="sm" variant="outline" disabled={pendingId === f.id} onClick={() => onEncaisser(f.id)}>
+                {pendingId === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+                Encaissée
+              </Button>
+            )}
           </span>
-        </div>
-        <div className="mt-3 flex items-center justify-between gap-3">
-          {f.date_echeance ? (
-            <span
-              className={`inline-flex items-center rounded-full border px-2.5 py-1 text-[11px] font-semibold ${
-                retard
-                  ? "border-destructive/40 bg-destructive/10 text-destructive"
-                  : "border-dashboard-line bg-dashboard-panel text-dashboard-muted"
-              }`}
-            >
-              {retard ? "En retard · " : "Échéance · "}
-              {new Date(f.date_echeance).toLocaleDateString("fr-FR")}
-            </span>
-          ) : (
-            <span className="inline-flex items-center rounded-full border border-dashboard-line bg-dashboard-panel px-2.5 py-1 text-[11px] font-semibold text-dashboard-muted">
-              Sans échéance
-            </span>
-          )}
-          <Button size="sm" variant="outline" disabled={pendingId === f.id} onClick={() => onEncaisser(f.id)}>
-            {pendingId === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-            Encaissée
-          </Button>
         </div>
       </li>
     );
   };
 
+  const liste = onglet === "a_encaisser" ? aEncaisser : encaissees;
+  const visibles = liste.slice(0, LIMITE);
+
   return (
     <section className="neo-dashboard-panel mt-4 p-4 sm:p-5">
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h2 className="pro-heading text-base font-bold">Factures</h2>
         <Link to="/factures" className="text-mono text-xs text-dashboard-muted hover:text-primary">Toutes les factures</Link>
       </div>
       {brouillonsNb > 0 && (
-        <Link to="/factures" className="mb-4 block rounded-md border border-dashboard-line px-3 py-2 text-xs text-dashboard-muted hover:text-primary">
+        <Link to="/factures" className="mb-3 block rounded-md border border-dashboard-line px-3 py-2 text-xs text-dashboard-muted hover:text-primary">
           {brouillonsNb} facture(s) en brouillon ({euro(brouillonsTtc)}) : validez-les pour qu'elles passent « à encaisser ».
         </Link>
       )}
-      <div className="mb-4 grid grid-cols-2 gap-2">
+      <div className="mb-3 grid grid-cols-2 gap-2">
         <button
           type="button"
           onClick={() => setOnglet("a_encaisser")}
-          className={`rounded-lg border px-4 py-3 text-left transition-colors ${
+          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
             onglet === "a_encaisser"
               ? "border-primary bg-primary/10 text-dashboard-foreground"
               : "border-dashboard-line bg-dashboard-raised text-dashboard-muted hover:text-dashboard-foreground"
           }`}
         >
-          <span className="block text-xs font-semibold uppercase tracking-wide">
+          <span className="block text-[11px] font-semibold uppercase tracking-wide">
             À encaisser{nbRetard > 0 ? ` · ${nbRetard} en retard` : ""}
           </span>
-          <span className="mt-1 block text-mono text-xl font-bold">{euro(total(aEncaisser))}</span>
+          <span className="mt-0.5 block text-mono text-lg font-bold">{euro(total(aEncaisser))}</span>
         </button>
         <button
           type="button"
           onClick={() => setOnglet("encaissees")}
-          className={`rounded-lg border px-4 py-3 text-left transition-colors ${
+          className={`rounded-lg border px-3 py-2 text-left transition-colors ${
             onglet === "encaissees"
               ? "border-primary bg-primary/10 text-dashboard-foreground"
               : "border-dashboard-line bg-dashboard-raised text-dashboard-muted hover:text-dashboard-foreground"
           }`}
         >
-          <span className="block text-xs font-semibold uppercase tracking-wide">Encaissées</span>
-          <span className="mt-1 block text-mono text-xl font-bold">{euro(total(encaissees))}</span>
+          <span className="block text-[11px] font-semibold uppercase tracking-wide">Encaissées</span>
+          <span className="mt-0.5 block text-mono text-lg font-bold">{euro(total(encaissees))}</span>
         </button>
       </div>
-      {onglet === "a_encaisser" ? (
-        aEncaisser.length ? (
-          <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">{aEncaisser.map((f) => <Carte key={f.id} f={f} />)}</ul>
-        ) : (
-          <Empty>Aucune facture à encaisser.</Empty>
-        )
-      ) : encaissees.length ? (
-        <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
-          {encaissees.map((f) => (
-            <li key={f.id} className="rounded-lg border border-dashboard-line bg-dashboard-raised p-4">
-              <div className="flex items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <Link
-                    to="/factures/$id"
-                    params={{ id: f.id }}
-                    className="block break-words text-base font-bold leading-snug text-dashboard-foreground hover:text-primary"
-                    title={f.client_nom}
-                  >
-                    {f.client_nom}
-                  </Link>
-                  <p className="mt-0.5 truncate text-xs text-dashboard-muted">
-                    {f.numero}
-                    {f.paid_at ? ` · payée le ${new Date(f.paid_at).toLocaleDateString("fr-FR")}` : " · payée"}
-                  </p>
-                </div>
-                <span className="shrink-0 text-mono text-lg font-bold text-dashboard-foreground">
-                  {euro(Number(f.total_ttc ?? 0))}
-                </span>
-              </div>
-            </li>
-          ))}
-        </ul>
+      {!liste.length ? (
+        <Empty>{onglet === "a_encaisser" ? "Aucune facture à encaisser." : "Aucun encaissement."}</Empty>
       ) : (
-        <Empty>Aucun encaissement.</Empty>
+        <>
+          <ul className="divide-y divide-dashboard-line/70">
+            {visibles.map((f) => <Ligne key={f.id} f={f} />)}
+          </ul>
+          {liste.length > LIMITE && (
+            <Link to="/factures" className="mt-2 block text-center text-mono text-xs text-dashboard-muted hover:text-primary">
+              + {liste.length - LIMITE} autre(s) — voir toutes les factures
+            </Link>
+          )}
+        </>
       )}
     </section>
   );
