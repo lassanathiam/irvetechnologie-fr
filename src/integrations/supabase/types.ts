@@ -934,6 +934,9 @@ export type Database = {
         Row: {
           actif: boolean
           adresse: string | null
+          base_adresse: string | null
+          base_lat: number | null
+          base_lng: number | null
           contact_nom: string | null
           couleur: string
           cp_ville: string | null
@@ -953,11 +956,15 @@ export type Database = {
           telephone: string | null
           token: string
           tva_intracom: string | null
+          type: string
           updated_at: string
         }
         Insert: {
           actif?: boolean
           adresse?: string | null
+          base_adresse?: string | null
+          base_lat?: number | null
+          base_lng?: number | null
           contact_nom?: string | null
           couleur?: string
           cp_ville?: string | null
@@ -977,11 +984,15 @@ export type Database = {
           telephone?: string | null
           token?: string
           tva_intracom?: string | null
+          type?: string
           updated_at?: string
         }
         Update: {
           actif?: boolean
           adresse?: string | null
+          base_adresse?: string | null
+          base_lat?: number | null
+          base_lng?: number | null
           contact_nom?: string | null
           couleur?: string
           cp_ville?: string | null
@@ -1001,6 +1012,7 @@ export type Database = {
           telephone?: string | null
           token?: string
           tva_intracom?: string | null
+          type?: string
           updated_at?: string
         }
         Relationships: []
@@ -1330,6 +1342,7 @@ export type Database = {
           montant_propose_ht: number | null
           montant_propose_note: string | null
           montant_propose_par: string | null
+          montant_sous_traitant_ht: number | null
           montant_valide_at: string | null
           nature_dossier: string | null
           notes: string | null
@@ -1350,6 +1363,7 @@ export type Database = {
           retour_complete_at: string | null
           retour_delestage: boolean
           retour_observations: string | null
+          sous_traitant_id: string | null
           statut: string
           statut_facturation: string
           technicien: string | null
@@ -1400,6 +1414,7 @@ export type Database = {
           montant_propose_ht?: number | null
           montant_propose_note?: string | null
           montant_propose_par?: string | null
+          montant_sous_traitant_ht?: number | null
           montant_valide_at?: string | null
           nature_dossier?: string | null
           notes?: string | null
@@ -1420,6 +1435,7 @@ export type Database = {
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
+          sous_traitant_id?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
@@ -1470,6 +1486,7 @@ export type Database = {
           montant_propose_ht?: number | null
           montant_propose_note?: string | null
           montant_propose_par?: string | null
+          montant_sous_traitant_ht?: number | null
           montant_valide_at?: string | null
           nature_dossier?: string | null
           notes?: string | null
@@ -1490,6 +1507,7 @@ export type Database = {
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
+          sous_traitant_id?: string | null
           statut?: string
           statut_facturation?: string
           technicien?: string | null
@@ -1512,6 +1530,13 @@ export type Database = {
           {
             foreignKeyName: "rendezvous_partenaire_id_fkey"
             columns: ["partenaire_id"]
+            isOneToOne: false
+            referencedRelation: "partenaires"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rendezvous_sous_traitant_id_fkey"
+            columns: ["sous_traitant_id"]
             isOneToOne: false
             referencedRelation: "partenaires"
             referencedColumns: ["id"]
