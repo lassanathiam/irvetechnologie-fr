@@ -1002,7 +1002,8 @@ function PlanningPage() {
                             <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Retour de travaux (photos + métrage)</span>
                           </button>
                         )}
-                        {r.termine_at && r.statut_facturation === "a_facturer" && (
+                        {(r.termine_at || r.statut === "termine" || r.statut === "realise") &&
+                          r.statut_facturation === "a_facturer" && (
                           <Link
                             to="/factures/nouvelle"
                             search={{ rdv: r.id }}
@@ -1853,7 +1854,8 @@ function PlanningPage() {
                                   {r.notif_fin_at ? " · client prévenu" : ""}
                                 </span>
                               )}
-                              {r.termine_at && r.statut_facturation === "a_facturer" && (
+                              {(r.termine_at || r.statut === "termine" || r.statut === "realise") &&
+                                r.statut_facturation === "a_facturer" && (
                                 <Link
                                   to="/factures/nouvelle"
                                   search={{ rdv: r.id }}
