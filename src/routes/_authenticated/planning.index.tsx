@@ -953,15 +953,17 @@ function PlanningPage() {
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate font-bold">{r.client_nom}</span>
-                          <a
-                            href={wazeLien(r.adresse, r.cp_ville, r.lat, r.lng)}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(e) => e.stopPropagation()}
+                          <span
+                            role="link"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(wazeLien(r.adresse, r.cp_ville, r.lat, r.lng), "_blank", "noopener");
+                            }}
                             className="mt-0.5 block text-xs text-primary underline underline-offset-2"
                           >
                             {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""} · Waze
-                          </a>
+                          </span>
                           <span className="mt-1 block text-xs text-muted-foreground">
                             {dureeFr(r.duree_min)}
                             {r.distance_km != null
