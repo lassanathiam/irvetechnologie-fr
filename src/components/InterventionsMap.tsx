@@ -51,7 +51,10 @@ export function InterventionsMap({
   onToggleSelect,
   lienCoords,
   visible = true,
+  bases: basesProp,
 }: {
+  /** Remplace les bases affichées (ex. base du sous-traitant). */
+  bases?: { lat: number; lng: number; label: string }[];
   markers: MapMarker[];
   activeId?: string | null;
   onSelect?: (id: string) => void;
