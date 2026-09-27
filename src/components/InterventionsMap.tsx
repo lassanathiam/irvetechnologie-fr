@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react";
+import { TECHNICIENS } from "@/lib/geo";
 
 export type MapMarker = {
   id: string;
@@ -14,7 +15,12 @@ export type MapMarker = {
   couleur?: string | null;
 };
 
-const BASE = { lat: 47.2184, lng: -1.5536, label: "Nantes" };
+/** Bases de départ : une par intervenant (domicile de chacun). */
+const BASES = TECHNICIENS.map((t) => ({
+  lat: t.lat,
+  lng: t.lng,
+  label: `${t.nom.split(" ")[0]} · ${t.label}`,
+}));
 
 /** Couleurs de statut : orange = programmé, vert = réalisé / validé. */
 export const STATUT_COLORS: Record<string, string> = {
