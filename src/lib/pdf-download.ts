@@ -28,6 +28,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
       clone.style.boxShadow = "none";
       clone.style.overflow = "visible";
       doc.querySelectorAll(".print\\:hidden").forEach((n) => ((n as HTMLElement).style.display = "none"));
+      clone.querySelectorAll("[data-label]").forEach((n) => n.removeAttribute("data-label"));
       clone.querySelectorAll("table").forEach((t) => {
         (t as HTMLElement).style.width = "100%";
         (t as HTMLElement).style.tableLayout = "fixed";
