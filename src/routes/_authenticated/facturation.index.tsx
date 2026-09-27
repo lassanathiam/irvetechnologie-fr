@@ -495,16 +495,34 @@ function FacturationChantiers() {
                       <button
                         type="button"
                         disabled={busy === c.id}
-                        onClick={() =>
+                        onClick={(ev) => {
+                          const form = ev.currentTarget.form;
                           void action(c.id, async () => {
+                            // Enregistre d'abord le montant saisi (sinon il est ignoré).
+                            if (form) {
+                              const fd = new FormData(form);
+                              const saisi = parseNombreSaisi(fd.get("montant_saisi"));
+                              if (saisi == null || saisi <= 0) throw new Error("Indiquez le montant du chantier (champ Montant), puis cliquez sur Facturer.");
+                              const ht = String(fd.get("mode_montant") ?? "ht") === "ttc" ? saisi / (1 + tvaPct / 100) : saisi;
+                              await majPaiement({
+                                data: {
+                                  id: c.id,
+                                  statut_facturation: String(fd.get("statut_facturation") ?? "a_facturer") as "a_facturer" | "facture" | "paye",
+                                  montant_ht: String(Math.round(ht * 100) / 100),
+                                  metrage_reel_m: String(fd.get("metrage_reel_m") ?? ""),
+                                  delai_paiement_jours: String(fd.get("delai") ?? ""),
+                                  echeance_paiement: String(fd.get("echeance") ?? "") || null,
+                                },
+                              });
+                            }
                             const r = await creerFacture({ data: { id: c.id, client_cle: factA[c.id] || null } });
                             setMessage(
                               `Facture ${r.numero} créée au nom de ${r.destinataire} (${
                                 r.facturer_a === "partenaire" ? "partenaire" : "client"
                               }).`,
                             );
-                          })
-                        }
+                          });
+                        }}
                         className="bg-primary text-primary-foreground rounded-sm px-3 py-2 text-xs font-semibold inline-flex items-center gap-1.5 disabled:opacity-60 min-h-10"
                       >
                         <Receipt className="h-3.5 w-3.5" />
