@@ -684,3 +684,9 @@
   }
 }
 
+
+/* Rendu PDF téléchargé : mise en page ordinateur, sans étiquettes mobiles */
+.pdf-render td::before {
+  content: none !important;
+  display: none !important;
+}
