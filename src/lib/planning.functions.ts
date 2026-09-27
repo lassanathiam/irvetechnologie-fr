@@ -1795,6 +1795,27 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
         .maybeSingle();
       partenaire = p ?? null;
     }
+    // Chantier lié seulement par le nom écrit (accents, espaces, fautes de frappe tolérés).
+    if (!partenaire?.adresse && rdv.partenaire?.trim()) {
+      const norm = (x: string | null) => (x ?? "").normalize("NFD").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      const dist = (x: string, y: string) => {
+        const d = Array.from({ length: x.length + 1 }, (_, i) => [i, ...Array(y.length).fill(0)]);
+        for (let j = 1; j <= y.length; j++) d[0][j] = j;
+        for (let i = 1; i <= x.length; i++)
+          for (let j = 1; j <= y.length; j++)
+            d[i][j] = Math.min(d[i - 1][j] + 1, d[i][j - 1] + 1, d[i - 1][j - 1] + (x[i - 1] === y[j - 1] ? 0 : 1));
+        return d[x.length][y.length];
+      };
+      const cible = norm(rdv.partenaire);
+      const { data: tous } = await context.supabase
+        .from("partenaires")
+        .select("nom, email, delai_paiement_jours, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, telephone")
+        .not("adresse", "is", null);
+      const trouve = (tous ?? []).find((p) =>
+        [p.nom, p.raison_sociale].some((n) => { const v = norm(n); return v && (v === cible || dist(v, cible) <= 2); }),
+      );
+      if (trouve) partenaire = trouve;
+    }
     const sousTraitance = Boolean(data.client_cle) || rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
 
     // Si l'adresse manque sur la fiche partenaire, on la reprend de la fiche société (donneurs d'ordre).
