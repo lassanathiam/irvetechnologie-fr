@@ -205,49 +205,7 @@ function EspacePage() {
             pendingId={encaisser.isPending ? encaisser.variables : undefined}
           />
 
-          <div className="mt-4 grid gap-4 lg:grid-cols-3">
-            <section className="neo-dashboard-panel p-4 lg:col-span-2">
-              <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="pro-heading text-base font-bold">Devis récents</h2>
-                <Link to="/devis" className="text-mono text-xs text-dashboard-muted hover:text-primary">
-                  Voir tout
-                </Link>
-              </div>
-              {!devisRecents.length ? (
-                <Empty>Aucun devis à afficher.</Empty>
-              ) : (
-                <ul className="divide-y divide-dashboard-line/70">
-                  {devisRecents.map((d) => {
-                    const badge = DEVIS_BADGE[d.statut] ?? DEVIS_BADGE.brouillon;
-                    return (
-                      <li key={d.id}>
-                        <Link
-                          to="/devis/$id"
-                          params={{ id: d.id }}
-                           className="flex flex-wrap items-center justify-between gap-2 rounded-lg px-2 py-2.5 transition hover:bg-dashboard-raised/60 sm:flex-nowrap"
-                        >
-                          <span className="min-w-0">
-                            <span className="block truncate text-sm font-semibold text-dashboard-foreground">
-                              {d.client_nom}
-                            </span>
-                            <span className="block text-mono text-[11px] text-dashboard-muted">{d.numero}</span>
-                          </span>
-                          <span className="flex min-w-0 items-center gap-2">
-                            <span className={`inline-flex items-center rounded border px-2 py-0.5 text-[11px] font-bold ${badge.cls}`}>
-                              {badge.label}
-                            </span>
-                            <span className="font-mono text-xs font-bold text-dashboard-foreground whitespace-nowrap">
-                              {euro(Number(d.total_ttc))}
-                            </span>
-                          </span>
-                        </Link>
-                      </li>
-                    );
-                  })}
-                </ul>
-              )}
-            </section>
-
+          <div className="mt-4 grid gap-4">
             <Panel
               icon={CalendarClock}
               title="Prochains rendez-vous"
