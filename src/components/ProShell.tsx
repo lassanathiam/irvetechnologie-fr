@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router";
-import { useEffect, useState, type LucideIcon } from "react";
+import { useEffect, useState, type LucideIcon } from "lucide-react";
 import {
   Calculator,
   CalendarClock,
