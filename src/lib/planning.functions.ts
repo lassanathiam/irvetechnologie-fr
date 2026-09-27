@@ -1795,6 +1795,16 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
         .maybeSingle();
       partenaire = p ?? null;
     }
+    // Chantier lié seulement par le nom écrit : on retrouve la fiche partenaire du même nom.
+    if (!partenaire?.adresse && rdv.partenaire?.trim()) {
+      const { data: p2 } = await context.supabase
+        .from("partenaires")
+        .select("nom, email, delai_paiement_jours, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, telephone")
+        .or(`nom.ilike.${rdv.partenaire.trim().replace(/[,()]/g, "")},raison_sociale.ilike.${rdv.partenaire.trim().replace(/[,()]/g, "")}`)
+        .not("adresse", "is", null)
+        .limit(1);
+      if (p2?.[0]) partenaire = p2[0];
+    }
     const sousTraitance = Boolean(data.client_cle) || rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
 
     // Si l'adresse manque sur la fiche partenaire, on la reprend de la fiche société (donneurs d'ordre).
