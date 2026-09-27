@@ -21,6 +21,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
     windowWidth: 1280,
     width: RENDER_W,
     onclone: (doc, clone) => {
+      clone.classList.add("pdf-render");
       clone.style.width = `${RENDER_W}px`;
       clone.style.maxWidth = `${RENDER_W}px`;
       clone.style.border = "0";

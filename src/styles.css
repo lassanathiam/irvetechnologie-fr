@@ -544,30 +544,30 @@
     min-width: 0;
     width: 100%;
   }
-  .document-lines,
-  .document-lines tbody,
-  .document-lines tr,
-  .document-lines td {
+  .print-doc:not(.pdf-render) .document-lines,
+  .print-doc:not(.pdf-render) .document-lines tbody,
+  .print-doc:not(.pdf-render) .document-lines tr,
+  .print-doc:not(.pdf-render) .document-lines td {
     display: block;
     width: 100%;
   }
-  .document-lines thead {
+  .print-doc:not(.pdf-render) .document-lines thead {
     display: none;
   }
-  .document-lines tr {
+  .print-doc:not(.pdf-render) .document-lines tr {
     margin-top: 0.75rem;
     padding: 0.75rem;
     border: 1px solid var(--border);
     border-radius: var(--radius-sm);
   }
-  .document-lines td {
+  .print-doc:not(.pdf-render) .document-lines td {
     display: grid;
     grid-template-columns: minmax(6.5rem, 42%) minmax(0, 1fr);
     gap: 0.75rem;
     padding: 0.3rem 0;
     text-align: right;
   }
-  .document-lines td::before {
+  .print-doc:not(.pdf-render) .document-lines td::before {
     content: attr(data-label);
     color: var(--muted-foreground);
     font-family: var(--font-mono);
@@ -576,12 +576,12 @@
     text-align: left;
     text-transform: uppercase;
   }
-  .document-lines td:nth-child(2) {
+  .print-doc:not(.pdf-render) .document-lines td:nth-child(2) {
     display: block;
     padding-bottom: 0.65rem;
     text-align: left;
   }
-  .document-lines td:nth-child(2)::before {
+  .print-doc:not(.pdf-render) .document-lines td:nth-child(2)::before {
     display: block;
     margin-bottom: 0.35rem;
   }
