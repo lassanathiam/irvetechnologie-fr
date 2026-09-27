@@ -189,6 +189,78 @@ const ligneSchema = z.object({
   tva: z.coerce.number().min(0).max(100),
 });
 
+/** Facture directe (sans devis), ex. prestations 100 % au BPU. */
+export const createFactureDirecte = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        client_nom: z.string().trim().min(1).max(200),
+        client_email: z.string().trim().max(200).nullable(),
+        client_telephone: z.string().trim().max(50).nullable(),
+        client_adresse: z.string().trim().max(300).nullable(),
+        client_cp_ville: z.string().trim().max(200).nullable(),
+        objet: z.string().trim().max(500).nullable(),
+        remise_pct: z.coerce.number().min(0).max(100),
+        conditions_paiement: z.string().trim().max(3000).nullable(),
+        notes: z.string().trim().max(3000).nullable(),
+        autoliquidation: z.boolean(),
+        delai_jours: z.coerce.number().int().min(0).max(365).default(30),
+        items: z.array(ligneSchema).min(1).max(200),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { computeTotals } = await import("@/lib/billing");
+    const items = data.autoliquidation ? data.items.map((i) => ({ ...i, tva: 0 })) : data.items;
+    const t = computeTotals(items, data.remise_pct);
+    const now = new Date();
+    const prefix = `F-${now.getFullYear()}-`;
+    const { data: last } = await context.supabase
+      .from("factures").select("numero").like("numero", `${prefix}%`)
+      .order("numero", { ascending: false }).limit(1);
+    const n = last?.[0]?.numero ? Number(String(last[0].numero).slice(prefix.length)) : 0;
+    const numero = `${prefix}${String((Number.isFinite(n) ? n : 0) + 1).padStart(4, "0")}`;
+    const ech = new Date(now);
+    ech.setDate(ech.getDate() + data.delai_jours);
+    const { data: ins, error } = await context.supabase
+      .from("factures")
+      .insert({
+        numero,
+        date_emission: now.toISOString().slice(0, 10),
+        date_echeance: ech.toISOString().slice(0, 10),
+        statut: "brouillon",
+        client_nom: data.client_nom,
+        client_email: data.client_email || null,
+        client_telephone: data.client_telephone || null,
+        client_adresse: data.client_adresse || null,
+        client_cp_ville: data.client_cp_ville || null,
+        objet: data.objet || null,
+        remise_pct: data.remise_pct,
+        acompte_pct: 0,
+        conditions_paiement: data.conditions_paiement || null,
+        notes: data.notes || null,
+        autoliquidation: data.autoliquidation,
+        total_ht_brut: t.total_ht_brut,
+        total_remise: t.total_remise,
+        total_ht: t.total_ht,
+        total_tva: t.total_tva,
+        total_ttc: t.total_ttc,
+        created_by: context.userId,
+      })
+      .select("id")
+      .single();
+    if (error) throw new Error(error.message);
+    const { error: insErr } = await context.supabase.from("facture_items").insert(
+      items.map((i, idx) => ({
+        facture_id: ins.id, libelle: i.libelle, description: i.description || null,
+        quantite: i.quantite, prix_unitaire: i.prix_unitaire, tva: i.tva, ordre: idx + 1,
+      })),
+    );
+    if (insErr) throw new Error(insErr.message);
+    return { id: ins.id };
+  });
+
 export const updateFactureComplete = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>

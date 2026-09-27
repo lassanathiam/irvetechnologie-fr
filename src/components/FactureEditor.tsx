@@ -2,7 +2,10 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { updateFactureComplete } from "@/lib/factures.functions";
+import { createFactureDirecte, updateFactureComplete } from "@/lib/factures.functions";
+import { listBordereau } from "@/lib/bordereau.functions";
+import { useQuery } from "@tanstack/react-query";
+import { ClientPicker, mentionsClient } from "@/components/ClientPicker";
 import { computeTotals } from "@/lib/billing";
 
 type Item = { libelle: string; description: string | null; quantite: number; prix_unitaire: number; tva: number };
@@ -15,8 +18,13 @@ type Facture = {
 const inp = "mt-1 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm";
 const eur = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
-export function FactureEditor({ facture, items, onDone }: { facture: Facture; items: Item[]; onDone: () => void }) {
+export function FactureEditor({ facture, items, onDone, onCreated }: { facture: Facture; items: Item[]; onDone: () => void; onCreated?: (id: string) => void }) {
   const saveFn = useServerFn(updateFactureComplete);
+  const createFn = useServerFn(createFactureDirecte);
+  const bpuFn = useServerFn(listBordereau);
+  const creation = !facture.id;
+  const bpu = useQuery({ queryKey: ["bordereau"], queryFn: () => bpuFn() });
+  const [delai, setDelai] = useState(30);
   const [f, setF] = useState({
     client_nom: facture.client_nom, client_email: facture.client_email ?? "", client_telephone: facture.client_telephone ?? "",
     client_adresse: facture.client_adresse ?? "", client_cp_ville: facture.client_cp_ville ?? "", objet: facture.objet ?? "",
@@ -28,8 +36,15 @@ export function FactureEditor({ facture, items, onDone }: { facture: Facture; it
   );
   const totals = computeTotals(f.autoliquidation ? lignes.map((l) => ({ ...l, tva: 0 })) : lignes, f.remise_pct);
   const save = useMutation({
-    mutationFn: () => saveFn({ data: { id: facture.id, ...f, items: lignes } }),
-    onSuccess: onDone,
+    mutationFn: async () => {
+      if (creation) {
+        const r = await createFn({ data: { ...f, delai_jours: delai, items: lignes } });
+        onCreated?.(r.id);
+      } else {
+        await saveFn({ data: { id: facture.id, ...f, items: lignes } });
+        onDone();
+      }
+    },
   });
   const setL = (i: number, patch: Partial<Item>) => setLignes((ls) => ls.map((l, k) => (k === i ? { ...l, ...patch } : l)));
   const champ = (key: keyof typeof f, label: string) => (
@@ -40,7 +55,14 @@ export function FactureEditor({ facture, items, onDone }: { facture: Facture; it
 
   return (
     <div className="border border-primary rounded-sm bg-card p-6 space-y-5">
-      <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">Modifier la facture</h2>
+      <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">{creation ? "Nouvelle facture" : "Modifier la facture"}</h2>
+      <ClientPicker onPick={(c) => {
+        const m = mentionsClient(c);
+        setF((x) => ({ ...x, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "",
+          client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "", autoliquidation: c.autoliquidation || x.autoliquidation,
+          notes: m && !x.notes.includes(m) ? (x.notes ? `${x.notes}\n${m}` : m) : x.notes }));
+        if (c.delai_paiement_jours != null) setDelai(c.delai_paiement_jours);
+      }} />
       <div className="grid sm:grid-cols-2 gap-3">
         {champ("client_nom", "Client")}{champ("client_email", "Email")}
         {champ("client_telephone", "Téléphone")}{champ("client_adresse", "Adresse")}
@@ -75,6 +97,19 @@ export function FactureEditor({ facture, items, onDone }: { facture: Facture; it
           className="border border-border rounded-sm px-3 py-2 text-mono text-xs inline-flex items-center gap-1.5 hover:border-primary hover:text-primary">
           <Plus className="h-3.5 w-3.5" /> Ajouter une ligne
         </button>
+        {(bpu.data?.length ?? 0) > 0 && (
+          <select className={inp} value="" onChange={(e) => {
+            const b = bpu.data?.find((x) => x.id === e.target.value);
+            if (!b) return;
+            const l: Item = { libelle: [b.reference, b.libelle].filter(Boolean).join(" — "), description: null, quantite: 1, prix_unitaire: Number(b.prix_unitaire), tva: f.autoliquidation ? 0 : 20 };
+            setLignes((ls) => (ls.length === 1 && !ls[0].libelle.trim() ? [l] : [...ls, l]));
+          }}>
+            <option value="">+ Ajouter une prestation du bordereau (BPU)…</option>
+            {bpu.data?.filter((b) => b.actif).map((b) => (
+              <option key={b.id} value={b.id}>{b.donneur_ordre.toUpperCase()} · {b.reference ? `${b.reference} · ` : ""}{b.libelle} · {Number(b.prix_unitaire)} € / {b.unite}</option>
+            ))}
+          </select>
+        )}
       </div>
       <div className="grid sm:grid-cols-2 gap-3">
         <label className="block text-xs text-muted-foreground">Remise %
@@ -85,6 +120,11 @@ export function FactureEditor({ facture, items, onDone }: { facture: Facture; it
           Autoliquidation (TVA à 0)
         </label>
       </div>
+      {creation && (
+        <label className="block text-xs text-muted-foreground">Délai de paiement (jours)
+          <input type="number" min={0} className={inp} value={delai} onChange={(e) => setDelai(Number(e.target.value))} />
+        </label>
+      )}
       <label className="block text-xs text-muted-foreground">Conditions de paiement
         <textarea rows={2} className={inp} value={f.conditions_paiement} onChange={(e) => setF({ ...f, conditions_paiement: e.target.value })} />
       </label>
@@ -97,7 +137,7 @@ export function FactureEditor({ facture, items, onDone }: { facture: Facture; it
         <button type="button" disabled={save.isPending || !f.client_nom.trim() || lignes.some((l) => !l.libelle.trim())}
           onClick={() => save.mutate()}
           className="hero-grad text-primary-foreground text-mono text-xs px-5 py-3 rounded-sm inline-flex items-center gap-2 disabled:opacity-50">
-          {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />} Enregistrer les modifications
+          {save.isPending && <Loader2 className="h-4 w-4 animate-spin" />} {creation ? "Créer la facture" : "Enregistrer les modifications"}
         </button>
         <button type="button" onClick={onDone} className="border border-border rounded-sm px-4 py-2 text-mono text-xs">Annuler</button>
       </div>

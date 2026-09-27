@@ -16,6 +16,7 @@ import {
   Trash2,
 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
+import { ClientPicker } from "@/components/ClientPicker";
 import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
@@ -225,6 +226,7 @@ function DevisPage() {
             open={openSection === "client"}
             onToggle={() => setOpenSection((v) => (v === "client" ? null : "client"))}
           >
+            <div className="mb-4"><ClientPicker onPick={(c) => setClient({ ...client, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "", client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "" })} /></div>
             <div className="grid sm:grid-cols-2 gap-4">
               <Field label="Nom / société *" value={client.client_nom} onChange={(v) => setClient({ ...client, client_nom: v })} />
               <Field label="Objet" value={client.objet} onChange={(v) => setClient({ ...client, objet: v })} />

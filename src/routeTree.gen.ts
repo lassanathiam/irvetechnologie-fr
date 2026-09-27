@@ -37,6 +37,7 @@ import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
 import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_authenticated/rapports.modeles'
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
+import { Route as AuthenticatedFacturesNouvelleRouteImport } from './routes/_authenticated/factures.nouvelle'
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
@@ -197,6 +198,12 @@ const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
   path: '/rapports/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFacturesNouvelleRoute =
+  AuthenticatedFacturesNouvelleRouteImport.update({
+    id: '/factures/nouvelle',
+    path: '/factures/nouvelle',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedFacturesIdRoute = AuthenticatedFacturesIdRouteImport.update({
   id: '/factures/$id',
   path: '/factures/$id',
@@ -269,6 +276,7 @@ export interface FileRoutesByFullPath {
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
+  '/factures/nouvelle': typeof AuthenticatedFacturesNouvelleRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/attachements/': typeof AuthenticatedAttachementsIndexRoute
@@ -307,6 +315,7 @@ export interface FileRoutesByTo {
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
+  '/factures/nouvelle': typeof AuthenticatedFacturesNouvelleRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/attachements': typeof AuthenticatedAttachementsIndexRoute
@@ -347,6 +356,7 @@ export interface FileRoutesById {
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
+  '/_authenticated/factures/nouvelle': typeof AuthenticatedFacturesNouvelleRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
   '/_authenticated/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/_authenticated/attachements/': typeof AuthenticatedAttachementsIndexRoute
@@ -387,6 +397,7 @@ export interface FileRouteTypes {
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
+    | '/factures/nouvelle'
     | '/rapports/$id'
     | '/rapports/modeles'
     | '/attachements/'
@@ -425,6 +436,7 @@ export interface FileRouteTypes {
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
+    | '/factures/nouvelle'
     | '/rapports/$id'
     | '/rapports/modeles'
     | '/attachements'
@@ -464,6 +476,7 @@ export interface FileRouteTypes {
     | '/_authenticated/devis/$id'
     | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
+    | '/_authenticated/factures/nouvelle'
     | '/_authenticated/rapports/$id'
     | '/_authenticated/rapports/modeles'
     | '/_authenticated/attachements/'
@@ -701,6 +714,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRapportsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/factures/nouvelle': {
+      id: '/_authenticated/factures/nouvelle'
+      path: '/factures/nouvelle'
+      fullPath: '/factures/nouvelle'
+      preLoaderRoute: typeof AuthenticatedFacturesNouvelleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/factures/$id': {
       id: '/_authenticated/factures/$id'
       path: '/factures/$id'
@@ -774,6 +794,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
   AuthenticatedEspaceDashboardRoute: typeof AuthenticatedEspaceDashboardRoute
   AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
+  AuthenticatedFacturesNouvelleRoute: typeof AuthenticatedFacturesNouvelleRoute
   AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
   AuthenticatedRapportsModelesRoute: typeof AuthenticatedRapportsModelesRoute
   AuthenticatedAttachementsIndexRoute: typeof AuthenticatedAttachementsIndexRoute
@@ -798,6 +819,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
   AuthenticatedEspaceDashboardRoute: AuthenticatedEspaceDashboardRoute,
   AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,
+  AuthenticatedFacturesNouvelleRoute: AuthenticatedFacturesNouvelleRoute,
   AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
   AuthenticatedRapportsModelesRoute: AuthenticatedRapportsModelesRoute,
   AuthenticatedAttachementsIndexRoute: AuthenticatedAttachementsIndexRoute,
