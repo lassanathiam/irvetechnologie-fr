@@ -137,6 +137,21 @@ function FactureDetail() {
               </option>
             ))}
           </select>
+          {facture.statut === "brouillon" && (
+            <button
+              type="button"
+              disabled={statut.isPending}
+              onClick={() => statut.mutate("envoyee")}
+              className="border border-primary text-primary rounded-sm px-4 py-2 text-mono text-xs hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
+            >
+              {statut.isPending ? "Validation…" : "Valider la facture"}
+            </button>
+          )}
+          {statut.isError && (
+            <span className="w-full text-xs text-destructive">
+              Validation impossible : {statut.error instanceof Error ? statut.error.message : "erreur"}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Facture-${facture.numero}`); }}
