@@ -114,7 +114,7 @@ export const listDonneurs = createServerFn({ method: "GET" })
     const read = async () => context.supabase.from("donneurs_ordre").select("*").order("nom");
     let { data, error } = await read();
     if (error) throw new Error(error.message);
-    if (!data?.some((l) => l.donneur_ordre === "axians")) {
+    if (!data?.length) {
       const inserted = await context.supabase.from("donneurs_ordre").insert(DONNEURS_DEFAUT);
       if (inserted.error) throw new Error(inserted.error.message);
       const again = await read();
