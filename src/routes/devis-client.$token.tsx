@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { CheckCircle2, Loader2, Printer } from "lucide-react";
+import { CheckCircle2, Loader2, Printer, Download } from "lucide-react";
+import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { BrandLogo } from "@/components/BrandLogo";
 import { SignaturePad } from "@/components/SignaturePad";
@@ -113,10 +114,17 @@ function DevisClientPage() {
           </div>
           <button
             type="button"
+            onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Devis-${devis.numero}`); }}
+            className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
+          >
+            <Download className="h-3.5 w-3.5" /> Télécharger PDF
+          </button>
+          <button
+            type="button"
             onClick={() => window.print()}
             className="ml-auto border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-2"
           >
-            <Printer className="h-3.5 w-3.5" /> Télécharger / Imprimer
+            <Printer className="h-3.5 w-3.5" /> Imprimer
           </button>
         </div>
       </header>

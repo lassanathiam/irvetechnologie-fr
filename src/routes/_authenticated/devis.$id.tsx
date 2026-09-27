@@ -2,8 +2,9 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Plus, Printer, Receipt, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Plus, Printer, Download, Receipt, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
+import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
 import { computeTotals } from "@/lib/billing";
@@ -339,6 +340,13 @@ function DevisDetail() {
             className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary"
           >
             {editOpen ? "Fermer l'édition" : "Modifier le devis"}
+          </button>
+          <button
+            type="button"
+            onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Devis-${devis.numero}`); }}
+            className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
+          >
+            <Download className="h-3.5 w-3.5" /> Télécharger PDF
           </button>
           <button
             type="button"
