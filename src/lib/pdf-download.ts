@@ -13,6 +13,11 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   const blocks: Array<[number, number]> = [];
   let rootH = 0;
 
+  const labelled = Array.from(element.querySelectorAll<HTMLElement>("[data-label]")).map((n) => {
+    const v = n.getAttribute("data-label")!;
+    n.removeAttribute("data-label");
+    return [n, v] as const;
+  });
   const canvas = await html2canvas(element, {
     scale: 2,
     backgroundColor: "#ffffff",
@@ -47,6 +52,8 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
       });
     },
   });
+
+  labelled.forEach(([n, v]) => n.setAttribute("data-label", v));
 
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth();
