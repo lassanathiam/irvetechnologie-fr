@@ -10,6 +10,7 @@ export function SiteFooter() {
             <a href="mailto:contacts@irvetechnologie.fr" className="hover:text-premium-blue">contacts@irvetechnologie.fr</a>
             <a href="tel:+33633657840" className="hover:text-premium-blue">06 33 65 78 40</a>
             <Link to="/a-propos" className="hover:text-premium-blue">À propos</Link>
+            <Link to="/calculateur-irve" className="hover:text-premium-blue">Calculateur IRVE</Link>
             <span>Nantes · Grand Ouest élargi · jusqu&apos;à ~250 km (selon projet)</span>
           </div>
         </div>
