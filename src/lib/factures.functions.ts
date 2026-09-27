@@ -170,8 +170,12 @@ export const updateFactureReferences = createServerFn({ method: "POST" })
       .parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { id, ...refs } = data;
-    const clean = Object.fromEntries(Object.entries(refs).map(([k, v]) => [k, v ? v : null]));
+    const { id } = data;
+    const clean = {
+      numero_ticket: data.numero_ticket || null,
+      numero_affaire: data.numero_affaire || null,
+      bon_commande: data.bon_commande || null,
+    };
     const { error } = await context.supabase.from("factures").update(clean).eq("id", id);
     if (error) throw new Error(error.message);
     return { ok: true };
