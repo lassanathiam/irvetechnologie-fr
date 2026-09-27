@@ -82,6 +82,8 @@ import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 import { useIsMobile } from "@/hooks/use-mobile";
 import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
+import { ImportRdvDialog } from "@/components/ImportRdvDialog";
+import { FileUp } from "lucide-react";
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -476,6 +478,7 @@ function PlanningPage() {
 
   /** Couleur d'identification de chaque partenaire (carte + fiches). */
   const fetchPartenaires = useServerFn(listPartenaires);
+  const [importOpen, setImportOpen] = useState(false);
   const partenaires = useQuery({
     queryKey: ["partenaires"],
     queryFn: () => fetchPartenaires(),
@@ -861,6 +864,20 @@ function PlanningPage() {
           >
             <ListChecks className="h-4 w-4" /> Programmer ensemble
           </button>
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            className="text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 border border-primary/60 text-primary hover:bg-primary/10"
+          >
+            <FileUp className="h-4 w-4" /> Importer (photo, PDF, Excel)
+          </button>
+          {importOpen && (
+            <ImportRdvDialog
+              partenaires={(partenaires.data ?? []).map((p) => p.nom)}
+              onClose={() => setImportOpen(false)}
+              onDone={refresh}
+            />
+          )}
           <button
             type="button"
             onClick={() => setOpen((o) => !o)}
