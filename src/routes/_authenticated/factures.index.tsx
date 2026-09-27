@@ -47,15 +47,20 @@ function FacturesPage() {
           </div>
           <h1 className="mt-2 text-3xl font-medium tracking-tight">Factures</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Les factures sont créées depuis un devis accepté.
+            Depuis un devis accepté, ou directement (prestations au BPU).
           </p>
         </div>
+        <div className="flex gap-2">
+        <Link to="/factures/nouvelle" className="hero-grad text-primary-foreground text-mono text-xs rounded-sm px-4 py-2.5 inline-flex items-center gap-2">
+          + Nouvelle facture
+        </Link>
         <Link
           to="/devis"
           className="text-mono text-xs border border-border rounded-sm px-4 py-2.5 hover:border-primary hover:text-primary inline-flex items-center gap-2"
         >
           <FileText className="h-3.5 w-3.5" /> Devis
         </Link>
+        </div>
       </div>
       </div>
 
