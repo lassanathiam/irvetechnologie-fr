@@ -1159,7 +1159,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
       type: "chantier_termine",
       titre: `Chantier terminé — ${rdv.client_nom}`,
       message: `À facturer, échéance au ${echeance.toLocaleDateString("fr-FR")}.`,
-      lien: "/facturation",
+      lien: "/factures/nouvelle",
       montant: rdv.montant_ht == null ? null : Number(rdv.montant_ht),
       meta: { rendezvous_id: data.id },
     });
