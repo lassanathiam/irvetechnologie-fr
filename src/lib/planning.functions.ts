@@ -1824,7 +1824,7 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
       : rdv.client_nom;
     if (sousTraitance && !partenaire?.adresse) {
       throw new Error(
-        "Complétez d'abord la fiche du partenaire (adresse de siège) pour émettre une facture conforme.",
+        `Adresse du siège manquante pour « ${destinataireNom} ». Ouvrez Partenaires, complétez son adresse, puis relancez la facturation.`,
       );
     }
     const destinataireEmail = sousTraitance ? (partenaire?.email ?? null) : rdv.client_email;
