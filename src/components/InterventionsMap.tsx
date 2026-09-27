@@ -51,7 +51,10 @@ export function InterventionsMap({
   onToggleSelect,
   lienCoords,
   visible = true,
+  bases: basesProp,
 }: {
+  /** Remplace les bases affichées (ex. base du sous-traitant). */
+  bases?: { lat: number; lng: number; label: string }[];
   markers: MapMarker[];
   activeId?: string | null;
   onSelect?: (id: string) => void;
@@ -100,6 +103,8 @@ export function InterventionsMap({
     }, 160);
   }
 
+  const basesRef = useRef(basesProp);
+  basesRef.current = basesProp;
   useEffect(() => {
     let cancelled = false;
     (async () => {
@@ -180,7 +185,7 @@ export function InterventionsMap({
     layer.current.clearLayers();
     byId.current = {};
 
-    BASES.forEach((b) => {
+    (basesRef.current ?? BASES).forEach((b) => {
       leaflet
         .marker([b.lat, b.lng], {
           icon: leaflet.divIcon({
@@ -229,7 +234,7 @@ export function InterventionsMap({
     if (markers.length && fitRef.current !== cle) {
       fitRef.current = cle;
       const bounds = leaflet.latLngBounds([
-        ...BASES.map((b) => [b.lat, b.lng] as [number, number]),
+        ...(basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]),
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
       ]);
       map.current.fitBounds(bounds, { padding: [34, 34], maxZoom: 9 });

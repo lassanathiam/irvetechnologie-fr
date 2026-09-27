@@ -53,7 +53,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at, pin_defini_at, dernier_acces_at")
+      .select("id, nom, type, base_adresse, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at, pin_defini_at, dernier_acces_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -91,6 +91,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
       tva_intracom?: string | null;
       contact_nom?: string | null;
       telephone?: string | null;
+      type?: "donneur_ordre" | "sous_traitant";
     }) =>
       z
         .object({
@@ -129,6 +130,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
           tva_intracom: texteOptionnel(30),
           contact_nom: texteOptionnel(160),
           telephone: texteOptionnel(40),
+          type: z.enum(["donneur_ordre", "sous_traitant"]).default("donneur_ordre"),
         })
         .parse(raw),
   )
@@ -151,6 +153,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
           tva_intracom: data.tva_intracom ?? null,
           contact_nom: data.contact_nom ?? null,
           telephone: data.telephone ?? null,
+          type: data.type,
         })
         .eq("id", data.id);
       if (error) throw new Error(error.message);
@@ -173,6 +176,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
         tva_intracom: data.tva_intracom ?? null,
         contact_nom: data.contact_nom ?? null,
         telephone: data.telephone ?? null,
+        type: data.type,
         owner_user_id: context.userId,
       })
       .select("id")
@@ -245,7 +249,7 @@ async function loadPartenaire(data: { token: string; session?: string | null }) 
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data: partenaire, error } = await supabaseAdmin
     .from("partenaires")
-    .select("id, nom, actif, owner_user_id, delai_paiement_jours, pin_hash")
+    .select("id, nom, actif, owner_user_id, delai_paiement_jours, pin_hash, type, base_adresse, base_lat, base_lng")
     .eq("token", data.token)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -406,6 +410,36 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
   .inputValidator((data: { token: string; session?: string | null }) => tokenSchema.parse(data))
   .handler(async ({ data }) => {
     const { partenaire, supabaseAdmin } = await loadPartenaire(data);
+    if (partenaire.type === "sous_traitant") {
+      const { data: rows } = await supabaseAdmin
+        .from("rendezvous")
+        .select(
+          "id, titre, designation, type, client_nom, client_telephone, adresse, cp_ville, lat, lng, date_debut, date_a_confirmer, statut, montant_sous_traitant_ht, notes, metrage_m, metrage_reel_m, puissance_borne, phase_installation, type_pose, nature_dossier, materiel_fourni, demarre_at, termine_at, retour_observations",
+        )
+        .eq("sous_traitant_id", partenaire.id)
+        .eq("archive", false)
+        .order("date_debut", { ascending: true })
+        .limit(200);
+      const base =
+        partenaire.base_lat != null && partenaire.base_lng != null
+          ? { lat: Number(partenaire.base_lat), lng: Number(partenaire.base_lng) }
+          : null;
+      return {
+        nom: partenaire.nom,
+        type: "sous_traitant" as const,
+        base_adresse: partenaire.base_adresse ?? null,
+        base,
+        delai_paiement_jours: partenaire.delai_paiement_jours ?? 30,
+        dossiers: [],
+        missions: (rows ?? []).map((r) => ({
+          ...r,
+          trajet:
+            base && r.lat != null && r.lng != null
+              ? trajetDepuisBase(Number(r.lat), Number(r.lng), base)
+              : null,
+        })),
+      };
+    }
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select(
@@ -416,8 +450,12 @@ export const getEspacePartenaire = createServerFn({ method: "GET" })
       .limit(200);
     return {
       nom: partenaire.nom,
+      type: "donneur_ordre" as const,
+      base_adresse: null as string | null,
+      base: null as { lat: number; lng: number } | null,
       delai_paiement_jours: partenaire.delai_paiement_jours ?? 30,
       dossiers: dossiers ?? [],
+      missions: [] as never[],
     };
   });
 
@@ -562,7 +600,7 @@ export const uploadPhotoPartenaire = createServerFn({ method: "POST" })
       .from("rendezvous")
       .select("id")
       .eq("id", data.rendezvous_id)
-      .eq("partenaire_id", partenaire.id)
+      .or(`partenaire_id.eq.${partenaire.id},sous_traitant_id.eq.${partenaire.id}`)
       .maybeSingle();
     if (!dossier) throw new Error("Dossier introuvable.");
 
@@ -603,7 +641,7 @@ export const comptePhotosPartenaire = createServerFn({ method: "POST" })
     const { data: dossiers } = await supabaseAdmin
       .from("rendezvous")
       .select("id")
-      .eq("partenaire_id", partenaire.id)
+      .or(`partenaire_id.eq.${partenaire.id},sous_traitant_id.eq.${partenaire.id}`)
       .limit(200);
     const ids = (dossiers ?? []).map((d) => d.id);
     const vide: Record<string, ComptePhotos> = {};
@@ -706,5 +744,103 @@ export const proposerMontantPartenaire = createServerFn({ method: "POST" })
       meta: { rendezvous_id: data.rendezvous_id, partenaire_id: partenaire.id },
     });
 
+    return { ok: true as const };
+  });
+
+
+/* --------------------------- Espace sous-traitant -------------------------- */
+
+/** Le sous-traitant enregistre l'adresse de sa base (départ des trajets). */
+export const definirBaseSousTraitant = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    tokenSchema.extend({ adresse: z.string().trim().min(5).max(300) }).parse(raw),
+  )
+  .handler(async ({ data }) => {
+    const { partenaire, supabaseAdmin } = await loadPartenaire(data);
+    if (partenaire.type !== "sous_traitant") throw new Error("Accès réservé aux sous-traitants.");
+    const geo = await geocode(data.adresse);
+    if (!geo) throw new Error("Adresse introuvable, précisez le code postal et la ville.");
+    const { error } = await supabaseAdmin
+      .from("partenaires")
+      .update({ base_adresse: data.adresse, base_lat: geo.lat, base_lng: geo.lng })
+      .eq("id", partenaire.id);
+    if (error) throw new Error(error.message);
+    // Recalcule les trajets des missions depuis la nouvelle base.
+    const { data: rows } = await supabaseAdmin
+      .from("rendezvous")
+      .select("id, lat, lng")
+      .eq("sous_traitant_id", partenaire.id)
+      .limit(500);
+    for (const r of rows ?? []) {
+      if (r.lat == null || r.lng == null) continue;
+      const t = trajetDepuisBase(Number(r.lat), Number(r.lng), geo);
+      await supabaseAdmin.from("rendezvous").update(t).eq("id", r.id);
+    }
+    return { ok: true as const };
+  });
+
+async function missionDuSousTraitant(data: { token: string; session?: string | null; id: string }) {
+  const { partenaire, supabaseAdmin } = await loadPartenaire(data);
+  if (partenaire.type !== "sous_traitant") throw new Error("Accès réservé aux sous-traitants.");
+  const { data: rdv } = await supabaseAdmin
+    .from("rendezvous")
+    .select("id, demarre_at, termine_at")
+    .eq("id", data.id)
+    .eq("sous_traitant_id", partenaire.id)
+    .maybeSingle();
+  if (!rdv) throw new Error("Dossier introuvable.");
+  return { rdv, supabaseAdmin };
+}
+
+export const demarrerMissionSousTraitant = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) => tokenSchema.extend({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data }) => {
+    const { rdv, supabaseAdmin } = await missionDuSousTraitant(data);
+    if (rdv.termine_at) throw new Error("Chantier déjà terminé.");
+    const { error } = await supabaseAdmin
+      .from("rendezvous")
+      .update({ demarre_at: new Date().toISOString(), statut: "en_cours" })
+      .eq("id", rdv.id);
+    if (error) throw new Error(error.message);
+    return { ok: true as const };
+  });
+
+export const terminerMissionSousTraitant = createServerFn({ method: "POST" })
+  .inputValidator((raw: unknown) =>
+    tokenSchema
+      .extend({
+        id: z.string().uuid(),
+        metrage_reel_m: z.number().min(0).max(10000).nullable().default(null),
+        observations: z.string().trim().max(2000).nullable().default(null),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data }) => {
+    const { rdv, supabaseAdmin } = await missionDuSousTraitant(data);
+    if (!rdv.demarre_at) throw new Error("Démarrez d'abord le chantier.");
+    const { count } = await supabaseAdmin
+      .from("rendezvous_photos")
+      .select("id", { count: "exact", head: true })
+      .eq("rendezvous_id", rdv.id);
+    if ((count ?? 0) < 1) throw new Error("Ajoutez au moins une photo avant de terminer.");
+    const fin = new Date().toISOString();
+    const { error } = await supabaseAdmin
+      .from("rendezvous")
+      .update({
+        termine_at: fin,
+        statut: "termine",
+        metrage_reel_m: data.metrage_reel_m,
+        retour_observations: data.observations,
+        retour_complete_at: fin,
+      })
+      .eq("id", rdv.id);
+    if (error) throw new Error(error.message);
+    await supabaseAdmin.from("notifications").insert({
+      type: "chantier_termine",
+      titre: "Chantier terminé par un sous-traitant",
+      message: `Dossier terminé par un sous-traitant.`,
+      lien: "/planning",
+      meta: { rendezvous_id: rdv.id },
+    });
     return { ok: true as const };
   });

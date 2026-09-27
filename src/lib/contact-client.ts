@@ -18,3 +18,10 @@ export function whatsappLien(numero?: string | null, message?: string): string |
   const texte = message ? `?text=${encodeURIComponent(message)}` : "";
   return `https://wa.me/${n}${texte}`;
 }
+
+/** Lien Waze : ouvre directement la navigation vers l'adresse. */
+export function wazeLien(adresse?: string | null, cpVille?: string | null, lat?: number | null, lng?: number | null) {
+  if (lat != null && lng != null) return `https://waze.com/ul?ll=${lat},${lng}&navigate=yes`;
+  const q = [adresse, cpVille].filter(Boolean).join(", ");
+  return `https://waze.com/ul?q=${encodeURIComponent(q)}&navigate=yes`;
+}

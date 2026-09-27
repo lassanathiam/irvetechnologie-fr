@@ -76,7 +76,7 @@ import {
 
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
-import { telLien, whatsappLien } from "@/lib/contact-client";
+import { telLien, whatsappLien, wazeLien } from "@/lib/contact-client";
 import { estNoteAutoDepuisDevis } from "@/lib/devis-to-planning";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
@@ -953,8 +953,16 @@ function PlanningPage() {
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate font-bold">{r.client_nom}</span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}
+                          <span
+                            role="link"
+                            tabIndex={0}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              window.open(wazeLien(r.adresse, r.cp_ville, r.lat, r.lng), "_blank", "noopener");
+                            }}
+                            className="mt-0.5 block text-xs text-primary underline underline-offset-2"
+                          >
+                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""} · Waze
                           </span>
                           <span className="mt-1 block text-xs text-muted-foreground">
                             {dureeFr(r.duree_min)}
@@ -1691,10 +1699,17 @@ function PlanningPage() {
                                 </button>
                               )}
 
-                              <span className="inline-flex items-center gap-1">
+                              <a
+                                href={wazeLien(r.adresse, r.cp_ville, r.lat, r.lng)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                                title="Ouvrir dans Waze"
+                              >
                                 <MapPin className="h-3 w-3" /> {r.adresse}
                                 {r.cp_ville ? `, ${r.cp_ville}` : ""}
-                              </span>
+                              </a>
                               {r.distance_km != null ? (
                                 <span className="inline-flex items-center gap-1 text-mono">
                                   <RouteIcon className="h-3 w-3" />{" "}
@@ -2165,6 +2180,10 @@ function PlanningPage() {
                                 puissance_borne: g("puissance_borne") || null,
                                 phase_installation: g("phase_installation") || null,
                                 type_pose: g("type_pose") || null,
+                                sous_traitant_id: g("sous_traitant_id") || null,
+                                montant_sous_traitant_ht: g("montant_sous_traitant_ht")
+                                  ? Number(g("montant_sous_traitant_ht").replace(",", "."))
+                                  : null,
                               });
                             }}
                             className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
@@ -2232,6 +2251,10 @@ function PlanningPage() {
                                 ))}
                               </select>
                             </label>
+                            <SousTraitantFields
+                              defaultId={(r as { sous_traitant_id?: string | null }).sous_traitant_id ?? ""}
+                              defaultMontant={(r as { montant_sous_traitant_ht?: number | null }).montant_sous_traitant_ht ?? null}
+                            />
                             <div className="sm:col-span-2">
                               <AdresseFields
                                 required
@@ -3108,5 +3131,39 @@ function Field({
         className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm focus:outline-none focus:border-primary"
       />
     </label>
+  );
+}
+
+
+/** Affectation d'un dossier à un sous-traitant (qui ne voit que ses dossiers). */
+function SousTraitantFields({ defaultId, defaultMontant }: { defaultId: string; defaultMontant: number | null }) {
+  const lister = useServerFn(listPartenaires);
+  const q = useQuery({ queryKey: ["partenaires"], queryFn: () => lister() });
+  const sts = (q.data ?? []).filter((p) => p.type === "sous_traitant" && p.actif);
+  return (
+    <>
+      <label className="block">
+        <span className="text-mono text-xs text-muted-foreground">Sous-traitant affecté</span>
+        <select
+          name="sous_traitant_id"
+          defaultValue={defaultId}
+          key={`${defaultId}-${sts.length}`}
+          className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
+        >
+          <option value="">Aucun (réalisé par nous)</option>
+          {sts.map((p) => (
+            <option key={p.id} value={p.id}>
+              {p.nom}{p.base_adresse ? "" : " — base non définie"}
+            </option>
+          ))}
+        </select>
+      </label>
+      <Field
+        label="Montant payé au sous-traitant (HT €)"
+        name="montant_sous_traitant_ht"
+        type="number"
+        defaultValue={defaultMontant != null ? String(defaultMontant) : ""}
+      />
+    </>
   );
 }

@@ -52,6 +52,7 @@ function PartenairesAdmin() {
   const list = useQuery({ queryKey: ["partenaires"], queryFn: () => fetchAll() });
 
   const [nom, setNom] = useState("");
+  const [typeP, setTypeP] = useState<"donneur_ordre" | "sous_traitant">("donneur_ordre");
   const [notes, setNotes] = useState("");
   const [email, setEmail] = useState("");
   const [couleur, setCouleur] = useState(COULEURS[0]!);
@@ -95,6 +96,7 @@ function PartenairesAdmin() {
     tva_intracom: p.tva_intracom,
     contact_nom: p.contact_nom,
     telephone: p.telephone,
+    type: (p.type === "sous_traitant" ? "sous_traitant" : "donneur_ordre") as "sous_traitant" | "donneur_ordre",
   });
 
   async function ajouter() {
@@ -114,6 +116,7 @@ function PartenairesAdmin() {
           email: email.trim() || null,
           delai_paiement_jours: delai || 30,
           ...fiche,
+          type: typeP,
         },
       });
       setNom("");
@@ -158,6 +161,21 @@ function PartenairesAdmin() {
         </header>
 
         <section className="bg-card border border-border rounded-xl p-5 grid gap-4 sm:grid-cols-2">
+          <div className="sm:col-span-2 flex flex-wrap gap-2">
+            {([
+              ["donneur_ordre", "Partenaire donneur d'ordre (nous confie des dossiers)"],
+              ["sous_traitant", "Sous-traitant (réalise nos dossiers)"],
+            ] as const).map(([v, l]) => (
+              <button
+                key={v}
+                type="button"
+                onClick={() => setTypeP(v)}
+                className={`rounded-full border px-3 py-1.5 text-xs font-medium ${typeP === v ? "border-primary bg-primary/15 text-primary" : "border-border text-muted-foreground"}`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
           <label className="block">
             <span className="text-mono text-xs text-muted-foreground">Nom du partenaire</span>
             <input
@@ -281,6 +299,11 @@ function PartenairesAdmin() {
                           style={{ background: p.couleur ?? "#0284c7" }}
                         />
                         {p.nom}
+                        {p.type === "sous_traitant" && (
+                          <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                            Sous-traitant{p.base_adresse ? "" : " · base à définir"}
+                          </span>
+                        )}
                         <span className="text-muted-foreground font-normal text-sm">
                           — {p.dossiers} dossier{p.dossiers > 1 ? "s" : ""}
                         </span>
