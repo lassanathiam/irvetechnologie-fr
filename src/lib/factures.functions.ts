@@ -180,3 +180,73 @@ export const updateFactureReferences = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+const ligneSchema = z.object({
+  libelle: z.string().trim().min(1).max(300),
+  description: z.string().trim().max(2000).nullable().optional(),
+  quantite: z.coerce.number().min(0).max(100000),
+  prix_unitaire: z.coerce.number().min(-1000000).max(1000000),
+  tva: z.coerce.number().min(0).max(100),
+});
+
+export const updateFactureComplete = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        client_nom: z.string().trim().min(1).max(200),
+        client_email: z.string().trim().max(200).nullable(),
+        client_telephone: z.string().trim().max(50).nullable(),
+        client_adresse: z.string().trim().max(300).nullable(),
+        client_cp_ville: z.string().trim().max(200).nullable(),
+        objet: z.string().trim().max(500).nullable(),
+        remise_pct: z.coerce.number().min(0).max(100),
+        conditions_paiement: z.string().trim().max(3000).nullable(),
+        notes: z.string().trim().max(3000).nullable(),
+        autoliquidation: z.boolean(),
+        items: z.array(ligneSchema).min(1).max(200),
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { computeTotals } = await import("@/lib/billing");
+    const items = data.autoliquidation ? data.items.map((i) => ({ ...i, tva: 0 })) : data.items;
+    const t = computeTotals(items, data.remise_pct);
+    const { error } = await context.supabase
+      .from("factures")
+      .update({
+        client_nom: data.client_nom,
+        client_email: data.client_email || null,
+        client_telephone: data.client_telephone || null,
+        client_adresse: data.client_adresse || null,
+        client_cp_ville: data.client_cp_ville || null,
+        objet: data.objet || null,
+        remise_pct: data.remise_pct,
+        conditions_paiement: data.conditions_paiement || null,
+        notes: data.notes || null,
+        autoliquidation: data.autoliquidation,
+        total_ht_brut: t.total_ht_brut,
+        total_remise: t.total_remise,
+        total_ht: t.total_ht,
+        total_tva: t.total_tva,
+        total_ttc: t.total_ttc,
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    const { error: delErr } = await context.supabase.from("facture_items").delete().eq("facture_id", data.id);
+    if (delErr) throw new Error(delErr.message);
+    const { error: insErr } = await context.supabase.from("facture_items").insert(
+      items.map((i, idx) => ({
+        facture_id: data.id,
+        libelle: i.libelle,
+        description: i.description || null,
+        quantite: i.quantite,
+        prix_unitaire: i.prix_unitaire,
+        tva: i.tva,
+        ordre: idx + 1,
+      })),
+    );
+    if (insErr) throw new Error(insErr.message);
+    return { ok: true };
+  });
