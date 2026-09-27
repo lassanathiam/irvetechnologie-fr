@@ -977,6 +977,15 @@ function PlanningPage() {
                             <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Retour de travaux (photos + métrage)</span>
                           </button>
                         )}
+                        {r.demarre_at && (
+                          <Link
+                            to="/chantier-rapport/$rdvId"
+                            params={{ rdvId: r.id }}
+                            className="col-span-2 grid min-h-11 place-items-center rounded-lg border-2 border-sky-500 px-3 text-sm font-bold text-sky-600 dark:text-sky-400"
+                          >
+                            <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Rapport {r.partenaire ? r.partenaire : "donneur d'ordre"} (signatures)</span>
+                          </Link>
+                        )}
                         {r.demarre_at && !r.termine_at && (
                           <button
                             type="button"
@@ -1757,6 +1766,13 @@ function PlanningPage() {
                                   >
                                     <ClipboardCheck className="h-3.5 w-3.5" /> Retour de travaux
                                   </button>
+                                  <Link
+                                    to="/chantier-rapport/$rdvId"
+                                    params={{ rdvId: r.id }}
+                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border-2 border-sky-500 text-sky-600 dark:text-sky-400 inline-flex items-center gap-1.5"
+                                  >
+                                    <ClipboardCheck className="h-3.5 w-3.5" /> Rapport donneur d'ordre
+                                  </Link>
                                   <button
                                     type="button"
                                     onClick={() => {
