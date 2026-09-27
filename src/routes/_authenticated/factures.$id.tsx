@@ -28,6 +28,7 @@ export const Route = createFileRoute("/_authenticated/factures/$id")({
 
 const STATUTS = [
   { value: "brouillon", label: "Brouillon" },
+  { value: "validee", label: "Validée" },
   { value: "envoyee", label: "Envoyée" },
   { value: "payee", label: "Payée" },
   { value: "annulee", label: "Annulée" },
@@ -141,10 +142,10 @@ function FactureDetail() {
             <button
               type="button"
               disabled={statut.isPending}
-              onClick={() => statut.mutate("envoyee")}
+              onClick={() => statut.mutate("validee")}
               className="border border-primary text-primary rounded-sm px-4 py-2 text-mono text-xs hover:bg-primary hover:text-primary-foreground disabled:opacity-50"
             >
-              {statut.isPending ? "Validation…" : "Valider la facture"}
+              {statut.isPending ? "Validation…" : "Valider la facture (sans l'envoyer)"}
             </button>
           )}
           {statut.isError && (
