@@ -27,10 +27,16 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
       clone.style.boxShadow = "none";
       clone.style.overflow = "visible";
       doc.querySelectorAll(".print\\:hidden").forEach((n) => ((n as HTMLElement).style.display = "none"));
+      clone.querySelectorAll("table").forEach((t) => {
+        (t as HTMLElement).style.width = "100%";
+        (t as HTMLElement).style.tableLayout = "fixed";
+        (t as HTMLElement).style.wordBreak = "break-word";
+      });
       const top = clone.getBoundingClientRect().top;
       rootH = clone.getBoundingClientRect().height;
       const sel = "tr, h1, h2, h3, p, li, img, .print-avoid, :scope > *, :scope > * > *";
       clone.querySelectorAll(sel).forEach((n) => {
+        if (n.tagName === "TABLE" || n.tagName === "TBODY" || n.querySelector("table")) return;
         const r = (n as HTMLElement).getBoundingClientRect();
         if (r.height > 0 && r.height < 900) blocks.push([r.top - top, r.bottom - top]);
       });
