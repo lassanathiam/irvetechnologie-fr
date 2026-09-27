@@ -339,7 +339,7 @@ export const listChantiersAFacturer = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("rendezvous")
       .select("id, titre, designation, client_nom, adresse, cp_ville, partenaire, partenaire_id, montant_ht, tva_pct, termine_at, metrage_reel_m, metrage_inclus_m, puissance_borne")
-      .not("termine_at", "is", null)
+      .or("termine_at.not.is.null,statut.in.(termine,realise)")
       .eq("statut_facturation", "a_facturer")
       .order("termine_at", { ascending: false })
       .limit(300);
