@@ -249,7 +249,7 @@ function MissionCard({
       <div className="flex flex-wrap gap-3 text-xs text-muted-foreground">
         {m.trajet && <span>{m.trajet.distance_km} km · {dureeFr(m.trajet.duree_trajet_min)} depuis ma base</span>}
         {m.client_telephone && (
-          <a href={telLien(m.client_telephone)} className="inline-flex items-center gap-1 text-primary">
+          <a href={telLien(m.client_telephone) ?? undefined} className="inline-flex items-center gap-1 text-primary">
             <Phone className="h-3 w-3" /> {m.client_telephone}
           </a>
         )}
