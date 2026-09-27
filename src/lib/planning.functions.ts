@@ -1795,6 +1795,30 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
     }
     const sousTraitance = rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
 
+    // Si l'adresse manque sur la fiche partenaire, on la reprend de la fiche société (donneurs d'ordre).
+    const nomRecherche = (partenaire?.nom || rdv.partenaire || "").trim();
+    if (sousTraitance && !partenaire?.adresse && nomRecherche) {
+      const { data: d } = await context.supabase
+        .from("donneurs_ordre")
+        .select("nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, charge_affaires_email, delai_paiement_jours")
+        .ilike("nom", nomRecherche)
+        .maybeSingle();
+      if (d?.adresse) {
+        partenaire = {
+          nom: partenaire?.nom ?? d.nom,
+          email: partenaire?.email ?? d.charge_affaires_email ?? null,
+          delai_paiement_jours: partenaire?.delai_paiement_jours ?? d.delai_paiement_jours ?? null,
+          raison_sociale: partenaire?.raison_sociale || d.raison_sociale,
+          adresse: d.adresse,
+          cp_ville: partenaire?.cp_ville || d.cp_ville,
+          pays: partenaire?.pays || d.pays,
+          siret: partenaire?.siret || d.siret,
+          tva_intracom: partenaire?.tva_intracom || d.tva_intracom,
+          telephone: partenaire?.telephone ?? null,
+        };
+      }
+    }
+
     const destinataireNom = sousTraitance
       ? (partenaire?.raison_sociale || partenaire?.nom || rdv.partenaire || "Partenaire")
       : rdv.client_nom;
