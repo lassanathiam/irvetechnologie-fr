@@ -42,6 +42,7 @@ const LINKS = [
   { to: "/factures", label: "Mes factures", icon: Receipt },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
+  { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
   { to: "/realisations", label: "Photos", icon: Images },
 ] as const;
 
