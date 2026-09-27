@@ -26,12 +26,19 @@ const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/demande")({
-  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string } => {
-    const out: { formule?: Formule; borne?: string } = {};
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } => {
+    const out: { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } = {};
     const f = search.formule;
     if (f === "serenite" || f === "premium" || f === "pro") out.formule = f;
     const b = search.borne;
     if (typeof b === "string" && trouverBorne(b)) out.borne = b;
+    const str = (k: string) => (typeof search[k] === "string" ? (search[k] as string).slice(0, 1500) : undefined);
+    if (PUISSANCES_BORNE.includes(str("puissance") ?? "")) out.puissance = str("puissance");
+    if (ABONNEMENTS_KVA.includes(str("kva") ?? "")) out.kva = str("kva");
+    if (["Monophasé", "Triphasé"].includes(str("phase") ?? "")) out.phase = str("phase");
+    const d = Number(search.distance); if (d > 0) out.distance = Math.round(d);
+    const n = Number(search.nb); if (n > 0) out.nb = Math.round(n);
+    out.bien = str("bien"); out.notes = str("notes");
     return out;
   },
   head: () => ({
@@ -73,12 +80,12 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const { formule, borne: borneId } = Route.useSearch();
+  const { formule, borne: borneId, puissance: pCalc, kva: kvaCalc, phase: phaseCalc, distance: distCalc, bien: bienCalc, nb: nbCalc, notes: notesCalc } = Route.useSearch();
   const borneChoisie = trouverBorne(borneId);
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
-  const [kva, setKva] = useState(ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
+  const [kva, setKva] = useState(kvaCalc ?? ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
   const [puissanceBorne, setPuissanceBorne] = useState(
-    borneChoisie?.puissance ?? PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!,
+    pCalc ?? borneChoisie?.puissance ?? PUISSANCES_BORNE[PUISSANCES_BORNE.length - 1]!,
   );
   const alerte = alerteAbonnement(kva, puissanceBorne);
   const [typeDemande, setTypeDemande] = useState<TypeDemande>(
@@ -346,7 +353,7 @@ function Demande() {
                 label="Alimentation"
                 name="phase"
                 options={["Monophasé", "Triphasé", "Je ne sais pas"]}
-                defaultValue={borneChoisie?.phase}
+                defaultValue={phaseCalc ?? borneChoisie?.phase}
               />
               <SelectControlled
                 label="Puissance de borne souhaitée"
@@ -381,13 +388,13 @@ function Demande() {
                 label="Nombre de bornes"
                 name="nb_bornes"
                 type="number"
-                defaultValue={formule === "pro" ? "2" : "1"}
+                defaultValue={nbCalc ? String(nbCalc) : formule === "pro" ? "2" : "1"}
               />
-              <Select label="Type de bien" name="bien" options={["Maison individuelle", "Copropriété", "Entreprise / parking", "Concession auto"]} />
+              <Select label="Type de bien" name="bien" defaultValue={bienCalc === "Entreprise" || bienCalc?.startsWith("Parking") ? "Entreprise / parking" : bienCalc} options={["Maison individuelle", "Copropriété", "Entreprise / parking", "Concession auto"]} />
               <Select label="Type d'installation" name="type" options={["Intérieure (garage)", "Extérieure (façade)", "Sur poteau / borne", "À déterminer"]} />
-              <Field label="Distance tableau → borne (m)" name="distance" type="number" />
+              <Field label="Distance tableau → borne (m)" name="distance" type="number" defaultValue={distCalc ? String(distCalc) : undefined} />
             </div>
-            <Textarea label="Précisions" name="notes" placeholder="Modèle de véhicule, contraintes particulières, délais souhaités…" />
+            <Textarea label="Précisions" name="notes" defaultValue={notesCalc} placeholder="Modèle de véhicule, contraintes particulières, délais souhaités…" />
           </div>
 
 
@@ -506,11 +513,11 @@ function SelectControlled({
   );
 }
 
-function Textarea({ label, name, placeholder }: { label: string; name: string; placeholder?: string }) {
+function Textarea({ label, name, placeholder, defaultValue }: { label: string; name: string; placeholder?: string; defaultValue?: string }) {
   return (
     <label className="block mt-4">
       <span className="text-mono text-muted-foreground">{label}</span>
-      <textarea name={name} rows={4} placeholder={placeholder} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition resize-none" />
+      <textarea name={name} rows={4} defaultValue={defaultValue} placeholder={placeholder} className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-3 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary transition resize-none" />
     </label>
   );
 }

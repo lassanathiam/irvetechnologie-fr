@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as DemandeRouteImport } from './routes/demande'
+import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
 import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as AuthRouteImport } from './routes/auth'
 import { Route as AProposRouteImport } from './routes/a-propos'
@@ -59,6 +60,11 @@ const InstallerRoute = InstallerRouteImport.update({
 const DemandeRoute = DemandeRouteImport.update({
   id: '/demande',
   path: '/demande',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CalculateurIrveRoute = CalculateurIrveRouteImport.update({
+  id: '/calculateur-irve',
+  path: '/calculateur-irve',
   getParentRoute: () => rootRouteImport,
 } as any)
 const BornesRoute = BornesRouteImport.update({
@@ -247,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
   '/bornes': typeof BornesRoute
+  '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -284,6 +291,7 @@ export interface FileRoutesByTo {
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
   '/bornes': typeof BornesRoute
+  '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
   '/bornes': typeof BornesRoute
+  '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -362,6 +371,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/auth'
     | '/bornes'
+    | '/calculateur-irve'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -399,6 +409,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/auth'
     | '/bornes'
+    | '/calculateur-irve'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -437,6 +448,7 @@ export interface FileRouteTypes {
     | '/a-propos'
     | '/auth'
     | '/bornes'
+    | '/calculateur-irve'
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
@@ -476,6 +488,7 @@ export interface RootRouteChildren {
   AProposRoute: typeof AProposRoute
   AuthRoute: typeof AuthRoute
   BornesRoute: typeof BornesRoute
+  CalculateurIrveRoute: typeof CalculateurIrveRoute
   DemandeRoute: typeof DemandeRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -511,6 +524,13 @@ declare module '@tanstack/react-router' {
       path: '/demande'
       fullPath: '/demande'
       preLoaderRoute: typeof DemandeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/calculateur-irve': {
+      id: '/calculateur-irve'
+      path: '/calculateur-irve'
+      fullPath: '/calculateur-irve'
+      preLoaderRoute: typeof CalculateurIrveRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/bornes': {
@@ -802,6 +822,7 @@ const rootRouteChildren: RootRouteChildren = {
   AProposRoute: AProposRoute,
   AuthRoute: AuthRoute,
   BornesRoute: BornesRoute,
+  CalculateurIrveRoute: CalculateurIrveRoute,
   DemandeRoute: DemandeRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
