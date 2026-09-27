@@ -2,7 +2,9 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation } from "@tanstack/react-query";
 import { Loader2, Plus, Trash2 } from "lucide-react";
-import { createFactureDirecte, updateFactureComplete } from "@/lib/factures.functions";
+import { createFactureDirecte, listChantiersAFacturer, updateFactureComplete } from "@/lib/factures.functions";
+import { listClientsEnregistres } from "@/lib/clients.functions";
+import { useEffect } from "react";
 import { listBordereau } from "@/lib/bordereau.functions";
 import { useQuery } from "@tanstack/react-query";
 import { ClientPicker, mentionsClient } from "@/components/ClientPicker";
@@ -18,13 +20,19 @@ type Facture = {
 const inp = "mt-1 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm";
 const eur = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
-export function FactureEditor({ facture, items, onDone, onCreated }: { facture: Facture; items: Item[]; onDone: () => void; onCreated?: (id: string) => void }) {
+export function FactureEditor({ facture, items, onDone, onCreated, rdvInitiaux = [] }: { facture: Facture; items: Item[]; onDone: () => void; onCreated?: (id: string) => void; rdvInitiaux?: string[] }) {
   const saveFn = useServerFn(updateFactureComplete);
   const createFn = useServerFn(createFactureDirecte);
   const bpuFn = useServerFn(listBordereau);
   const creation = !facture.id;
   const bpu = useQuery({ queryKey: ["bordereau"], queryFn: () => bpuFn() });
   const [delai, setDelai] = useState(30);
+  const chantiersFn = useServerFn(listChantiersAFacturer);
+  const clientsFn = useServerFn(listClientsEnregistres);
+  const chantiers = useQuery({ queryKey: ["chantiers-a-facturer"], queryFn: () => chantiersFn(), enabled: creation });
+  const clientsQ = useQuery({ queryKey: ["clients-enregistres"], queryFn: () => clientsFn(), enabled: creation });
+  const [rdvIds, setRdvIds] = useState<string[]>([]);
+  const [initFait, setInitFait] = useState(false);
   const [f, setF] = useState({
     client_nom: facture.client_nom, client_email: facture.client_email ?? "", client_telephone: facture.client_telephone ?? "",
     client_adresse: facture.client_adresse ?? "", client_cp_ville: facture.client_cp_ville ?? "", objet: facture.objet ?? "",
@@ -38,7 +46,7 @@ export function FactureEditor({ facture, items, onDone, onCreated }: { facture: 
   const save = useMutation({
     mutationFn: async () => {
       if (creation) {
-        const r = await createFn({ data: { ...f, delai_jours: delai, items: lignes } });
+        const r = await createFn({ data: { ...f, delai_jours: delai, rdv_ids: rdvIds, items: lignes } });
         onCreated?.(r.id);
       } else {
         await saveFn({ data: { id: facture.id, ...f, items: lignes } });
@@ -47,6 +55,48 @@ export function FactureEditor({ facture, items, onDone, onCreated }: { facture: 
     },
   });
   const setL = (i: number, patch: Partial<Item>) => setLignes((ls) => ls.map((l, k) => (k === i ? { ...l, ...patch } : l)));
+  type Ch = NonNullable<typeof chantiers.data>[number];
+  const ligneChantier = (c: Ch): Item => {
+    const inclus = Number(c.metrage_inclus_m ?? 0);
+    const reel = c.metrage_reel_m == null ? null : Number(c.metrage_reel_m);
+    return {
+      libelle: c.designation || c.titre || "Installation borne de recharge",
+      description: [c.client_nom && `Client final : ${c.client_nom}`, [c.adresse, c.cp_ville].filter(Boolean).join(", "),
+        c.puissance_borne && `Borne ${c.puissance_borne}`, reel != null && `Câble ${reel} m${inclus ? ` (forfait ${inclus} m)` : ""}`,
+        c.termine_at && `Terminé le ${new Date(c.termine_at).toLocaleDateString("fr-FR")}`].filter(Boolean).join(" · "),
+      quantite: 1, prix_unitaire: Number(c.montant_ht ?? 0), tva: f.autoliquidation ? 0 : Number(c.tva_pct ?? 20),
+    };
+  };
+  const remplirClient = (c: NonNullable<typeof clientsQ.data>[number]) => {
+    const m = mentionsClient(c);
+    setF((x) => ({ ...x, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "",
+      client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "", autoliquidation: c.autoliquidation || x.autoliquidation,
+      notes: m && !x.notes.includes(m) ? (x.notes ? `${x.notes}\n${m}` : m) : x.notes }));
+    if (c.delai_paiement_jours != null) setDelai(c.delai_paiement_jours);
+  };
+  const basculerChantier = (c: Ch, on: boolean) => {
+    const marque = `Chantier réf. ${c.id.slice(0, 8)}`;
+    if (on) {
+      setRdvIds((ids) => [...ids, c.id]);
+      const l = { ...ligneChantier(c), description: `${ligneChantier(c).description} · ${marque}` };
+      setLignes((ls) => (ls.length === 1 && !ls[0].libelle.trim() ? [l] : [...ls, l]));
+      if (!f.client_nom.trim() && clientsQ.data) {
+        const norm = (x: string | null) => (x ?? "").normalize("NFD").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+        const cl = clientsQ.data.find((k) => k.cle === `p-${c.partenaire_id}`) ??
+          (c.partenaire ? clientsQ.data.find((k) => norm(k.nom) === norm(c.partenaire)) : undefined);
+        if (cl) remplirClient(cl);
+      }
+    } else {
+      setRdvIds((ids) => ids.filter((x) => x !== c.id));
+      setLignes((ls) => { const r = ls.filter((l) => !(l.description ?? "").includes(marque)); return r.length ? r : [{ libelle: "", description: null, quantite: 1, prix_unitaire: 0, tva: 20 }]; });
+    }
+  };
+  useEffect(() => {
+    if (initFait || !creation || !chantiers.data || !clientsQ.data) return;
+    setInitFait(true);
+    chantiers.data.filter((c) => rdvInitiaux.includes(c.id)).forEach((c) => basculerChantier(c, true));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [chantiers.data, clientsQ.data]);
   const champ = (key: keyof typeof f, label: string) => (
     <label className="block text-xs text-muted-foreground">{label}
       <input className={inp} value={String(f[key])} onChange={(e) => setF({ ...f, [key]: e.target.value })} />
@@ -56,13 +106,29 @@ export function FactureEditor({ facture, items, onDone, onCreated }: { facture: 
   return (
     <div className="border border-primary rounded-sm bg-card p-6 space-y-5">
       <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">{creation ? "Nouvelle facture" : "Modifier la facture"}</h2>
-      <ClientPicker onPick={(c) => {
-        const m = mentionsClient(c);
-        setF((x) => ({ ...x, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "",
-          client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "", autoliquidation: c.autoliquidation || x.autoliquidation,
-          notes: m && !x.notes.includes(m) ? (x.notes ? `${x.notes}\n${m}` : m) : x.notes }));
-        if (c.delai_paiement_jours != null) setDelai(c.delai_paiement_jours);
-      }} />
+      <ClientPicker onPick={remplirClient} />
+      {creation && (
+        <details open={rdvInitiaux.length > 0} className="border border-border rounded-sm p-3">
+          <summary className="cursor-pointer text-sm font-medium">
+            Chantiers terminés à facturer ({chantiers.data?.length ?? 0}) — cochez-en un ou plusieurs (ex. la semaine)
+          </summary>
+          <div className="mt-3 max-h-72 overflow-y-auto divide-y divide-border">
+            {(chantiers.data ?? []).map((c) => (
+              <label key={c.id} className="flex items-start gap-3 py-2 text-sm cursor-pointer">
+                <input type="checkbox" className="mt-1" checked={rdvIds.includes(c.id)} onChange={(e) => basculerChantier(c, e.target.checked)} />
+                <span className="flex-1 min-w-0">
+                  <span className="font-medium">{c.client_nom}</span>
+                  <span className="text-muted-foreground"> · {c.partenaire || "direct"} · {c.termine_at ? new Date(c.termine_at).toLocaleDateString("fr-FR") : ""}</span>
+                  <span className="block text-xs text-muted-foreground truncate">{[c.adresse, c.cp_ville].filter(Boolean).join(", ")}</span>
+                </span>
+                <span className="text-mono text-xs">{eur(Number(c.montant_ht ?? 0))}</span>
+              </label>
+            ))}
+            {chantiers.data?.length === 0 && <p className="py-2 text-xs text-muted-foreground">Aucun chantier terminé en attente.</p>}
+          </div>
+          <p className="mt-2 text-xs text-muted-foreground">Les chantiers cochés passeront en « Facturé » et seront archivés à la création.</p>
+        </details>
+      )}
       <div className="grid sm:grid-cols-2 gap-3">
         {champ("client_nom", "Client")}{champ("client_email", "Email")}
         {champ("client_telephone", "Téléphone")}{champ("client_adresse", "Adresse")}

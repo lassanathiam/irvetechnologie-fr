@@ -206,6 +206,7 @@ export const createFactureDirecte = createServerFn({ method: "POST" })
         notes: z.string().trim().max(3000).nullable(),
         autoliquidation: z.boolean(),
         delai_jours: z.coerce.number().int().min(0).max(365).default(30),
+        rdv_ids: z.array(z.string().uuid()).max(200).default([]),
         items: z.array(ligneSchema).min(1).max(200),
       })
       .parse(data),
@@ -258,6 +259,14 @@ export const createFactureDirecte = createServerFn({ method: "POST" })
       })),
     );
     if (insErr) throw new Error(insErr.message);
+    if (data.rdv_ids.length) {
+      // Chantiers facturés : marqués « Facturé » et archivés automatiquement.
+      const { error: rErr } = await context.supabase
+        .from("rendezvous")
+        .update({ statut_facturation: "facture", archive: true, archive_at: new Date().toISOString() })
+        .in("id", data.rdv_ids);
+      if (rErr) throw new Error(rErr.message);
+    }
     return { id: ins.id };
   });
 
@@ -321,4 +330,19 @@ export const updateFactureComplete = createServerFn({ method: "POST" })
     );
     if (insErr) throw new Error(insErr.message);
     return { ok: true };
+  });
+
+/** Chantiers terminés pas encore facturés (facturation à l'unité ou groupée). */
+export const listChantiersAFacturer = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { data, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, titre, designation, client_nom, adresse, cp_ville, partenaire, partenaire_id, montant_ht, tva_pct, termine_at, metrage_reel_m, metrage_inclus_m, puissance_borne")
+      .not("termine_at", "is", null)
+      .eq("statut_facturation", "a_facturer")
+      .order("termine_at", { ascending: false })
+      .limit(300);
+    if (error) throw new Error(error.message);
+    return data ?? [];
   });
