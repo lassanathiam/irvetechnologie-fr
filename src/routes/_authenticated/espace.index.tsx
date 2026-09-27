@@ -49,13 +49,6 @@ const STATUT_DEMANDE: Record<string, { label: string; cls: string }> = {
   clos: { label: "Clôturée", cls: "bg-muted text-muted-foreground" },
 };
 
-const DEVIS_BADGE: Record<string, { label: string; cls: string }> = {
-  brouillon: { label: "Brouillon", cls: "bg-slate-500/15 text-dashboard-muted border-dashboard-line" },
-  envoye: { label: "Envoyé", cls: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" },
-  accepte: { label: "Accepté", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
-  signe: { label: "Signé", cls: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" },
-  refuse: { label: "Refusé", cls: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25" },
-};
 
 const moisJour = (iso: string) => {
   const d = new Date(iso);
@@ -99,7 +92,6 @@ function EspacePage() {
     .slice(0, 5);
   const demandes = q.data?.demandes ?? [];
   const nouvelles = demandes.filter((d) => d.status === "nouveau" || d.status === "en_cours").slice(0, 6);
-  const devisRecents = (q.data?.devis ?? []).slice(0, 5);
 
 
   return (
