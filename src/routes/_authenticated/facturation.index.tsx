@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
+import { listClientsEnregistres } from "@/lib/clients.functions";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
 import {
@@ -81,6 +82,9 @@ function FacturationChantiers() {
   const majPaiement = useServerFn(updateSuiviPaiement);
   const validerMontant = useServerFn(validerMontantPropose);
   const creerFacture = useServerFn(creerFactureChantier);
+  const fetchClients = useServerFn(listClientsEnregistres);
+  const clients = useQuery({ queryKey: ["clients-enregistres"], queryFn: () => fetchClients() });
+  const [factA, setFactA] = useState<Record<string, string>>({});
   const archiverRdv = useServerFn(archiverRendezVous);
   const supprimerRdv = useServerFn(deleteRendezVous);
   const [message, setMessage] = useState<string | null>(null);
@@ -463,6 +467,22 @@ function FacturationChantiers() {
                       actuelle ({tvaPct}%).
                     </p>
 
+                    <label className="block text-[11px] text-muted-foreground">
+                      Facturer à (entreprise du donneur d'ordre)
+                      <select
+                        value={factA[c.id] ?? ""}
+                        onChange={(e) => setFactA((m) => ({ ...m, [c.id]: e.target.value }))}
+                        className={`${INPUT} block mt-1 w-full`}
+                      >
+                        <option value="">Automatique ({c.facturer_a === "partenaire" ? c.destinataire_nom ?? "partenaire" : "client final"})</option>
+                        {(clients.data ?? []).map((cl) => (
+                          <option key={cl.cle} value={cl.cle}>
+                            {cl.nom} · {cl.source === "partenaire" ? "partenaire" : "société"}{cl.adresse ? "" : " (adresse manquante)"}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+
                     <div className="flex flex-wrap gap-2">
                       <button
                         type="submit"
@@ -477,7 +497,7 @@ function FacturationChantiers() {
                         disabled={busy === c.id}
                         onClick={() =>
                           void action(c.id, async () => {
-                            const r = await creerFacture({ data: { id: c.id } });
+                            const r = await creerFacture({ data: { id: c.id, client_cle: factA[c.id] || null } });
                             setMessage(
                               `Facture ${r.numero} créée au nom de ${r.destinataire} (${
                                 r.facturer_a === "partenaire" ? "partenaire" : "client"

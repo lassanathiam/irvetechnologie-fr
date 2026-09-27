@@ -1755,7 +1755,9 @@ async function nextFactureNumero(supabase: { from: (t: string) => any }, prefix:
  */
 export const creerFactureChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .inputValidator((raw: { id: string; client_cle?: string | null }) =>
+    z.object({ id: z.string().uuid(), client_cle: z.string().regex(/^[pd]-[0-9a-f-]{36}$/).nullable().optional() }).parse(raw),
+  )
   .handler(async ({ data, context }) => {
     const { data: rdv, error } = await context.supabase
       .from("rendezvous")
@@ -1793,7 +1795,7 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
         .maybeSingle();
       partenaire = p ?? null;
     }
-    const sousTraitance = rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
+    const sousTraitance = Boolean(data.client_cle) || rdv.origine === "sous_traitance" || Boolean(rdv.partenaire_id);
 
     // Si l'adresse manque sur la fiche partenaire, on la reprend de la fiche société (donneurs d'ordre).
     const nomRecherche = (partenaire?.nom || rdv.partenaire || "").trim();
@@ -1819,6 +1821,25 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
       }
     }
 
+    // Entreprise choisie à la main (partenaire ou fiche société du donneur d'ordre).
+    if (data.client_cle) {
+      const cid = data.client_cle.slice(2);
+      if (data.client_cle.startsWith("p-")) {
+        const { data: p } = await context.supabase.from("partenaires")
+          .select("nom, email, telephone, delai_paiement_jours, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom")
+          .eq("id", cid).maybeSingle();
+        if (p) partenaire = p as typeof partenaire;
+      } else {
+        const { data: d } = await context.supabase.from("donneurs_ordre")
+          .select("nom, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, charge_affaires_email, charge_affaires_telephone, delai_paiement_jours")
+          .eq("id", cid).maybeSingle();
+        if (d) partenaire = {
+          nom: d.nom, email: d.charge_affaires_email, telephone: d.charge_affaires_telephone,
+          delai_paiement_jours: d.delai_paiement_jours, raison_sociale: d.raison_sociale, adresse: d.adresse,
+          cp_ville: d.cp_ville, pays: d.pays, siret: d.siret, tva_intracom: d.tva_intracom,
+        } as typeof partenaire;
+      }
+    }
     const destinataireNom = sousTraitance
       ? (partenaire?.raison_sociale || partenaire?.nom || rdv.partenaire || "Partenaire")
       : rdv.client_nom;
