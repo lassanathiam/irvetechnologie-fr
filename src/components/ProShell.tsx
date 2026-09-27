@@ -31,7 +31,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { compterNotificationsNonLues } from "@/lib/notifications.functions";
 
-const LINKS = [
+type LienPro = { to: string; label: string; icon: LucideIcon; externe?: boolean };
+
+const LINKS: LienPro[] = [
   { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
   { to: "/notifications", label: "Notifications", icon: Bell },
   { to: "/planning", label: "Planning", icon: CalendarClock },
@@ -44,7 +46,7 @@ const LINKS = [
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
   { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
   { to: "/realisations", label: "Photos", icon: Images },
-] as const;
+];
 
 export function ProShell({ children }: { children: React.ReactNode }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
