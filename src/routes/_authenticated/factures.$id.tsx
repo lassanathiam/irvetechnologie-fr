@@ -2,8 +2,9 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer } from "lucide-react";
+import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
+import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
 import {
@@ -136,6 +137,13 @@ function FactureDetail() {
               </option>
             ))}
           </select>
+          <button
+            type="button"
+            onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Facture-${facture.numero}`); }}
+            className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
+          >
+            <Download className="h-3.5 w-3.5" /> Télécharger PDF
+          </button>
           <button
             type="button"
             onClick={() => window.print()}
