@@ -1041,6 +1041,108 @@ export type Database = {
         }
         Relationships: []
       }
+      rapport_modeles: {
+        Row: {
+          actif: boolean
+          created_at: string
+          donneur_ordre: string
+          email_destinataire: string | null
+          id: string
+          logo_data: string | null
+          nom: string
+          structure: Json
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          created_at?: string
+          donneur_ordre: string
+          email_destinataire?: string | null
+          id?: string
+          logo_data?: string | null
+          nom: string
+          structure?: Json
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          created_at?: string
+          donneur_ordre?: string
+          email_destinataire?: string | null
+          id?: string
+          logo_data?: string | null
+          nom?: string
+          structure?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      rapport_remplis: {
+        Row: {
+          created_at: string
+          id: string
+          modele_id: string
+          public_token: string
+          rendezvous_id: string | null
+          sent_at: string | null
+          sent_to: string | null
+          signataire_nom: string | null
+          signature_client: string | null
+          signature_technicien: string | null
+          signed_at: string | null
+          technicien: string | null
+          updated_at: string
+          valeurs: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          modele_id: string
+          public_token?: string
+          rendezvous_id?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          signataire_nom?: string | null
+          signature_client?: string | null
+          signature_technicien?: string | null
+          signed_at?: string | null
+          technicien?: string | null
+          updated_at?: string
+          valeurs?: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          modele_id?: string
+          public_token?: string
+          rendezvous_id?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          signataire_nom?: string | null
+          signature_client?: string | null
+          signature_technicien?: string | null
+          signed_at?: string | null
+          technicien?: string | null
+          updated_at?: string
+          valeurs?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rapport_remplis_modele_id_fkey"
+            columns: ["modele_id"]
+            isOneToOne: false
+            referencedRelation: "rapport_modeles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rapport_remplis_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rapports: {
         Row: {
           borne_marque: string | null

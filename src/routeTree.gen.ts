@@ -18,6 +18,7 @@ import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
+import { Route as RapportDonneurTokenRouteImport } from './routes/rapport-donneur.$token'
 import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
@@ -33,10 +34,12 @@ import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenti
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
 import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
 import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
+import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_authenticated/rapports.modeles'
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
 import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
 import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
 import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
+import { Route as AuthenticatedChantierRapportRdvIdRouteImport } from './routes/_authenticated/chantier-rapport.$rdvId'
 import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -85,6 +88,11 @@ const IndexRoute = IndexRouteImport.update({
 const RdvTokenRoute = RdvTokenRouteImport.update({
   id: '/rdv/$token',
   path: '/rdv/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapportDonneurTokenRoute = RapportDonneurTokenRouteImport.update({
+  id: '/rapport-donneur/$token',
+  path: '/rapport-donneur/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
@@ -172,6 +180,12 @@ const AuthenticatedAttachementsIndexRoute =
     path: '/attachements/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedRapportsModelesRoute =
+  AuthenticatedRapportsModelesRouteImport.update({
+    id: '/rapports/modeles',
+    path: '/rapports/modeles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
   id: '/rapports/$id',
   path: '/rapports/$id',
@@ -193,6 +207,12 @@ const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
   path: '/devis/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedChantierRapportRdvIdRoute =
+  AuthenticatedChantierRapportRdvIdRouteImport.update({
+    id: '/chantier-rapport/$rdvId',
+    path: '/chantier-rapport/$rdvId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedAttachementsBordereauRoute =
   AuthenticatedAttachementsBordereauRouteImport.update({
     id: '/attachements/bordereau',
@@ -234,13 +254,16 @@ export interface FileRoutesByFullPath {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
+  '/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/attachements/': typeof AuthenticatedAttachementsIndexRoute
   '/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/devis/': typeof AuthenticatedDevisIndexRoute
@@ -268,13 +291,16 @@ export interface FileRoutesByTo {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
+  '/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/attachements': typeof AuthenticatedAttachementsIndexRoute
   '/demandes': typeof AuthenticatedDemandesIndexRoute
   '/devis': typeof AuthenticatedDevisIndexRoute
@@ -304,13 +330,16 @@ export interface FileRoutesById {
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
+  '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
+  '/_authenticated/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/espace/dashboard': typeof AuthenticatedEspaceDashboardRoute
   '/_authenticated/factures/$id': typeof AuthenticatedFacturesIdRoute
   '/_authenticated/rapports/$id': typeof AuthenticatedRapportsIdRoute
+  '/_authenticated/rapports/modeles': typeof AuthenticatedRapportsModelesRoute
   '/_authenticated/attachements/': typeof AuthenticatedAttachementsIndexRoute
   '/_authenticated/demandes/': typeof AuthenticatedDemandesIndexRoute
   '/_authenticated/devis/': typeof AuthenticatedDevisIndexRoute
@@ -340,13 +369,16 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rapport-donneur/$token'
     | '/rdv/$token'
     | '/attachements/$id'
     | '/attachements/bordereau'
+    | '/chantier-rapport/$rdvId'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
+    | '/rapports/modeles'
     | '/attachements/'
     | '/demandes/'
     | '/devis/'
@@ -374,13 +406,16 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rapport-donneur/$token'
     | '/rdv/$token'
     | '/attachements/$id'
     | '/attachements/bordereau'
+    | '/chantier-rapport/$rdvId'
     | '/devis/$id'
     | '/espace/dashboard'
     | '/factures/$id'
     | '/rapports/$id'
+    | '/rapports/modeles'
     | '/attachements'
     | '/demandes'
     | '/devis'
@@ -409,13 +444,16 @@ export interface FileRouteTypes {
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
+    | '/rapport-donneur/$token'
     | '/rdv/$token'
     | '/_authenticated/attachements/$id'
     | '/_authenticated/attachements/bordereau'
+    | '/_authenticated/chantier-rapport/$rdvId'
     | '/_authenticated/devis/$id'
     | '/_authenticated/espace/dashboard'
     | '/_authenticated/factures/$id'
     | '/_authenticated/rapports/$id'
+    | '/_authenticated/rapports/modeles'
     | '/_authenticated/attachements/'
     | '/_authenticated/demandes/'
     | '/_authenticated/devis/'
@@ -445,6 +483,7 @@ export interface RootRouteChildren {
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
   PartenaireTokenRoute: typeof PartenaireTokenRoute
+  RapportDonneurTokenRoute: typeof RapportDonneurTokenRoute
   RdvTokenRoute: typeof RdvTokenRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
@@ -514,6 +553,13 @@ declare module '@tanstack/react-router' {
       path: '/rdv/$token'
       fullPath: '/rdv/$token'
       preLoaderRoute: typeof RdvTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/rapport-donneur/$token': {
+      id: '/rapport-donneur/$token'
+      path: '/rapport-donneur/$token'
+      fullPath: '/rapport-donneur/$token'
+      preLoaderRoute: typeof RapportDonneurTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partenaire/$token': {
@@ -621,6 +667,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttachementsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/rapports/modeles': {
+      id: '/_authenticated/rapports/modeles'
+      path: '/rapports/modeles'
+      fullPath: '/rapports/modeles'
+      preLoaderRoute: typeof AuthenticatedRapportsModelesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/rapports/$id': {
       id: '/_authenticated/rapports/$id'
       path: '/rapports/$id'
@@ -647,6 +700,13 @@ declare module '@tanstack/react-router' {
       path: '/devis/$id'
       fullPath: '/devis/$id'
       preLoaderRoute: typeof AuthenticatedDevisIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/chantier-rapport/$rdvId': {
+      id: '/_authenticated/chantier-rapport/$rdvId'
+      path: '/chantier-rapport/$rdvId'
+      fullPath: '/chantier-rapport/$rdvId'
+      preLoaderRoute: typeof AuthenticatedChantierRapportRdvIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/attachements/bordereau': {
@@ -690,10 +750,12 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
+  AuthenticatedChantierRapportRdvIdRoute: typeof AuthenticatedChantierRapportRdvIdRoute
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
   AuthenticatedEspaceDashboardRoute: typeof AuthenticatedEspaceDashboardRoute
   AuthenticatedFacturesIdRoute: typeof AuthenticatedFacturesIdRoute
   AuthenticatedRapportsIdRoute: typeof AuthenticatedRapportsIdRoute
+  AuthenticatedRapportsModelesRoute: typeof AuthenticatedRapportsModelesRoute
   AuthenticatedAttachementsIndexRoute: typeof AuthenticatedAttachementsIndexRoute
   AuthenticatedDemandesIndexRoute: typeof AuthenticatedDemandesIndexRoute
   AuthenticatedDevisIndexRoute: typeof AuthenticatedDevisIndexRoute
@@ -711,10 +773,13 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
   AuthenticatedAttachementsBordereauRoute:
     AuthenticatedAttachementsBordereauRoute,
+  AuthenticatedChantierRapportRdvIdRoute:
+    AuthenticatedChantierRapportRdvIdRoute,
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
   AuthenticatedEspaceDashboardRoute: AuthenticatedEspaceDashboardRoute,
   AuthenticatedFacturesIdRoute: AuthenticatedFacturesIdRoute,
   AuthenticatedRapportsIdRoute: AuthenticatedRapportsIdRoute,
+  AuthenticatedRapportsModelesRoute: AuthenticatedRapportsModelesRoute,
   AuthenticatedAttachementsIndexRoute: AuthenticatedAttachementsIndexRoute,
   AuthenticatedDemandesIndexRoute: AuthenticatedDemandesIndexRoute,
   AuthenticatedDevisIndexRoute: AuthenticatedDevisIndexRoute,
@@ -744,6 +809,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
   PartenaireTokenRoute: PartenaireTokenRoute,
+  RapportDonneurTokenRoute: RapportDonneurTokenRoute,
   RdvTokenRoute: RdvTokenRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
