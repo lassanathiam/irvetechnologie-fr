@@ -10,6 +10,7 @@ import {
   envoyerFacture,
   getFacture,
   updateFactureDates,
+  updateFactureReferences,
   updateFactureStatut,
 } from "@/lib/factures.functions";
 
@@ -38,6 +39,7 @@ function FactureDetail() {
   const sendFn = useServerFn(envoyerFacture);
   const statutFn = useServerFn(updateFactureStatut);
   const datesFn = useServerFn(updateFactureDates);
+  const refsFn = useServerFn(updateFactureReferences);
 
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -75,6 +77,12 @@ function FactureDetail() {
 
   const dates = useMutation({
     mutationFn: (v: { date_emission: string; date_echeance: string }) => datesFn({ data: { id, ...v } }),
+    onSuccess: invalidate,
+  });
+
+  const refs = useMutation({
+    mutationFn: (v: { numero_ticket: string | null; numero_affaire: string | null; bon_commande: string | null }) =>
+      refsFn({ data: { id, ...v } }),
     onSuccess: invalidate,
   });
 
@@ -161,6 +169,35 @@ function FactureDetail() {
             />
           </label>
         </div>
+
+        <div className="grid sm:grid-cols-3 gap-4">
+          {([
+            ["numero_ticket", "N° de ticket"],
+            ["numero_affaire", "N° d'affaire"],
+            ["bon_commande", "N° de bon de commande"],
+          ] as const).map(([key, label]) => (
+            <label key={key + (facture[key] ?? "")} className="block">
+              <span className="text-mono text-xs text-muted-foreground">{label}</span>
+              <input
+                type="text"
+                defaultValue={facture[key] ?? ""}
+                placeholder="À compléter"
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v === (facture[key] ?? "")) return;
+                  refs.mutate({
+                    numero_ticket: facture.numero_ticket,
+                    numero_affaire: facture.numero_affaire,
+                    bon_commande: facture.bon_commande,
+                    [key]: v || null,
+                  });
+                }}
+                className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-2.5"
+              />
+            </label>
+          ))}
+        </div>
+        {refs.isSuccess && <p className="text-xs text-primary">Références enregistrées.</p>}
 
         <div className="border border-border rounded-sm bg-card p-6 space-y-3">
           <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
