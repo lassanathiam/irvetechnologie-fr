@@ -74,7 +74,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   while (y < canvas.height - 2) {
     const end = y + pagePx >= canvas.height ? canvas.height : safeCut(y, y + pagePx);
     const h = end - y;
-    if (h * mmPerPx < 4 && !first) break;
+    if (h * mmPerPx < 15 && !first) break;
     const slice = document.createElement("canvas");
     slice.width = canvas.width;
     slice.height = h;
