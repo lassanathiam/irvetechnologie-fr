@@ -278,6 +278,7 @@ export const convertirAttachementEnFacture = createServerFn({ method: "POST" })
       numero_affaire: attachment.numero_affaire,
       bon_commande: attachment.bon_commande,
       autoliquidation: attachment.autoliquidation,
+      statut: "validee",
       created_by: context.userId,
     }).select("id").single();
     if (invoiceError) throw new Error(invoiceError.message);
