@@ -690,3 +690,13 @@
   content: none !important;
   display: none !important;
 }
+
+.pdf-render .doc-header {
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 38%) !important;
+}
+@media print {
+  .print-doc .doc-header {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) minmax(200px, 38%) !important;
+  }
+}
