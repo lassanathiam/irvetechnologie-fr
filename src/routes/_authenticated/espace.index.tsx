@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { getDashboard, getSuiviFacturation } from "@/lib/planning.functions";
 import { updateStatutDemande } from "@/lib/demandes-admin.functions";
+import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { euro } from "@/lib/company";
@@ -77,6 +78,12 @@ function EspacePage() {
 
   const accepter = useMutation({
     mutationFn: (id: string) => setStatut({ data: { id, status: "accepte" } }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
+  });
+
+  const setFactureStatut = useServerFn(updateFactureStatut);
+  const encaisser = useMutation({
+    mutationFn: (id: string) => setFactureStatut({ data: { id, statut: "payee" } }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["dashboard"] }),
   });
 
@@ -169,7 +176,7 @@ function EspacePage() {
               icon={Receipt}
               label="À encaisser"
               value={euro(q.data?.stats.caEnAttente ?? 0)}
-              hint="Factures en attente"
+              hint={`${q.data?.aEncaisser?.length ?? 0} facture(s) validée(s)${q.data?.brouillonsNb ? ` · ${q.data.brouillonsNb} brouillon(s) à valider` : ""}`}
               to="/factures"
             />
             <SimpleStat
@@ -187,6 +194,15 @@ function EspacePage() {
               to="/facturation"
             />
           </div>
+
+          <SuiviEncaissements
+            aEncaisser={q.data?.aEncaisser ?? []}
+            encaissees={q.data?.encaissees ?? []}
+            brouillonsNb={q.data?.brouillonsNb ?? 0}
+            brouillonsTtc={q.data?.brouillonsTtc ?? 0}
+            onEncaisser={(id) => encaisser.mutate(id)}
+            pendingId={encaisser.isPending ? encaisser.variables : undefined}
+          />
 
           <div className="mt-4 grid gap-4 lg:grid-cols-3">
             <section className="neo-dashboard-panel p-4 lg:col-span-2">
@@ -422,3 +438,93 @@ function Empty({ children }: { children: React.ReactNode }) {
 }
 
 export { STATUT_DEMANDE };
+
+type FactureSuivi = {
+  id: string;
+  numero: string;
+  client_nom: string;
+  total_ttc: number | string | null;
+  date_echeance: string | null;
+  paid_at: string | null;
+  bon_commande: string | null;
+  numero_affaire: string | null;
+};
+
+function SuiviEncaissements({
+  aEncaisser,
+  encaissees,
+  brouillonsNb,
+  brouillonsTtc,
+  onEncaisser,
+  pendingId,
+}: {
+  aEncaisser: FactureSuivi[];
+  encaissees: FactureSuivi[];
+  brouillonsNb: number;
+  brouillonsTtc: number;
+  onEncaisser: (id: string) => void;
+  pendingId?: string;
+}) {
+  const auj = new Date().toISOString().slice(0, 10);
+  const enRetard = aEncaisser.filter((f) => f.date_echeance && f.date_echeance < auj);
+  const aVenir = aEncaisser.filter((f) => !f.date_echeance || f.date_echeance >= auj);
+  const total = (l: FactureSuivi[]) => l.reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
+  const Ligne = ({ f, retard }: { f: FactureSuivi; retard?: boolean }) => (
+    <li className="flex flex-wrap items-center justify-between gap-2 rounded-md bg-dashboard-raised px-3 py-2 text-sm">
+      <Link to="/factures/$id" params={{ id: f.id }} className="min-w-0 flex-1 hover:text-primary">
+        <span className="font-semibold">{f.numero}</span> · {f.client_nom}
+        <span className="block text-xs text-dashboard-muted">
+          {f.bon_commande ? `Cde ${f.bon_commande}` : "Sans n° de commande"}
+          {f.numero_affaire ? ` · Affaire ${f.numero_affaire}` : ""}
+          {f.date_echeance ? ` · échéance ${new Date(f.date_echeance).toLocaleDateString("fr-FR")}` : ""}
+        </span>
+      </Link>
+      <span className={`text-mono text-sm font-bold ${retard ? "text-destructive" : ""}`}>{euro(Number(f.total_ttc ?? 0))}</span>
+      <Button size="sm" variant="outline" disabled={pendingId === f.id} onClick={() => onEncaisser(f.id)}>
+        {pendingId === f.id ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
+        Encaissée
+      </Button>
+    </li>
+  );
+  return (
+    <section className="neo-dashboard-panel mt-4 p-4">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h2 className="pro-heading text-base font-bold">Suivi des encaissements</h2>
+        <Link to="/factures" className="text-mono text-xs text-dashboard-muted hover:text-primary">Toutes les factures</Link>
+      </div>
+      {brouillonsNb > 0 && (
+        <Link to="/factures" className="mb-3 block rounded-md border border-dashboard-line px-3 py-2 text-xs text-dashboard-muted hover:text-primary">
+          {brouillonsNb} facture(s) en brouillon ({euro(brouillonsTtc)}) : validez-les pour qu'elles passent « à encaisser ».
+        </Link>
+      )}
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div>
+          <p className="mb-2 text-xs font-bold text-destructive">En retard · {euro(total(enRetard))}</p>
+          {enRetard.length ? <ul className="grid gap-2">{enRetard.map((f) => <Ligne key={f.id} f={f} retard />)}</ul> : <Empty>Aucun retard.</Empty>}
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-bold text-primary">À venir · {euro(total(aVenir))}</p>
+          {aVenir.length ? <ul className="grid gap-2">{aVenir.map((f) => <Ligne key={f.id} f={f} />)}</ul> : <Empty>Aucune facture en attente.</Empty>}
+        </div>
+        <div>
+          <p className="mb-2 text-xs font-bold text-dashboard-muted">Derniers encaissements · {euro(total(encaissees))}</p>
+          {encaissees.length ? (
+            <ul className="grid gap-2">
+              {encaissees.map((f) => (
+                <li key={f.id} className="flex items-center justify-between gap-2 rounded-md bg-dashboard-raised px-3 py-2 text-sm">
+                  <Link to="/factures/$id" params={{ id: f.id }} className="min-w-0 truncate hover:text-primary">
+                    <span className="font-semibold">{f.numero}</span> · {f.client_nom}
+                    <span className="block text-xs text-dashboard-muted">
+                      {f.paid_at ? `payée le ${new Date(f.paid_at).toLocaleDateString("fr-FR")}` : "payée"}
+                    </span>
+                  </Link>
+                  <span className="text-mono text-sm font-bold">{euro(Number(f.total_ttc ?? 0))}</span>
+                </li>
+              ))}
+            </ul>
+          ) : <Empty>Aucun encaissement.</Empty>}
+        </div>
+      </div>
+    </section>
+  );
+}

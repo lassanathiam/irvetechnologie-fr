@@ -784,9 +784,9 @@ export const getDashboard = createServerFn({ method: "GET" })
         .eq("archive", false)
         .order("date_debut", { ascending: true })
         .limit(200),
-      s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, paid_at")
+      s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, date_echeance, paid_at, bon_commande, numero_affaire")
         .order("created_at", { ascending: false })
-        .limit(50),
+        .limit(500),
     ]);
 
     const now = Date.now();
@@ -805,8 +805,16 @@ export const getDashboard = createServerFn({ method: "GET" })
       .filter((f) => f.statut === "payee")
       .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
     const caEnAttente = factureRows
-      .filter((f) => f.statut !== "payee" && f.statut !== "annulee")
+      .filter((f) => f.statut === "envoyee")
       .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
+    const aEncaisser = factureRows
+      .filter((f) => f.statut === "envoyee")
+      .sort((a, b) => String(a.date_echeance).localeCompare(String(b.date_echeance)));
+    const encaissees = factureRows
+      .filter((f) => f.statut === "payee")
+      .sort((a, b) => String(b.paid_at).localeCompare(String(a.paid_at)))
+      .slice(0, 8);
+    const brouillons = factureRows.filter((f) => f.statut === "brouillon");
     const caMois = factureRows
       .filter((f) => f.paid_at && new Date(f.paid_at).getTime() >= debutMois.getTime())
       .reduce((t, f) => t + Number(f.total_ttc ?? 0), 0);
@@ -817,6 +825,10 @@ export const getDashboard = createServerFn({ method: "GET" })
       rapports: rapports.data ?? [],
       rendezvous: rows,
       factures: factureRows.slice(0, 6),
+      aEncaisser,
+      encaissees,
+      brouillonsNb: brouillons.length,
+      brouillonsTtc: brouillons.reduce((t, f) => t + Number(f.total_ttc ?? 0), 0),
       stats: {
         rdvAVenir: aVenir.length,
         rdvSemaine: aVenir.filter(
