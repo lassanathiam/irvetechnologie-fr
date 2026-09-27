@@ -101,24 +101,39 @@ export function ProShell({ children }: { children: React.ReactNode }) {
         </div>
 
         <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Navigation de l’espace professionnel">
-          {LINKS.map(({ to, label, icon: Icon }) => (
-            <Link
-              key={to}
-              to={to}
-              onClick={() => setMenuOuvert(false)}
-              title={reduit ? label : undefined}
-              className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
-              activeProps={{ className: "pro-nav-active" }}
-            >
-              <Icon className="h-5 w-5 shrink-0" />
-              {!reduit && <span>{label}</span>}
-              {to === "/notifications" && nbNonLues > 0 && (
-                <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-[11px] font-bold text-sidebar">
-                  {nbNonLues > 99 ? "99+" : nbNonLues}
-                </span>
-              )}
-            </Link>
-          ))}
+          {LINKS.map(({ to, label, icon: Icon, externe }) =>
+            externe ? (
+              <a
+                key={to}
+                href={to}
+                target="_blank"
+                rel="noreferrer"
+                title={reduit ? label : undefined}
+                className="pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title"
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {!reduit && <span className="flex-1">{label}</span>}
+                {!reduit && <span className="text-[10px] text-sidebar-muted">↗</span>}
+              </a>
+            ) : (
+              <Link
+                key={to}
+                to={to}
+                onClick={() => setMenuOuvert(false)}
+                title={reduit ? label : undefined}
+                className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
+                activeProps={{ className: "pro-nav-active" }}
+              >
+                <Icon className="h-5 w-5 shrink-0" />
+                {!reduit && <span>{label}</span>}
+                {to === "/notifications" && nbNonLues > 0 && (
+                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-[11px] font-bold text-sidebar">
+                    {nbNonLues > 99 ? "99+" : nbNonLues}
+                  </span>
+                )}
+              </Link>
+            ),
+          )}
         </nav>
 
         <div className="border-t border-sidebar-line p-3">
