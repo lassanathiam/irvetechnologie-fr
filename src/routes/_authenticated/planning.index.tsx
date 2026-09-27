@@ -76,7 +76,7 @@ import {
 
 import { AgendaMois } from "@/components/AgendaMois";
 import { AdresseFields } from "@/components/AdresseFields";
-import { telLien, whatsappLien } from "@/lib/contact-client";
+import { telLien, whatsappLien, wazeLien } from "@/lib/contact-client";
 import { estNoteAutoDepuisDevis } from "@/lib/devis-to-planning";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
@@ -953,9 +953,15 @@ function PlanningPage() {
                         </span>
                         <span className="min-w-0">
                           <span className="block truncate font-bold">{r.client_nom}</span>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
-                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}
-                          </span>
+                          <a
+                            href={wazeLien(r.adresse, r.cp_ville, r.lat, r.lng)}
+                            target="_blank"
+                            rel="noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="mt-0.5 block text-xs text-primary underline underline-offset-2"
+                          >
+                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""} · Waze
+                          </a>
                           <span className="mt-1 block text-xs text-muted-foreground">
                             {dureeFr(r.duree_min)}
                             {r.distance_km != null
@@ -1691,10 +1697,17 @@ function PlanningPage() {
                                 </button>
                               )}
 
-                              <span className="inline-flex items-center gap-1">
+                              <a
+                                href={wazeLien(r.adresse, r.cp_ville, r.lat, r.lng)}
+                                target="_blank"
+                                rel="noreferrer"
+                                onClick={(e) => e.stopPropagation()}
+                                className="inline-flex items-center gap-1 text-primary underline underline-offset-2"
+                                title="Ouvrir dans Waze"
+                              >
                                 <MapPin className="h-3 w-3" /> {r.adresse}
                                 {r.cp_ville ? `, ${r.cp_ville}` : ""}
-                              </span>
+                              </a>
                               {r.distance_km != null ? (
                                 <span className="inline-flex items-center gap-1 text-mono">
                                   <RouteIcon className="h-3 w-3" />{" "}
