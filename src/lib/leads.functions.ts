@@ -255,6 +255,17 @@ export const envoyerReponseExpress = createServerFn({ method: "POST" })
     );
     const lien = `${base}/devis-client/${devis.public_token}`;
 
+    if (!data.envoyer) {
+      return {
+        id: devis.id as string,
+        numero: devis.numero as string,
+        lien,
+        sent: false as const,
+        reason: "non_envoye" as const,
+        total_ttc: totals.total_ttc,
+      };
+    }
+
     if (!data.email) {
       return {
         id: devis.id as string,
