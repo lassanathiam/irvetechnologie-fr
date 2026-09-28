@@ -118,6 +118,8 @@ const envoiSchema = z.object({
   metrage_m: z.number().min(0).max(200),
   option: z.boolean().default(false),
   message: z.string().trim().max(2000).optional().nullable(),
+  /** false = enregistrer le devis sans l'envoyer au prospect. */
+  envoyer: z.boolean().default(true),
 });
 
 /** Lignes du devis express, calculées à partir de la configuration. */
@@ -252,6 +254,17 @@ export const envoyerReponseExpress = createServerFn({ method: "POST" })
       "",
     );
     const lien = `${base}/devis-client/${devis.public_token}`;
+
+    if (!data.envoyer) {
+      return {
+        id: devis.id as string,
+        numero: devis.numero as string,
+        lien,
+        sent: false as const,
+        reason: "non_envoye" as const,
+        total_ttc: totals.total_ttc,
+      };
+    }
 
     if (!data.email) {
       return {
