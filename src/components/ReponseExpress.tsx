@@ -137,7 +137,7 @@ function ReponseExpressPanel({
       if (r.sent) toast.success(`Proposition ${r.numero} envoyée au prospect.`);
       else
         toast.message(
-          `Devis ${r.numero} créé — e-mail non parti, utilisez le lien à copier ci-dessous.`,
+          `Devis ${r.numero} enregistré dans « Mes devis » — lien à copier ci-dessous.`,
         );
     },
     onError: (e: unknown) =>
