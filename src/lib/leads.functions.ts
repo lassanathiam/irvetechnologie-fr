@@ -118,6 +118,8 @@ const envoiSchema = z.object({
   metrage_m: z.number().min(0).max(200),
   option: z.boolean().default(false),
   message: z.string().trim().max(2000).optional().nullable(),
+  /** false = enregistrer le devis sans l'envoyer au prospect. */
+  envoyer: z.boolean().default(true),
 });
 
 /** Lignes du devis express, calculées à partir de la configuration. */
