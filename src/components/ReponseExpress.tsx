@@ -144,9 +144,7 @@ function ReponseExpressPanel({
       toast.error(e instanceof Error ? e.message : "Envoi impossible pour le moment."),
   });
 
-  async function onSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault();
-    const form = e.currentTarget;
+  async function soumettre(form: HTMLFormElement, avecEnvoi: boolean) {
     if (!offreChoisie) {
       toast.error("Choisissez une borne.");
       return;
@@ -179,6 +177,10 @@ function ReponseExpressPanel({
       toast.error("Le nom est obligatoire.");
       return;
     }
+    if (avecEnvoi && !get("email")) {
+      toast.error("Indiquez l'e-mail du prospect, ou utilisez « Enregistrer sans envoyer ».");
+      return;
+    }
     envoi.mutate({
       prenom: get("prenom") || null,
       nom: get("nom"),
@@ -190,7 +192,13 @@ function ReponseExpressPanel({
       metrage_m: metrageNum,
       option,
       message: null,
+      envoyer: avecEnvoi,
     });
+  }
+
+  function onSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    void soumettre(e.currentTarget, true);
   }
 
   return (
