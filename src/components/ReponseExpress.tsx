@@ -435,18 +435,36 @@ function ReponseExpressPanel({
               )}
             </div>
 
-            <button
-              type="submit"
-              disabled={envoi.isPending || !offreChoisie}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
-            >
-              {envoi.isPending ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Zap className="h-4 w-4" />
-              )}
-              Envoyer la proposition
-            </button>
+            <div className="grid gap-2 sm:grid-cols-2">
+              <button
+                type="submit"
+                disabled={envoi.isPending || !offreChoisie}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground transition hover:bg-primary/90 disabled:opacity-50"
+              >
+                {envoi.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Zap className="h-4 w-4" />
+                )}
+                Envoyer la proposition
+              </button>
+              <button
+                type="button"
+                disabled={envoi.isPending || !offreChoisie}
+                onClick={(e) => {
+                  const form = e.currentTarget.closest("form");
+                  if (form) void soumettre(form, false);
+                }}
+                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-bold transition hover:border-primary hover:text-primary disabled:opacity-50"
+              >
+                {envoi.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4" />
+                )}
+                Enregistrer sans envoyer
+              </button>
+            </div>
           </form>
         )}
       </div>
