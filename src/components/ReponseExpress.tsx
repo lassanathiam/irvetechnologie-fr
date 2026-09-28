@@ -27,6 +27,7 @@ type EnvoiPayload = {
   metrage_m: number;
   option: boolean;
   message: string | null;
+  envoyer: boolean;
 };
 
 const INPUT =
