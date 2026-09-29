@@ -77,7 +77,7 @@ export async function ajouterPreuve(pdf: Uint8Array, nomDoc: string, signataires
 }
 
 export async function sha256(bytes: Uint8Array) {
-  const h = await crypto.subtle.digest("SHA-256", bytes);
+  const h = await crypto.subtle.digest("SHA-256", new Uint8Array(bytes));
   return Array.from(new Uint8Array(h))
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
