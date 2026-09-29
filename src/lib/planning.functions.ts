@@ -1064,7 +1064,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
+        "id, public_token, type, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
       )
       .eq("id", data.id)
       .single();
@@ -1076,7 +1076,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
       .select("categorie, path")
       .eq("rendezvous_id", data.id);
     const presentes = new Set((photosRows ?? []).map((p) => p.categorie));
-    const manquantes = RETOUR_CATEGORIES_OBLIGATOIRES.filter((c) => !presentes.has(c));
+    const manquantes = categoriesRetourObligatoires(rdv.type).filter((c) => !presentes.has(c));
     if (manquantes.length) {
       throw new Error(
         `Retour de travaux incomplet — photos manquantes : ${manquantes
@@ -1300,6 +1300,12 @@ export const RETOUR_CATEGORIES_OBLIGATOIRES = [
   "compteur_linky",
 ] as const;
 
+/** En maintenance, seules les preuves avant intervention et de remise en service sont exigées. */
+export const RETOUR_CATEGORIES_MAINTENANCE = [
+  "etat_avant_maintenance",
+  "mise_en_service",
+] as const;
+
 /** Photos utiles mais facultatives. */
 export const RETOUR_CATEGORIES_OPTIONNELLES = [
   "cheminement_cable",
@@ -1312,6 +1318,7 @@ export const RETOUR_CATEGORIES_OPTIONNELLES = [
 
 export const RETOUR_CATEGORIES = [
   ...RETOUR_CATEGORIES_OBLIGATOIRES,
+  ...RETOUR_CATEGORIES_MAINTENANCE,
   ...RETOUR_CATEGORIES_OPTIONNELLES,
 ] as const;
 
@@ -1323,6 +1330,7 @@ export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   mise_en_service: "Mise en service et essai",
   tableau_electrique: "Tableau électrique / protections",
   compteur_linky: "Compteur Linky (délestage)",
+  etat_avant_maintenance: "État de la borne avant maintenance",
   cheminement_cable: "Cheminement du câble",
   boite_derivation: "Boîte de dérivation",
   armoire: "Armoire",
@@ -1332,6 +1340,18 @@ export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   emplacement_borne: "Emplacement de la borne",
   emplacement_tableau: "Emplacement du tableau",
 };
+
+export function categoriesRetourObligatoires(type?: string | null): readonly RetourCategorie[] {
+  return type === "maintenance"
+    ? RETOUR_CATEGORIES_MAINTENANCE
+    : RETOUR_CATEGORIES_OBLIGATOIRES;
+}
+
+export function categoriesRetourOptionnelles(type?: string | null): readonly RetourCategorie[] {
+  return type === "maintenance"
+    ? ["tableau_electrique", "compteur_linky", "plaque_serie", "autre"]
+    : RETOUR_CATEGORIES_OPTIONNELLES;
+}
 
 const MAX_PHOTOS_CHANTIER = 40;
 
@@ -1355,7 +1375,6 @@ export const uploadPhotoChantier = createServerFn({ method: "POST" })
       categorie: string;
       data_url: string;
       legende?: string | null;
-      photo_reelle?: boolean;
     }) =>
     z
       .object({
@@ -1363,15 +1382,10 @@ export const uploadPhotoChantier = createServerFn({ method: "POST" })
         categorie: z.enum(RETOUR_CATEGORIES),
         data_url: z.string().max(4_500_000),
         legende: z.string().trim().max(160).optional().nullable(),
-        photo_reelle: z.boolean(),
       })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    if (!data.photo_reelle) {
-      throw new Error("Photo refusée : seules les photos réelles de chantier sont autorisées.");
-    }
-
     const { count } = await context.supabase
       .from("rendezvous_photos")
       .select("id", { count: "exact", head: true })

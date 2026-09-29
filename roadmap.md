@@ -39,3 +39,4 @@
 - [x] Signature à plusieurs parties (2-3 signataires) : liens individuels, zones par signataire, finalisation quand tous ont signé — testé de bout en bout
 - [x] Fiabiliser l'envoi au client après signature IRVE (parcours signer puis envoyer) — testé : lien créé, client signe, document finalisé
 - [x] Réorganiser le planning avec le mode « Mission terrain » : grandes actions et parcours arrivée → photos/métrage → rapport/signatures → clôture
+- [x] Adapter le retour terrain à la nature du chantier : parcours complet pour une installation, parcours allégé pour une maintenance, câble commenté seulement si nécessaire

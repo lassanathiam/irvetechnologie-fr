@@ -1,13 +1,13 @@
 import { useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Check, Loader2, Trash2, X } from "lucide-react";
+import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import {
   RETOUR_CATEGORIES_LABELS,
-  RETOUR_CATEGORIES_OBLIGATOIRES,
-  RETOUR_CATEGORIES_OPTIONNELLES,
+  categoriesRetourObligatoires,
+  categoriesRetourOptionnelles,
   enregistrerRetourTravaux,
   listPhotosChantier,
   supprimerPhotoChantier,
@@ -24,11 +24,12 @@ export type RetourTravauxRdv = {
   retour_observations?: string | null;
   retour_delestage?: boolean | null;
   type_pose?: string | null;
+  type?: string | null;
 };
 
 /** Compte les photos obligatoires déjà présentes. */
-export function nbRetourFait(categories: string[]): number {
-  return RETOUR_CATEGORIES_OBLIGATOIRES.filter((c) => categories.includes(c)).length;
+export function nbRetourFait(categories: string[], obligatoires: readonly string[]): number {
+  return obligatoires.filter((c) => categories.includes(c)).length;
 }
 
 export default function RetourTravauxSheet({
@@ -50,8 +51,11 @@ export default function RetourTravauxSheet({
   );
   const [observations, setObservations] = useState(rdv.retour_observations ?? "");
   const [delestage, setDelestage] = useState(Boolean(rdv.retour_delestage));
-  const [photoReelle, setPhotoReelle] = useState(false);
   const [enCours, setEnCours] = useState<string | null>(null);
+  const maintenance = rdv.type === "maintenance";
+  const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
+  const obligatoires = categoriesRetourObligatoires(rdv.type);
+  const optionnelles = categoriesRetourOptionnelles(rdv.type);
 
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
@@ -60,7 +64,7 @@ export default function RetourTravauxSheet({
 
   const liste = photos.data ?? [];
   const parCategorie = (cat: string) => liste.filter((p) => p.categorie === cat);
-  const faites = nbRetourFait(liste.map((p) => p.categorie));
+  const faites = nbRetourFait(liste.map((p) => p.categorie), obligatoires);
 
   const supplement = Math.max(
     0,
@@ -69,17 +73,13 @@ export default function RetourTravauxSheet({
 
   async function envoyer(cat: string, files: FileList | null) {
     if (!files?.length) return;
-    if (!photoReelle) {
-      toast.error("Confirmez d'abord que les photos sont réelles (pas générées par IA).");
-      return;
-    }
     setEnCours(cat);
     let ok = 0;
     for (const file of Array.from(files).slice(0, 6)) {
       try {
         const data_url = await compressImage(file);
         await uploadFn({
-          data: { rendezvous_id: rdv.id, categorie: cat, data_url, photo_reelle: true },
+          data: { rendezvous_id: rdv.id, categorie: cat, data_url },
         });
         ok++;
       } catch (e) {
@@ -100,16 +100,23 @@ export default function RetourTravauxSheet({
   });
 
   const enregistrer = useMutation({
-    mutationFn: () =>
-      saveFn({
+    mutationFn: () => {
+      if (maintenance && cablePose && !(Number(reel.replace(",", ".")) > 0)) {
+        throw new Error("Indiquez le métrage de câble tiré ou remplacé.");
+      }
+      if (maintenance && cablePose && !observations.trim()) {
+        throw new Error("Ajoutez un commentaire sur les travaux de câble réalisés.");
+      }
+      return saveFn({
         data: {
           id: rdv.id,
-          metrage_inclus_m: inclus,
-          metrage_reel_m: reel,
+          metrage_inclus_m: maintenance ? 0 : inclus,
+          metrage_reel_m: maintenance && !cablePose ? 0 : reel,
           retour_observations: observations,
           retour_delestage: delestage,
         },
-      }),
+      });
+    },
     onSuccess: async () => {
       toast.success("Retour de travaux enregistré.");
       await qc.invalidateQueries({ queryKey: ["rendezvous"] });
@@ -200,7 +207,7 @@ export default function RetourTravauxSheet({
               {rdv.adresse ? ` · ${rdv.adresse}` : ""}
             </p>
             <p className="mt-1 text-xs font-bold text-primary">
-              Photos essentielles : {faites}/{RETOUR_CATEGORIES_OBLIGATOIRES.length}
+              Photos essentielles : {faites}/{obligatoires.length}
             </p>
           </div>
           <button
@@ -213,33 +220,52 @@ export default function RetourTravauxSheet({
           </button>
         </div>
 
-        <label className="mb-3 flex items-start gap-2 rounded-lg border border-border p-3 text-sm">
-          <input
-            type="checkbox"
-            checked={photoReelle}
-            onChange={(e) => setPhotoReelle(e.target.checked)}
-            className="mt-0.5 h-5 w-5"
-          />
-          <span>
-            Je confirme que les photos ajoutées sont des photos réelles du chantier (aucune image
-            générée par intelligence artificielle).
-          </span>
-        </label>
+        <div className="mb-3 rounded-lg border border-primary/30 bg-primary/10 p-3">
+          <p className="flex items-center gap-2 text-sm font-bold">
+            {maintenance ? <Wrench className="h-4 w-4" /> : <Check className="h-4 w-4" />}
+            {maintenance ? "Ordre d’intervention · Maintenance" : "Ordre d’intervention · Installation"}
+          </p>
+          <ol className="mt-2 grid gap-1.5 text-xs text-muted-foreground sm:grid-cols-2">
+            {(maintenance
+              ? ["Contrôle de la borne", "Diagnostic / maintenance", "Essai", "Remise en service"]
+              : ["Pose de la borne", "Raccordement de la borne", "Raccordement au tableau électrique", "Tableau de protection", "Compteur Linky", "Délestage", "Mise en service"]
+            ).map((etape) => (
+              <li key={etape} className="flex items-center gap-2"><Circle className="h-2.5 w-2.5 shrink-0 fill-primary text-primary" /> {etape}</li>
+            ))}
+          </ol>
+        </div>
 
         <div className="grid gap-2">
-          {RETOUR_CATEGORIES_OBLIGATOIRES.map((c) => ligne(c, true))}
+          {obligatoires.map((c) => ligne(c, true))}
         </div>
 
         <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Photos complémentaires
         </p>
         <div className="mt-2 grid gap-2">
-          {RETOUR_CATEGORIES_OPTIONNELLES.map((c) => ligne(c, false))}
+          {optionnelles.map((c) => ligne(c, false))}
         </div>
 
         <div className="mt-4 rounded-lg border border-border p-3">
-          <p className="text-sm font-bold">Métrage de câble</p>
-          <div className="mt-2 grid grid-cols-2 gap-3">
+          {maintenance && (
+            <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
+              <input
+                type="checkbox"
+                checked={cablePose}
+                onChange={(e) => {
+                  setCablePose(e.target.checked);
+                  if (!e.target.checked) setReel("");
+                }}
+                className="h-5 w-5"
+              />
+              <Cable className="h-4 w-4 shrink-0" />
+              Câble tiré ou remplacé pendant la maintenance
+            </label>
+          )}
+          {(!maintenance || cablePose) && <>
+          <p className={`${maintenance ? "mt-3" : ""} text-sm font-bold`}>Métrage de câble</p>
+          <div className={`mt-2 grid gap-3 ${maintenance ? "grid-cols-1" : "grid-cols-2"}`}>
+            {!maintenance && (
             <label className="text-xs text-muted-foreground">
               Inclus (m)
               <input
@@ -251,6 +277,7 @@ export default function RetourTravauxSheet({
                 className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3 text-base"
               />
             </label>
+            )}
             <label className="text-xs text-muted-foreground">
               Réellement posé (m)
               <input
@@ -270,6 +297,7 @@ export default function RetourTravauxSheet({
                 : `${reel} m posés, aucun dépassement.`
               : "Saisissez le métrage posé sur place."}
           </p>
+          </>}
 
           <label className="mt-3 flex items-center gap-2 text-sm">
             <input
@@ -282,13 +310,13 @@ export default function RetourTravauxSheet({
           </label>
 
           <label className="mt-3 block text-xs text-muted-foreground">
-            Observations de fin d&apos;intervention
+            {maintenance && cablePose ? "Commentaire sur le câble (obligatoire)" : "Observations de fin d’intervention"}
             <textarea
               rows={3}
               value={observations}
               onChange={(e) => setObservations(e.target.value)}
               className="mt-1 w-full rounded-lg border border-border bg-background p-2 text-sm"
-              placeholder="Essais conformes, protections posées, réserves…"
+              placeholder={maintenance ? (cablePose ? "Précisez le câble tiré ou remplacé, le cheminement et la raison…" : "Diagnostic, intervention réalisée, pièces remplacées…") : "Essais conformes, protections posées, réserves…"}
             />
           </label>
         </div>
@@ -302,9 +330,9 @@ export default function RetourTravauxSheet({
           >
             {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
           </button>
-          {faites < RETOUR_CATEGORIES_OBLIGATOIRES.length && (
+          {faites < obligatoires.length && (
             <p className="text-center text-xs text-amber-600 dark:text-amber-400">
-              Il manque {RETOUR_CATEGORIES_OBLIGATOIRES.length - faites} photo(s) obligatoire(s)
+              Il manque {obligatoires.length - faites} photo(s) obligatoire(s)
               avant de pouvoir terminer le chantier.
             </p>
           )}
