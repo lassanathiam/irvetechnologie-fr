@@ -15,13 +15,13 @@ export const Route = createFileRoute("/api/public/borne-photo/$")({
 
           const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-          const { data: row } = await supabaseAdmin
+          const { data: rows } = await supabaseAdmin
             .from("bornes")
             .select("id")
             .eq("photo_path", path)
             .eq("actif", true)
-            .maybeSingle();
-          if (!row) return new Response("Not found", { status: 404 });
+            .limit(1);
+          if (!rows || rows.length === 0) return new Response("Not found", { status: 404 });
 
           const { data: file, error } = await supabaseAdmin.storage.from("borne-photos").download(path);
           if (error || !file) return new Response("Not found", { status: 404 });
