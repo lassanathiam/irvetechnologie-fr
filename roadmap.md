@@ -36,3 +36,5 @@
 
 - [x] Hero accueil refait en immersif plein écran (direction v2 choisie), vérifié
 - [x] Corriger la visibilité mobile de « Maintenance et suivi » et ajouter des tarifs publics modifiables
+- [ ] Signature à plusieurs parties (2-3 signataires) : liens individuels, zones par signataire, finalisation quand tous ont signé
+- [ ] Fiabiliser l'envoi au client après signature IRVE (parcours signer puis envoyer)
