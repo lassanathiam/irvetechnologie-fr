@@ -117,6 +117,29 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+/**
+ * Remplace le fichier de travail par une copie propre (PDF protégé recréé côté navigateur).
+ * `repartir` : repart du document d'origine (signature IRVE précédente illisible).
+ */
+export const remplacerFichierDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), storage_path: z.string().regex(/^propres\/[0-9a-f-]{36}-\d+\.pdf$/), repartir: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: doc, error } = await context.supabase.from("documents").select("id, storage_path, original_path, signataires, statut").eq("id", data.id).maybeSingle();
+    if (error || !doc) throw new Error("Document introuvable.");
+    if (doc.statut === "signe") throw new Error("Document déjà signé.");
+    if (!data.storage_path.startsWith(`propres/${doc.id}-`)) throw new Error("Fichier invalide.");
+    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).map((s) => (data.repartir && s.role === "irve" ? { ...s, signed_at: null } : s));
+    const { error: e2 } = await context.supabase
+      .from("documents")
+      .update({ storage_path: data.storage_path, original_path: doc.original_path ?? doc.storage_path, signataires: sigs as never, hash: null })
+      .eq("id", doc.id);
+    if (e2) throw new Error(e2.message);
+    return { ok: true };
+  });
+
 /** IRVE signe ses zones. Si aucune zone client : le document est finalisé. */
 export const signerIrve = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])

@@ -27,7 +27,10 @@ export const Route = createFileRoute("/_authenticated/documents/")({
 });
 
 async function versPdf(file: File): Promise<Uint8Array> {
-  if (file.type === "application/pdf") return new Uint8Array(await file.arrayBuffer());
+  if (file.type === "application/pdf") {
+    const { pdfSignable } = await import("@/lib/pdf-signable");
+    return (await pdfSignable(new Uint8Array(await file.arrayBuffer()))).bytes;
+  }
   if (file.type === "image/jpeg" || file.type === "image/png") {
     const { PDFDocument } = await import("pdf-lib");
     const doc = await PDFDocument.create();
