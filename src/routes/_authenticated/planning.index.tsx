@@ -746,10 +746,6 @@ function PlanningPage() {
         },
       }),
   });
-  const trajetChoisi =
-    itineraire.data && !avecPeage && itineraire.data.sansPeage
-      ? itineraire.data.sansPeage
-      : itineraire.data;
   const kmEconomises = comparaison.data
     ? Math.max(comparaison.data.kmSepares - comparaison.data.kmEnsemble, 0)
     : 0;
@@ -774,6 +770,11 @@ function PlanningPage() {
         },
       }),
   });
+
+  const trajetChoisi =
+    itineraire.data && !avecPeage && itineraire.data.sansPeage
+      ? itineraire.data.sansPeage
+      : itineraire.data;
 
   /** Tournée de la journée sélectionnée, sur le réseau routier réel. */
   const tourneeFn = useServerFn(tourneeReelle);
