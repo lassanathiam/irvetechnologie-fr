@@ -23,8 +23,10 @@ export type Itineraire = {
   minutes: number;
   /** Tracé réel [lat, lng] prêt pour Leaflet. */
   coords: [number, number][];
-  /** true si le réseau routier n'a pas répondu (valeur estimée). */
+  /** true si le réseau routier n'a pas répondu (aucun calcul à vol d'oiseau). */
   estime: boolean;
+  /** Durée en évitant les péages (null si indisponible). */
+  sansPeage: { km: number; minutes: number } | null;
 };
 
 const lonlat = (p: { lat: number; lng: number }) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`;
@@ -64,19 +66,11 @@ export const itineraireDepuisBase = createServerFn({ method: "POST" })
       `/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson`,
     );
     const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
-    if (!route) {
-      const km = Math.round(haversineKm(from, data) * 1.18);
-      return {
-        km,
-        minutes: Math.round((km / 80) * 60),
-        coords: [
-          [from.lat, from.lng],
-          [data.lat, data.lng],
-        ],
-        estime: true,
-      };
-    }
+    if (!route) return { km: 0, minutes: 0, coords: [], estime: true, sansPeage: null };
+    const alt = await osrm(`/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=false&exclude=toll`);
+    const r2 = (alt?.["routes"] as { distance: number; duration: number }[] | undefined)?.[0];
     return {
+      sansPeage: r2 ? { km: Math.round(r2.distance / 100) / 10, minutes: Math.round(r2.duration / 60) } : null,
       km: Math.round(route.distance / 100) / 10,
       minutes: Math.round(route.duration / 60),
       coords: toCoords(route.geometry),

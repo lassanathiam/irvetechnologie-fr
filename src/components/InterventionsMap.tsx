@@ -13,6 +13,8 @@ export type MapMarker = {
   trajet?: string | null;
   /** Couleur du partenaire / donneur d'ordre (repère visuel sur la carte). */
   couleur?: string | null;
+  /** Intervenant affecté. */
+  technicien?: string | null;
 };
 
 /** Bases de départ : une par intervenant (domicile de chacun). */
@@ -52,7 +54,10 @@ export function InterventionsMap({
   lienCoords,
   visible = true,
   bases: basesProp,
+  onAssign,
 }: {
+  /** Affecter un intervenant depuis la bulle du repère (null = retirer). */
+  onAssign?: (id: string, technicien: string | null) => void;
   /** Remplace les bases affichées (ex. base du sous-traitant). */
   bases?: { lat: number; lng: number; label: string }[];
   markers: MapMarker[];
@@ -103,6 +108,8 @@ export function InterventionsMap({
     }, 160);
   }
 
+  const assignRef = useRef(onAssign);
+  assignRef.current = onAssign;
   const basesRef = useRef(basesProp);
   basesRef.current = basesProp;
   useEffect(() => {
@@ -220,8 +227,27 @@ export function InterventionsMap({
                   rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
                 }</span>`
               : ""
+          }${
+            onAssign && !selectionMode
+              ? `<div style="margin-top:8px;font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
+                  (t) =>
+                    `<button type="button" data-assign="${escapeHtml(t.nom)}" style="padding:6px 10px;border-radius:8px;border:1px solid #2563eb;font-weight:700;${m.technicien === t.nom ? "background:#2563eb;color:#fff" : "background:#fff;color:#2563eb"}">${escapeHtml(t.nom.split(" ")[0])}</button>`,
+                ).join("")}</div>`
+              : ""
           }`,
         );
+      mk.on("popupopen", (ev: { popup: { getElement: () => HTMLElement | undefined } }) => {
+        ev.popup.getElement()?.querySelectorAll<HTMLButtonElement>("[data-assign]").forEach((b) => {
+          b.onclick = (e) => {
+            e.stopPropagation();
+            const nom = b.dataset["assign"] ?? null;
+            if (window.confirm(`Affecter ce chantier (${m.label}) à ${nom} ?`)) {
+              assignRef.current?.(m.id, nom);
+              mk.closePopup();
+            }
+          };
+        });
+      });
       mk.on("click", () => {
         if (selectionMode) onToggleSelect?.(m.id);
         onSelect?.(m.id);

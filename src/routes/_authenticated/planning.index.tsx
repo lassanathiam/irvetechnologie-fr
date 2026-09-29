@@ -40,6 +40,7 @@ import {
   archiverRendezVous,
   createRendezVous,
   demarrerChantier,
+  affecterTechnicien,
   envoyerPropositionRdv,
   terminerChantier,
   deleteRendezVous,
@@ -459,6 +460,15 @@ function PlanningPage() {
       toast.error(msg);
     },
   });
+  const affecterFn = useServerFn(affecterTechnicien);
+  const affecter = useMutation({
+    mutationFn: (p: { id: string; technicien: string | null }) => affecterFn({ data: p }),
+    onSuccess: (_r, p) => {
+      refresh();
+      toast.success(p.technicien ? `Chantier affecté à ${p.technicien}` : "Affectation retirée");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Affectation impossible."),
+  });
   const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
   const terminerFn = useServerFn(terminerChantier);
   const terminer = useMutation({
@@ -644,6 +654,7 @@ function PlanningPage() {
           statut: r.statut,
           couleur: couleurPartenaire(r.partenaire),
           date: dateTimeFr(r.date_debut),
+          technicien: r.technicien ?? null,
           trajet:
             r.distance_km != null
               ? `${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
@@ -952,6 +963,7 @@ function PlanningPage() {
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
                     <h3 className="mt-2 truncate text-xl font-bold">{missionTerrain.client_nom}</h3>
+                    <p className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-2 py-1 text-sm font-semibold text-slate-100"><Clock3 className="h-4 w-4" /> {new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à {new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien}` : ""}</p>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
                   </div>
@@ -966,6 +978,7 @@ function PlanningPage() {
               <div className="space-y-0 p-5 sm:p-6">
                 <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
                   {!missionTerrain.demarre_at && <Button className="mt-3 h-12 w-full text-base font-bold" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play /> Je suis arrivé — démarrer</Button>}
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-11 w-full border-destructive/40 text-destructive" disabled={demarrer.isPending} onClick={() => { if (window.confirm(`Annuler le démarrage des travaux chez ${missionTerrain.client_nom} ?\n\nÀ utiliser seulement si vous avez démarré par erreur. Le chantier repasse en « confirmé ».`)) demarrer.mutate({ id: missionTerrain.id, demarre: false }); }}>Annuler les travaux démarrés par erreur</Button>}
                 </EtapeMission>
                 <EtapeMission titre={missionTerrain.type === "maintenance" ? "Maintenance, photos et contrôle" : "Matériel, photos et métrage"} detail={missionTerrain.retour_complete_at ? "Enregistré" : undefined} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
@@ -1406,6 +1419,7 @@ function PlanningPage() {
               selectionMode={modeSelection}
               selectedIds={selection}
               onToggleSelect={basculerSelection}
+              onAssign={(id, tech) => affecter.mutate({ id, technicien: tech })}
               lienCoords={comparaison.data?.entre.coords ?? null}
               routeCoords={itineraire.data?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
@@ -1420,8 +1434,19 @@ function PlanningPage() {
                 </span>
               ) : itineraire.data ? (
                 <span className="min-w-0 break-words text-primary text-mono">
-                  {depart.label} → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
-                  {itineraire.data.estime ? " (estimé)" : " par la route"}
+                  {itineraire.data.estime ? (
+                    <>Itinéraire routier indisponible — ouvrez Waze</>
+                  ) : (
+                    <>
+                      {depart.label} → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)} par autoroute (péages)
+                      {itineraire.data.sansPeage ? ` · sans péage : ${itineraire.data.sansPeage.km} km · ${dureeFr(itineraire.data.sansPeage.minutes)}` : ""}
+                    </>
+                  )}
+                  {activeRow && (
+                    <a className="ml-2 underline" href={wazeLien(activeRow.adresse, activeRow.cp_ville, activeRow.lat, activeRow.lng)} target="_blank" rel="noreferrer">
+                      Prix des péages dans Waze
+                    </a>
+                  )}
                 </span>
               ) : (
                 <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>

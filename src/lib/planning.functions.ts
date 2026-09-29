@@ -1,7 +1,27 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { trajetDepuisBase, technicienByNom } from "@/lib/geo";
+import { technicienByNom } from "@/lib/geo";
+
+/** Trajet routier réel (réseau OSRM, autoroutes/péages compris). Jamais à vol d'oiseau. */
+async function trajetDepuisBase(
+  lat: number,
+  lng: number,
+  base: { lat: number; lng: number } = { lat: 47.235974, lng: -1.499838 },
+): Promise<{ distance_km: number; duree_trajet_min: number } | null> {
+  try {
+    const res = await fetch(
+      `https://router.project-osrm.org/route/v1/driving/${base.lng},${base.lat};${lng},${lat}?overview=false`,
+      { signal: AbortSignal.timeout(9000) },
+    );
+    const j = (await res.json()) as { code?: string; routes?: { distance: number; duration: number }[] };
+    const r = j.code === "Ok" ? j.routes?.[0] : undefined;
+    if (!r) return null;
+    return { distance_km: Math.round(r.distance / 1000), duree_trajet_min: Math.round(r.duration / 60) };
+  } catch {
+    return null;
+  }
+}
 
 type SmsOutcome =
   | { status: "sent"; provider: "twilio"; to: string }
@@ -401,7 +421,7 @@ export const createRendezVous = createServerFn({ method: "POST" })
     const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
     const tech = technicienByNom(data.technicien);
     const trajet = geo
-      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+      ? await trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
       : null;
 
     const { data: row, error } = await context.supabase
@@ -529,7 +549,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       if (st?.base_lat != null && st?.base_lng != null)
         baseDepart = { lat: Number(st.base_lat), lng: Number(st.base_lng) };
     }
-    const trajet = geo ? trajetDepuisBase(geo.lat, geo.lng, baseDepart) : null;
+    const trajet = geo ? await trajetDepuisBase(geo.lat, geo.lng, baseDepart) : null;
 
     const patch = {
       sous_traitant_id: data.sous_traitant_id ?? null,
@@ -618,7 +638,7 @@ export const updateAdresseRendezVous = createServerFn({ method: "POST" })
     const geo = await geocode([data.adresse, data.cp_ville].filter(Boolean).join(" "));
     const tech = technicienByNom(current?.technicien);
     const trajet = geo
-      ? trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+      ? await trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
       : null;
 
     const { error } = await context.supabase
@@ -1979,4 +1999,31 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
       destinataire: destinataireNom,
       facturer_a: (sousTraitance ? "partenaire" : "client") as "partenaire" | "client",
     };
+  });
+
+
+/** Affecte un intervenant à un chantier (depuis la carte) et recalcule le trajet par la route. */
+export const affecterTechnicien = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: { id: string; technicien: string | null }) =>
+    z.object({ id: z.string().uuid(), technicien: z.string().trim().max(160).nullable() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error: e1 } = await context.supabase
+      .from("rendezvous").select("lat, lng").eq("id", data.id).single();
+    if (e1) throw new Error(e1.message);
+    const tech = technicienByNom(data.technicien);
+    const trajet =
+      rdv.lat != null && rdv.lng != null
+        ? await trajetDepuisBase(Number(rdv.lat), Number(rdv.lng), tech ? { lat: tech.lat, lng: tech.lng } : undefined)
+        : null;
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({
+        technicien: tech?.nom ?? data.technicien,
+        ...(trajet ? { distance_km: trajet.distance_km, duree_trajet_min: trajet.duree_trajet_min } : {}),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
