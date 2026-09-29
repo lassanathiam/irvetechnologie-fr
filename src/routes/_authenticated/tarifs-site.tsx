@@ -13,7 +13,7 @@ import {
   updateTarifsSite,
   type TarifsSite,
 } from "@/lib/tarifs-site.functions";
-import { BORNES_CATALOGUE } from "@/lib/bornes-catalogue";
+import { borneImage, listBornesAdmin, updateBorne } from "@/lib/bornes.functions";
 
 export const Route = createFileRoute("/_authenticated/tarifs-site")({
   head: () => ({
@@ -39,19 +39,44 @@ const CHAMPS: { cle: Exclude<keyof TarifsSite, "bornes">; titre: string; aide: s
 function TarifsSitePage() {
   const getTarifs = useServerFn(getTarifsSite);
   const saveTarifs = useServerFn(updateTarifsSite);
+  const listerBornes = useServerFn(listBornesAdmin);
+  const majBorne = useServerFn(updateBorne);
   const qc = useQueryClient();
   const query = useQuery({ queryKey: ["tarifs-site"], queryFn: () => getTarifs() });
+  const bornesQuery = useQuery({ queryKey: ["bornes-admin"], queryFn: () => listerBornes() });
   const [tarifs, setTarifs] = useState<TarifsSite>(TARIFS_SITE_DEFAUT);
+  const [prixBornes, setPrixBornes] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (query.data) setTarifs(query.data);
   }, [query.data]);
 
+  useEffect(() => {
+    if (bornesQuery.data) {
+      setPrixBornes(
+        Object.fromEntries(bornesQuery.data.map((b) => [b.id, b.prix_ttc != null ? String(b.prix_ttc) : ""])),
+      );
+    }
+  }, [bornesQuery.data]);
+
   const save = useMutation({
-    mutationFn: () => saveTarifs({ data: tarifs }),
+    mutationFn: async () => {
+      await saveTarifs({ data: tarifs });
+      const bornes = bornesQuery.data ?? [];
+      await Promise.all(
+        bornes.map((b) => {
+          const texte = prixBornes[b.id] ?? "";
+          const prix = texte === "" ? null : Number(texte);
+          if (prix === b.prix_ttc) return Promise.resolve();
+          return majBorne({ data: { id: b.id, borne: { prix_ttc: prix } } });
+        }),
+      );
+    },
     onSuccess: (data) => {
       qc.setQueryData(["tarifs-site"], data);
       qc.invalidateQueries({ queryKey: ["tarifs-site-publics"] });
+      qc.invalidateQueries({ queryKey: ["bornes-publiques"] });
+      qc.invalidateQueries({ queryKey: ["bornes-admin"] });
       toast.success("Tarifs du site enregistrés");
     },
     onError: (error: Error) => toast.error(error.message),
