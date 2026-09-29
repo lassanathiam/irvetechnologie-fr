@@ -249,6 +249,13 @@ function DocumentPage() {
             <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
+          {verrouille && (
+            <aside className="space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 lg:sticky lg:top-20 lg:self-start">
+              <p className="flex items-center gap-2 text-sm font-bold text-emerald-600"><Check className="h-5 w-5" /> Document signé et terminé</p>
+              <Button className="w-full" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger le document signé</Button>
+              <Button className="w-full" variant="outline" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
+            </aside>
+          )}
           {!verrouille && (
             <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
               <div className={`flex items-start gap-3 rounded-lg border p-3 ${preparationPrete ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
