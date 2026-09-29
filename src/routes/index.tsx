@@ -10,6 +10,7 @@ import { useQuery } from "@tanstack/react-query";
 import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
 import { BornesCarrousel } from "@/components/BornesCarrousel";
+import heroAccueil from "@/assets/hero-accueil.jpg";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -212,54 +213,74 @@ function Index() {
     <div className="public-premium min-h-screen overflow-x-hidden bg-background text-foreground">
       <SiteNav />
 
-      {/* HERO */}
-      <section className="premium-hero relative min-h-[92svh] overflow-hidden pt-16">
-        <div className="premium-hero-atmosphere absolute inset-0" aria-hidden />
-        <div className="absolute inset-0 premium-hero-veil" aria-hidden />
-        <div className="absolute inset-0 premium-tech-grid opacity-30" aria-hidden />
-        <div className="relative mx-auto grid min-h-[calc(92svh-4rem)] max-w-7xl items-center gap-12 px-6 py-16 lg:grid-cols-12 lg:py-20">
-          <div className="animate-fade-up lg:col-span-7">
-            <div className="inline-flex items-center gap-2 border border-premium-blue/50 bg-premium-night/65 px-3 py-2 text-xs font-semibold uppercase text-premium-blue backdrop-blur-md">
-              <span className="relative flex h-2 w-2"><span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-premium-blue opacity-70" /><span className="relative inline-flex h-2 w-2 rounded-full bg-premium-blue" /></span>
-              Expertise IRVE certifiée P1 · P2 · P3
-            </div>
-            <h1 className="mt-7 font-display text-2xl font-bold leading-tight sm:text-3xl lg:text-4xl">
-              Installation de bornes de recharge
-            </h1>
-            <p className="mt-5 max-w-2xl text-base leading-relaxed text-current opacity-70 sm:text-lg">
-              Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels dans le Grand Ouest.
-            </p>
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
-              <Link to="/demande" className="premium-primary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
-                Demander un devis <ArrowRight className="h-5 w-5" />
-              </Link>
-              <a href="tel:+33768084367" className="premium-secondary-cta inline-flex min-h-14 items-center justify-center gap-3 px-7 text-base font-bold uppercase">
-                <Phone className="h-5 w-5" /> 07 68 08 43 67
-              </a>
-            </div>
-            <div className="mt-10 grid max-w-2xl grid-cols-1 gap-px border-y border-premium-foreground/20 bg-premium-foreground/20 sm:grid-cols-3">
-              {["Étude technique", "Pose & raccordement", "Maintenance suivie"].map((label) => (
-                <div key={label} className="flex items-center gap-3 bg-premium-night/90 px-4 py-4 text-sm font-semibold text-premium-foreground backdrop-blur-md">
-                  <BadgeCheck className="h-5 w-5 shrink-0 text-premium-blue" /> {label}
-                </div>
-              ))}
+      {/* HERO — immersif plein écran */}
+      <section className="relative px-4 pt-20 sm:px-8">
+        <div className="relative h-[88svh] min-h-[560px] w-full overflow-hidden rounded-[2.5rem] shadow-2xl">
+          <img
+            src={heroAccueil}
+            alt="Voiture électrique en charge sur une borne installée par Borne de l'Ouest"
+            className="absolute inset-0 h-full w-full object-cover"
+            width={1920}
+            height={1088}
+            fetchPriority="high"
+          />
+          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-slate-900/45 to-transparent" aria-hidden />
+
+          <div className="relative z-10 flex h-full flex-col justify-center px-6 text-white sm:px-12 lg:px-20">
+            <div className="max-w-3xl animate-fade-up">
+              <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 shadow-sm backdrop-blur-md">
+                <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
+                <span className="text-xs font-bold uppercase tracking-widest text-emerald-50">Expertise IRVE certifiée P1 · P2 · P3</span>
+              </div>
+
+              <h1 className="mb-6 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+                Installation de <br />
+                <span className="text-emerald-400">bornes de recharge</span>
+              </h1>
+
+              <p className="mb-10 max-w-xl text-lg leading-relaxed text-slate-200 md:text-xl">
+                Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels.
+                Intervention rapide dans tout le <span className="font-bold text-white">Grand Ouest</span>.
+              </p>
+
+              <div className="mb-14 flex flex-wrap gap-5">
+                <Link
+                  to="/demande"
+                  className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-8 py-4 font-bold text-slate-900 shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
+                >
+                  Demander un devis
+                  <ArrowRight className="h-5 w-5" />
+                </Link>
+                <a
+                  href="tel:+33768084367"
+                  className="flex items-center gap-3 rounded-2xl border border-white/30 bg-white/10 px-8 py-4 font-bold text-white backdrop-blur-md transition-all hover:bg-white/20"
+                >
+                  <Phone className="h-5 w-5 text-emerald-400" />
+                  07 68 08 43 67
+                </a>
+              </div>
+
+              <div className="flex flex-wrap gap-8 opacity-90 md:gap-12">
+                {[
+                  { icon: BadgeCheck, label: "Étude technique" },
+                  { icon: Zap, label: "Pose & raccordement" },
+                  { icon: Wrench, label: "Maintenance suivie" },
+                ].map(({ icon: Icon, label }) => (
+                  <div key={label} className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/20">
+                      <Icon className="h-5 w-5 text-emerald-400" />
+                    </div>
+                    <span className="font-medium">{label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
-          <div className="relative hidden lg:col-span-5 lg:block animate-fade-soft">
-            <div className="premium-photo-frame relative ml-auto aspect-[4/5] w-full max-w-md border border-premium-blue/50">
-              {realisations[0]?.src ? (
-                <img src={realisations[0].src} alt={realisations[0].title || "Réalisation de recharge électrique par Borne de l'Ouest"} className="h-full w-full object-cover" />
-              ) : (
-                <div className="h-full w-full bg-[linear-gradient(165deg,#0f1c34_0%,#16284a_58%,#0d1528_100%)]" />
-              )}
-              <div className="absolute right-5 top-5 border border-premium-blue/60 bg-premium-night/85 p-4 backdrop-blur-md">
-                <p className="text-xs font-semibold uppercase text-premium-blue">Installation maîtrisée</p>
-                <p className="mt-1 font-display text-2xl font-bold text-premium-foreground">7 · 11 · 22 kW</p>
-              </div>
-              <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-premium-night p-6 pt-20">
-                <p className="text-xs uppercase text-premium-foreground/60">IRVE Technologie</p>
-                <p className="mt-1 text-lg font-semibold text-premium-foreground">Une installation nette, conforme et documentée.</p>
-              </div>
+
+          <div className="absolute bottom-8 right-12 hidden md:block" aria-hidden>
+            <div className="flex items-center gap-4 text-white/50">
+              <span className="text-xs font-bold uppercase tracking-widest">Défiler</span>
+              <div className="h-px w-12 bg-white/30" />
             </div>
           </div>
         </div>
