@@ -222,23 +222,33 @@ export const annulerSignature = createServerFn({ method: "POST" })
 
 export const envoyerPourSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), email: z.string().trim().max(200).optional().nullable(), envoyerEmail: z.boolean() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), email: z.string().trim().max(200).optional().nullable(), envoyerEmail: z.boolean(), cle: z.string().max(40).optional().nullable() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: doc, error } = await context.supabase.from("documents").select("id, nom, zones, public_token, statut, signataires").eq("id", data.id).maybeSingle();
     if (error || !doc) throw new Error("Document introuvable.");
     const zones = (doc.zones as unknown as Zone[]) ?? [];
     if (!zones.some((z) => z.role === "client")) throw new Error("Ajoutez au moins une zone « client » avant l'envoi.");
+    const sigs = (doc.signataires as unknown as Signataire[]) ?? [];
+    // Signataire visé : celui demandé, sinon le premier client pas encore signé.
+    const cible =
+      sigs.find((s) => s.role === "client" && data.cle && s.cle === data.cle) ??
+      sigs.find((s) => s.role === "client" && !s.signed_at) ??
+      sigs.find((s) => s.role === "client");
+    if (!cible) throw new Error("Renseignez d'abord le nom du signataire (étape 2).");
+    if (cible.signed_at) throw new Error(`${cible.nom || "Ce signataire"} a déjà signé.`);
     const base = process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr";
-    const lien = `${base}/signer/${doc.public_token}`;
+    const lien = `${base}/signer/${cible.token ?? doc.public_token}`;
+    const destinataire = data.email || cible.email || null;
     let emailEnvoye = false;
     let emailErreur: string | null = null;
-    if (data.envoyerEmail && data.email) {
+    if (data.envoyerEmail && destinataire) {
       try {
         const { sendTemplateEmail } = await import("./email-templates/send-email");
-        const client = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
-        await sendTemplateEmail("document-a-signer", data.email, {
-          idempotencyKey: `document-${doc.id}-${Date.now()}`,
-          templateData: { nom: client?.nom ?? "", document: doc.nom, lien },
+        await sendTemplateEmail("document-a-signer", destinataire, {
+          idempotencyKey: `document-${doc.id}-${cible.cle ?? "c"}-${Date.now()}`,
+          templateData: { nom: cible.nom ?? "", document: doc.nom, lien },
         });
         emailEnvoye = true;
       } catch (e) {
@@ -248,10 +258,10 @@ export const envoyerPourSignature = createServerFn({ method: "POST" })
     if (doc.statut === "brouillon" || doc.statut === "refuse") {
       await context.supabase
         .from("documents")
-        .update({ statut: "envoye", sent_at: new Date().toISOString(), sent_to: data.email ?? null, refused_at: null, refus_motif: null })
+        .update({ statut: "envoye", sent_at: new Date().toISOString(), sent_to: destinataire, refused_at: null, refus_motif: null })
         .eq("id", doc.id);
     }
-    return { lien, emailEnvoye, emailErreur };
+    return { lien, emailEnvoye, emailErreur, nom: cible.nom ?? "" };
   });
 
 // ---------- Page publique ----------
