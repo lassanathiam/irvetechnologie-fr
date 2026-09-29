@@ -315,44 +315,65 @@ function DocumentPage() {
               <section className="space-y-3 rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
-                  <div><h2 className="text-sm font-bold">Signer ou envoyer</h2><p className="text-xs text-muted-foreground">Choisissez une seule action selon votre besoin.</p></div>
+                  <div><h2 className="text-sm font-bold">Qui signe ?</h2><p className="text-xs text-muted-foreground">Choisissez le cas, puis suivez le bouton.</p></div>
                 </div>
                 {!irveSigne && (
+                  <div className="grid gap-2">
+                    {([
+                      ["seul", "Je signe seul", "Je signe, puis je télécharge ou je laisse dans la plateforme."],
+                      ["deux", "Je signe, puis le client", "Je signe d'abord, le client reçoit ensuite le document à signer."],
+                      ["client", "Seul le client signe", "J'envoie le document au client sans le signer."],
+                    ] as const).map(([k, t, d]) => (
+                      <button key={k} type="button" onClick={() => setMode(k)} className={`rounded-md border p-2.5 text-left text-xs transition ${mode === k ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-border hover:bg-muted"}`}>
+                        <span className="block font-bold">{mode === k ? "● " : "○ "}{t}</span>
+                        <span className="text-muted-foreground">{d}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!irveSigne && mode !== "client" && (
                   <div className="space-y-2 rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
-                    <p className="text-xs font-bold">Signature IRVE Technologie</p>
-                    {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre cachet sera posé en bas de la dernière page.</p>}
-                    {nbZones("client") > 0 && (
-                      <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email après ma signature</label>
+                    <p className="text-xs font-bold">Ma signature IRVE Technologie</p>
+                    {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre signature sera posée en bas de la dernière page.</p>}
+                    {mode === "deux" && (
+                      <>
+                        {nbZones("client") === 0 && <p className="text-xs text-muted-foreground">Aucune zone client placée : sa signature sera prévue en bas de la dernière page.</p>}
+                        {client.nom.trim().length < 2 && <p className="text-xs font-semibold text-amber-600">Renseignez d'abord le nom du client (étape 2).</p>}
+                        <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email juste après ma signature</label>
+                      </>
                     )}
+                    {mode === "seul" && nbZones("client") > 0 && <p className="text-xs text-muted-foreground">Les zones du client seront retirées : le document sera terminé dès votre signature.</p>}
                     {signe ? (
                       <div className="space-y-2">
                         <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
                         {zones.some((z) => z.role === "irve" && z.type === "paraphe") && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
                         <Button className="w-full" onClick={() => faireSigner()} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
+                        <Button className="w-full" variant="ghost" size="sm" onClick={() => setSigne(false)}>Revenir au cachet</Button>
                       </div>
                     ) : (
                       <>
+                        <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
                         <Button className="w-full" disabled={busy === "sign"} onClick={async () => {
                           let c: string;
                           try { c = await cachetIrve(); } catch { return toast.error("Cachet introuvable"); }
                           await faireSigner(c);
                         }}>
-                          {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stamp className="h-4 w-4" />} Signer avec notre cachet
+                          {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stamp className="h-4 w-4" />} {mode === "deux" ? (envoiAuto ? "Signer avec le cachet et envoyer" : "Signer avec le cachet") : "Signer avec le cachet et terminer"}
                         </Button>
-                        <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
-                        <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main</Button>
+                        <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main plutôt</Button>
                       </>
                     )}
                   </div>
                 )}
-                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — choisissez la suite :</p>}
-                {nbZones("client") > 0 && (
+                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — en attente de la signature du client :</p>}
+                {(mode === "client" || irveSigne) && (
                   <>
-                    <Button className="w-full" variant={irveSigne ? "default" : "secondary"} onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
-                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete}><Send className="h-4 w-4" /> Créer un lien à partager</Button>
+                    {nbZones("client") === 0 && <p className="text-xs text-amber-600">Placez au moins une zone « Signature client » (étape 1).</p>}
+                    <Button className="w-full" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
+                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Send className="h-4 w-4" /> Créer un lien (SMS / WhatsApp)</Button>
                   </>
                 )}
-                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger le document signé" : "Télécharger"}</Button>
+                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger (signé par IRVE)" : "Télécharger"}</Button>
                 {irveSigne && (
                   <Button className="w-full" variant="ghost" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
                 )}
