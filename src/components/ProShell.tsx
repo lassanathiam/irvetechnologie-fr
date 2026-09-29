@@ -45,6 +45,7 @@ const LINKS: LienPro[] = [
   { to: "/factures", label: "Mes factures", icon: Receipt },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
+  { to: "/tarifs-site", label: "Tarifs du site", icon: Euro },
   { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
   { to: "/documents", label: "Documents", icon: FolderLock },
   { to: "/realisations", label: "Photos", icon: Images },
