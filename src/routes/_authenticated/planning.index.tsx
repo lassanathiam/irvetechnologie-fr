@@ -2116,7 +2116,7 @@ function PlanningPage() {
                                     </>
                                   ) : (
                                     <>
-                                      <Archive className="h-3 w-3" /> Archiver
+                                      <Archive className="h-3 w-3" /> Clôturer le chantier
                                     </>
                                   )}
                                 </button>
