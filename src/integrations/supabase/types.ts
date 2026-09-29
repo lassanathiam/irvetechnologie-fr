@@ -614,6 +614,81 @@ export type Database = {
           },
         ]
       }
+      documents: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          dossier: string
+          hash: string | null
+          id: string
+          mime: string | null
+          nom: string
+          original_path: string | null
+          public_token: string
+          refus_motif: string | null
+          refused_at: string | null
+          sent_at: string | null
+          sent_to: string | null
+          signataires: Json
+          signed_at: string | null
+          statut: string
+          storage_path: string
+          taille: number | null
+          updated_at: string
+          view_count: number
+          viewed_at: string | null
+          zones: Json
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          dossier?: string
+          hash?: string | null
+          id?: string
+          mime?: string | null
+          nom: string
+          original_path?: string | null
+          public_token?: string
+          refus_motif?: string | null
+          refused_at?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          signataires?: Json
+          signed_at?: string | null
+          statut?: string
+          storage_path: string
+          taille?: number | null
+          updated_at?: string
+          view_count?: number
+          viewed_at?: string | null
+          zones?: Json
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          dossier?: string
+          hash?: string | null
+          id?: string
+          mime?: string | null
+          nom?: string
+          original_path?: string | null
+          public_token?: string
+          refus_motif?: string | null
+          refused_at?: string | null
+          sent_at?: string | null
+          sent_to?: string | null
+          signataires?: Json
+          signed_at?: string | null
+          statut?: string
+          storage_path?: string
+          taille?: number | null
+          updated_at?: string
+          view_count?: number
+          viewed_at?: string | null
+          zones?: Json
+        }
+        Relationships: []
+      }
       donneurs_ordre: {
         Row: {
           actif: boolean
