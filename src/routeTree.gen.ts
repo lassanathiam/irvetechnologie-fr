@@ -25,6 +25,7 @@ import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
+import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
@@ -129,6 +130,11 @@ const AttachementTokenRoute = AttachementTokenRouteImport.update({
   id: '/attachement/$token',
   path: '/attachement/$token',
   getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
+  id: '/tarifs-site',
+  path: '/tarifs-site',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedRealisationsIndexRoute =
   AuthenticatedRealisationsIndexRouteImport.update({
@@ -284,6 +290,7 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
@@ -326,6 +333,7 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
@@ -370,6 +378,7 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
@@ -414,6 +423,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
     | '/facture-client/$token'
@@ -456,6 +466,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
     | '/facture-client/$token'
@@ -499,6 +510,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/_authenticated/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
     | '/facture-client/$token'
@@ -668,6 +680,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/attachement/$token'
       preLoaderRoute: typeof AttachementTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/tarifs-site': {
+      id: '/_authenticated/tarifs-site'
+      path: '/tarifs-site'
+      fullPath: '/tarifs-site'
+      preLoaderRoute: typeof AuthenticatedTarifsSiteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/realisations/': {
       id: '/_authenticated/realisations/'
@@ -848,6 +867,7 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedTarifsSiteRoute: typeof AuthenticatedTarifsSiteRoute
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
   AuthenticatedChantierRapportRdvIdRoute: typeof AuthenticatedChantierRapportRdvIdRoute
@@ -873,6 +893,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedTarifsSiteRoute: AuthenticatedTarifsSiteRoute,
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
   AuthenticatedAttachementsBordereauRoute:
     AuthenticatedAttachementsBordereauRoute,
