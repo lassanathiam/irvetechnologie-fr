@@ -465,6 +465,8 @@ function PlanningPage() {
     mutationFn: (p: { id: string; technicien: string | null }) => affecterFn({ data: p }),
     onSuccess: (_r, p) => {
       refresh();
+      // Sélectionne le chantier pour redessiner le trajet depuis le domicile du nouvel intervenant.
+      setActive(p.id);
       toast.success(p.technicien ? `Chantier affecté à ${p.technicien}` : "Affectation retirée");
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Affectation impossible."),
@@ -766,7 +768,7 @@ function PlanningPage() {
         data: {
           lat: Number(activeRow!.lat),
           lng: Number(activeRow!.lng),
-          base: { lat: depart.lat, lng: depart.lng },
+          base: { lat: departTrajet.lat, lng: departTrajet.lng },
         },
       }),
   });
