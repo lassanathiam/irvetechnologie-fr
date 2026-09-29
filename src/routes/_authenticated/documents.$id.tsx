@@ -72,6 +72,7 @@ function DocumentPage() {
   const [sig, setSig] = useState<string | null>(null);
   const [par, setPar] = useState<string | null>(null);
   const [lien, setLien] = useState<string | null>(null);
+  const [envoiAuto, setEnvoiAuto] = useState(false);
 
   useEffect(() => {
     if (!data?.url) return;
@@ -92,9 +93,9 @@ function DocumentPage() {
   const irveSigne = signataires.some((s) => s.role === "irve" && s.signed_at);
   const verrouille = doc.statut === "signe";
 
-  const enregistrer = async () => {
+  const enregistrer = async (z: Zone[] = zones) => {
     if (!pdf) return;
-    await sauver({ data: { id, nbPages: pdf.numPages, zones, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
+    await sauver({ data: { id, nbPages: pdf.numPages, zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
   };
 
   const detecter = async () => {
@@ -114,11 +115,24 @@ function DocumentPage() {
   const faireSigner = async (cachet?: string) => {
     const sig2 = cachet ?? sig;
     if (!sig2) return toast.error("Dessinez votre signature.");
+    if (envoiAuto && nbZones("client") > 0) {
+      if (!client.nom.trim()) return toast.error("Indiquez le nom du client pour l'envoi automatique.");
+      if (!client.email) return toast.error("Indiquez l'email du client pour l'envoi automatique.");
+    }
     setBusy("sign");
     try {
-      await enregistrer();
+      // Pas de zone IRVE placée : on ajoute automatiquement un emplacement en bas de la dernière page.
+      const z = zones.some((x) => x.role === "irve") ? zones : [...zones, nouvelleZone("signature", "irve", (pdf?.numPages ?? 1) - 1, 0.08, 0.8)];
+      setZones(z);
+      await enregistrer(z);
       const r = await signer({ data: { id, signature: sig2, paraphe: cachet ?? par, nom: irveNom } });
-      toast.success(r.termine ? "Document signé et finalisé." : "Votre signature est posée. Envoyez maintenant au client.");
+      if (!r.termine && envoiAuto && client.email) {
+        const e = await envoyer({ data: { id, email: client.email, envoyerEmail: true } });
+        setLien(e.lien);
+        e.emailEnvoye ? toast.success("Signé et envoyé au client par email.") : toast.error("Signé. L'email n'a pas pu partir : utilisez le lien (SMS / WhatsApp).");
+      } else {
+        toast.success(r.termine ? "Document signé. Vous pouvez le télécharger." : "Signé. Choisissez maintenant : envoyer au client ou laisser dans la plateforme.");
+      }
       setSigne(false);
       setPdf(null);
       qc.invalidateQueries({ queryKey: ["document", id] });
@@ -238,33 +252,45 @@ function DocumentPage() {
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
                   <div><h2 className="text-sm font-bold">Signer ou envoyer</h2><p className="text-xs text-muted-foreground">Choisissez une seule action selon votre besoin.</p></div>
                 </div>
-                {nbZones("irve") > 0 && !irveSigne && (
-                  signe ? (
-                    <div className="space-y-2">
-                      <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
-                      {zones.some((z) => z.role === "irve" && z.type === "paraphe") && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
-                      <Button className="w-full" onClick={() => faireSigner()} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
-                    </div>
-                  ) : (
-                    <>
-                      <Button className="w-full" disabled={busy === "sign"} onClick={async () => {
-                        try { await faireSigner(await cachetIrve()); } catch { toast.error("Cachet introuvable"); }
-                      }}>
-                        <Stamp className="h-4 w-4" /> Signer avec notre cachet et signature
-                      </Button>
-                      <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
-                      <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main</Button>
-                    </>
-                  )
+                {!irveSigne && (
+                  <div className="space-y-2 rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
+                    <p className="text-xs font-bold">Signature IRVE Technologie</p>
+                    {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre cachet sera posé en bas de la dernière page.</p>}
+                    {nbZones("client") > 0 && (
+                      <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email après ma signature</label>
+                    )}
+                    {signe ? (
+                      <div className="space-y-2">
+                        <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
+                        {zones.some((z) => z.role === "irve" && z.type === "paraphe") && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
+                        <Button className="w-full" onClick={() => faireSigner()} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
+                      </div>
+                    ) : (
+                      <>
+                        <Button className="w-full" disabled={busy === "sign"} onClick={async () => {
+                          let c: string;
+                          try { c = await cachetIrve(); } catch { return toast.error("Cachet introuvable"); }
+                          await faireSigner(c);
+                        }}>
+                          {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stamp className="h-4 w-4" />} Signer avec notre cachet
+                        </Button>
+                        <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
+                        <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main</Button>
+                      </>
+                    )}
+                  </div>
                 )}
-                {irveSigne && <p className="text-xs text-emerald-600">✓ Signé par IRVE Technologie</p>}
+                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — choisissez la suite :</p>}
                 {nbZones("client") > 0 && (
                   <>
-                    <Button className="w-full" variant="secondary" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer le lien par email</Button>
+                    <Button className="w-full" variant={irveSigne ? "default" : "secondary"} onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
                     <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete}><Send className="h-4 w-4" /> Créer un lien à partager</Button>
                   </>
                 )}
-                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger pour l'envoyer moi-même</Button>
+                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger le document signé" : "Télécharger"}</Button>
+                {irveSigne && (
+                  <Button className="w-full" variant="ghost" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
+                )}
                 {lien && (
                   <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
                     <p className="font-bold">Lien de signature prêt</p>
