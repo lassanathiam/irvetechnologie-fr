@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
-import { BORNES_CATALOGUE, BORNES_VEDETTES } from "@/lib/bornes-catalogue";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getTarifsSitePublic } from "@/lib/tarifs-site.functions";
+import { borneImage, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
 
 /**
  * Carrousel des bornes : défilement automatique (diaporama) + glisser-déplacer
  * à la souris ou au doigt, avec flèches et pause au survol.
  */
 export function BornesCarrousel() {
-  const getTarifs = useServerFn(getTarifsSitePublic);
-  const prix = useQuery({ queryKey: ["tarifs-site-publics"], queryFn: () => getTarifs() }).data?.bornes;
+  const lister = useServerFn(listBornesPubliques);
+  const bornes = useQuery({ queryKey: ["bornes-publiques"], queryFn: () => lister() }).data ?? bornesStatiquesEnSecours();
+  const vedettes = bornes.filter((b) => b.vedette);
   const trackRef = useRef<HTMLDivElement>(null);
   const [grabbing, setGrabbing] = useState(false);
   const dragging = useRef(false);
