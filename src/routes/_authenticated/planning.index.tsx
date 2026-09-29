@@ -34,7 +34,6 @@ import {
   ClipboardCheck,
   Clock3,
   Navigation,
-  Wrench,
 } from "lucide-react";
 import {
   appliquerProgramme,
