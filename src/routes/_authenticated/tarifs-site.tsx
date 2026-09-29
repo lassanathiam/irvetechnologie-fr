@@ -120,12 +120,19 @@ function TarifsSitePage() {
             ))}
             <div className="pt-3">
               <h2 className="font-semibold">Catalogue « Nos bornes »</h2>
-              <p className="mt-0.5 text-xs text-dashboard-muted">Prix « À partir de » posée, affiché sous chaque borne. Laissez vide pour ne pas afficher de prix.</p>
+              <p className="mt-0.5 text-xs text-dashboard-muted">
+                Prix « À partir de » posée, affiché sous chaque borne. Laissez vide pour ne pas afficher de prix.
+                Pour ajouter ou modifier une borne, utilisez le menu « Catalogue bornes ».
+              </p>
             </div>
             <div className="grid gap-2 sm:grid-cols-2">
-              {BORNES_CATALOGUE.map((b) => (
+              {(bornesQuery.data ?? []).map((b) => (
                 <label key={b.id} className="grid grid-cols-[3rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-lg border border-dashboard-line bg-dashboard-raised/50 p-3">
-                  <img src={b.img} alt="" className="h-12 w-12 rounded-md bg-white object-contain p-1" />
+                  {borneImage(b) ? (
+                    <img src={borneImage(b)!} alt="" className="h-12 w-12 rounded-md bg-white object-contain p-1" />
+                  ) : (
+                    <span className="h-12 w-12 rounded-md bg-dashboard-line" />
+                  )}
                   <span className="min-w-0">
                     <span className="block truncate text-sm font-semibold">{b.nom}</span>
                     <span className="block text-xs text-dashboard-muted">{b.puissance} · {b.phase}</span>
@@ -135,14 +142,9 @@ function TarifsSitePage() {
                     min="0"
                     step="1"
                     placeholder="€ TTC"
-                    value={tarifs.bornes?.[b.id] ?? ""}
+                    value={prixBornes[b.id] ?? ""}
                     onChange={(event) =>
-                      setTarifs((a) => {
-                        const bornes = { ...(a.bornes ?? {}) };
-                        if (event.target.value === "") delete bornes[b.id];
-                        else bornes[b.id] = Number(event.target.value);
-                        return { ...a, bornes };
-                      })
+                      setPrixBornes((a) => ({ ...a, [b.id]: event.target.value }))
                     }
                   />
                 </label>
