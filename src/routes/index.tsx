@@ -254,7 +254,7 @@ function Index() {
               <div className="mb-7 grid gap-3 sm:mb-14 sm:flex sm:flex-wrap sm:gap-5">
                 <Link
                   to="/demande"
-                  className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-8 py-4 font-bold text-slate-900 shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
+                  className="flex items-center gap-3 rounded-full bg-emerald-600 px-8 py-4 font-bold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700"
                 >
                   Demander un devis
                   <ArrowRight className="h-5 w-5" />

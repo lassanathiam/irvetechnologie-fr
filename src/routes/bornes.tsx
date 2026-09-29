@@ -53,7 +53,7 @@ function Bornes() {
               search={{ borne: b.id }}
               className="group flex flex-col items-center gap-3 rounded-2xl border border-border bg-card/70 p-6 transition hover:border-primary hover:bg-card"
             >
-              <div className="flex h-32 w-32 items-center justify-center rounded-xl border border-border bg-premium-night/60 p-3">
+              <div className="flex h-32 w-32 items-center justify-center rounded-xl border border-border bg-slate-100 p-3">
                 <img
                   src={b.img}
                   alt={`Borne ${b.nom}`}

@@ -295,7 +295,7 @@ function Demande() {
                 alt={`Borne ${borneChoisie.nom}`}
                 width={64}
                 height={64}
-                className="h-16 w-16 rounded-lg border border-border bg-premium-night/60 object-contain p-1"
+                className="h-16 w-16 rounded-lg border border-border bg-slate-100 object-contain p-1"
               />
               <div>
                 <p className="text-sm font-semibold text-foreground">Borne sélectionnée : {borneChoisie.nom}</p>

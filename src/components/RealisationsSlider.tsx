@@ -60,14 +60,14 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
             <p className="truncate font-display text-xl font-bold sm:text-2xl">{current.title}</p>
             <p className="mt-1 truncate text-sm text-premium-foreground/70">{[current.place, current.spec].filter(Boolean).join(" · ")}</p>
           </div>
-          <span className="shrink-0 text-xs font-semibold text-premium-energy">{i + 1} / {safeItems.length}</span>
+          <span className="shrink-0 text-xs font-semibold text-emerald-300">{i + 1} / {safeItems.length}</span>
         </div>
         {safeItems.length > 1 && (
           <>
-            <button type="button" onClick={() => go(-1)} aria-label="Réalisation précédente" className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center border border-premium-foreground/30 bg-premium-night/75 text-premium-foreground backdrop-blur transition hover:border-premium-energy hover:text-premium-energy">
+            <button type="button" onClick={() => go(-1)} aria-label="Réalisation précédente" className="absolute left-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-slate-900/70 text-white backdrop-blur transition hover:border-emerald-300 hover:text-emerald-300">
               <ChevronLeft className="h-5 w-5" />
             </button>
-            <button type="button" onClick={() => go(1)} aria-label="Réalisation suivante" className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center border border-premium-foreground/30 bg-premium-night/75 text-premium-foreground backdrop-blur transition hover:border-premium-energy hover:text-premium-energy">
+            <button type="button" onClick={() => go(1)} aria-label="Réalisation suivante" className="absolute right-3 top-1/2 grid h-11 w-11 -translate-y-1/2 place-items-center rounded-full border border-white/40 bg-slate-900/70 text-white backdrop-blur transition hover:border-emerald-300 hover:text-emerald-300">
               <ChevronRight className="h-5 w-5" />
             </button>
           </>

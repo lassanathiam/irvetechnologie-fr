@@ -390,23 +390,27 @@
   background: linear-gradient(100deg, oklch(0.72 0.17 213) 0%, var(--premium-blue) 52%, var(--premium-energy) 100%);
 }
 
+/* Direction « Élégance professionnelle » : site public clair, doux et épuré.
+   Fond gris très clair, cartes blanches, un seul accent vert émeraude, boutons unis. */
 .public-premium {
-  --background: oklch(0.17 0.04 250);
-  --foreground: oklch(0.96 0.008 245);
-  --card: oklch(0.22 0.04 250);
-  --card-foreground: oklch(0.96 0.008 245);
-  --popover: oklch(0.22 0.04 250);
-  --popover-foreground: oklch(0.96 0.008 245);
-  --primary: oklch(0.78 0.17 174);
+  --background: oklch(0.979 0.005 247);
+  --foreground: oklch(0.3 0.03 255);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.3 0.03 255);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.3 0.03 255);
+  --primary: oklch(0.596 0.127 163);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.26 0.035 250);
-  --secondary-foreground: oklch(0.94 0.008 245);
-  --muted: oklch(0.25 0.03 250);
-  --muted-foreground: oklch(0.74 0.025 245);
-  --border: oklch(0.34 0.04 250);
-  --input: oklch(0.23 0.035 250);
-  --ring: oklch(0.78 0.17 174);
-  color-scheme: dark;
+  --secondary: oklch(0.955 0.01 240);
+  --secondary-foreground: oklch(0.3 0.03 255);
+  --muted: oklch(0.955 0.01 240);
+  --muted-foreground: oklch(0.554 0.02 250);
+  --accent: oklch(0.596 0.127 163);
+  --accent-foreground: oklch(0.99 0 0);
+  --border: oklch(0.92 0.01 247);
+  --input: oklch(0.985 0.003 240);
+  --ring: oklch(0.596 0.127 163);
+  color-scheme: light;
   font-family: "Figtree", system-ui, sans-serif;
 }
 
@@ -414,6 +418,22 @@
 .public-premium h2,
 .public-premium h3 {
   font-family: "Outfit", system-ui, sans-serif;
+}
+
+/* Le site public garde des cartes douces et arrondies (l'espace pro garde ses 8px). */
+.public-premium .rounded-sm { border-radius: 0.75rem; }
+.public-premium .rounded-md { border-radius: 0.875rem; }
+
+/* Boutons unis : le dégradé cyan-vert devient un aplat émeraude sur le site public. */
+.public-premium .hero-grad {
+  background: var(--primary);
+}
+
+/* Fin des libellés « machine à écrire » : texte normal, lisible, sans majuscules forcées. */
+.public-premium .text-mono {
+  font-family: inherit;
+  text-transform: none;
+  letter-spacing: 0;
 }
 
 .premium-hero-veil {

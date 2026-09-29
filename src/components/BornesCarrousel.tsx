@@ -133,7 +133,7 @@ export function BornesCarrousel() {
               draggable={false}
               className="group flex w-44 shrink-0 flex-col items-center gap-3 rounded-xl border border-border bg-card/70 p-4 transition hover:border-primary hover:bg-card"
             >
-              <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-premium-night/60 p-2">
+              <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-slate-100 p-2">
                 <img src={p.img} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} draggable={false} className="h-full w-full object-contain" />
               </div>
               <span className="text-center text-sm font-semibold text-foreground">{p.nom}</span>
