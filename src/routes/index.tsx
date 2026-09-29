@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useRef, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown, BadgeCheck } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -160,7 +160,11 @@ function Index() {
   const [avisSent, setAvisSent] = useState(false);
   const [avisBusy, setAvisBusy] = useState(false);
   const [avisError, setAvisError] = useState<string | null>(null);
-  const [homeCompact, setHomeCompact] = useState(true);
+  const homeCompact = false;
+  useEffect(() => {
+    const h = window.location.hash.slice(1);
+    if (h) setTimeout(() => document.getElementById(h)?.scrollIntoView({ behavior: "smooth" }), 150);
+  }, []);
   const [aideProfil, setAideProfil] = useState<"maison" | "copro-individuelle" | "copro-partagee" | "pro">("maison");
   const PRIX_DEMARRAGE_TTC = 1290;
   const PRIX_DEMARRAGE_HT = Math.round((PRIX_DEMARRAGE_TTC / 1.2) * 100) / 100;
@@ -581,20 +585,6 @@ function Index() {
       </>
       )}
 
-      <section className="border-t border-border bg-white/[0.03] py-5">
-        <div className="mx-auto max-w-7xl px-6 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-muted-foreground">
-            Mode compact actif pour raccourcir la page d&apos;accueil.
-          </p>
-          <button
-            type="button"
-            onClick={() => setHomeCompact((v) => !v)}
-            className="text-mono text-xs px-4 py-2 rounded-full border border-border bg-background hover:border-primary hover:text-primary transition"
-          >
-            {homeCompact ? "Afficher toutes les sections" : "Revenir au mode compact"}
-          </button>
-        </div>
-      </section>
 
       {!homeCompact && (
       <>
