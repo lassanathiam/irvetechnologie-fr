@@ -23,6 +23,7 @@ import {
   Sparkles,
   ShieldCheck,
   X,
+  Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -46,6 +47,7 @@ const LINKS: LienPro[] = [
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
   { to: "/tarifs-site", label: "Tarifs du site", icon: Euro },
+  { to: "/bornes-catalogue", label: "Catalogue bornes", icon: Zap },
   { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
   { to: "/documents", label: "Documents", icon: FolderLock },
   { to: "/realisations", label: "Photos", icon: Images },

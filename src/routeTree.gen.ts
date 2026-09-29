@@ -26,6 +26,7 @@ import { Route as FactureClientTokenRouteImport } from './routes/facture-client.
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
+import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
@@ -51,6 +52,7 @@ import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authe
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
+import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -136,6 +138,12 @@ const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
   path: '/tarifs-site',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedBornesCatalogueRoute =
+  AuthenticatedBornesCatalogueRouteImport.update({
+    id: '/bornes-catalogue',
+    path: '/bornes-catalogue',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedRealisationsIndexRoute =
   AuthenticatedRealisationsIndexRouteImport.update({
     id: '/realisations/',
@@ -280,6 +288,12 @@ const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   path: '/api/public/photo/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBornePhotoSplatRoute =
+  ApiPublicBornePhotoSplatRouteImport.update({
+    id: '/api/public/borne-photo/$',
+    path: '/api/public/borne-photo/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -290,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
@@ -320,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -333,6 +349,7 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
@@ -363,6 +380,7 @@ export interface FileRoutesByTo {
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -378,6 +396,7 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
@@ -408,6 +427,7 @@ export interface FileRoutesById {
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -423,6 +443,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
@@ -453,6 +474,7 @@ export interface FileRouteTypes {
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -466,6 +488,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
@@ -496,6 +519,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/rapports'
     | '/realisations'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -510,6 +534,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/_authenticated/bornes-catalogue'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
     | '/devis-client/$token'
@@ -540,6 +565,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -562,6 +588,7 @@ export interface RootRouteChildren {
   RapportDonneurTokenRoute: typeof RapportDonneurTokenRoute
   RdvTokenRoute: typeof RdvTokenRoute
   SignerTokenRoute: typeof SignerTokenRoute
+  ApiPublicBornePhotoSplatRoute: typeof ApiPublicBornePhotoSplatRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -686,6 +713,13 @@ declare module '@tanstack/react-router' {
       path: '/tarifs-site'
       fullPath: '/tarifs-site'
       preLoaderRoute: typeof AuthenticatedTarifsSiteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/bornes-catalogue': {
+      id: '/_authenticated/bornes-catalogue'
+      path: '/bornes-catalogue'
+      fullPath: '/bornes-catalogue'
+      preLoaderRoute: typeof AuthenticatedBornesCatalogueRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/realisations/': {
@@ -863,10 +897,18 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/borne-photo/$': {
+      id: '/api/public/borne-photo/$'
+      path: '/api/public/borne-photo/$'
+      fullPath: '/api/public/borne-photo/$'
+      preLoaderRoute: typeof ApiPublicBornePhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBornesCatalogueRoute: typeof AuthenticatedBornesCatalogueRoute
   AuthenticatedTarifsSiteRoute: typeof AuthenticatedTarifsSiteRoute
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
@@ -893,6 +935,7 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBornesCatalogueRoute: AuthenticatedBornesCatalogueRoute,
   AuthenticatedTarifsSiteRoute: AuthenticatedTarifsSiteRoute,
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
   AuthenticatedAttachementsBordereauRoute:
@@ -940,6 +983,7 @@ const rootRouteChildren: RootRouteChildren = {
   RapportDonneurTokenRoute: RapportDonneurTokenRoute,
   RdvTokenRoute: RdvTokenRoute,
   SignerTokenRoute: SignerTokenRoute,
+  ApiPublicBornePhotoSplatRoute: ApiPublicBornePhotoSplatRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,

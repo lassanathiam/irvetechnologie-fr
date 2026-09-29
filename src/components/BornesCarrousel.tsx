@@ -1,18 +1,18 @@
 import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
-import { BORNES_CATALOGUE, BORNES_VEDETTES } from "@/lib/bornes-catalogue";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { getTarifsSitePublic } from "@/lib/tarifs-site.functions";
+import { borneImage, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
 
 /**
  * Carrousel des bornes : défilement automatique (diaporama) + glisser-déplacer
  * à la souris ou au doigt, avec flèches et pause au survol.
  */
 export function BornesCarrousel() {
-  const getTarifs = useServerFn(getTarifsSitePublic);
-  const prix = useQuery({ queryKey: ["tarifs-site-publics"], queryFn: () => getTarifs() }).data?.bornes;
+  const lister = useServerFn(listBornesPubliques);
+  const bornes = useQuery({ queryKey: ["bornes-publiques"], queryFn: () => lister() }).data ?? bornesStatiquesEnSecours();
+  const vedettes = bornes.filter((b) => b.vedette);
   const trackRef = useRef<HTMLDivElement>(null);
   const [grabbing, setGrabbing] = useState(false);
   const dragging = useRef(false);
@@ -130,25 +130,27 @@ export function BornesCarrousel() {
           }`}
           style={{ touchAction: "pan-y" }}
         >
-          {[...BORNES_VEDETTES, ...BORNES_VEDETTES].map((p, i) => (
+          {[...vedettes, ...vedettes].map((p, i) => (
             <Link
               key={i}
               to="/demande"
-              search={{ borne: p.id }}
+              search={{ borne: p.slug }}
               draggable={false}
               className="group flex w-44 shrink-0 flex-col items-center gap-3 rounded-xl border border-border bg-card/70 p-4 transition hover:border-primary hover:bg-card"
             >
               <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-slate-100 p-2">
-                <img src={p.img} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} draggable={false} className="h-full w-full object-contain" />
+                {borneImage(p) && (
+                  <img src={borneImage(p)!} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} draggable={false} className="h-full w-full object-contain" />
+                )}
               </div>
               <span className="text-center text-sm font-semibold text-foreground">{p.nom}</span>
               <span className="hero-grad rounded-full px-3 py-1 text-xs font-semibold text-primary-foreground">
                 {p.puissance} · {p.phase}
               </span>
               <span className="text-center text-xs text-muted-foreground">{p.atout}</span>
-              {prix?.[p.id] != null && (
+              {p.prix_ttc != null && (
                 <span className="text-center text-xs">
-                  Dès <span className="font-semibold text-primary">{prix[p.id].toLocaleString("fr-FR")} € TTC</span>
+                  Dès <span className="font-semibold text-primary">{p.prix_ttc.toLocaleString("fr-FR")} € TTC</span>
                 </span>
               )}
               {p.badge && (
@@ -169,7 +171,7 @@ export function BornesCarrousel() {
           to="/bornes"
           className="inline-flex items-center gap-2 rounded-full border border-primary/50 bg-primary/10 px-5 py-2.5 text-sm font-semibold text-primary transition hover:bg-primary/20"
         >
-          Plus de choix — voir les {BORNES_CATALOGUE.length} modèles
+          Plus de choix — voir les {bornes.length} modèles
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
