@@ -93,6 +93,8 @@ export const supprimerDocument = createServerFn({ method: "POST" })
 
 const signataireSchema = z.object({
   role: z.enum(["irve", "client"]),
+  cle: z.string().trim().max(40).nullable().optional(),
+  token: z.string().uuid().nullable().optional(),
   nom: z.string().trim().max(120),
   email: z.string().trim().max(200).nullable().optional(),
   telephone: z.string().trim().max(40).nullable().optional(),
@@ -108,14 +110,24 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         nbPages: z.number().int().min(1).max(500),
         zones: z.array(z.any()).max(200),
-        signataires: z.array(signataireSchema).max(2),
+        signataires: z.array(signataireSchema).max(10),
         dossier: z.string().max(40).optional(),
       })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const zones = normaliserZones(data.zones, data.nbPages);
-    const patch: Record<string, unknown> = { zones, signataires: data.signataires };
+    // Chaque signataire client reçoit une cle stable et son lien individuel.
+    let n = 0;
+    const signataires = data.signataires.map((s) => {
+      if (s.role !== "client") return s;
+      n += 1;
+      return { ...s, cle: s.cle || `c${n}`, token: s.token || crypto.randomUUID() };
+    });
+    const premierClient = signataires.find((s) => s.role === "client")?.cle ?? null;
+    const zones = normaliserZones(data.zones, data.nbPages).map((zn) =>
+      zn.role === "client" && !zn.signataire ? { ...zn, signataire: premierClient } : zn,
+    );
+    const patch: Record<string, unknown> = { zones, signataires };
     if (data.dossier) patch["dossier"] = data.dossier;
     const { error } = await context.supabase.from("documents").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
@@ -210,23 +222,33 @@ export const annulerSignature = createServerFn({ method: "POST" })
 
 export const envoyerPourSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), email: z.string().trim().max(200).optional().nullable(), envoyerEmail: z.boolean() }).parse(d))
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), email: z.string().trim().max(200).optional().nullable(), envoyerEmail: z.boolean(), cle: z.string().max(40).optional().nullable() }).parse(d),
+  )
   .handler(async ({ data, context }) => {
     const { data: doc, error } = await context.supabase.from("documents").select("id, nom, zones, public_token, statut, signataires").eq("id", data.id).maybeSingle();
     if (error || !doc) throw new Error("Document introuvable.");
     const zones = (doc.zones as unknown as Zone[]) ?? [];
     if (!zones.some((z) => z.role === "client")) throw new Error("Ajoutez au moins une zone « client » avant l'envoi.");
+    const sigs = (doc.signataires as unknown as Signataire[]) ?? [];
+    // Signataire visé : celui demandé, sinon le premier client pas encore signé.
+    const cible =
+      sigs.find((s) => s.role === "client" && data.cle && s.cle === data.cle) ??
+      sigs.find((s) => s.role === "client" && !s.signed_at) ??
+      sigs.find((s) => s.role === "client");
+    if (!cible) throw new Error("Renseignez d'abord le nom du signataire (étape 2).");
+    if (cible.signed_at) throw new Error(`${cible.nom || "Ce signataire"} a déjà signé.`);
     const base = process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr";
-    const lien = `${base}/signer/${doc.public_token}`;
+    const lien = `${base}/signer/${cible.token ?? doc.public_token}`;
+    const destinataire = data.email || cible.email || null;
     let emailEnvoye = false;
     let emailErreur: string | null = null;
-    if (data.envoyerEmail && data.email) {
+    if (data.envoyerEmail && destinataire) {
       try {
         const { sendTemplateEmail } = await import("./email-templates/send-email");
-        const client = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
-        await sendTemplateEmail("document-a-signer", data.email, {
-          idempotencyKey: `document-${doc.id}-${Date.now()}`,
-          templateData: { nom: client?.nom ?? "", document: doc.nom, lien },
+        await sendTemplateEmail("document-a-signer", destinataire, {
+          idempotencyKey: `document-${doc.id}-${cible.cle ?? "c"}-${Date.now()}`,
+          templateData: { nom: cible.nom ?? "", document: doc.nom, lien },
         });
         emailEnvoye = true;
       } catch (e) {
@@ -236,19 +258,37 @@ export const envoyerPourSignature = createServerFn({ method: "POST" })
     if (doc.statut === "brouillon" || doc.statut === "refuse") {
       await context.supabase
         .from("documents")
-        .update({ statut: "envoye", sent_at: new Date().toISOString(), sent_to: data.email ?? null, refused_at: null, refus_motif: null })
+        .update({ statut: "envoye", sent_at: new Date().toISOString(), sent_to: destinataire, refused_at: null, refus_motif: null })
         .eq("id", doc.id);
     }
-    return { lien, emailEnvoye, emailErreur };
+    return { lien, emailEnvoye, emailErreur, nom: cible.nom ?? "" };
   });
 
 // ---------- Page publique ----------
 
+/** Retrouve le document et le signataire à partir d'un lien (token signataire ou token du document). */
+async function trouverParLien(token: string) {
+  const sb = await admin();
+  // Lien individuel d'un signataire ?
+  const { data: parSignataire } = await sb
+    .from("documents")
+    .select("*")
+    .contains("signataires", JSON.stringify([{ token }]))
+    .maybeSingle();
+  if (parSignataire) {
+    const sig = ((parSignataire.signataires as unknown as Signataire[]) ?? []).find((s) => s.token === token) ?? null;
+    return { sb, doc: parSignataire, signataire: sig };
+  }
+  const { data: doc } = await sb.from("documents").select("*").eq("public_token", token).maybeSingle();
+  if (!doc) return { sb, doc: null, signataire: null };
+  const sig = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client") ?? null;
+  return { sb, doc, signataire: sig };
+}
+
 export const getDocumentPublic = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => tokenSchema.parse(d))
   .handler(async ({ data }) => {
-    const sb = await admin();
-    const { data: doc } = await sb.from("documents").select("*").eq("public_token", data.token).maybeSingle();
+    const { sb, doc, signataire } = await trouverParLien(data.token);
     if (!doc || doc.statut === "brouillon") throw new Error("Ce lien de signature n'est plus valide.");
     const { data: url } = await sb.storage.from("documents").createSignedUrl(doc.storage_path, 3600);
     const now = new Date().toISOString();
@@ -258,13 +298,18 @@ export const getDocumentPublic = createServerFn({ method: "GET" })
         .update({ viewed_at: doc.viewed_at ?? now, view_count: Number(doc.view_count ?? 0) + 1, statut: doc.statut === "envoye" ? "consulte" : doc.statut })
         .eq("id", doc.id);
     }
-    const client = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
+    const sigs = (doc.signataires as unknown as Signataire[]) ?? [];
+    const cle = signataire?.cle ?? null;
+    const zones = ((doc.zones as unknown as Zone[]) ?? []).filter((z) => z.role === "client" && (!cle || !z.signataire || z.signataire === cle));
+    const enAttente = sigs.filter((s) => s.role === "client" && !s.signed_at && s.cle !== cle).map((s) => s.nom || "un autre signataire");
     return {
       nom: doc.nom,
       statut: doc.statut,
       url: url?.signedUrl ?? null,
-      zones: ((doc.zones as unknown as Zone[]) ?? []).filter((z) => z.role === "client"),
-      clientNom: client?.nom ?? "",
+      zones,
+      clientNom: signataire?.nom ?? "",
+      dejaSigne: Boolean(signataire?.signed_at),
+      enAttente,
       signedAt: doc.signed_at,
     };
   });
@@ -274,23 +319,32 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
     tokenSchema.extend({ signature: dataUrl, paraphe: dataUrl.nullable().optional(), nom: z.string().trim().min(2).max(120) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const sb = await admin();
-    const { data: doc } = await sb.from("documents").select("*").eq("public_token", data.token).maybeSingle();
+    const { sb, doc, signataire } = await trouverParLien(data.token);
     if (!doc || doc.statut === "brouillon") throw new Error("Ce lien de signature n'est plus valide.");
-    if (doc.statut === "signe") return { ok: true, already: true };
+    if (doc.statut === "signe") return { ok: true, already: true, enAttente: [] as string[] };
+    if (signataire?.signed_at) return { ok: true, already: true, enAttente: [] as string[] };
     const { getRequestIP } = await import("@tanstack/react-start/server");
     const ip = getRequestIP({ xForwardedFor: true }) ?? null;
     const { appliquerSignatures, ajouterPreuve, sha256 } = await import("./documents.server");
     const zones = (doc.zones as unknown as Zone[]) ?? [];
+    const cle = signataire?.cle ?? null;
     const pdf = await telecharger(doc.storage_path);
     const hash = doc.hash ?? (await sha256(pdf));
     const now = new Date();
-    let out = await appliquerSignatures(pdf, zones, "client", { signature: data.signature, paraphe: data.paraphe, nom: data.nom }, now);
-    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).filter((s) => s.role !== "client");
-    const ancien = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
-    sigs.push({ role: "client", nom: data.nom, email: ancien?.email ?? doc.sent_to, signed_at: now.toISOString(), ip });
-    out = await ajouterPreuve(out, doc.nom, sigs, hash);
-    const path = `signes/${doc.id}-final-${now.getTime()}.pdf`;
+    // On n'incruste que les zones de CE signataire.
+    let out = await appliquerSignatures(pdf, zones, "client", { signature: data.signature, paraphe: data.paraphe, nom: data.nom }, now, cle);
+    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).map((s) =>
+      s.role === "client" && (cle ? s.cle === cle : true) && !s.signed_at
+        ? { ...s, nom: data.nom, email: s.email ?? doc.sent_to, signed_at: now.toISOString(), ip }
+        : s,
+    );
+    if (!sigs.some((s) => s.role === "client")) {
+      sigs.push({ role: "client", cle: cle ?? "c1", nom: data.nom, email: doc.sent_to, signed_at: now.toISOString(), ip });
+    }
+    const restants = sigs.filter((s) => s.role === "client" && !s.signed_at).map((s) => s.nom || "un autre signataire");
+    const termine = restants.length === 0;
+    if (termine) out = await ajouterPreuve(out, doc.nom, sigs, hash);
+    const path = `signes/${doc.id}-${cle ?? "c"}-${now.getTime()}.pdf`;
     await deposer(path, out);
     await sb
       .from("documents")
@@ -299,19 +353,21 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
         original_path: doc.original_path ?? doc.storage_path,
         hash,
         signataires: sigs as never,
-        statut: "signe",
-        signed_at: now.toISOString(),
+        statut: termine ? "signe" : doc.statut === "brouillon" ? "envoye" : doc.statut,
+        signed_at: termine ? now.toISOString() : doc.signed_at,
       })
       .eq("id", doc.id);
     const { creerNotification } = await import("./notifications.server");
     await creerNotification(sb, {
       type: "document_signe",
-      titre: `Document signé : ${doc.nom}`,
-      message: `${data.nom} a signé le document en ligne.`,
+      titre: termine ? `Document signé : ${doc.nom}` : `Signature reçue : ${doc.nom}`,
+      message: termine
+        ? `${data.nom} a signé le document en ligne. Toutes les signatures sont réunies.`
+        : `${data.nom} a signé. En attente de : ${restants.join(", ")}.`,
       lien: `/documents/${doc.id}`,
       meta: { document_id: doc.id },
     });
-    return { ok: true, already: false };
+    return { ok: true, already: false, enAttente: restants };
   });
 
 export const refuserDocumentPublic = createServerFn({ method: "POST" })

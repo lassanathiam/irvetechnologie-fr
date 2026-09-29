@@ -2,14 +2,14 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, CircleAlert, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp, Undo2, UserRound } from "lucide-react";
+import { ArrowLeft, Check, CircleAlert, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Plus, Send, Sparkles, Stamp, Trash2, Undo2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { PdfZones, detecterZones, ouvrirPdf } from "@/components/PdfZones";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DOSSIERS, STATUT_DOC, ZONE_LABEL, nouvelleZone, type Role, type Signataire, type Zone, type ZoneType } from "@/lib/documents";
+import { DOSSIERS, STATUT_DOC, ZONE_LABEL, couleurSignataire, nouvelleZone, type Signataire, type Zone, type ZoneType } from "@/lib/documents";
 import { annulerSignature, enregistrerPreparation, envoyerPourSignature, getDocument, remplacerFichierDocument, signerIrve } from "@/lib/documents.functions";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -52,6 +52,12 @@ async function cachetIrve(): Promise<string> {
   return c.toDataURL("image/png");
 }
 
+type LienPret = { nom: string; lien: string; telephone?: string | null };
+
+function nouveauClient(index: number): Signataire {
+  return { role: "client", cle: `c${index + 1}`, nom: "", email: "", telephone: "" };
+}
+
 function DocumentPage() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
@@ -66,16 +72,16 @@ function DocumentPage() {
 
   const [pdf, setPdf] = useState<Awaited<ReturnType<typeof ouvrirPdf>> | null>(null);
   const [zones, setZones] = useState<Zone[]>([]);
-  const [client, setClient] = useState<Signataire>({ role: "client", nom: "", email: "", telephone: "" });
+  const [clients, setClients] = useState<Signataire[]>([nouveauClient(0)]);
   const [irveNom, setIrveNom] = useState("Lassana Thiam");
   const [paraphes, setParaphes] = useState(true);
   const [page, setPage] = useState(0);
-  const [role, setRole] = useState<Role>("client");
+  const [cible, setCible] = useState<string>("c1"); // "irve" ou cle d'un client
   const [busy, setBusy] = useState<string | null>(null);
   const [signe, setSigne] = useState(false);
   const [sig, setSig] = useState<string | null>(null);
   const [par, setPar] = useState<string | null>(null);
-  const [lien, setLien] = useState<string | null>(null);
+  const [liens, setLiens] = useState<LienPret[]>([]);
   const [envoiAuto, setEnvoiAuto] = useState(true);
   const [mode, setMode] = useState<"seul" | "deux" | "client" | null>(null);
 
@@ -116,8 +122,8 @@ function DocumentPage() {
     const zs = (data.doc.zones as unknown as Zone[]) ?? [];
     setZones(zs);
     const s = (data.doc.signataires as unknown as Signataire[]) ?? [];
-    const c = s.find((x) => x.role === "client");
-    if (c) setClient({ ...c, email: c.email ?? "", telephone: c.telephone ?? "" });
+    const cs = s.filter((x) => x.role === "client");
+    if (cs.length) setClients(cs.map((c, i) => ({ ...c, cle: c.cle ?? `c${i + 1}`, email: c.email ?? "", telephone: c.telephone ?? "" })));
     const i = s.find((x) => x.role === "irve");
     if (i?.nom) setIrveNom(i.nom);
     setMode((m) => m ?? (zs.some((z) => z.role === "client") || i?.signed_at ? "deux" : "seul"));
@@ -136,7 +142,7 @@ function DocumentPage() {
       setSigne(false);
       setSig(null);
       setPar(null);
-      setLien(null);
+      setLiens([]);
       await qc.invalidateQueries({ queryKey: ["document", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Annulation impossible");
@@ -155,8 +161,18 @@ function DocumentPage() {
 
   const nbPagesDoc = () => pdf?.numPages ?? Math.max(1, ...zones.map((z) => z.page + 1));
 
-  const enregistrer = async (z: Zone[] = zones) => {
-    await sauver({ data: { id, nbPages: nbPagesDoc(), zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
+  const enregistrer = async (z: Zone[] = zones, cls: Signataire[] = clients) => {
+    await sauver({
+      data: {
+        id,
+        nbPages: nbPagesDoc(),
+        zones: z,
+        signataires: [
+          { role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) },
+          ...cls.map((c, i) => ({ ...c, cle: c.cle ?? `c${i + 1}` })),
+        ],
+      },
+    });
   };
 
   const detecter = async () => {
@@ -164,44 +180,81 @@ function DocumentPage() {
     setBusy("detect");
     try {
       const z = await detecterZones(pdf, paraphes);
-      setZones(z);
+      // Les zones détectées « client » sont rattachées au premier signataire.
+      setZones(z.map((zn) => (zn.role === "client" ? { ...zn, signataire: zn.signataire ?? clients[0]?.cle ?? "c1" } : zn)));
       toast.success(`${z.length} emplacement(s) proposé(s). Déplacez-les si besoin.`);
     } finally {
       setBusy(null);
     }
   };
 
-  const ajouter = (type: ZoneType) => setZones([...zones, nouvelleZone(type, role, page, 0.4, 0.45)]);
+  const ajouter = (type: ZoneType) => {
+    const roleIrve = cible === "irve";
+    setZones([...zones, nouvelleZone(type, roleIrve ? "irve" : "client", page, 0.4, 0.45, roleIrve ? null : cible)]);
+  };
+
+  const majClient = (i: number, patch: Partial<Signataire>) => setClients(clients.map((c, k) => (k === i ? { ...c, ...patch } : c)));
+  const ajouterClient = () => {
+    const c = nouveauClient(clients.length);
+    setClients([...clients, c]);
+    setCible(c.cle!);
+  };
+  const retirerClient = (i: number) => {
+    const c = clients[i];
+    if (!c || clients.length <= 1) return;
+    if (zones.some((z) => z.signataire === c.cle) && !window.confirm(`Retirer ${c.nom || "ce signataire"} ? Ses zones seront supprimées du document.`)) return;
+    setZones(zones.filter((z) => z.signataire !== c.cle));
+    const reste = clients.filter((_, k) => k !== i);
+    setClients(reste);
+    if (cible === c.cle) setCible(reste[0]?.cle ?? "c1");
+  };
+
+  /** Envoie le lien à un signataire précis (email facultatif). */
+  const envoyerA = async (c: Signataire, avecEmail: boolean): Promise<LienPret | null> => {
+    const r = await envoyer({ data: { id, email: c.email || null, envoyerEmail: avecEmail && Boolean(c.email), cle: c.cle ?? null } });
+    return { nom: c.nom || "Signataire", lien: r.lien, telephone: c.telephone };
+  };
 
   const faireSigner = async (cachet?: string) => {
     const sig2 = cachet ?? sig;
     if (!sig2) return toast.error("Dessinez votre signature.");
     const aDeux = mode === "deux";
+    const clientsAvecZones = clients.filter((c) => zones.some((z) => z.role === "client" && (z.signataire ?? clients[0]?.cle ?? "c1") === c.cle));
     if (aDeux) {
-      if (client.nom.trim().length < 2) return toast.error("Étape 2 : indiquez le nom du client qui signera après vous.");
-      if (envoiAuto && !client.email) return toast.error("Étape 2 : indiquez l'email du client (ou décochez l'envoi automatique).");
+      for (const c of clientsAvecZones.length ? clientsAvecZones : clients.slice(0, 1)) {
+        if (c.nom.trim().length < 2) return toast.error("Étape 2 : indiquez le nom de chaque signataire qui signera après vous.");
+        if (envoiAuto && !c.email) return toast.error(`Étape 2 : indiquez l'email de ${c.nom || "chaque signataire"} (ou décochez l'envoi automatique).`);
+      }
     }
     setBusy("sign");
     try {
       const derniere = nbPagesDoc() - 1;
       let z = zones;
-      // Je signe seul : on retire les zones du client pour finaliser directement.
+      // Je signe seul : on retire les zones des clients pour finaliser directement.
       if (!aDeux) z = z.filter((x) => x.role !== "client");
-      // À deux sans zone client : on place la signature du client en bas de la dernière page.
-      if (aDeux && !z.some((x) => x.role === "client")) z = [...z, nouvelleZone("signature", "client", derniere, 0.6, 0.8)];
+      // À plusieurs sans zone client : on place la signature du premier client en bas de la dernière page.
+      if (aDeux && !z.some((x) => x.role === "client")) z = [...z, nouvelleZone("signature", "client", derniere, 0.6, 0.8, clients[0]?.cle ?? "c1")];
       // Pas de zone IRVE : emplacement automatique en bas de la dernière page.
       if (!z.some((x) => x.role === "irve")) z = [...z, nouvelleZone("signature", "irve", derniere, 0.08, 0.8)];
       setZones(z);
       await enregistrer(z);
       const r = await signer({ data: { id, signature: sig2, paraphe: cachet ?? par, nom: irveNom } });
-      if (!r.termine && aDeux && envoiAuto && client.email) {
-        const e = await envoyer({ data: { id, email: client.email, envoyerEmail: true } });
-        setLien(e.lien);
-        e.emailEnvoye ? toast.success("Signé et envoyé au client par email.") : toast.error("Signé. L'email n'a pas pu partir : utilisez le lien (SMS / WhatsApp).");
-      } else if (!r.termine && aDeux) {
-        const e = await envoyer({ data: { id, email: client.email || null, envoyerEmail: false } });
-        setLien(e.lien);
-        toast.success("Signé. Le lien pour le client est prêt : copiez-le ou envoyez-le par WhatsApp.");
+      if (!r.termine && aDeux) {
+        const destinataires = clientsAvecZones.length ? clientsAvecZones : clients.slice(0, 1);
+        const prets: LienPret[] = [];
+        let echecs = 0;
+        for (const c of destinataires) {
+          try {
+            const l = await envoyerA(c, envoiAuto);
+            if (l) prets.push(l);
+            if (envoiAuto && !c.email) echecs++;
+          } catch {
+            echecs++;
+          }
+        }
+        setLiens(prets);
+        if (envoiAuto && echecs === 0) toast.success("Signé et envoyé à chaque signataire par email.");
+        else toast.success("Signé. Les liens sont prêts ci-dessous : copiez-les ou envoyez-les par WhatsApp.");
       } else {
         toast.success("Document signé et terminé. Téléchargez-le ou laissez-le dans la plateforme.");
       }
@@ -217,14 +270,27 @@ function DocumentPage() {
   };
 
   const faireEnvoyer = async (avecEmail: boolean) => {
-    if (avecEmail && !client.email) return toast.error("Indiquez l'email du client.");
-    if (!client.nom) return toast.error("Indiquez le nom du client.");
+    const cibles = clients.filter((c) => !c.signed_at);
+    if (!cibles.length) return toast.error("Tous les signataires ont déjà signé.");
+    for (const c of cibles) {
+      if (c.nom.trim().length < 2) return toast.error("Indiquez le nom de chaque signataire (étape 2).");
+      if (avecEmail && !c.email) return toast.error(`Indiquez l'email de ${c.nom || "chaque signataire"}, ou utilisez « Créer un lien ».`);
+    }
     setBusy("send");
     try {
       await enregistrer();
-      const r = await envoyer({ data: { id, email: client.email || null, envoyerEmail: avecEmail } });
-      setLien(r.lien);
-      if (avecEmail) r.emailEnvoye ? toast.success("Email envoyé au client.") : toast.error("L'email n'a pas pu partir. Utilisez le lien ci-dessous (SMS / WhatsApp).");
+      const prets: LienPret[] = [];
+      let echecs = 0;
+      for (const c of cibles) {
+        try {
+          const l = await envoyerA(c, avecEmail);
+          if (l) prets.push(l);
+        } catch {
+          echecs++;
+        }
+      }
+      setLiens(prets);
+      if (avecEmail) echecs === 0 ? toast.success("Email envoyé à chaque signataire.") : toast.error("Une partie des emails n'a pas pu partir. Utilisez les liens ci-dessous (SMS / WhatsApp).");
       qc.invalidateQueries({ queryKey: ["document", id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Erreur");
@@ -233,9 +299,11 @@ function DocumentPage() {
     }
   };
 
-  const nbZones = (r: Role) => zones.filter((z) => z.role === r).length;
-  const clientPret = nbZones("client") === 0 || client.nom.trim().length > 1;
-  const preparationPrete = zones.length > 0 && clientPret;
+  // Les zones sans signataire (anciens documents) appartiennent au premier signataire.
+  const cleDe = (z: Zone) => z.signataire ?? clients[0]?.cle ?? "c1";
+  const nbZones = (cle: string | null) => zones.filter((z) => (cle === "irve" ? z.role === "irve" : z.role === "client" && cleDe(z) === cle)).length;
+  const clientsPrets = clients.every((c) => !zones.some((z) => z.role === "client" && cleDe(z) === c.cle) || c.nom.trim().length > 1);
+  const preparationPrete = zones.length > 0 && clientsPrets;
 
   return (
     <ProShell>
@@ -259,18 +327,25 @@ function DocumentPage() {
               <p className="font-semibold">Aperçu du document</p>
               <div className="flex flex-wrap gap-3 text-muted-foreground">
                 <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-sky-500" />IRVE Technologie ({nbZones("irve")})</span>
-                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" />Client ({nbZones("client")})</span>
+                {clients.map((c, i) => (
+                  <span key={c.cle ?? i}><span className={`mr-1 inline-block h-2.5 w-2.5 rounded-sm ${couleurSignataire(i).pastille}`} />{c.nom || `Signataire ${i + 1}`} ({nbZones(c.cle ?? `c${i + 1}`)})</span>
+                ))}
               </div>
             </div>
             {preparationPdf && (
               <p className="mb-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs"><Loader2 className="h-4 w-4 animate-spin" /> Document protégé détecté : préparation d'une copie signable…</p>
             )}
-            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
+            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} clients={clients} />
           </div>
 
           {verrouille && (
             <aside className="space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 lg:sticky lg:top-20 lg:self-start">
               <p className="flex items-center gap-2 text-sm font-bold text-emerald-600"><Check className="h-5 w-5" /> Document signé et terminé</p>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                {signataires.filter((s) => s.signed_at).map((s, i) => (
+                  <li key={i}>✓ {s.role === "irve" ? "IRVE Technologie" : s.nom} — {new Date(s.signed_at!).toLocaleString("fr-FR")}</li>
+                ))}
+              </ul>
               <Button className="w-full" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger le document signé</Button>
               <Button className="w-full" variant="outline" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
               <Button className="w-full" variant="ghost" size="sm" onClick={faireAnnuler} disabled={busy === "annuler"}>
@@ -285,7 +360,7 @@ function DocumentPage() {
                 <div>
                   <p className="text-sm font-bold">{preparationPrete ? "Prêt à signer ou envoyer" : "Préparation à terminer"}</p>
                   <p className="text-xs text-muted-foreground">
-                    {zones.length === 0 ? "Ajoutez au moins une zone sur le document." : !clientPret ? "Indiquez le nom du client." : `${zones.length} zone${zones.length > 1 ? "s" : ""} placée${zones.length > 1 ? "s" : ""}.`}
+                    {zones.length === 0 ? "Ajoutez au moins une zone sur le document." : !clientsPrets ? "Indiquez le nom de chaque signataire." : `${zones.length} zone${zones.length > 1 ? "s" : ""} placée${zones.length > 1 ? "s" : ""}.`}
                   </p>
                 </div>
               </div>
@@ -301,17 +376,19 @@ function DocumentPage() {
                 </Button>
                 <p className="border-t border-border pt-2 text-xs font-semibold">Placer rapidement une signature (page choisie ci-dessous)</p>
                 <div className="grid grid-cols-2 gap-2">
-                  <Button type="button" size="sm" disabled={!pdf} className="bg-amber-500 text-white hover:bg-amber-600" onClick={() => setZones([...zones, nouvelleZone("signature", "client", page, 0.6, 0.78)])}>
-                    <PenLine className="h-3.5 w-3.5" /> Signature client
-                  </Button>
                   <Button type="button" size="sm" disabled={!pdf || irveSigne} className="bg-sky-500 text-white hover:bg-sky-600" onClick={() => setZones([...zones, nouvelleZone("signature", "irve", page, 0.08, 0.78)])}>
                     <Stamp className="h-3.5 w-3.5" /> Signature IRVE
                   </Button>
+                  {clients.map((c, i) => (
+                    <Button key={c.cle ?? i} type="button" size="sm" disabled={!pdf} className={`${couleurSignataire(i).pastille} text-white hover:opacity-90`} onClick={() => setZones([...zones, nouvelleZone("signature", "client", page, 0.6, 0.78, c.cle ?? `c${i + 1}`)])}>
+                      <PenLine className="h-3.5 w-3.5" /> {c.nom || `Signataire ${i + 1}`}
+                    </Button>
+                  ))}
                 </div>
                 <p className="border-t border-border pt-2 text-xs font-semibold">Ajouter une autre zone</p>
                 <div className="flex gap-2 text-xs">
-                  <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="h-8 flex-1 rounded border border-input bg-background px-2">
-                    <option value="client">Pour le client</option>
+                  <select value={cible} onChange={(e) => setCible(e.target.value)} className="h-8 flex-1 rounded border border-input bg-background px-2">
+                    {clients.map((c, i) => <option key={c.cle ?? i} value={c.cle ?? `c${i + 1}`}>Pour {c.nom || `le signataire ${i + 1}`}</option>)}
                     <option value="irve">Pour IRVE Technologie</option>
                   </select>
                   <select value={page} onChange={(e) => setPage(Number(e.target.value))} className="h-8 rounded border border-input bg-background px-2">
@@ -329,15 +406,23 @@ function DocumentPage() {
               <section className="space-y-3 rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
-                  <div><h2 className="text-sm font-bold">Identifier les signataires</h2><p className="text-xs text-muted-foreground">Les coordonnées servent à envoyer le lien au client.</p></div>
+                  <div><h2 className="text-sm font-bold">Identifier les signataires</h2><p className="text-xs text-muted-foreground">Les coordonnées servent à envoyer le lien à chacun.</p></div>
                 </div>
                 <label className="space-y-1 text-xs font-semibold">Signataire IRVE Technologie<Input value={irveNom} onChange={(e) => setIrveNom(e.target.value)} placeholder="Nom et prénom" /></label>
-                <div className="space-y-2 rounded-md border border-border p-3">
-                  <p className="flex items-center gap-2 text-xs font-bold"><UserRound className="h-4 w-4" /> Client</p>
-                  <label className="space-y-1 text-xs font-semibold">Nom complet<Input value={client.nom} onChange={(e) => setClient({ ...client, nom: e.target.value })} placeholder="Nom et prénom du client" /></label>
-                  <label className="space-y-1 text-xs font-semibold">Adresse email<Input type="email" value={client.email ?? ""} onChange={(e) => setClient({ ...client, email: e.target.value })} placeholder="client@exemple.fr" /></label>
-                  <label className="space-y-1 text-xs font-semibold">Téléphone<Input value={client.telephone ?? ""} onChange={(e) => setClient({ ...client, telephone: e.target.value })} placeholder="06 00 00 00 00" /></label>
-                </div>
+                {clients.map((c, i) => (
+                  <div key={c.cle ?? i} className="space-y-2 rounded-md border border-border p-3">
+                    <div className="flex items-center justify-between">
+                      <p className="flex items-center gap-2 text-xs font-bold"><span className={`h-2.5 w-2.5 rounded-sm ${couleurSignataire(i).pastille}`} /><UserRound className="h-4 w-4" /> Signataire {i + 1}{c.signed_at ? " — ✓ a signé" : ""}</p>
+                      {clients.length > 1 && !c.signed_at && (
+                        <Button type="button" size="icon" variant="ghost" className="h-7 w-7" aria-label="Retirer ce signataire" onClick={() => retirerClient(i)}><Trash2 className="h-4 w-4" /></Button>
+                      )}
+                    </div>
+                    <label className="space-y-1 text-xs font-semibold">Nom complet<Input value={c.nom} onChange={(e) => majClient(i, { nom: e.target.value })} placeholder="Nom et prénom" /></label>
+                    <label className="space-y-1 text-xs font-semibold">Adresse email<Input type="email" value={c.email ?? ""} onChange={(e) => majClient(i, { email: e.target.value })} placeholder="client@exemple.fr" /></label>
+                    <label className="space-y-1 text-xs font-semibold">Téléphone<Input value={c.telephone ?? ""} onChange={(e) => majClient(i, { telephone: e.target.value })} placeholder="06 00 00 00 00" /></label>
+                  </div>
+                ))}
+                <Button variant="secondary" className="w-full" onClick={ajouterClient}><Plus className="h-4 w-4" /> Ajouter un signataire</Button>
                 <Button variant="outline" className="w-full" onClick={() => enregistrer().then(() => toast.success("Préparation enregistrée"))}>Enregistrer sans envoyer</Button>
               </section>
 
@@ -350,8 +435,8 @@ function DocumentPage() {
                   <div className="grid gap-2">
                     {([
                       ["seul", "Je signe seul", "Je signe, puis je télécharge ou je laisse dans la plateforme."],
-                      ["deux", "Je signe, puis le client", "Je signe d'abord, le client reçoit ensuite le document à signer."],
-                      ["client", "Seul le client signe", "J'envoie le document au client sans le signer."],
+                      ["deux", clients.length > 1 ? `Je signe, puis les ${clients.length} signataires` : "Je signe, puis le client", "Je signe d'abord, chaque signataire reçoit ensuite son lien."],
+                      ["client", clients.length > 1 ? "Seuls les signataires signent" : "Seul le client signe", "J'envoie le document sans le signer."],
                     ] as const).map(([k, t, d]) => (
                       <button key={k} type="button" onClick={() => setMode(k)} className={`rounded-md border p-2.5 text-left text-xs transition ${mode === k ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-border hover:bg-muted"}`}>
                         <span className="block font-bold">{mode === k ? "● " : "○ "}{t}</span>
@@ -366,12 +451,11 @@ function DocumentPage() {
                     {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre signature sera posée en bas de la dernière page.</p>}
                     {mode === "deux" && (
                       <>
-                        {nbZones("client") === 0 && <p className="text-xs text-muted-foreground">Aucune zone client placée : sa signature sera prévue en bas de la dernière page.</p>}
-                        {client.nom.trim().length < 2 && <p className="text-xs font-semibold text-amber-600">Renseignez d'abord le nom du client (étape 2).</p>}
-                        <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email juste après ma signature</label>
+                        {nbZones(clients[0]?.cle ?? "c1") === 0 && <p className="text-xs text-muted-foreground">Aucune zone client placée : une signature sera prévue en bas de la dernière page.</p>}
+                        <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement à chaque signataire par email juste après ma signature</label>
                       </>
                     )}
-                    {mode === "seul" && nbZones("client") > 0 && <p className="text-xs text-muted-foreground">Les zones du client seront retirées : le document sera terminé dès votre signature.</p>}
+                    {mode === "seul" && zones.some((z) => z.role === "client") && <p className="text-xs text-muted-foreground">Les zones des signataires seront retirées : le document sera terminé dès votre signature.</p>}
                     {signe ? (
                       <div className="space-y-2">
                         <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
@@ -394,12 +478,19 @@ function DocumentPage() {
                     )}
                   </div>
                 )}
-                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — en attente de la signature du client :</p>}
-                {(mode === "client" || irveSigne) && (
+                {irveSigne && (
+                  <div className="space-y-1 rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">
+                    <p>✓ Signé par IRVE Technologie.</p>
+                    {signataires.filter((s) => s.role === "client").map((s, i) => (
+                      <p key={i}>{s.signed_at ? `✓ ${s.nom} a signé le ${new Date(s.signed_at).toLocaleString("fr-FR")}` : `… En attente de ${s.nom || "du client"}`}</p>
+                    ))}
+                  </div>
+                )}
+                {(mode === "client" || irveSigne) && clients.some((c) => !c.signed_at) && (
                   <>
-                    {nbZones("client") === 0 && <p className="text-xs text-amber-600">Placez au moins une zone « Signature client » (étape 1).</p>}
-                    <Button className="w-full" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
-                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Send className="h-4 w-4" /> Créer un lien (SMS / WhatsApp)</Button>
+                    {nbZones(clients[0]?.cle ?? "c1") === 0 && <p className="text-xs text-amber-600">Placez au moins une zone « Signature » pour un signataire (étape 1).</p>}
+                    <Button className="w-full" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer par email{clients.filter((c) => !c.signed_at).length > 1 ? " à chaque signataire" : " au client"}</Button>
+                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete}><Send className="h-4 w-4" /> Créer les liens (SMS / WhatsApp)</Button>
                   </>
                 )}
                 <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger (signé par IRVE)" : "Télécharger"}</Button>
@@ -411,14 +502,19 @@ function DocumentPage() {
                     {busy === "annuler" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />} Annuler ma signature (erreur)
                   </Button>
                 )}
-                {lien && (
-                  <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
-                    <p className="font-bold">Lien de signature prêt</p>
-                    <p className="break-all text-muted-foreground">{lien}</p>
-                    <div className="flex gap-2">
-                      <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(lien).then(() => toast.success("Lien copié"))}><Copy className="h-3 w-3" /> Copier</Button>
-                      <Button size="sm" variant="outline" asChild><a target="_blank" rel="noreferrer" href={`https://wa.me/${(client.telephone ?? "").replace(/\D/g, "").replace(/^0/, "33")}?text=${encodeURIComponent(`Bonjour, merci de signer ce document : ${lien}`)}`}><MessageCircle className="h-3 w-3" /> WhatsApp</a></Button>
-                    </div>
+                {liens.length > 0 && (
+                  <div className="space-y-3 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
+                    <p className="font-bold">Liens de signature prêts</p>
+                    {liens.map((l, i) => (
+                      <div key={i} className="space-y-1 border-t border-primary/20 pt-2 first:border-0 first:pt-0">
+                        <p className="font-semibold">{l.nom}</p>
+                        <p className="break-all text-muted-foreground">{l.lien}</p>
+                        <div className="flex gap-2">
+                          <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(l.lien).then(() => toast.success("Lien copié"))}><Copy className="h-3 w-3" /> Copier</Button>
+                          <Button size="sm" variant="outline" asChild><a target="_blank" rel="noreferrer" href={`https://wa.me/${(l.telephone ?? "").replace(/\D/g, "").replace(/^0/, "33")}?text=${encodeURIComponent(`Bonjour, merci de signer ce document : ${l.lien}`)}`}><MessageCircle className="h-3 w-3" /> WhatsApp</a></Button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </section>

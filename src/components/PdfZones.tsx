@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
-import { nouvelleZone, ZONE_LABEL, type Role, type Zone, type ZoneType } from "@/lib/documents";
+import { couleurSignataire, nouvelleZone, ZONE_LABEL, type Role, type Signataire, type Zone, type ZoneType } from "@/lib/documents";
 import { Button } from "@/components/ui/button";
 
 type PdfDoc = { numPages: number; getPage: (n: number) => Promise<any> };
@@ -98,12 +98,14 @@ export function PdfZones({
   onChange,
   roleVisible,
   remplissage,
+  clients,
 }: {
   pdf: PdfDoc | null;
   zones: Zone[];
   onChange?: (z: Zone[]) => void;
   roleVisible?: Role;
   remplissage?: Partial<Record<ZoneType, string>>;
+  clients?: Signataire[];
 }) {
   const drag = useRef<{ id: string; sx: number; sy: number; zx: number; zy: number; w: number; h: number } | null>(null);
   if (!pdf)
@@ -123,12 +125,15 @@ export function PdfZones({
               .filter((z) => z.page === p && (!roleVisible || z.role === roleVisible))
               .map((z) => {
                 const client = z.role === "client";
+                const idx = client ? Math.max(0, (clients ?? []).findIndex((c, i) => (c.cle ?? `c${i + 1}`) === (z.signataire ?? "c1"))) : 0;
+                const coul = couleurSignataire(idx);
+                const nomClient = client ? (clients ?? [])[idx]?.nom || `Signataire ${idx + 1}` : "IRVE";
                 const val = remplissage?.[z.type];
                 return (
                   <div
                     key={z.id}
                     className={`absolute flex touch-none select-none items-center justify-center rounded-sm border-2 border-dashed text-[10px] font-bold ${
-                      client ? "border-amber-500 bg-amber-300/30 text-amber-900" : "border-sky-600 bg-sky-300/30 text-sky-900"
+                      client ? `${coul.bord} ${coul.fond} ${coul.txt}` : "border-sky-600 bg-sky-300/30 text-sky-900"
                     } ${onChange ? "cursor-move" : ""}`}
                     style={{ left: `${z.x * 100}%`, top: `${z.y * 100}%`, width: `${z.w * 100}%`, height: `${z.h * 100}%` }}
                     onPointerDown={(e) => {
@@ -149,7 +154,7 @@ export function PdfZones({
                     {val && val.startsWith("data:") ? (
                       <img src={val} alt="" className="max-h-full max-w-full object-contain" />
                     ) : (
-                      <span className="truncate px-1">{val || `${ZONE_LABEL[z.type]} · ${client ? "Client" : "IRVE"}`}</span>
+                      <span className="truncate px-1">{val || `${ZONE_LABEL[z.type]} · ${client ? nomClient : "IRVE"}`}</span>
                     )}
                     {onChange && (
                       <Button

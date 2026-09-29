@@ -49,6 +49,7 @@ function SignerPage() {
 
   const aParaphe = data.zones.some((z) => z.type === "paraphe");
   const signe = data.statut === "signe";
+  const dejaSigne = data.dejaSigne && !signe;
 
   const valider = async () => {
     setMsg(null);
@@ -96,6 +97,11 @@ function SignerPage() {
               <p className="flex items-center gap-2 font-bold text-emerald-700"><CheckCircle2 className="h-5 w-5" /> Document signé</p>
               {data.signedAt && <p className="text-sm">Le {new Date(data.signedAt).toLocaleString("fr-FR")}</p>}
               <Button className="w-full" onClick={telecharger}><Download className="h-4 w-4" /> Télécharger le PDF signé</Button>
+            </div>
+          ) : dejaSigne ? (
+            <div className="space-y-3 rounded-lg bg-white p-4">
+              <p className="flex items-center gap-2 font-bold text-emerald-700"><CheckCircle2 className="h-5 w-5" /> Merci, votre signature est enregistrée</p>
+              {data.enAttente.length > 0 && <p className="text-sm text-slate-600">Le document sera définitif quand {data.enAttente.join(", ")} aura signé. Vous pourrez alors le télécharger ici.</p>}
             </div>
           ) : data.statut === "refuse" ? (
             <div className="rounded-lg bg-white p-4 text-sm">Vous avez refusé ce document.</div>
