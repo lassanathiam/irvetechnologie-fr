@@ -319,23 +319,33 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
     tokenSchema.extend({ signature: dataUrl, paraphe: dataUrl.nullable().optional(), nom: z.string().trim().min(2).max(120) }).parse(d),
   )
   .handler(async ({ data }) => {
-    const sb = await admin();
-    const { data: doc } = await sb.from("documents").select("*").eq("public_token", data.token).maybeSingle();
+    const { sb, doc, signataire } = await trouverParLien(data.token);
     if (!doc || doc.statut === "brouillon") throw new Error("Ce lien de signature n'est plus valide.");
-    if (doc.statut === "signe") return { ok: true, already: true };
+    if (doc.statut === "signe") return { ok: true, already: true, enAttente: [] as string[] };
+    if (signataire?.signed_at) return { ok: true, already: true, enAttente: [] as string[] };
     const { getRequestIP } = await import("@tanstack/react-start/server");
     const ip = getRequestIP({ xForwardedFor: true }) ?? null;
-    const { appliquerSignatures, ajouterPreuve, sha256 } = await import("./documents.server");
+    const { appliquerSignatures, ajouterPreuve, ajouterPreuve: _p, sha256 } = await import("./documents.server");
+    void _p;
     const zones = (doc.zones as unknown as Zone[]) ?? [];
+    const cle = signataire?.cle ?? null;
     const pdf = await telecharger(doc.storage_path);
     const hash = doc.hash ?? (await sha256(pdf));
     const now = new Date();
-    let out = await appliquerSignatures(pdf, zones, "client", { signature: data.signature, paraphe: data.paraphe, nom: data.nom }, now);
-    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).filter((s) => s.role !== "client");
-    const ancien = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
-    sigs.push({ role: "client", nom: data.nom, email: ancien?.email ?? doc.sent_to, signed_at: now.toISOString(), ip });
-    out = await ajouterPreuve(out, doc.nom, sigs, hash);
-    const path = `signes/${doc.id}-final-${now.getTime()}.pdf`;
+    // On n'incruste que les zones de CE signataire.
+    let out = await appliquerSignatures(pdf, zones, "client", { signature: data.signature, paraphe: data.paraphe, nom: data.nom }, now, cle);
+    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).map((s) =>
+      s.role === "client" && (cle ? s.cle === cle : true) && !s.signed_at
+        ? { ...s, nom: data.nom, email: s.email ?? doc.sent_to, signed_at: now.toISOString(), ip }
+        : s,
+    );
+    if (!sigs.some((s) => s.role === "client")) {
+      sigs.push({ role: "client", cle: cle ?? "c1", nom: data.nom, email: doc.sent_to, signed_at: now.toISOString(), ip });
+    }
+    const restants = sigs.filter((s) => s.role === "client" && !s.signed_at).map((s) => s.nom || "un autre signataire");
+    const termine = restants.length === 0;
+    if (termine) out = await ajouterPreuve(out, doc.nom, sigs, hash);
+    const path = `signes/${doc.id}-${cle ?? "c"}-${now.getTime()}.pdf`;
     await deposer(path, out);
     await sb
       .from("documents")
@@ -344,19 +354,21 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
         original_path: doc.original_path ?? doc.storage_path,
         hash,
         signataires: sigs as never,
-        statut: "signe",
-        signed_at: now.toISOString(),
+        statut: termine ? "signe" : doc.statut === "brouillon" ? "envoye" : doc.statut,
+        signed_at: termine ? now.toISOString() : doc.signed_at,
       })
       .eq("id", doc.id);
     const { creerNotification } = await import("./notifications.server");
     await creerNotification(sb, {
       type: "document_signe",
-      titre: `Document signé : ${doc.nom}`,
-      message: `${data.nom} a signé le document en ligne.`,
+      titre: termine ? `Document signé : ${doc.nom}` : `Signature reçue : ${doc.nom}`,
+      message: termine
+        ? `${data.nom} a signé le document en ligne. Toutes les signatures sont réunies.`
+        : `${data.nom} a signé. En attente de : ${restants.join(", ")}.`,
       lien: `/documents/${doc.id}`,
       meta: { document_id: doc.id },
     });
-    return { ok: true, already: false };
+    return { ok: true, already: false, enAttente: restants };
   });
 
 export const refuserDocumentPublic = createServerFn({ method: "POST" })
