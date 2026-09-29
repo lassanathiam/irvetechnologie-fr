@@ -10,7 +10,8 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DOSSIERS, STATUT_DOC, ZONE_LABEL, nouvelleZone, type Role, type Signataire, type Zone, type ZoneType } from "@/lib/documents";
-import { enregistrerPreparation, envoyerPourSignature, getDocument, signerIrve } from "@/lib/documents.functions";
+import { enregistrerPreparation, envoyerPourSignature, getDocument, remplacerFichierDocument, signerIrve } from "@/lib/documents.functions";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/documents/$id")({
   head: () => ({
@@ -58,6 +59,8 @@ function DocumentPage() {
   const sauver = useServerFn(enregistrerPreparation);
   const signer = useServerFn(signerIrve);
   const envoyer = useServerFn(envoyerPourSignature);
+  const remplacer = useServerFn(remplacerFichierDocument);
+  const [preparationPdf, setPreparationPdf] = useState(false);
   const { data, isLoading, error } = useQuery({ queryKey: ["document", id], queryFn: () => lire({ data: { id } }) });
 
   const [pdf, setPdf] = useState<Awaited<ReturnType<typeof ouvrirPdf>> | null>(null);
@@ -114,6 +117,10 @@ function DocumentPage() {
     if (c) setClient({ ...c, email: c.email ?? "", telephone: c.telephone ?? "" });
     const i = s.find((x) => x.role === "irve");
     if (i?.nom) setIrveNom(i.nom);
+    return () => {
+      annule = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
   if (isLoading) return <ProShell><p className="p-6">Chargement…</p></ProShell>;
