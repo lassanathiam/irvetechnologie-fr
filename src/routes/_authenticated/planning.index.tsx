@@ -500,8 +500,14 @@ function PlanningPage() {
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
 
   const toutes = list.data ?? [];
+  /** Clôturé = rangé à la main, facturé, ou terminé + rapport/retour complet + validé (automatique). */
   const estArchiveLogique = (r: (typeof toutes)[number]) =>
-    Boolean(r.archive) || r.statut_facturation === "facture" || r.statut_facturation === "paye";
+    Boolean(r.archive) ||
+    r.statut_facturation === "facture" ||
+    r.statut_facturation === "paye" ||
+    (Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise") &&
+      Boolean(r.retour_complete_at) &&
+      Boolean(r.chantier_valide));
   const nbArchives = toutes.filter(estArchiveLogique).length;
   const rows = useMemo(
     () =>
@@ -1300,18 +1306,18 @@ function PlanningPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-sm">
             <strong>{aRanger.length}</strong> chantier{aRanger.length > 1 ? "s" : ""} terminé
-            {aRanger.length > 1 ? "s" : ""} peu{aRanger.length > 1 ? "vent" : "t"} être rangé
-            {aRanger.length > 1 ? "s" : ""} dans les archives.
+            {aRanger.length > 1 ? "s" : ""} peu{aRanger.length > 1 ? "vent" : "t"} être clôturé
+            {aRanger.length > 1 ? "s" : ""} dans « Chantiers clôturés ».
           </p>
           <button
             type="button"
             onClick={() => {
-              if (!window.confirm(`Ranger ${aRanger.length} chantier(s) terminé(s) ?`)) return;
+              if (!window.confirm(`Clôturer ${aRanger.length} chantier(s) terminé(s) ?`)) return;
               for (const r of aRanger) archiver.mutate({ id: r.id, archive: true });
             }}
             className="text-mono text-xs px-4 py-2.5 rounded-sm border border-border hover:border-primary inline-flex items-center gap-2"
           >
-            <Archive className="h-4 w-4" /> Tout ranger
+            <Archive className="h-4 w-4" /> Tout clôturer
           </button>
         </div>
       )}
@@ -1520,20 +1526,28 @@ function PlanningPage() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
-              {vueArchives ? "Chantiers archivés" : "Rendez-vous programmés"}
+              {vueArchives ? "Chantiers clôturés" : "Rendez-vous programmés"}
             </h2>
-            <button
-              type="button"
-              onClick={() => setVueArchives((v) => !v)}
-              className={`ml-auto text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
-                vueArchives
-                  ? "border-primary text-primary"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
-            >
-              <Archive className="h-3.5 w-3.5" />
-              {vueArchives ? "Revenir aux chantiers actifs" : `Archives (${nbArchives})`}
-            </button>
+            <div className="ml-auto inline-flex rounded-full border border-border p-0.5">
+              <button
+                type="button"
+                onClick={() => setVueArchives(false)}
+                className={`text-[11px] px-3 py-1.5 rounded-full transition ${
+                  !vueArchives ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                En cours ({toutes.length - nbArchives})
+              </button>
+              <button
+                type="button"
+                onClick={() => setVueArchives(true)}
+                className={`text-[11px] px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition ${
+                  vueArchives ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                <Archive className="h-3.5 w-3.5" /> Chantiers clôturés ({nbArchives})
+              </button>
+            </div>
           </div>
 
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
@@ -2102,7 +2116,7 @@ function PlanningPage() {
                                     </>
                                   ) : (
                                     <>
-                                      <Archive className="h-3 w-3" /> Archiver
+                                      <Archive className="h-3 w-3" /> Clôturer le chantier
                                     </>
                                   )}
                                 </button>
