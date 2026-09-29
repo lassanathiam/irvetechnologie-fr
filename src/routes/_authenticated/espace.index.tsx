@@ -163,14 +163,14 @@ function EspacePage() {
               label="Encaissé"
               value={euro(q.data?.stats.caEncaisse ?? 0)}
               hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
-              to="/facturation"
+              to="/factures"
             />
             <SimpleStat
               icon={Receipt}
               label="À encaisser"
               value={euro(q.data?.stats.caEnAttente ?? 0)}
               hint={`${q.data?.aEncaisser?.length ?? 0} facture(s) validée(s)${q.data?.brouillonsNb ? ` · ${q.data.brouillonsNb} brouillon(s) à valider` : ""}`}
-              to="/factures"
+              to="/facturation"
             />
             <SimpleStat
               icon={CalendarClock}
