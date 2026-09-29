@@ -318,7 +318,7 @@ export function InterventionsMap({
   }
 
   return (
-    <div className="relative rounded-sm overflow-hidden border border-border">
+    <div className="relative w-full min-w-0 max-w-full overflow-hidden rounded-sm border border-border">
       <button
         type="button"
         onClick={maPosition}
@@ -326,7 +326,7 @@ export function InterventionsMap({
       >
         Ma position
       </button>
-      <div ref={el} style={{ height }} className="w-full bg-muted" />
+      <div ref={el} style={{ height }} className="w-full min-w-0 max-w-full bg-muted" />
     </div>
   );
 }
