@@ -30,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/tarifs-site")({
   component: TarifsSitePage,
 });
 
-const CHAMPS: { cle: keyof TarifsSite; titre: string; aide: string; suffixe: string }[] = [
+const CHAMPS: { cle: Exclude<keyof TarifsSite, "bornes">; titre: string; aide: string; suffixe: string }[] = [
   { cle: "installation_ttc", titre: "Installation d’une borne", aide: "Borne et pose standard, selon configuration.", suffixe: "€ TTC" },
   { cle: "maintenance_ttc", titre: "Entretien annuel", aide: "Contrôle préventif d’une borne.", suffixe: "€ TTC/an" },
   { cle: "depannage_ttc", titre: "Diagnostic / dépannage", aide: "Prix de départ, hors pièces et trajet exceptionnel.", suffixe: "€ TTC" },
