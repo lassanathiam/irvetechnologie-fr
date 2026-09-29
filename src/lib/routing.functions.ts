@@ -25,9 +25,28 @@ export type Itineraire = {
   coords: [number, number][];
   /** true si le réseau routier n'a pas répondu (aucun calcul à vol d'oiseau). */
   estime: boolean;
-  /** Durée en évitant les péages (null si indisponible). */
-  sansPeage: { km: number; minutes: number } | null;
+  /** Trajet en évitant les péages (null si indisponible). */
+  sansPeage: { km: number; minutes: number; coords: [number, number][] } | null;
+  /** Kilomètres sur autoroute à péage du trajet principal. */
+  kmPeage: number;
+  /** Prix estimé des péages (véhicule léger, classe 1), en euros TTC. */
+  prixPeage: number;
 };
+
+/** Tarif moyen des autoroutes françaises, classe 1 (véhicule léger / utilitaire < 2 m). */
+const TARIF_PEAGE_EUR_KM = 0.115;
+
+type OsrmStep = { distance: number; intersections?: { classes?: string[] }[] };
+const kmSurPeage = (legs: { steps?: OsrmStep[] }[] | undefined) =>
+  (legs ?? []).reduce(
+    (sum, l) =>
+      sum +
+      (l.steps ?? []).reduce(
+        (s2, st) => s2 + (st.intersections?.some((i) => i.classes?.includes("toll")) ? st.distance : 0),
+        0,
+      ),
+    0,
+  ) / 1000;
 
 const lonlat = (p: { lat: number; lng: number }) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`;
 
@@ -55,29 +74,107 @@ const baseSchema = z
   .optional()
   .nullable();
 
-/** Itinéraire routier réel entre le point de départ du technicien et un chantier. */
+/** Décode une polyline Valhalla (précision 6) en [lat, lng]. */
+function decodePolyline6(str: string): [number, number][] {
+  const out: [number, number][] = [];
+  let i = 0, lat = 0, lng = 0;
+  while (i < str.length) {
+    for (const k of [0, 1]) {
+      let shift = 0, result = 0, b: number;
+      do {
+        b = str.charCodeAt(i++) - 63;
+        result |= (b & 0x1f) << shift;
+        shift += 5;
+      } while (b >= 0x20);
+      const d = result & 1 ? ~(result >> 1) : result >> 1;
+      if (k === 0) lat += d; else lng += d;
+    }
+    out.push([lat / 1e6, lng / 1e6]);
+  }
+  return out;
+}
+
+type ValhallaTrip = {
+  summary: { length: number; time: number };
+  legs: { shape: string; maneuvers: { length: number; toll?: boolean }[] }[];
+};
+
+/** Itinéraire Valhalla (OpenStreetMap), qui distingue les tronçons à péage. */
+async function valhalla(
+  from: { lat: number; lng: number },
+  to: { lat: number; lng: number },
+  sansPeage: boolean,
+): Promise<ValhallaTrip | null> {
+  try {
+    const res = await fetch("https://valhalla1.openstreetmap.de/route", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      signal: AbortSignal.timeout(12000),
+      body: JSON.stringify({
+        locations: [
+          { lat: from.lat, lon: from.lng },
+          { lat: to.lat, lon: to.lng },
+        ],
+        costing: "auto",
+        costing_options: { auto: sansPeage ? { use_tolls: 0, exclude_tolls: true } : { use_tolls: 1 } },
+        units: "kilometers",
+        directions_options: { units: "kilometers" },
+      }),
+    });
+    if (!res.ok) return null;
+    const j = (await res.json()) as { trip?: ValhallaTrip };
+    return j.trip ?? null;
+  } catch {
+    return null;
+  }
+}
+
+const coordsTrip = (t: ValhallaTrip) => t.legs.flatMap((l) => decodePolyline6(l.shape));
+
+/** Itinéraire routier réel (avec et sans péage) entre le départ du technicien et un chantier. */
 export const itineraireDepuisBase = createServerFn({ method: "POST" })
   .inputValidator((d) =>
     z.object({ lat: z.number(), lng: z.number(), base: baseSchema }).parse(d),
   )
   .handler(async ({ data }): Promise<Itineraire> => {
     const from = data.base ?? BASE;
-    const json = await osrm(
-      `/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson`,
+    const [avec, sans] = await Promise.all([valhalla(from, data, false), valhalla(from, data, true)]);
+    if (!avec) {
+      // Repli : réseau OSRM (sans détail des péages). Jamais de ligne à vol d'oiseau.
+      const json = await osrm(`/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson`);
+      const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
+      if (!route) return { km: 0, minutes: 0, coords: [], estime: true, sansPeage: null, kmPeage: 0, prixPeage: 0 };
+      return {
+        km: Math.round(route.distance / 100) / 10,
+        minutes: Math.round(route.duration / 60),
+        coords: toCoords(route.geometry),
+        estime: false,
+        sansPeage: null,
+        kmPeage: 0,
+        prixPeage: 0,
+      };
+    }
+    const kmPeage = Math.round(
+      avec.legs.reduce((s2, l) => s2 + l.maneuvers.reduce((s3, m) => s3 + (m.toll ? m.length : 0), 0), 0),
     );
-    const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
-    if (!route) return { km: 0, minutes: 0, coords: [], estime: true, sansPeage: null };
-    const alt = await osrm(`/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=false&exclude=toll`);
-    const r2 = (alt?.["routes"] as { distance: number; duration: number }[] | undefined)?.[0];
+    const diff = sans && Math.abs(sans.summary.time - avec.summary.time) > 60;
     return {
-      sansPeage: r2 ? { km: Math.round(r2.distance / 100) / 10, minutes: Math.round(r2.duration / 60) } : null,
-      km: Math.round(route.distance / 100) / 10,
-      minutes: Math.round(route.duration / 60),
-      coords: toCoords(route.geometry),
+      km: Math.round(avec.summary.length * 10) / 10,
+      minutes: Math.round(avec.summary.time / 60),
+      coords: coordsTrip(avec),
       estime: false,
+      kmPeage,
+      prixPeage: Math.round(kmPeage * TARIF_PEAGE_EUR_KM * 10) / 10,
+      sansPeage:
+        kmPeage > 0 && sans && diff
+          ? {
+              km: Math.round(sans.summary.length * 10) / 10,
+              minutes: Math.round(sans.summary.time / 60),
+              coords: coordsTrip(sans),
+            }
+          : null,
     };
   });
-
 
 export type TourneeReelle = {
   etapes: { id: string; ordre: number; km: number; minutes: number; label: string; sub?: string | null }[];
