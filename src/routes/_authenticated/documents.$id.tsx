@@ -127,6 +127,24 @@ function DocumentPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  const faireAnnuler = async () => {
+    if (!window.confirm("Annuler la signature ? Le document repartira du fichier d'origine, sans cachet ni signature.")) return;
+    setBusy("annuler");
+    try {
+      await annuler({ data: { id } });
+      toast.success("Signature annulée : le document est revenu à son état d'origine.");
+      setSigne(false);
+      setSig(null);
+      setPar(null);
+      setLien(null);
+      await qc.invalidateQueries({ queryKey: ["document", id] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Annulation impossible");
+    } finally {
+      setBusy(null);
+    }
+  };
+
   if (isLoading) return <ProShell><p className="p-6">Chargement…</p></ProShell>;
   if (error || !data) return <ProShell><p className="p-6 text-destructive">{error instanceof Error ? error.message : "Document introuvable"}</p></ProShell>;
   const doc = data.doc;
