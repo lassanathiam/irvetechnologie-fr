@@ -539,6 +539,20 @@ function PlanningPage() {
       ),
     [toutes],
   );
+  /** Intervenant choisi sur cet appareil (compte partagé). */
+  const [moiId, setMoiId] = useState<string | null>(null);
+  useEffect(() => {
+    setMoiId(window.localStorage.getItem("irve-intervenant"));
+  }, []);
+  const choisirMoi = (id: string | null) => {
+    setMoiId(id);
+    if (id) window.localStorage.setItem("irve-intervenant", id);
+    else window.localStorage.removeItem("irve-intervenant");
+    setActive(null);
+  };
+  const moi = TECHNICIENS.find((t) => t.id === moiId) ?? null;
+  const estPourMoi = (r: { technicien?: string | null }) =>
+    !moi || !r.technicien?.trim() || technicienByNom(r.technicien)?.id === moi.id;
   const chantiersDuJour = useMemo(() => {
     const maintenant = new Date();
     return toutes
@@ -547,15 +561,17 @@ function PlanningPage() {
         return (
           !estArchiveLogique(r) &&
           r.statut !== "annule" &&
+          estPourMoi(r) &&
           date.getFullYear() === maintenant.getFullYear() &&
           date.getMonth() === maintenant.getMonth() &&
           date.getDate() === maintenant.getDate()
         );
       })
       .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
-  }, [toutes]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toutes, moiId]);
   const missionTerrain =
-    chantiersDuJour.find((r) => r.id === active) ?? enCours[0] ?? chantiersDuJour[0] ?? null;
+    chantiersDuJour.find((r) => r.id === active) ?? enCours.filter(estPourMoi)[0] ?? chantiersDuJour[0] ?? null;
 
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
@@ -915,6 +931,18 @@ function PlanningPage() {
             {modeIntervention ? "Masquer" : "Ouvrir"}
           </Button>
         </div>
+
+        {modeIntervention && (
+          <div className="mx-auto mb-3 flex max-w-3xl flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-muted-foreground">Je suis :</span>
+            {TECHNICIENS.map((t) => (
+              <Button key={t.id} size="sm" variant={moiId === t.id ? "default" : "outline"} onClick={() => choisirMoi(t.id)}>
+                {t.nom.split(" ")[0]}
+              </Button>
+            ))}
+            <Button size="sm" variant={!moi ? "default" : "outline"} onClick={() => choisirMoi(null)}>Tous</Button>
+          </div>
+        )}
 
         {modeIntervention && (
           missionTerrain ? (
