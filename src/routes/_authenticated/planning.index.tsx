@@ -742,10 +742,14 @@ function PlanningPage() {
         data: {
           a: { lat: Number(paireA!.lat), lng: Number(paireA!.lng) },
           b: { lat: Number(paireB!.lat), lng: Number(paireB!.lng) },
-          base: { lat: depart.lat, lng: depart.lng },
+          base: { lat: departTrajet.lat, lng: departTrajet.lng },
         },
       }),
   });
+  const trajetChoisi =
+    itineraire.data && !avecPeage && itineraire.data.sansPeage
+      ? itineraire.data.sansPeage
+      : itineraire.data;
   const kmEconomises = comparaison.data
     ? Math.max(comparaison.data.kmSepares - comparaison.data.kmEnsemble, 0)
     : 0;
@@ -755,8 +759,10 @@ function PlanningPage() {
   /** Itinéraire routier réel base → chantier sélectionné. */
   const routeFn = useServerFn(itineraireDepuisBase);
   const activeRow = rows.find((r) => r.id === active && r.lat != null && r.lng != null);
+  const departTrajet = technicienByNom(activeRow?.technicien) ?? depart;
+  const [avecPeage, setAvecPeage] = useState(true);
   const itineraire = useQuery({
-    queryKey: ["itineraire", activeRow?.id, depart.id],
+    queryKey: ["itineraire", activeRow?.id, departTrajet.id, activeRow?.lat, activeRow?.lng],
     enabled: !!activeRow,
     staleTime: 30 * 60_000,
     queryFn: () =>
@@ -963,7 +969,7 @@ function PlanningPage() {
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
                     <h3 className="mt-2 truncate text-xl font-bold">{missionTerrain.client_nom}</h3>
-                    <p className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-slate-800 px-2 py-1 text-sm font-semibold text-slate-100"><Clock3 className="h-4 w-4" /> {new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} à {new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien}` : ""}</p>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
                   </div>
@@ -1421,7 +1427,7 @@ function PlanningPage() {
               onToggleSelect={basculerSelection}
               onAssign={(id, tech) => affecter.mutate({ id, technicien: tech })}
               lienCoords={comparaison.data?.entre.coords ?? null}
-              routeCoords={itineraire.data?.coords ?? null}
+              routeCoords={trajetChoisi?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
               visible={!modeIntervention || mobileSections.carte || !isMobile}
@@ -1437,14 +1443,22 @@ function PlanningPage() {
                   {itineraire.data.estime ? (
                     <>Itinéraire routier indisponible — ouvrez Waze</>
                   ) : (
-                    <>
-                      {depart.label} → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)} par autoroute (péages)
-                      {itineraire.data.sansPeage ? ` · sans péage : ${itineraire.data.sansPeage.km} km · ${dureeFr(itineraire.data.sansPeage.minutes)}` : ""}
-                    </>
+                    <span className="flex flex-wrap items-center gap-2">
+                      <span>Départ {departTrajet.nom.split(" ")[0]} ({departTrajet.label}) :</span>
+                      <button type="button" onClick={() => setAvecPeage(true)} className={`rounded-md border px-3 py-2 text-xs font-bold ${avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                        Avec péage · {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                        {itineraire.data.prixPeage > 0 ? ` · ≈ ${itineraire.data.prixPeage.toFixed(2).replace(".", ",")} €` : " · sans péage sur ce trajet"}
+                      </button>
+                      {itineraire.data.sansPeage && (
+                        <button type="button" onClick={() => setAvecPeage(false)} className={`rounded-md border px-3 py-2 text-xs font-bold ${!avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                          Sans péage · {itineraire.data.sansPeage.km} km · {dureeFr(itineraire.data.sansPeage.minutes)} · 0 €
+                        </button>
+                      )}
+                    </span>
                   )}
                   {activeRow && (
                     <a className="ml-2 underline" href={wazeLien(activeRow.adresse, activeRow.cp_ville, activeRow.lat, activeRow.lng)} target="_blank" rel="noreferrer">
-                      Prix des péages dans Waze
+                      Ouvrir dans Waze
                     </a>
                   )}
                 </span>

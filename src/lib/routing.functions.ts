@@ -25,9 +25,28 @@ export type Itineraire = {
   coords: [number, number][];
   /** true si le réseau routier n'a pas répondu (aucun calcul à vol d'oiseau). */
   estime: boolean;
-  /** Durée en évitant les péages (null si indisponible). */
-  sansPeage: { km: number; minutes: number } | null;
+  /** Trajet en évitant les péages (null si indisponible). */
+  sansPeage: { km: number; minutes: number; coords: [number, number][] } | null;
+  /** Kilomètres sur autoroute à péage du trajet principal. */
+  kmPeage: number;
+  /** Prix estimé des péages (véhicule léger, classe 1), en euros TTC. */
+  prixPeage: number;
 };
+
+/** Tarif moyen des autoroutes françaises, classe 1 (véhicule léger / utilitaire < 2 m). */
+const TARIF_PEAGE_EUR_KM = 0.115;
+
+type OsrmStep = { distance: number; intersections?: { classes?: string[] }[] };
+const kmSurPeage = (legs: { steps?: OsrmStep[] }[] | undefined) =>
+  (legs ?? []).reduce(
+    (sum, l) =>
+      sum +
+      (l.steps ?? []).reduce(
+        (s2, st) => s2 + (st.intersections?.some((i) => i.classes?.includes("toll")) ? st.distance : 0),
+        0,
+      ),
+    0,
+  ) / 1000;
 
 const lonlat = (p: { lat: number; lng: number }) => `${p.lng.toFixed(6)},${p.lat.toFixed(6)}`;
 
@@ -63,14 +82,19 @@ export const itineraireDepuisBase = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<Itineraire> => {
     const from = data.base ?? BASE;
     const json = await osrm(
-      `/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson`,
+      `/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson&steps=true`,
     );
-    const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
-    if (!route) return { km: 0, minutes: 0, coords: [], estime: true, sansPeage: null };
-    const alt = await osrm(`/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=false&exclude=toll`);
-    const r2 = (alt?.["routes"] as { distance: number; duration: number }[] | undefined)?.[0];
+    const route = (json?.["routes"] as { distance: number; duration: number; geometry: unknown; legs?: { steps?: OsrmStep[] }[] }[] | undefined)?.[0];
+    if (!route) return { km: 0, minutes: 0, coords: [], estime: true, sansPeage: null, kmPeage: 0, prixPeage: 0 };
+    const kmPeage = Math.round(kmSurPeage(route.legs));
+    const alt = kmPeage > 0
+      ? await osrm(`/route/v1/driving/${lonlat(from)};${lonlat(data)}?overview=full&geometries=geojson&exclude=toll`)
+      : null;
+    const r2 = (alt?.["routes"] as { distance: number; duration: number; geometry: unknown }[] | undefined)?.[0];
     return {
-      sansPeage: r2 ? { km: Math.round(r2.distance / 100) / 10, minutes: Math.round(r2.duration / 60) } : null,
+      kmPeage,
+      prixPeage: Math.round(kmPeage * TARIF_PEAGE_EUR_KM * 10) / 10,
+      sansPeage: r2 ? { km: Math.round(r2.distance / 100) / 10, minutes: Math.round(r2.duration / 60), coords: toCoords(r2.geometry) } : null,
       km: Math.round(route.distance / 100) / 10,
       minutes: Math.round(route.duration / 60),
       coords: toCoords(route.geometry),
