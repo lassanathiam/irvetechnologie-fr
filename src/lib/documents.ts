@@ -111,6 +111,7 @@ export function normaliserZones(input: unknown, nbPages: number): Zone[] {
       h,
       type,
       role,
+      signataire: typeof o["signataire"] === "string" ? (o["signataire"] as string) : null,
     });
   }
   return out.slice(0, 200);

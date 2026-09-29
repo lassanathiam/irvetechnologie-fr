@@ -9,8 +9,8 @@ function dataUrlBytes(d: string): { bytes: Uint8Array; png: boolean } {
   return { bytes: Uint8Array.from(Buffer.from(m[2]!, "base64")), png: m[1] === "png" };
 }
 
-/** Incruste dans le PDF les zones du rôle donné. */
-export async function appliquerSignatures(pdf: Uint8Array, zones: Zone[], role: Role, v: Valeurs, quand: Date) {
+/** Incruste dans le PDF les zones du rôle donné (et du signataire `cle` si précisé). */
+export async function appliquerSignatures(pdf: Uint8Array, zones: Zone[], role: Role, v: Valeurs, quand: Date, cle?: string | null) {
   const doc = await PDFDocument.load(pdf, { ignoreEncryption: true });
   const font = await doc.embedFont(StandardFonts.Helvetica);
   const sig = dataUrlBytes(v.signature);
