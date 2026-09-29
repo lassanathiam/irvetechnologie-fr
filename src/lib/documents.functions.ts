@@ -266,11 +266,29 @@ export const envoyerPourSignature = createServerFn({ method: "POST" })
 
 // ---------- Page publique ----------
 
+/** Retrouve le document et le signataire à partir d'un lien (token signataire ou token du document). */
+async function trouverParLien(token: string) {
+  const sb = await admin();
+  // Lien individuel d'un signataire ?
+  const { data: parSignataire } = await sb
+    .from("documents")
+    .select("*")
+    .contains("signataires", JSON.stringify([{ token }]))
+    .maybeSingle();
+  if (parSignataire) {
+    const sig = ((parSignataire.signataires as unknown as Signataire[]) ?? []).find((s) => s.token === token) ?? null;
+    return { sb, doc: parSignataire, signataire: sig };
+  }
+  const { data: doc } = await sb.from("documents").select("*").eq("public_token", token).maybeSingle();
+  if (!doc) return { sb, doc: null, signataire: null };
+  const sig = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client") ?? null;
+  return { sb, doc, signataire: sig };
+}
+
 export const getDocumentPublic = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => tokenSchema.parse(d))
   .handler(async ({ data }) => {
-    const sb = await admin();
-    const { data: doc } = await sb.from("documents").select("*").eq("public_token", data.token).maybeSingle();
+    const { sb, doc, signataire } = await trouverParLien(data.token);
     if (!doc || doc.statut === "brouillon") throw new Error("Ce lien de signature n'est plus valide.");
     const { data: url } = await sb.storage.from("documents").createSignedUrl(doc.storage_path, 3600);
     const now = new Date().toISOString();
@@ -280,13 +298,18 @@ export const getDocumentPublic = createServerFn({ method: "GET" })
         .update({ viewed_at: doc.viewed_at ?? now, view_count: Number(doc.view_count ?? 0) + 1, statut: doc.statut === "envoye" ? "consulte" : doc.statut })
         .eq("id", doc.id);
     }
-    const client = ((doc.signataires as unknown as Signataire[]) ?? []).find((s) => s.role === "client");
+    const sigs = (doc.signataires as unknown as Signataire[]) ?? [];
+    const cle = signataire?.cle ?? null;
+    const zones = ((doc.zones as unknown as Zone[]) ?? []).filter((z) => z.role === "client" && (!cle || !z.signataire || z.signataire === cle));
+    const enAttente = sigs.filter((s) => s.role === "client" && !s.signed_at && s.cle !== cle).map((s) => s.nom || "un autre signataire");
     return {
       nom: doc.nom,
       statut: doc.statut,
       url: url?.signedUrl ?? null,
-      zones: ((doc.zones as unknown as Zone[]) ?? []).filter((z) => z.role === "client"),
-      clientNom: client?.nom ?? "",
+      zones,
+      clientNom: signataire?.nom ?? "",
+      dejaSigne: Boolean(signataire?.signed_at),
+      enAttente,
       signedAt: doc.signed_at,
     };
   });
