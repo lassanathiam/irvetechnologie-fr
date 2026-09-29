@@ -31,16 +31,31 @@ export type Zone = {
   h: number;
   type: ZoneType;
   role: Role;
+  signataire?: string | null; // cle du signataire client concerné (plusieurs parties)
 };
 
 export type Signataire = {
   role: Role;
   nom: string;
+  cle?: string; // identifiant stable (c1, c2…) pour les clients
+  token?: string | null; // lien de signature individuel
   email?: string | null;
   telephone?: string | null;
   signed_at?: string | null;
   ip?: string | null;
 };
+
+/** Couleurs des signataires clients (Client 1, 2, 3…) sur l'aperçu. */
+export const COULEURS_SIGNATAIRES = [
+  { bord: "border-amber-500", fond: "bg-amber-300/30", txt: "text-amber-900", pastille: "bg-amber-500" },
+  { bord: "border-violet-500", fond: "bg-violet-300/30", txt: "text-violet-900", pastille: "bg-violet-500" },
+  { bord: "border-rose-500", fond: "bg-rose-300/30", txt: "text-rose-900", pastille: "bg-rose-500" },
+  { bord: "border-cyan-500", fond: "bg-cyan-300/30", txt: "text-cyan-900", pastille: "bg-cyan-500" },
+] as const;
+
+export function couleurSignataire(index: number) {
+  return COULEURS_SIGNATAIRES[((index % COULEURS_SIGNATAIRES.length) + COULEURS_SIGNATAIRES.length) % COULEURS_SIGNATAIRES.length]!;
+}
 
 export const ZONE_LABEL: Record<ZoneType, string> = {
   signature: "Signature",
@@ -58,7 +73,7 @@ export const TAILLE_ZONE: Record<ZoneType, { w: number; h: number }> = {
   mention: { w: 0.22, h: 0.03 },
 };
 
-export function nouvelleZone(type: ZoneType, role: Role, page: number, x = 0.55, y = 0.8): Zone {
+export function nouvelleZone(type: ZoneType, role: Role, page: number, x = 0.55, y = 0.8, signataire: string | null = null): Zone {
   const t = TAILLE_ZONE[type];
   return {
     id: Math.random().toString(36).slice(2, 10),
@@ -69,6 +84,7 @@ export function nouvelleZone(type: ZoneType, role: Role, page: number, x = 0.55,
     h: t.h,
     type,
     role,
+    signataire,
   };
 }
 
