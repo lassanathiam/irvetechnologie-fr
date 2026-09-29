@@ -75,7 +75,8 @@ function DocumentPage() {
   const [sig, setSig] = useState<string | null>(null);
   const [par, setPar] = useState<string | null>(null);
   const [lien, setLien] = useState<string | null>(null);
-  const [envoiAuto, setEnvoiAuto] = useState(false);
+  const [envoiAuto, setEnvoiAuto] = useState(true);
+  const [mode, setMode] = useState<"seul" | "deux" | "client" | null>(null);
 
   useEffect(() => {
     if (!data?.url) return;
@@ -111,12 +112,14 @@ function DocumentPage() {
         if (!annule) setPreparationPdf(false);
       }
     })();
-    setZones((data.doc.zones as unknown as Zone[]) ?? []);
+    const zs = (data.doc.zones as unknown as Zone[]) ?? [];
+    setZones(zs);
     const s = (data.doc.signataires as unknown as Signataire[]) ?? [];
     const c = s.find((x) => x.role === "client");
     if (c) setClient({ ...c, email: c.email ?? "", telephone: c.telephone ?? "" });
     const i = s.find((x) => x.role === "irve");
     if (i?.nom) setIrveNom(i.nom);
+    setMode((m) => m ?? (zs.some((z) => z.role === "client") || i?.signed_at ? "deux" : "seul"));
     return () => {
       annule = true;
     };
@@ -131,9 +134,10 @@ function DocumentPage() {
   const irveSigne = signataires.some((s) => s.role === "irve" && s.signed_at);
   const verrouille = doc.statut === "signe";
 
+  const nbPagesDoc = () => pdf?.numPages ?? Math.max(1, ...zones.map((z) => z.page + 1));
+
   const enregistrer = async (z: Zone[] = zones) => {
-    if (!pdf) return;
-    await sauver({ data: { id, nbPages: pdf.numPages, zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
+    await sauver({ data: { id, nbPages: nbPagesDoc(), zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
   };
 
   const detecter = async () => {
@@ -153,23 +157,34 @@ function DocumentPage() {
   const faireSigner = async (cachet?: string) => {
     const sig2 = cachet ?? sig;
     if (!sig2) return toast.error("Dessinez votre signature.");
-    if (envoiAuto && nbZones("client") > 0) {
-      if (!client.nom.trim()) return toast.error("Indiquez le nom du client pour l'envoi automatique.");
-      if (!client.email) return toast.error("Indiquez l'email du client pour l'envoi automatique.");
+    const aDeux = mode === "deux";
+    if (aDeux) {
+      if (client.nom.trim().length < 2) return toast.error("Étape 2 : indiquez le nom du client qui signera après vous.");
+      if (envoiAuto && !client.email) return toast.error("Étape 2 : indiquez l'email du client (ou décochez l'envoi automatique).");
     }
     setBusy("sign");
     try {
-      // Pas de zone IRVE placée : on ajoute automatiquement un emplacement en bas de la dernière page.
-      const z = zones.some((x) => x.role === "irve") ? zones : [...zones, nouvelleZone("signature", "irve", (pdf?.numPages ?? 1) - 1, 0.08, 0.8)];
+      const derniere = nbPagesDoc() - 1;
+      let z = zones;
+      // Je signe seul : on retire les zones du client pour finaliser directement.
+      if (!aDeux) z = z.filter((x) => x.role !== "client");
+      // À deux sans zone client : on place la signature du client en bas de la dernière page.
+      if (aDeux && !z.some((x) => x.role === "client")) z = [...z, nouvelleZone("signature", "client", derniere, 0.6, 0.8)];
+      // Pas de zone IRVE : emplacement automatique en bas de la dernière page.
+      if (!z.some((x) => x.role === "irve")) z = [...z, nouvelleZone("signature", "irve", derniere, 0.08, 0.8)];
       setZones(z);
       await enregistrer(z);
       const r = await signer({ data: { id, signature: sig2, paraphe: cachet ?? par, nom: irveNom } });
-      if (!r.termine && envoiAuto && client.email) {
+      if (!r.termine && aDeux && envoiAuto && client.email) {
         const e = await envoyer({ data: { id, email: client.email, envoyerEmail: true } });
         setLien(e.lien);
         e.emailEnvoye ? toast.success("Signé et envoyé au client par email.") : toast.error("Signé. L'email n'a pas pu partir : utilisez le lien (SMS / WhatsApp).");
+      } else if (!r.termine && aDeux) {
+        const e = await envoyer({ data: { id, email: client.email || null, envoyerEmail: false } });
+        setLien(e.lien);
+        toast.success("Signé. Le lien pour le client est prêt : copiez-le ou envoyez-le par WhatsApp.");
       } else {
-        toast.success(r.termine ? "Document signé. Vous pouvez le télécharger." : "Signé. Choisissez maintenant : envoyer au client ou laisser dans la plateforme.");
+        toast.success("Document signé et terminé. Téléchargez-le ou laissez-le dans la plateforme.");
       }
       setSigne(false);
       setPdf(null);
@@ -234,6 +249,13 @@ function DocumentPage() {
             <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
+          {verrouille && (
+            <aside className="space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 lg:sticky lg:top-20 lg:self-start">
+              <p className="flex items-center gap-2 text-sm font-bold text-emerald-600"><Check className="h-5 w-5" /> Document signé et terminé</p>
+              <Button className="w-full" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger le document signé</Button>
+              <Button className="w-full" variant="outline" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
+            </aside>
+          )}
           {!verrouille && (
             <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
               <div className={`flex items-start gap-3 rounded-lg border p-3 ${preparationPrete ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
@@ -300,44 +322,65 @@ function DocumentPage() {
               <section className="space-y-3 rounded-lg border border-border bg-card p-4">
                 <div className="flex items-center gap-3">
                   <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
-                  <div><h2 className="text-sm font-bold">Signer ou envoyer</h2><p className="text-xs text-muted-foreground">Choisissez une seule action selon votre besoin.</p></div>
+                  <div><h2 className="text-sm font-bold">Qui signe ?</h2><p className="text-xs text-muted-foreground">Choisissez le cas, puis suivez le bouton.</p></div>
                 </div>
                 {!irveSigne && (
+                  <div className="grid gap-2">
+                    {([
+                      ["seul", "Je signe seul", "Je signe, puis je télécharge ou je laisse dans la plateforme."],
+                      ["deux", "Je signe, puis le client", "Je signe d'abord, le client reçoit ensuite le document à signer."],
+                      ["client", "Seul le client signe", "J'envoie le document au client sans le signer."],
+                    ] as const).map(([k, t, d]) => (
+                      <button key={k} type="button" onClick={() => setMode(k)} className={`rounded-md border p-2.5 text-left text-xs transition ${mode === k ? "border-primary bg-primary/10 ring-1 ring-primary" : "border-border hover:bg-muted"}`}>
+                        <span className="block font-bold">{mode === k ? "● " : "○ "}{t}</span>
+                        <span className="text-muted-foreground">{d}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                {!irveSigne && mode !== "client" && (
                   <div className="space-y-2 rounded-md border border-sky-500/30 bg-sky-500/5 p-3">
-                    <p className="text-xs font-bold">Signature IRVE Technologie</p>
-                    {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre cachet sera posé en bas de la dernière page.</p>}
-                    {nbZones("client") > 0 && (
-                      <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email après ma signature</label>
+                    <p className="text-xs font-bold">Ma signature IRVE Technologie</p>
+                    {nbZones("irve") === 0 && <p className="text-xs text-muted-foreground">Aucune zone IRVE placée : votre signature sera posée en bas de la dernière page.</p>}
+                    {mode === "deux" && (
+                      <>
+                        {nbZones("client") === 0 && <p className="text-xs text-muted-foreground">Aucune zone client placée : sa signature sera prévue en bas de la dernière page.</p>}
+                        {client.nom.trim().length < 2 && <p className="text-xs font-semibold text-amber-600">Renseignez d'abord le nom du client (étape 2).</p>}
+                        <label className="flex items-start gap-2 text-xs"><input type="checkbox" className="mt-0.5" checked={envoiAuto} onChange={(e) => setEnvoiAuto(e.target.checked)} /> Envoyer automatiquement au client par email juste après ma signature</label>
+                      </>
                     )}
+                    {mode === "seul" && nbZones("client") > 0 && <p className="text-xs text-muted-foreground">Les zones du client seront retirées : le document sera terminé dès votre signature.</p>}
                     {signe ? (
                       <div className="space-y-2">
                         <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
                         {zones.some((z) => z.role === "irve" && z.type === "paraphe") && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
                         <Button className="w-full" onClick={() => faireSigner()} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
+                        <Button className="w-full" variant="ghost" size="sm" onClick={() => setSigne(false)}>Revenir au cachet</Button>
                       </div>
                     ) : (
                       <>
+                        <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
                         <Button className="w-full" disabled={busy === "sign"} onClick={async () => {
                           let c: string;
                           try { c = await cachetIrve(); } catch { return toast.error("Cachet introuvable"); }
                           await faireSigner(c);
                         }}>
-                          {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stamp className="h-4 w-4" />} Signer avec notre cachet
+                          {busy === "sign" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Stamp className="h-4 w-4" />} {mode === "deux" ? (envoiAuto ? "Signer avec le cachet et envoyer" : "Signer avec le cachet") : "Signer avec le cachet et terminer"}
                         </Button>
-                        <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
-                        <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main</Button>
+                        <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main plutôt</Button>
                       </>
                     )}
                   </div>
                 )}
-                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — choisissez la suite :</p>}
-                {nbZones("client") > 0 && (
+                {irveSigne && <p className="rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">✓ Signé par IRVE Technologie — en attente de la signature du client :</p>}
+                {(mode === "client" || irveSigne) && (
                   <>
-                    <Button className="w-full" variant={irveSigne ? "default" : "secondary"} onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
-                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete}><Send className="h-4 w-4" /> Créer un lien à partager</Button>
+                    {nbZones("client") === 0 && <p className="text-xs text-amber-600">Placez au moins une zone « Signature client » (étape 1).</p>}
+                    <Button className="w-full" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
+                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete || nbZones("client") === 0}><Send className="h-4 w-4" /> Créer un lien (SMS / WhatsApp)</Button>
                   </>
                 )}
-                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger le document signé" : "Télécharger"}</Button>
+                <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger (signé par IRVE)" : "Télécharger"}</Button>
                 {irveSigne && (
                   <Button className="w-full" variant="ghost" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
                 )}
