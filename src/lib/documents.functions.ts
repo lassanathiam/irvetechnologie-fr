@@ -70,7 +70,12 @@ export const getDocument = createServerFn({ method: "GET" })
     if (!doc) throw new Error("Document introuvable.");
     const sb = await admin();
     const { data: url } = await sb.storage.from("documents").createSignedUrl(doc.storage_path, 3600);
-    return { doc, url: url?.signedUrl ?? null };
+    let urlOriginal: string | null = null;
+    if (doc.original_path && doc.original_path !== doc.storage_path) {
+      const { data: u2 } = await sb.storage.from("documents").createSignedUrl(doc.original_path, 3600);
+      urlOriginal = u2?.signedUrl ?? null;
+    }
+    return { doc, url: url?.signedUrl ?? null, urlOriginal };
   });
 
 export const supprimerDocument = createServerFn({ method: "POST" })
@@ -114,6 +119,29 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
     if (data.dossier) patch["dossier"] = data.dossier;
     const { error } = await context.supabase.from("documents").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/**
+ * Remplace le fichier de travail par une copie propre (PDF protégé recréé côté navigateur).
+ * `repartir` : repart du document d'origine (signature IRVE précédente illisible).
+ */
+export const remplacerFichierDocument = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) =>
+    z.object({ id: z.string().uuid(), storage_path: z.string().regex(/^propres\/[0-9a-f-]{36}-\d+\.pdf$/), repartir: z.boolean() }).parse(d),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: doc, error } = await context.supabase.from("documents").select("id, storage_path, original_path, signataires, statut").eq("id", data.id).maybeSingle();
+    if (error || !doc) throw new Error("Document introuvable.");
+    if (doc.statut === "signe") throw new Error("Document déjà signé.");
+    if (!data.storage_path.startsWith(`propres/${doc.id}-`)) throw new Error("Fichier invalide.");
+    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).map((s) => (data.repartir && s.role === "irve" ? { ...s, signed_at: null } : s));
+    const { error: e2 } = await context.supabase
+      .from("documents")
+      .update({ storage_path: data.storage_path, original_path: doc.original_path ?? doc.storage_path, signataires: sigs as never, hash: null })
+      .eq("id", doc.id);
+    if (e2) throw new Error(e2.message);
     return { ok: true };
   });
 
