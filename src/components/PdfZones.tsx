@@ -77,7 +77,7 @@ function PageCanvas({ pdf, n, children }: { pdf: PdfDoc; n: number; children?: R
       c.width = vp.width;
       c.height = vp.height;
       await page.render({ canvasContext: c.getContext("2d"), viewport: vp, canvas: c }).promise;
-    })().catch(() => {});
+    })().catch((e) => console.error("pdfrender", e?.message || e));
     return () => {
       annule = true;
     };
