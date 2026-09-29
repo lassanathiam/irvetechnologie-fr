@@ -3029,7 +3029,7 @@ function EtapeMission({
   children,
 }: {
   titre: string;
-  detail: string;
+  detail?: string;
   etat: "termine" | "active" | "attente";
   icone: React.ReactNode;
   dernier?: boolean;
