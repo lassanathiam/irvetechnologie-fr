@@ -32,6 +32,9 @@ import {
   Upload,
   Smartphone,
   ClipboardCheck,
+  Clock3,
+  Navigation,
+  Wrench,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -84,6 +87,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
 import { ImportRdvDialog } from "@/components/ImportRdvDialog";
 import { FileUp } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -551,6 +555,8 @@ function PlanningPage() {
       })
       .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
   }, [toutes]);
+  const missionTerrain =
+    chantiersDuJour.find((r) => r.id === active) ?? enCours[0] ?? chantiersDuJour[0] ?? null;
 
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
@@ -900,173 +906,54 @@ function PlanningPage() {
         </div>
       </div>
 
-      <section className="mb-5 md:hidden">
-        <button
-          type="button"
-          onClick={() => setModeIntervention((value) => !value)}
-          className={`grid min-h-12 w-full grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-xl border px-4 text-left ${
-            modeIntervention
-              ? "border-primary bg-primary/10 text-primary"
-              : "border-border bg-card text-foreground"
-          }`}
-          aria-pressed={modeIntervention}
-        >
-          <Smartphone className="h-5 w-5 shrink-0" />
-          <span className="min-w-0">
-            <span className="block font-bold">Mode intervention</span>
-            <span className="block truncate text-xs font-normal text-muted-foreground">
-              {modeIntervention ? "Chantiers du jour en priorité" : "Planning complet affiché"}
-            </span>
-          </span>
-          <span className="text-mono text-[10px] font-bold">
-            {modeIntervention ? "ACTIF" : "INACTIF"}
-          </span>
-        </button>
+      <section className="mb-6">
+        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <div className="min-w-0">
+            <h2 className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h2>
+            <p className="truncate text-xs text-muted-foreground">L’intervention en cours, étape par étape</p>
+          </div>
+          <Button variant={modeIntervention ? "default" : "outline"} size="sm" onClick={() => setModeIntervention((value) => !value)} aria-pressed={modeIntervention}>
+            {modeIntervention ? "Masquer" : "Ouvrir"}
+          </Button>
+        </div>
 
         {modeIntervention && (
-          <div className="mt-3 rounded-xl border border-primary/40 bg-card p-3 shadow-sm">
-            <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-b border-border pb-3">
-              <div className="min-w-0">
-                <p className="text-mono text-[11px] font-bold text-primary">INTERVENTIONS DU JOUR</p>
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  {chantiersDuJour.length} chantier{chantiersDuJour.length > 1 ? "s" : ""} prévu{chantiersDuJour.length > 1 ? "s" : ""}
-                </p>
+          missionTerrain ? (
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+              <div className="bg-slate-900 p-5 text-slate-50 dark:bg-slate-950 sm:p-6">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                  <div className="min-w-0">
+                    <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
+                    <h3 className="mt-2 truncate text-xl font-bold">{missionTerrain.client_nom}</h3>
+                    <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
+                    <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
+                  </div>
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-800"><MapPin className="h-6 w-6 text-slate-300" /></div>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  {telLien(missionTerrain.client_telephone) ? <Button asChild variant="secondary" className="h-12"><a href={telLien(missionTerrain.client_telephone) ?? undefined}><Phone /> Appeler</a></Button> : <Button variant="secondary" className="h-12" disabled><Phone /> Appeler</Button>}
+                  <Button asChild variant="secondary" className="h-12"><a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a></Button>
+                </div>
               </div>
-              <span className="grid h-9 min-w-9 shrink-0 place-items-center rounded-full bg-primary/15 px-2 font-bold text-primary">
-                {chantiersDuJour.length}
-              </span>
+
+              <div className="space-y-0 p-5 sm:p-6">
+                <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
+                  {!missionTerrain.demarre_at && <Button className="mt-3 h-12 w-full text-base font-bold" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play /> Je suis arrivé — démarrer</Button>}
+                </EtapeMission>
+                <EtapeMission titre="Matériel, photos et métrage" detail={missionTerrain.retour_complete_at ? "Retour de travaux enregistré" : "Contrôles et preuves du chantier"} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Ouvrir les photos et le métrage</Button>}
+                </EtapeMission>
+                <EtapeMission titre="Rapport et signatures" detail="Compléter le rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
+                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Ouvrir le rapport à signer</Link></Button>}
+                </EtapeMission>
+                <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 h-14 w-full bg-teal-600 text-base font-bold text-slate-50 hover:bg-teal-700" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag /> Terminer et prévenir le client</Button>}
+                </EtapeMission>
+              </div>
+
+              {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => setActive(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
             </div>
-            {chantiersDuJour.length === 0 ? (
-              <p className="py-4 text-sm text-muted-foreground">Aucun chantier prévu aujourd’hui.</p>
-            ) : (
-              <ul className="divide-y divide-border">
-                {chantiersDuJour.map((r) => {
-                  const tel = telLien(r.client_telephone);
-                  const wa = whatsappLien(
-                    r.client_telephone,
-                    `Bonjour ${r.client_nom}, Borne de l'Ouest au sujet de votre installation de borne de recharge.`,
-                  );
-                  return (
-                    <li key={r.id} className="py-3 first:pt-3 last:pb-0">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setActive(r.id);
-                          setDossier(r.id);
-                          setMobileSections((current) => ({ ...current, rendezvous: true }));
-                        }}
-                        className="grid w-full grid-cols-[auto_minmax(0,1fr)] items-start gap-3 text-left"
-                      >
-                        <span className="rounded-lg bg-primary/15 px-2 py-1 text-sm font-bold text-primary">
-                          {new Date(r.date_debut).toLocaleTimeString("fr-FR", {
-                            hour: "2-digit",
-                            minute: "2-digit",
-                          })}
-                        </span>
-                        <span className="min-w-0">
-                          <span className="block truncate font-bold">{r.client_nom}</span>
-                          <span
-                            role="link"
-                            tabIndex={0}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              window.open(wazeLien(r.adresse, r.cp_ville, r.lat, r.lng), "_blank", "noopener");
-                            }}
-                            className="mt-0.5 block text-xs text-primary underline underline-offset-2"
-                          >
-                            {r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""} · Waze
-                          </span>
-                          <span className="mt-1 block text-xs text-muted-foreground">
-                            {dureeFr(r.duree_min)}
-                            {r.distance_km != null
-                              ? ` · ${Math.round(Number(r.distance_km))} km · ${dureeFr(Number(r.duree_trajet_min ?? 0))}`
-                              : ""}
-                          </span>
-                        </span>
-                      </button>
-                      <div className="mt-3 grid grid-cols-2 gap-2">
-                        {tel && (
-                          <a href={tel} className="grid min-h-11 place-items-center rounded-lg border border-border text-sm font-semibold">
-                            <span className="inline-flex items-center gap-2"><Phone className="h-4 w-4" /> Appeler</span>
-                          </a>
-                        )}
-                        {wa && (
-                          <a href={wa} target="_blank" rel="noreferrer" className="grid min-h-11 place-items-center rounded-lg border border-emerald-500/50 text-sm font-semibold text-emerald-400">
-                            <span className="inline-flex items-center gap-2"><MessageCircle className="h-4 w-4" /> WhatsApp</span>
-                          </a>
-                        )}
-                        {!r.demarre_at && !r.termine_at && (
-                          <button
-                            type="button"
-                            onClick={() => demarrer.mutate({ id: r.id, demarre: true })}
-                            disabled={demarrer.isPending}
-                            className="col-span-2 min-h-11 rounded-lg bg-violet-600 px-3 text-sm font-bold text-white disabled:opacity-50"
-                          >
-                            <span className="inline-flex items-center gap-2"><Play className="h-4 w-4" /> Démarrer les travaux</span>
-                          </button>
-                        )}
-                        {r.demarre_at && !r.termine_at && (
-                          <button
-                            type="button"
-                            onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}
-                            className="col-span-2 min-h-11 rounded-lg border-2 border-amber-500 px-3 text-sm font-bold text-amber-600 dark:text-amber-400"
-                          >
-                            <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Retour de travaux (photos + métrage)</span>
-                          </button>
-                        )}
-                        {(r.termine_at || r.statut === "termine" || r.statut === "realise") &&
-                          r.statut_facturation === "a_facturer" && (
-                          <Link
-                            to="/factures/nouvelle"
-                            search={{ rdv: r.id }}
-                            className="col-span-2 grid min-h-11 place-items-center rounded-lg bg-primary px-3 text-sm font-bold text-primary-foreground"
-                          >
-                            Facturer le chantier
-                          </Link>
-                        )}
-                        {r.demarre_at && (
-                          <Link
-                            to="/chantier-rapport/$rdvId"
-                            params={{ rdvId: r.id }}
-                            className="col-span-2 grid min-h-11 place-items-center rounded-lg border-2 border-sky-500 px-3 text-sm font-bold text-sky-600 dark:text-sky-400"
-                          >
-                            <span className="inline-flex items-center gap-2"><ClipboardCheck className="h-4 w-4" /> Rapport {r.partenaire ? r.partenaire : "donneur d'ordre"} (signatures)</span>
-                          </Link>
-                        )}
-                        {r.demarre_at && !r.termine_at && (
-                          <button
-                            type="button"
-                            onClick={() => terminer.mutate({ id: r.id, notifier: true })}
-                            disabled={terminer.isPending}
-                            className="col-span-2 min-h-11 rounded-lg bg-teal-600 px-3 text-sm font-bold text-white disabled:opacity-50"
-                          >
-                            <span className="inline-flex items-center gap-2"><Flag className="h-4 w-4" /> Terminer le chantier</span>
-                          </button>
-                        )}
-                        {r.demarre_at && !r.termine_at && (
-                          <button
-                            type="button"
-                            onClick={() => {
-                              if (
-                                window.confirm(
-                                  "Annuler le démarrage des travaux ? Le chantier repasse en « confirmé » et l'heure d'arrivée est effacée.",
-                                )
-                              )
-                                demarrer.mutate({ id: r.id, demarre: false });
-                            }}
-                            disabled={demarrer.isPending}
-                            className="col-span-2 min-h-11 rounded-lg border border-destructive/50 px-3 text-sm font-semibold text-destructive disabled:opacity-50"
-                          >
-                            Annuler le démarrage (erreur de déclenchement)
-                          </button>
-                        )}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
+          ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucune intervention prévue aujourd’hui</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
         )}
       </section>
 
@@ -3131,6 +3018,36 @@ function MobileSectionTrigger({
       )}
       <ChevronDown className={`h-5 w-5 shrink-0 transition-transform ${open ? "rotate-180" : ""}`} />
     </button>
+  );
+}
+
+function EtapeMission({
+  titre,
+  detail,
+  etat,
+  icone,
+  dernier = false,
+  children,
+}: {
+  titre: string;
+  detail: string;
+  etat: "termine" | "active" | "attente";
+  icone: React.ReactNode;
+  dernier?: boolean;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div className={`relative grid grid-cols-[32px_minmax(0,1fr)] gap-3 ${dernier ? "" : "pb-6"}`}>
+      {!dernier && <span className={`absolute left-[15px] top-8 h-[calc(100%-1rem)] w-0.5 ${etat === "termine" ? "bg-emerald-500" : "bg-border"}`} />}
+      <span className={`relative z-10 grid h-8 w-8 place-items-center rounded-full [&_svg]:h-4 [&_svg]:w-4 ${etat === "termine" ? "bg-emerald-500 text-slate-50" : etat === "active" ? "bg-blue-600 text-slate-50 ring-4 ring-blue-100 dark:ring-blue-950" : "bg-muted text-muted-foreground"}`}>
+        {etat === "termine" ? <CheckCircle2 /> : icone}
+      </span>
+      <div className={`min-w-0 rounded-lg p-3 ${etat === "active" ? "border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30" : ""}`}>
+        <h4 className={`font-bold ${etat === "attente" ? "text-muted-foreground" : "text-foreground"}`}>{titre}</h4>
+        <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+        {children}
+      </div>
+    </div>
   );
 }
 

@@ -38,3 +38,4 @@
 - [x] Corriger la visibilité mobile de « Maintenance et suivi » et ajouter des tarifs publics modifiables
 - [x] Signature à plusieurs parties (2-3 signataires) : liens individuels, zones par signataire, finalisation quand tous ont signé — testé de bout en bout
 - [x] Fiabiliser l'envoi au client après signature IRVE (parcours signer puis envoyer) — testé : lien créé, client signe, document finalisé
+- [x] Réorganiser le planning avec le mode « Mission terrain » : grandes actions et parcours arrivée → photos/métrage → rapport/signatures → clôture
