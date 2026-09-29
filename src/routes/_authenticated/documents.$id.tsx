@@ -228,6 +228,9 @@ function DocumentPage() {
                 <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" />Client ({nbZones("client")})</span>
               </div>
             </div>
+            {preparationPdf && (
+              <p className="mb-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs"><Loader2 className="h-4 w-4 animate-spin" /> Document protégé détecté : préparation d'une copie signable…</p>
+            )}
             <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
@@ -252,7 +255,16 @@ function DocumentPage() {
                 <Button className="w-full" variant="secondary" onClick={detecter} disabled={!pdf || busy === "detect"}>
                   {busy === "detect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Proposer les zones automatiquement
                 </Button>
-                <p className="border-t border-border pt-2 text-xs font-semibold">Ajouter une zone manuellement</p>
+                <p className="border-t border-border pt-2 text-xs font-semibold">Placer rapidement une signature (page choisie ci-dessous)</p>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button type="button" size="sm" disabled={!pdf} className="bg-amber-500 text-white hover:bg-amber-600" onClick={() => setZones([...zones, nouvelleZone("signature", "client", page, 0.6, 0.78)])}>
+                    <PenLine className="h-3.5 w-3.5" /> Signature client
+                  </Button>
+                  <Button type="button" size="sm" disabled={!pdf || irveSigne} className="bg-sky-500 text-white hover:bg-sky-600" onClick={() => setZones([...zones, nouvelleZone("signature", "irve", page, 0.08, 0.78)])}>
+                    <Stamp className="h-3.5 w-3.5" /> Signature IRVE
+                  </Button>
+                </div>
+                <p className="border-t border-border pt-2 text-xs font-semibold">Ajouter une autre zone</p>
                 <div className="flex gap-2 text-xs">
                   <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="h-8 flex-1 rounded border border-input bg-background px-2">
                     <option value="client">Pour le client</option>
