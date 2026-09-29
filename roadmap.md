@@ -40,7 +40,7 @@
 - [x] Fiabiliser l'envoi au client après signature IRVE (parcours signer puis envoyer) — testé : lien créé, client signe, document finalisé
 - [x] Réorganiser le planning avec le mode « Mission terrain » : grandes actions et parcours arrivée → photos/métrage → rapport/signatures → clôture
 - [x] Adapter le retour terrain à la nature du chantier : parcours complet pour une installation, parcours allégé pour une maintenance, câble commenté seulement si nécessaire
-- [ ] Annuler des travaux démarrés par erreur (avec confirmation) depuis Mission terrain
-- [ ] Afficher date et heure du rendez-vous dans Mission terrain
-- [ ] Affecter un intervenant directement depuis la carte
-- [ ] Plus de calcul à vol d'oiseau : trajets par la route, péages via Waze
+- [x] Annuler des travaux démarrés par erreur (avec confirmation) depuis Mission terrain
+- [x] Afficher date et heure du rendez-vous dans Mission terrain
+- [x] Affecter un intervenant directement depuis la carte
+- [x] Plus de calcul à vol d'oiseau : trajets par la route, péages via Waze
