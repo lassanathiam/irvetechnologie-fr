@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles } from "lucide-react";
+import { ArrowLeft, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { PdfZones, detecterZones, ouvrirPdf } from "@/components/PdfZones";
@@ -34,6 +34,19 @@ async function telechargerFichier(url: string, nom: string) {
   a.download = `${nom}.pdf`;
   a.click();
   setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+
+async function cachetIrve(): Promise<string> {
+  const img = new Image();
+  img.src = "/cachet-signature-irve.svg";
+  await img.decode();
+  const w = 800;
+  const h = Math.round((w * (img.naturalHeight || 400)) / (img.naturalWidth || 800));
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+  return c.toDataURL("image/png");
 }
 
 function DocumentPage() {
@@ -96,12 +109,13 @@ function DocumentPage() {
 
   const ajouter = (type: ZoneType) => setZones([...zones, nouvelleZone(type, role, page, 0.4, 0.45)]);
 
-  const faireSigner = async () => {
-    if (!sig) return toast.error("Dessinez votre signature.");
+  const faireSigner = async (cachet?: string) => {
+    const sig2 = cachet ?? sig;
+    if (!sig2) return toast.error("Dessinez votre signature.");
     setBusy("sign");
     try {
       await enregistrer();
-      const r = await signer({ data: { id, signature: sig, paraphe: par, nom: irveNom } });
+      const r = await signer({ data: { id, signature: sig2, paraphe: cachet ?? par, nom: irveNom } });
       toast.success(r.termine ? "Document signé et finalisé." : "Votre signature est posée. Envoyez maintenant au client.");
       setSigne(false);
       setPdf(null);
@@ -151,7 +165,7 @@ function DocumentPage() {
 
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="rounded-lg border border-border bg-muted/30 p-3">
-            <PdfZones pdf={pdf} zones={verrouille ? [] : zones} onChange={verrouille ? undefined : setZones} />
+            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
           {!verrouille && (
@@ -196,10 +210,18 @@ function DocumentPage() {
                     <div className="space-y-2">
                       <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
                       {zones.some((z) => z.role === "irve" && z.type === "paraphe") && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
-                      <Button className="w-full" onClick={faireSigner} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
+                      <Button className="w-full" onClick={() => faireSigner()} disabled={busy === "sign"}>{busy === "sign" && <Loader2 className="h-4 w-4 animate-spin" />} Valider ma signature</Button>
                     </div>
                   ) : (
-                    <Button className="w-full" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Je signe maintenant</Button>
+                    <>
+                      <Button className="w-full" disabled={busy === "sign"} onClick={async () => {
+                        try { await faireSigner(await cachetIrve()); } catch { toast.error("Cachet introuvable"); }
+                      }}>
+                        <Stamp className="h-4 w-4" /> Signer avec notre cachet et signature
+                      </Button>
+                      <img src="/cachet-signature-irve.svg" alt="Cachet et signature IRVE Technologie" className="mx-auto h-16 object-contain" />
+                      <Button className="w-full" variant="outline" onClick={() => setSigne(true)}><PenLine className="h-4 w-4" /> Signer à la main</Button>
+                    </>
                   )
                 )}
                 {irveSigne && <p className="text-xs text-emerald-600">✓ Signé par IRVE Technologie</p>}
