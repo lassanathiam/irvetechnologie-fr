@@ -24,16 +24,16 @@ export const RecoveryEmail = ({
     <Head>
       <style>{darkModeCss}</style>
     </Head>
-    <Preview>Reset your password for {siteName}</Preview>
+    <Preview>Réinitialisez votre mot de passe pour {siteName}</Preview>
     <Body style={main}>
       <Container style={container}>
-        <Heading style={h1}>Reset your password</Heading>
+        <Heading style={h1}>Réinitialiser votre mot de passe</Heading>
         <Text style={text}>
           We received a request to reset your password for {siteName}. Click
           the button below to choose a new password.
         </Text>
         <Button className="dm-btn" style={button} href={confirmationUrl}>
-          Reset Password
+          Réinitialiser mon mot de passe
         </Button>
         <Text style={footer}>
           If you didn't request a password reset, you can safely ignore this
