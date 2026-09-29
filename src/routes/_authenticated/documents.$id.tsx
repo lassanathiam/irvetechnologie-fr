@@ -219,7 +219,7 @@ function DocumentPage() {
     const sig2 = cachet ?? sig;
     if (!sig2) return toast.error("Dessinez votre signature.");
     const aDeux = mode === "deux";
-    const clientsAvecZones = clients.filter((c) => zones.some((z) => z.role === "client" && z.signataire === c.cle));
+    const clientsAvecZones = clients.filter((c) => zones.some((z) => z.role === "client" && (z.signataire ?? clients[0]?.cle ?? "c1") === c.cle));
     if (aDeux) {
       for (const c of clientsAvecZones.length ? clientsAvecZones : clients.slice(0, 1)) {
         if (c.nom.trim().length < 2) return toast.error("Étape 2 : indiquez le nom de chaque signataire qui signera après vous.");
