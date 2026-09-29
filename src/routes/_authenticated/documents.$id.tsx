@@ -299,8 +299,10 @@ function DocumentPage() {
     }
   };
 
-  const nbZones = (cle: string | null) => zones.filter((z) => (cle === "irve" ? z.role === "irve" : z.role === "client" && z.signataire === cle)).length;
-  const clientsPrets = clients.every((c) => !zones.some((z) => z.role === "client" && z.signataire === c.cle) || c.nom.trim().length > 1);
+  // Les zones sans signataire (anciens documents) appartiennent au premier signataire.
+  const cleDe = (z: Zone) => z.signataire ?? clients[0]?.cle ?? "c1";
+  const nbZones = (cle: string | null) => zones.filter((z) => (cle === "irve" ? z.role === "irve" : z.role === "client" && cleDe(z) === cle)).length;
+  const clientsPrets = clients.every((c) => !zones.some((z) => z.role === "client" && cleDe(z) === c.cle) || c.nom.trim().length > 1);
   const preparationPrete = zones.length > 0 && clientsPrets;
 
   return (
@@ -480,7 +482,7 @@ function DocumentPage() {
                   <div className="space-y-1 rounded-md bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-600">
                     <p>✓ Signé par IRVE Technologie.</p>
                     {signataires.filter((s) => s.role === "client").map((s, i) => (
-                      <p key={i}>{s.signed_at ? `✓ ${s.nom} a signé le ${new Date(s.signed_at).toLocaleString("fr-FR")}` : `… En attente de ${s.nom || "un signataire"}`}</p>
+                      <p key={i}>{s.signed_at ? `✓ ${s.nom} a signé le ${new Date(s.signed_at).toLocaleString("fr-FR")}` : `… En attente de ${s.nom || "du client"}`}</p>
                     ))}
                   </div>
                 )}
