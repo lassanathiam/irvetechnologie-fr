@@ -182,6 +182,32 @@ export const signerIrve = createServerFn({ method: "POST" })
     return { ok: true, termine: !clientRestant };
   });
 
+/**
+ * Annule la ou les signatures posées par erreur : le document repart du fichier
+ * d'origine (sans cachet ni signature), les signataires repassent en attente.
+ */
+export const annulerSignature = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => idSchema.parse(d))
+  .handler(async ({ data, context }) => {
+    const { data: doc, error } = await context.supabase.from("documents").select("*").eq("id", data.id).maybeSingle();
+    if (error || !doc) throw new Error("Document introuvable.");
+    const sigs = ((doc.signataires as unknown as Signataire[]) ?? []).map((s) => ({ ...s, signed_at: null, ip: null }));
+    const retour = doc.original_path && doc.original_path !== doc.storage_path ? doc.original_path : doc.storage_path;
+    const { error: e2 } = await context.supabase
+      .from("documents")
+      .update({
+        storage_path: retour,
+        hash: null,
+        signataires: sigs as never,
+        statut: doc.sent_at ? "envoye" : "brouillon",
+        signed_at: null,
+      })
+      .eq("id", doc.id);
+    if (e2) throw new Error(e2.message);
+    return { ok: true };
+  });
+
 export const envoyerPourSignature = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => z.object({ id: z.string().uuid(), email: z.string().trim().max(200).optional().nullable(), envoyerEmail: z.boolean() }).parse(d))
