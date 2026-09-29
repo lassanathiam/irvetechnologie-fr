@@ -70,7 +70,12 @@ export const getDocument = createServerFn({ method: "GET" })
     if (!doc) throw new Error("Document introuvable.");
     const sb = await admin();
     const { data: url } = await sb.storage.from("documents").createSignedUrl(doc.storage_path, 3600);
-    return { doc, url: url?.signedUrl ?? null };
+    let urlOriginal: string | null = null;
+    if (doc.original_path && doc.original_path !== doc.storage_path) {
+      const { data: u2 } = await sb.storage.from("documents").createSignedUrl(doc.original_path, 3600);
+      urlOriginal = u2?.signedUrl ?? null;
+    }
+    return { doc, url: url?.signedUrl ?? null, urlOriginal };
   });
 
 export const supprimerDocument = createServerFn({ method: "POST" })

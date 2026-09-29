@@ -76,7 +76,38 @@ function DocumentPage() {
 
   useEffect(() => {
     if (!data?.url) return;
-    ouvrirPdf(data.url).then(setPdf).catch(() => toast.error("Impossible d'ouvrir le PDF"));
+    let annule = false;
+    const url = data.url;
+    (async () => {
+      try {
+        const { estPdfProtege, recreerPdfPropre } = await import("@/lib/pdf-signable");
+        let bytes = new Uint8Array(await (await fetch(url)).arrayBuffer());
+        const clientASigne = ((data.doc.signataires as unknown as Signataire[]) ?? []).some((s) => s.role === "client" && s.signed_at);
+        if (data.doc.statut !== "signe" && !clientASigne && (await estPdfProtege(bytes))) {
+          // PDF protégé : on prépare une copie propre, sinon les signatures l'abîment.
+          let repartir = false;
+          if (data.doc.storage_path.startsWith("signes/") && data.urlOriginal) {
+            bytes = new Uint8Array(await (await fetch(data.urlOriginal)).arrayBuffer());
+            repartir = true;
+          }
+          setPreparationPdf(true);
+          const propre = await recreerPdfPropre(bytes);
+          const path = `propres/${id}-${Date.now()}.pdf`;
+          const { error: up } = await supabase.storage.from("documents").upload(path, propre, { contentType: "application/pdf" });
+          if (up) throw new Error(up.message);
+          await remplacer({ data: { id, storage_path: path, repartir } });
+          if (repartir) toast.info("Le document était protégé : il a été remis au propre. Signez à nouveau.");
+          if (!annule) qc.invalidateQueries({ queryKey: ["document", id] });
+          return;
+        }
+        const p = await ouvrirPdf(url);
+        if (!annule) setPdf(p);
+      } catch (e) {
+        if (!annule) toast.error(e instanceof Error ? `Impossible d'ouvrir le PDF : ${e.message}` : "Impossible d'ouvrir le PDF");
+      } finally {
+        if (!annule) setPreparationPdf(false);
+      }
+    })();
     setZones((data.doc.zones as unknown as Zone[]) ?? []);
     const s = (data.doc.signataires as unknown as Signataire[]) ?? [];
     const c = s.find((x) => x.role === "client");
