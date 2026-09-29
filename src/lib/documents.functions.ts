@@ -325,8 +325,7 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
     if (signataire?.signed_at) return { ok: true, already: true, enAttente: [] as string[] };
     const { getRequestIP } = await import("@tanstack/react-start/server");
     const ip = getRequestIP({ xForwardedFor: true }) ?? null;
-    const { appliquerSignatures, ajouterPreuve, ajouterPreuve: _p, sha256 } = await import("./documents.server");
-    void _p;
+    const { appliquerSignatures, ajouterPreuve, sha256 } = await import("./documents.server");
     const zones = (doc.zones as unknown as Zone[]) ?? [];
     const cle = signataire?.cle ?? null;
     const pdf = await telecharger(doc.storage_path);
