@@ -2,12 +2,17 @@ import { useEffect, useRef, useState, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
 import { BORNES_CATALOGUE, BORNES_VEDETTES } from "@/lib/bornes-catalogue";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getTarifsSitePublic } from "@/lib/tarifs-site.functions";
 
 /**
  * Carrousel des bornes : défilement automatique (diaporama) + glisser-déplacer
  * à la souris ou au doigt, avec flèches et pause au survol.
  */
 export function BornesCarrousel() {
+  const getTarifs = useServerFn(getTarifsSitePublic);
+  const prix = useQuery({ queryKey: ["tarifs-site-publics"], queryFn: () => getTarifs() }).data?.bornes;
   const trackRef = useRef<HTMLDivElement>(null);
   const [grabbing, setGrabbing] = useState(false);
   const dragging = useRef(false);
@@ -141,6 +146,11 @@ export function BornesCarrousel() {
                 {p.puissance} · {p.phase}
               </span>
               <span className="text-center text-xs text-muted-foreground">{p.atout}</span>
+              {prix?.[p.id] != null && (
+                <span className="text-center text-xs">
+                  Dès <span className="font-semibold text-primary">{prix[p.id].toLocaleString("fr-FR")} € TTC</span>
+                </span>
+              )}
               {p.badge && (
                 <span className="rounded-full border border-primary/50 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
                   {p.badge}
