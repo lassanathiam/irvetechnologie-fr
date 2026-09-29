@@ -218,8 +218,8 @@ function Index() {
         <div className="relative h-[88svh] min-h-[560px] w-full overflow-hidden rounded-[2.5rem] shadow-2xl">
           <img
             src={heroAccueil}
-            alt="Voiture électrique en charge sur une borne installée par Borne de l'Ouest"
-            className="absolute inset-0 h-full w-full object-cover"
+            alt="Voiture électrique française en charge sur une borne installée par Borne de l'Ouest"
+            className="absolute inset-0 h-full w-full object-cover animate-kenburns"
             width={1920}
             height={1088}
             fetchPriority="high"
