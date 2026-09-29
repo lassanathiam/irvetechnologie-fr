@@ -11,6 +11,7 @@ import { listPublicRealisations } from "@/lib/realisations.functions";
 import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
 import { BornesCarrousel } from "@/components/BornesCarrousel";
 import heroAccueil from "@/assets/hero-accueil.jpg";
+import { getTarifsSitePublic, TARIFS_SITE_DEFAUT } from "@/lib/tarifs-site.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -136,6 +137,7 @@ function Index() {
   const parcours_r = useReveal<HTMLDivElement>();
   const real_r = useReveal<HTMLDivElement>();
   const fetchRealisations = useServerFn(listPublicRealisations);
+  const fetchTarifs = useServerFn(getTarifsSitePublic);
   const realisationsQuery = useQuery({
     queryKey: ["realisations-publiques"],
     queryFn: () => fetchRealisations(),
@@ -147,6 +149,12 @@ function Index() {
     place: r.lieu,
     spec: r.description,
   }));
+  const tarifsQuery = useQuery({
+    queryKey: ["tarifs-site-publics"],
+    queryFn: () => fetchTarifs(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const tarifsSite = tarifsQuery.data ?? TARIFS_SITE_DEFAUT;
   const zones_r = useReveal<HTMLDivElement>();
   const [audience, setAudience] = useState<"client" | "external">("client");
   const [avisSent, setAvisSent] = useState(false);
@@ -214,8 +222,8 @@ function Index() {
       <SiteNav />
 
       {/* HERO — immersif plein écran */}
-      <section className="relative px-4 pt-20 sm:px-8">
-        <div className="relative h-[88svh] min-h-[560px] w-full overflow-hidden rounded-[2.5rem] shadow-2xl">
+      <section className="relative px-3 pt-28 sm:px-8 sm:pt-20">
+        <div className="relative min-h-[720px] w-full overflow-hidden rounded-2xl shadow-2xl sm:h-[88svh] sm:min-h-[620px] sm:rounded-[2.5rem]">
           <img
             src={heroAccueil}
             alt="Voiture électrique française en charge sur une borne installée par Borne de l'Ouest"
@@ -226,24 +234,24 @@ function Index() {
           />
           <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-slate-900/45 to-transparent" aria-hidden />
 
-          <div className="relative z-10 flex h-full flex-col justify-center px-6 text-white sm:px-12 lg:px-20">
+          <div className="relative z-10 flex min-h-[720px] flex-col justify-center px-5 py-12 text-white sm:h-full sm:min-h-0 sm:px-12 sm:py-0 lg:px-20">
             <div className="max-w-3xl animate-fade-up">
-              <div className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 shadow-sm backdrop-blur-md">
+              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 shadow-sm backdrop-blur-md sm:mb-8 sm:px-4">
                 <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
                 <span className="text-xs font-bold uppercase tracking-widest text-emerald-50">Expertise IRVE certifiée P1 · P2 · P3</span>
               </div>
 
-              <h1 className="mb-6 font-display text-4xl font-extrabold leading-tight tracking-tight sm:text-6xl lg:text-7xl">
+              <h1 className="mb-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:mb-6 sm:text-6xl lg:text-7xl">
                 Installation de <br />
                 <span className="text-emerald-400">bornes de recharge</span>
               </h1>
 
-              <p className="mb-10 max-w-xl text-lg leading-relaxed text-slate-200 md:text-xl">
+              <p className="mb-6 max-w-xl text-base leading-relaxed text-slate-200 sm:mb-10 sm:text-lg md:text-xl">
                 Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels.
                 Intervention rapide dans tout le <span className="font-bold text-white">Grand Ouest</span>.
               </p>
 
-              <div className="mb-14 flex flex-wrap gap-5">
+              <div className="mb-7 grid gap-3 sm:mb-14 sm:flex sm:flex-wrap sm:gap-5">
                 <Link
                   to="/demande"
                   className="flex items-center gap-3 rounded-2xl bg-emerald-500 px-8 py-4 font-bold text-slate-900 shadow-lg shadow-emerald-500/20 transition-all hover:bg-emerald-400"
@@ -260,14 +268,14 @@ function Index() {
                 </a>
               </div>
 
-              <div className="flex flex-wrap gap-8 opacity-90 md:gap-12">
+              <div className="grid gap-2 opacity-95 sm:flex sm:flex-wrap sm:gap-8 md:gap-12">
                 {[
                   { icon: BadgeCheck, label: "Étude technique" },
                   { icon: Zap, label: "Pose & raccordement" },
                   { icon: Wrench, label: "Maintenance suivie" },
                 ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/20">
+                  <div key={label} className="flex min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-slate-950/25 p-2.5 backdrop-blur-sm sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/20 sm:h-10 sm:w-10 sm:rounded-xl">
                       <Icon className="h-5 w-5 text-emerald-400" />
                     </div>
                     <span className="font-medium">{label}</span>
@@ -284,6 +292,28 @@ function Index() {
             </div>
           </div>
         </div>
+      </section>
+
+      <section className="border-b border-border bg-card/30 py-5" aria-label="Tarifs indicatifs">
+        <div className="mx-auto grid max-w-6xl gap-2 px-4 sm:grid-cols-3 sm:gap-3 sm:px-6">
+          {[
+            { label: "Installation borne", valeur: tarifsSite.installation_ttc, suite: "TTC", icon: Zap },
+            { label: "Entretien annuel", valeur: tarifsSite.maintenance_ttc, suite: "TTC/an", icon: ShieldCheck },
+            { label: "Diagnostic / dépannage", valeur: tarifsSite.depannage_ttc, suite: "TTC", icon: Wrench },
+          ].map(({ label, valeur, suite, icon: Icon }, index) => (
+            <Link
+              key={label}
+              to="/demande"
+              className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
+              style={{ animationDelay: `${index * 90}ms` }}
+            >
+              <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span>
+              <span className="min-w-0"><span className="block truncate text-xs text-muted-foreground">{label}</span><span className="block text-xs font-semibold">À partir de</span></span>
+              <span className="shrink-0 text-right"><strong className="text-xl text-primary">{new Intl.NumberFormat("fr-FR").format(valeur)} €</strong><span className="block text-[10px] text-muted-foreground">{suite}</span></span>
+            </Link>
+          ))}
+        </div>
+        <p className="mx-auto mt-3 max-w-4xl px-6 text-center text-[11px] text-muted-foreground">Tarifs indicatifs selon une configuration standard. Le devis final dépend du matériel, de la distance et des travaux nécessaires.</p>
       </section>
 
       {/* CARROUSEL bornes — diaporama + glisser, cliquables vers la demande préremplie */}
@@ -419,7 +449,7 @@ function Index() {
 
           {/* Cartes formules */}
           <div className="grid md:grid-cols-3 gap-6 lg:gap-8 items-stretch">
-            {(homeCompact ? maintenancePlans.slice(0, 2) : maintenancePlans).map((p, idx) => {
+            {maintenancePlans.map((p, idx) => {
               const raw = isClient ? p.client : p.external;
               const isQuote = raw === "Sur devis";
               return (

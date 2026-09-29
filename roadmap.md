@@ -35,3 +35,4 @@
 # Roadmap
 
 - [x] Hero accueil refait en immersif plein écran (direction v2 choisie), vérifié
+- [x] Corriger la visibilité mobile de « Maintenance et suivi » et ajouter des tarifs publics modifiables
