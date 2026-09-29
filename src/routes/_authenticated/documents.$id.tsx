@@ -165,7 +165,7 @@ function DocumentPage() {
 
         <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
           <div className="rounded-lg border border-border bg-muted/30 p-3">
-            <PdfZones pdf={pdf} zones={verrouille ? [] : zones} onChange={verrouille ? undefined : setZones} />
+            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
           {!verrouille && (
