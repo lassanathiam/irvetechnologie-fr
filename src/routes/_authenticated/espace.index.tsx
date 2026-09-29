@@ -184,7 +184,7 @@ function EspacePage() {
               label="Retards de règlement"
               value={String(facturation.data?.totaux.retard_nb ?? 0)}
               hint={euro(facturation.data?.totaux.retard_ht ?? 0)}
-              to="/factures"
+              to="/facturation"
             />
           </div>
 
