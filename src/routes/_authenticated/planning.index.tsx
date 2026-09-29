@@ -495,7 +495,8 @@ function PlanningPage() {
   const [montantsVisibles, setMontantsVisibles] = useState(true);
 
   /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
-  const [vueArchives, setVueArchives] = useState(false);
+  const [vueListe, setVueListe] = useState<"encours" | "annules" | "clotures">("encours");
+  const vueArchives = vueListe === "clotures";
   /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
 
@@ -508,14 +509,19 @@ function PlanningPage() {
     (Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise") &&
       Boolean(r.retour_complete_at) &&
       Boolean(r.chantier_valide));
-  const nbArchives = toutes.filter(estArchiveLogique).length;
+  /** Onglet d'un rendez-vous : annulé en priorité, puis clôturé, sinon en cours. */
+  const ongletDe = (r: (typeof toutes)[number]) =>
+    r.statut === "annule" ? "annules" : estArchiveLogique(r) ? "clotures" : "encours";
+  const nbArchives = toutes.filter((r) => ongletDe(r) === "clotures").length;
+  const nbAnnules = toutes.filter((r) => ongletDe(r) === "annules").length;
+  const nbEnCours = toutes.length - nbArchives - nbAnnules;
   const rows = useMemo(
     () =>
       toutes
-        .filter((r) => estArchiveLogique(r) === vueArchives)
+        .filter((r) => ongletDe(r) === vueListe)
         .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.data, vueArchives, filtreStatut],
+    [list.data, vueListe, filtreStatut],
   );
   /** Chantiers en cours : toujours remontés en tête de page. */
   const enCours = useMemo(
@@ -1526,23 +1532,32 @@ function PlanningPage() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
-              {vueArchives ? "Chantiers clôturés" : "Rendez-vous programmés"}
+              {vueListe === "clotures" ? "Chantiers clôturés" : vueListe === "annules" ? "Rendez-vous annulés" : "Rendez-vous programmés"}
             </h2>
             <div className="ml-auto inline-flex rounded-full border border-border p-0.5">
               <button
                 type="button"
-                onClick={() => setVueArchives(false)}
+                onClick={() => { setVueListe("encours"); setFiltreStatut("tous"); }}
                 className={`text-[11px] px-3 py-1.5 rounded-full transition ${
-                  !vueArchives ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                  vueListe === "encours" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
                 }`}
               >
-                En cours ({toutes.length - nbArchives})
+                En cours ({nbEnCours})
               </button>
               <button
                 type="button"
-                onClick={() => setVueArchives(true)}
+                onClick={() => { setVueListe("annules"); setFiltreStatut("tous"); }}
+                className={`text-[11px] px-3 py-1.5 rounded-full transition ${
+                  vueListe === "annules" ? "bg-destructive text-destructive-foreground" : "text-muted-foreground hover:text-destructive"
+                }`}
+              >
+                Annulés ({nbAnnules})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVueListe("clotures"); setFiltreStatut("tous"); }}
                 className={`text-[11px] px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition ${
-                  vueArchives ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                  vueListe === "clotures" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
                 }`}
               >
                 <Archive className="h-3.5 w-3.5" /> Chantiers clôturés ({nbArchives})
@@ -1554,13 +1569,13 @@ function PlanningPage() {
             <div className="flex min-w-max items-center gap-2">
             {[
               { v: "tous", l: "Tous", point: "bg-muted-foreground" },
-              ...STATUTS.map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
+              ...STATUTS.filter((s) => (vueListe === "annules" ? false : s.v !== "annule")).map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
             ].map((f) => {
               const nb =
                 f.v === "tous"
-                  ? toutes.filter((r) => estArchiveLogique(r) === vueArchives).length
+                  ? toutes.filter((r) => ongletDe(r) === vueListe).length
                   : toutes.filter(
-                      (r) => estArchiveLogique(r) === vueArchives && r.statut === f.v,
+                      (r) => ongletDe(r) === vueListe && r.statut === f.v,
                     )
                       .length;
               const on = filtreStatut === f.v;
@@ -1601,7 +1616,9 @@ function PlanningPage() {
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
             <p className="text-sm text-muted-foreground">
-              {vueArchives
+              {vueListe === "annules"
+                ? "Aucun rendez-vous annulé."
+                : vueArchives
                 ? "Aucun chantier archivé pour le moment."
                 : filtreStatut !== "tous"
                   ? "Aucun chantier dans cet état."
