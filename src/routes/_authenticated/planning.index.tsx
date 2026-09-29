@@ -939,11 +939,11 @@ function PlanningPage() {
                 <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
                   {!missionTerrain.demarre_at && <Button className="mt-3 h-12 w-full text-base font-bold" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play /> Je suis arrivé — démarrer</Button>}
                 </EtapeMission>
-                <EtapeMission titre="Matériel, photos et métrage" detail={missionTerrain.retour_complete_at ? "Retour de travaux enregistré" : "Contrôles et preuves du chantier"} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Ouvrir les photos et le métrage</Button>}
+                <EtapeMission titre="Matériel, photos et métrage" detail={missionTerrain.retour_complete_at ? "Enregistré" : undefined} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
                 </EtapeMission>
-                <EtapeMission titre="Rapport et signatures" detail="Compléter le rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
-                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Ouvrir le rapport à signer</Link></Button>}
+                <EtapeMission titre="Rapport et signatures" detail="Rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
+                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link></Button>}
                 </EtapeMission>
                 <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 h-14 w-full bg-teal-600 text-base font-bold text-slate-50 hover:bg-teal-700" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag /> Terminer et prévenir le client</Button>}
@@ -3029,7 +3029,7 @@ function EtapeMission({
   children,
 }: {
   titre: string;
-  detail: string;
+  detail?: string;
   etat: "termine" | "active" | "attente";
   icone: React.ReactNode;
   dernier?: boolean;
