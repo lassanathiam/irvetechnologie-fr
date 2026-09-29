@@ -22,7 +22,7 @@ const BASES = TECHNICIENS.map((t) => ({
   label: `${t.nom.split(" ")[0]} · ${t.label}`,
 }));
 
-/** Couleurs de statut : orange = programmé, vert = réalisé / validé. */
+/** Couleurs de statut : bleu = programmé, vert = réalisé / validé. */
 export const STATUT_COLORS: Record<string, string> = {
   planifie: "#2563eb",
   confirme: "#0284c7",
