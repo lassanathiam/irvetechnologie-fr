@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Check, CircleAlert, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp, UserRound } from "lucide-react";
+import { ArrowLeft, Check, CircleAlert, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp, Undo2, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { PdfZones, detecterZones, ouvrirPdf } from "@/components/PdfZones";
@@ -10,7 +10,7 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DOSSIERS, STATUT_DOC, ZONE_LABEL, nouvelleZone, type Role, type Signataire, type Zone, type ZoneType } from "@/lib/documents";
-import { enregistrerPreparation, envoyerPourSignature, getDocument, remplacerFichierDocument, signerIrve } from "@/lib/documents.functions";
+import { annulerSignature, enregistrerPreparation, envoyerPourSignature, getDocument, remplacerFichierDocument, signerIrve } from "@/lib/documents.functions";
 import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/_authenticated/documents/$id")({
@@ -60,6 +60,7 @@ function DocumentPage() {
   const signer = useServerFn(signerIrve);
   const envoyer = useServerFn(envoyerPourSignature);
   const remplacer = useServerFn(remplacerFichierDocument);
+  const annuler = useServerFn(annulerSignature);
   const [preparationPdf, setPreparationPdf] = useState(false);
   const { data, isLoading, error } = useQuery({ queryKey: ["document", id], queryFn: () => lire({ data: { id } }) });
 
