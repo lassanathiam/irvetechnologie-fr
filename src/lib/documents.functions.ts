@@ -93,6 +93,8 @@ export const supprimerDocument = createServerFn({ method: "POST" })
 
 const signataireSchema = z.object({
   role: z.enum(["irve", "client"]),
+  cle: z.string().trim().max(40).nullable().optional(),
+  token: z.string().uuid().nullable().optional(),
   nom: z.string().trim().max(120),
   email: z.string().trim().max(200).nullable().optional(),
   telephone: z.string().trim().max(40).nullable().optional(),
@@ -108,7 +110,7 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
         id: z.string().uuid(),
         nbPages: z.number().int().min(1).max(500),
         zones: z.array(z.any()).max(200),
-        signataires: z.array(signataireSchema).max(2),
+        signataires: z.array(signataireSchema).max(10),
         dossier: z.string().max(40).optional(),
       })
       .parse(d),
