@@ -51,6 +51,7 @@ import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authe
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
+import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
 
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
@@ -280,6 +281,12 @@ const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   path: '/api/public/photo/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicBornePhotoSplatRoute =
+  ApiPublicBornePhotoSplatRouteImport.update({
+    id: '/api/public/borne-photo/$',
+    path: '/api/public/borne-photo/$',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -320,6 +327,7 @@ export interface FileRoutesByFullPath {
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -363,6 +371,7 @@ export interface FileRoutesByTo {
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -408,6 +417,7 @@ export interface FileRoutesById {
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -453,6 +463,7 @@ export interface FileRouteTypes {
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -496,6 +507,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/rapports'
     | '/realisations'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -540,6 +552,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
+    | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/transactional/preview'
@@ -562,6 +575,7 @@ export interface RootRouteChildren {
   RapportDonneurTokenRoute: typeof RapportDonneurTokenRoute
   RdvTokenRoute: typeof RdvTokenRoute
   SignerTokenRoute: typeof SignerTokenRoute
+  ApiPublicBornePhotoSplatRoute: typeof ApiPublicBornePhotoSplatRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -863,6 +877,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/borne-photo/$': {
+      id: '/api/public/borne-photo/$'
+      path: '/api/public/borne-photo/$'
+      fullPath: '/api/public/borne-photo/$'
+      preLoaderRoute: typeof ApiPublicBornePhotoSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -940,6 +961,7 @@ const rootRouteChildren: RootRouteChildren = {
   RapportDonneurTokenRoute: RapportDonneurTokenRoute,
   RdvTokenRoute: RdvTokenRoute,
   SignerTokenRoute: SignerTokenRoute,
+  ApiPublicBornePhotoSplatRoute: ApiPublicBornePhotoSplatRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
