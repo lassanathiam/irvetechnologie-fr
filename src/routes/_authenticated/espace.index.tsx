@@ -163,7 +163,7 @@ function EspacePage() {
               label="Encaissé"
               value={euro(q.data?.stats.caEncaisse ?? 0)}
               hint={`${euro(q.data?.stats.caMois ?? 0)} ce mois`}
-              to="/factures"
+              to="/facturation"
             />
             <SimpleStat
               icon={Receipt}

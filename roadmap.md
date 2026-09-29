@@ -44,3 +44,5 @@
 - [x] Afficher date et heure du rendez-vous dans Mission terrain
 - [x] Affecter un intervenant directement depuis la carte
 - [x] Plus de calcul à vol d'oiseau : trajets par la route, péages via Waze
+- [x] Rétablir l’espace « À facturer » et ses liens depuis les notifications et le tableau de bord
+- [x] Ajouter « Réponse express » préremplie sur chaque demande client

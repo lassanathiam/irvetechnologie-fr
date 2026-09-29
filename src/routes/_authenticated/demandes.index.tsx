@@ -19,6 +19,7 @@ import {
 import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
 import { supprimerDemande, updateStatutDemande } from "@/lib/demandes-admin.functions";
 import { ProShell } from "@/components/ProShell";
+import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dateFr } from "@/lib/company";
 
@@ -275,6 +276,17 @@ function DemandesPage() {
                     </a>
                   )}
                   <span className="w-px h-5 bg-border mx-1 hidden sm:block" />
+                  <ReponseExpressButton
+                    label="Réponse express"
+                    prefill={{
+                      nom: d.nom,
+                      email: d.email,
+                      telephone: d.telephone,
+                      cp_ville: d.code_postal,
+                      metrage_m: d.distance_m,
+                    }}
+                    className="inline-flex min-h-8 items-center gap-1.5 rounded-full bg-primary px-3 py-1.5 text-[11px] font-bold text-primary-foreground transition hover:bg-primary/90"
+                  />
                   <button
                     type="button"
                     onClick={() => changer.mutate({ id: d.id, status: "accepte" })}

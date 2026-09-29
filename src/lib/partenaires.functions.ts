@@ -739,7 +739,7 @@ export const proposerMontantPartenaire = createServerFn({ method: "POST" })
       type: "partenaire_montant",
       titre: `${partenaire.nom} propose un montant révisé`,
       message: data.note?.trim() || "À valider avant facturation.",
-      lien: "/factures/nouvelle",
+      lien: "/facturation",
       montant: data.montant_ht,
       meta: { rendezvous_id: data.rendezvous_id, partenaire_id: partenaire.id },
     });
