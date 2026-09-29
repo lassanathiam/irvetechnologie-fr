@@ -11,6 +11,7 @@ import {
   Download,
   Euro,
   FileText,
+  FolderLock,
   Handshake,
   Images,
   Inbox,
@@ -45,6 +46,7 @@ const LINKS: LienPro[] = [
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
   { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
+  { to: "/documents", label: "Documents", icon: FolderLock },
   { to: "/realisations", label: "Photos", icon: Images },
 ];
 
