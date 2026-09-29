@@ -75,7 +75,8 @@ function DocumentPage() {
   const [sig, setSig] = useState<string | null>(null);
   const [par, setPar] = useState<string | null>(null);
   const [lien, setLien] = useState<string | null>(null);
-  const [envoiAuto, setEnvoiAuto] = useState(false);
+  const [envoiAuto, setEnvoiAuto] = useState(true);
+  const [mode, setMode] = useState<"seul" | "deux" | "client" | null>(null);
 
   useEffect(() => {
     if (!data?.url) return;
@@ -111,12 +112,14 @@ function DocumentPage() {
         if (!annule) setPreparationPdf(false);
       }
     })();
-    setZones((data.doc.zones as unknown as Zone[]) ?? []);
+    const zs = (data.doc.zones as unknown as Zone[]) ?? [];
+    setZones(zs);
     const s = (data.doc.signataires as unknown as Signataire[]) ?? [];
     const c = s.find((x) => x.role === "client");
     if (c) setClient({ ...c, email: c.email ?? "", telephone: c.telephone ?? "" });
     const i = s.find((x) => x.role === "irve");
     if (i?.nom) setIrveNom(i.nom);
+    setMode((m) => m ?? (zs.some((z) => z.role === "client") || i?.signed_at ? "deux" : "seul"));
     return () => {
       annule = true;
     };
