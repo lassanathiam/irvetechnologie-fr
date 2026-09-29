@@ -221,74 +221,77 @@ function Index() {
     <div className="public-premium min-h-screen overflow-x-hidden bg-background text-foreground">
       <SiteNav />
 
-      {/* HERO — immersif plein écran */}
-      <section className="relative px-3 pt-28 sm:px-8 sm:pt-20">
-        <div className="relative min-h-[720px] w-full overflow-hidden rounded-2xl shadow-2xl sm:h-[88svh] sm:min-h-[620px] sm:rounded-[2.5rem]">
-          <img
-            src={heroAccueil}
-            alt="Voiture électrique française en charge sur une borne installée par Borne de l'Ouest"
-            className="absolute inset-0 h-full w-full object-cover animate-kenburns"
-            width={1920}
-            height={1088}
-            fetchPriority="high"
-          />
-          <div className="absolute inset-0 bg-gradient-to-r from-slate-900/85 via-slate-900/45 to-transparent" aria-hidden />
+      {/* HERO — clair, dans la continuité du reste du site */}
+      <section className="px-3 pt-24 sm:px-8 sm:pt-28" aria-label="Introduction">
+        <div className="mx-auto grid w-full max-w-6xl items-center gap-8 py-6 sm:py-12 lg:grid-cols-[1.05fr_1fr] lg:gap-16">
+          <div className="animate-fade-up">
+            <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-emerald-50 px-4 py-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-500" />
+              <span className="text-xs font-semibold text-emerald-700">Expertise IRVE certifiée P1 · P2 · P3</span>
+            </div>
 
-          <div className="relative z-10 flex min-h-[720px] flex-col justify-center px-5 py-12 text-white sm:h-full sm:min-h-0 sm:px-12 sm:py-0 lg:px-20">
-            <div className="max-w-3xl animate-fade-up">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-2 shadow-sm backdrop-blur-md sm:mb-8 sm:px-4">
-                <span className="flex h-2 w-2 rounded-full bg-emerald-400" />
-                <span className="text-xs font-bold uppercase tracking-widest text-emerald-50">Expertise IRVE certifiée P1 · P2 · P3</span>
-              </div>
+            <h1 className="mb-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-6 sm:text-5xl lg:text-6xl">
+              Installation de <br />
+              <span className="text-primary">bornes de recharge</span>
+            </h1>
 
-              <h1 className="mb-4 font-display text-4xl font-extrabold leading-tight tracking-tight sm:mb-6 sm:text-6xl lg:text-7xl">
-                Installation de <br />
-                <span className="text-emerald-400">bornes de recharge</span>
-              </h1>
+            <p className="mb-6 max-w-xl text-base leading-relaxed text-muted-foreground sm:mb-10 sm:text-lg">
+              Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels.
+              Intervention rapide dans tout le <span className="font-semibold text-foreground">Grand Ouest</span>.
+            </p>
 
-              <p className="mb-6 max-w-xl text-base leading-relaxed text-slate-200 sm:mb-10 sm:text-lg md:text-xl">
-                Étude, pose, mise en service et maintenance pour particuliers, copropriétés et professionnels.
-                Intervention rapide dans tout le <span className="font-bold text-white">Grand Ouest</span>.
-              </p>
+            <div className="mb-7 grid gap-3 sm:mb-12 sm:flex sm:flex-wrap sm:gap-4">
+              <Link
+                to="/demande"
+                className="flex items-center justify-center gap-3 rounded-full bg-primary px-7 py-3.5 font-semibold text-primary-foreground shadow-md shadow-emerald-600/20 transition-all hover:bg-emerald-700"
+              >
+                Demander un devis
+                <ArrowRight className="h-5 w-5" />
+              </Link>
+              <a
+                href="tel:+33768084367"
+                className="flex items-center justify-center gap-3 rounded-full border border-border bg-card px-7 py-3.5 font-semibold text-foreground transition-all hover:border-primary/50 hover:text-primary"
+              >
+                <Phone className="h-5 w-5 text-primary" />
+                07 68 08 43 67
+              </a>
+            </div>
 
-              <div className="mb-7 grid gap-3 sm:mb-14 sm:flex sm:flex-wrap sm:gap-5">
-                <Link
-                  to="/demande"
-                  className="flex items-center gap-3 rounded-full bg-emerald-600 px-8 py-4 font-bold text-white shadow-lg shadow-emerald-600/25 transition-all hover:bg-emerald-700"
-                >
-                  Demander un devis
-                  <ArrowRight className="h-5 w-5" />
-                </Link>
-                <a
-                  href="tel:+33768084367"
-                  className="flex items-center gap-3 rounded-2xl border border-white/30 bg-white/10 px-8 py-4 font-bold text-white backdrop-blur-md transition-all hover:bg-white/20"
-                >
-                  <Phone className="h-5 w-5 text-emerald-400" />
-                  07 68 08 43 67
-                </a>
-              </div>
-
-              <div className="grid gap-2 opacity-95 sm:flex sm:flex-wrap sm:gap-8 md:gap-12">
-                {[
-                  { icon: BadgeCheck, label: "Étude technique" },
-                  { icon: Zap, label: "Pose & raccordement" },
-                  { icon: Wrench, label: "Maintenance suivie" },
-                ].map(({ icon: Icon, label }) => (
-                  <div key={label} className="flex min-w-0 items-center gap-3 rounded-lg border border-white/10 bg-slate-950/25 p-2.5 backdrop-blur-sm sm:border-0 sm:bg-transparent sm:p-0 sm:backdrop-blur-none">
-                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-emerald-500/40 bg-emerald-500/20 sm:h-10 sm:w-10 sm:rounded-xl">
-                      <Icon className="h-5 w-5 text-emerald-400" />
-                    </div>
-                    <span className="font-medium">{label}</span>
+            <div className="grid gap-2 sm:flex sm:flex-wrap sm:gap-6">
+              {[
+                { icon: BadgeCheck, label: "Étude technique" },
+                { icon: Zap, label: "Pose & raccordement" },
+                { icon: Wrench, label: "Maintenance suivie" },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="flex items-center gap-3 rounded-xl border border-border bg-card px-3.5 py-2.5">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-50">
+                    <Icon className="h-5 w-5 text-primary" />
                   </div>
-                ))}
-              </div>
+                  <span className="text-sm font-medium text-foreground">{label}</span>
+                </div>
+              ))}
             </div>
           </div>
 
-          <div className="absolute bottom-8 right-12 hidden md:block" aria-hidden>
-            <div className="flex items-center gap-4 text-white/50">
-              <span className="text-xs font-bold uppercase tracking-widest">Défiler</span>
-              <div className="h-px w-12 bg-white/30" />
+          <div className="relative animate-fade-up" style={{ animationDelay: "120ms" }}>
+            <div className="overflow-hidden rounded-2xl border border-border shadow-xl shadow-slate-900/10">
+              <img
+                src={heroAccueil}
+                alt="Voiture électrique française en charge sur une borne installée par Borne de l'Ouest"
+                className="aspect-[4/3] w-full object-cover animate-kenburns"
+                width={1920}
+                height={1088}
+                fetchPriority="high"
+              />
+            </div>
+            <div className="absolute -bottom-4 left-5 flex items-center gap-3 rounded-xl border border-border bg-card px-4 py-3 shadow-lg">
+              <span className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50">
+                <MapPin className="h-5 w-5 text-primary" />
+              </span>
+              <span className="text-sm leading-tight">
+                <span className="block font-semibold text-foreground">Nantes & Grand Ouest</span>
+                <span className="block text-xs text-muted-foreground">Déplacements jusqu'à ~250 km</span>
+              </span>
             </div>
           </div>
         </div>
