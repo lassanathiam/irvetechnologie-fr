@@ -13,7 +13,8 @@ async function chargerPdfjs() {
 
 export async function ouvrirPdf(url: string): Promise<PdfDoc> {
   const pdfjs = await chargerPdfjs();
-  return await pdfjs.getDocument({ url }).promise;
+  const cdn = `https://unpkg.com/pdfjs-dist@${pdfjs.version}`;
+  return await pdfjs.getDocument({ url, standardFontDataUrl: `${cdn}/standard_fonts/`, cMapUrl: `${cdn}/cmaps/`, cMapPacked: true }).promise;
 }
 
 /** Détection « intelligente » : repère les mots-clés du document et propose des zones. */
