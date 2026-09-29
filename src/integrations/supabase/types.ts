@@ -300,6 +300,60 @@ export type Database = {
         }
         Relationships: []
       }
+      bornes: {
+        Row: {
+          actif: boolean
+          atout: string
+          badge: string | null
+          created_at: string
+          id: string
+          nom: string
+          ordre: number
+          phase: string
+          photo_path: string | null
+          prix_ttc: number | null
+          puissance: string
+          slug: string
+          updated_at: string
+          usage: string
+          vedette: boolean
+        }
+        Insert: {
+          actif?: boolean
+          atout?: string
+          badge?: string | null
+          created_at?: string
+          id?: string
+          nom: string
+          ordre?: number
+          phase?: string
+          photo_path?: string | null
+          prix_ttc?: number | null
+          puissance?: string
+          slug: string
+          updated_at?: string
+          usage?: string
+          vedette?: boolean
+        }
+        Update: {
+          actif?: boolean
+          atout?: string
+          badge?: string | null
+          created_at?: string
+          id?: string
+          nom?: string
+          ordre?: number
+          phase?: string
+          photo_path?: string | null
+          prix_ttc?: number | null
+          puissance?: string
+          slug?: string
+          updated_at?: string
+          usage?: string
+          vedette?: boolean
+        }
+        Relationships: []
+      }
       demande_photos: {
         Row: {
           created_at: string
