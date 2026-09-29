@@ -134,9 +134,10 @@ function DocumentPage() {
   const irveSigne = signataires.some((s) => s.role === "irve" && s.signed_at);
   const verrouille = doc.statut === "signe";
 
+  const nbPagesDoc = () => pdf?.numPages ?? Math.max(1, ...zones.map((z) => z.page + 1));
+
   const enregistrer = async (z: Zone[] = zones) => {
-    if (!pdf) return;
-    await sauver({ data: { id, nbPages: pdf.numPages, zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
+    await sauver({ data: { id, nbPages: nbPagesDoc(), zones: z, signataires: [{ role: "irve", nom: irveNom, ...(signataires.find((s) => s.role === "irve") ?? {}) }, client].map((s) => ({ ...s, nom: s.role === "irve" ? irveNom : client.nom })) } });
   };
 
   const detecter = async () => {
@@ -156,23 +157,34 @@ function DocumentPage() {
   const faireSigner = async (cachet?: string) => {
     const sig2 = cachet ?? sig;
     if (!sig2) return toast.error("Dessinez votre signature.");
-    if (envoiAuto && nbZones("client") > 0) {
-      if (!client.nom.trim()) return toast.error("Indiquez le nom du client pour l'envoi automatique.");
-      if (!client.email) return toast.error("Indiquez l'email du client pour l'envoi automatique.");
+    const aDeux = mode === "deux";
+    if (aDeux) {
+      if (client.nom.trim().length < 2) return toast.error("Étape 2 : indiquez le nom du client qui signera après vous.");
+      if (envoiAuto && !client.email) return toast.error("Étape 2 : indiquez l'email du client (ou décochez l'envoi automatique).");
     }
     setBusy("sign");
     try {
-      // Pas de zone IRVE placée : on ajoute automatiquement un emplacement en bas de la dernière page.
-      const z = zones.some((x) => x.role === "irve") ? zones : [...zones, nouvelleZone("signature", "irve", (pdf?.numPages ?? 1) - 1, 0.08, 0.8)];
+      const derniere = nbPagesDoc() - 1;
+      let z = zones;
+      // Je signe seul : on retire les zones du client pour finaliser directement.
+      if (!aDeux) z = z.filter((x) => x.role !== "client");
+      // À deux sans zone client : on place la signature du client en bas de la dernière page.
+      if (aDeux && !z.some((x) => x.role === "client")) z = [...z, nouvelleZone("signature", "client", derniere, 0.6, 0.8)];
+      // Pas de zone IRVE : emplacement automatique en bas de la dernière page.
+      if (!z.some((x) => x.role === "irve")) z = [...z, nouvelleZone("signature", "irve", derniere, 0.08, 0.8)];
       setZones(z);
       await enregistrer(z);
       const r = await signer({ data: { id, signature: sig2, paraphe: cachet ?? par, nom: irveNom } });
-      if (!r.termine && envoiAuto && client.email) {
+      if (!r.termine && aDeux && envoiAuto && client.email) {
         const e = await envoyer({ data: { id, email: client.email, envoyerEmail: true } });
         setLien(e.lien);
         e.emailEnvoye ? toast.success("Signé et envoyé au client par email.") : toast.error("Signé. L'email n'a pas pu partir : utilisez le lien (SMS / WhatsApp).");
+      } else if (!r.termine && aDeux) {
+        const e = await envoyer({ data: { id, email: client.email || null, envoyerEmail: false } });
+        setLien(e.lien);
+        toast.success("Signé. Le lien pour le client est prêt : copiez-le ou envoyez-le par WhatsApp.");
       } else {
-        toast.success(r.termine ? "Document signé. Vous pouvez le télécharger." : "Signé. Choisissez maintenant : envoyer au client ou laisser dans la plateforme.");
+        toast.success("Document signé et terminé. Téléchargez-le ou laissez-le dans la plateforme.");
       }
       setSigne(false);
       setPdf(null);
