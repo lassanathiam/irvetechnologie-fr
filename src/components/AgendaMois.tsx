@@ -13,14 +13,14 @@ export type AgendaEvent = {
 };
 
 const DOTS: Record<string, string> = {
-  planifie: "bg-amber-500",
+  planifie: "bg-blue-600",
   confirme: "bg-sky-500",
   realise: "bg-emerald-500",
   annule: "bg-muted-foreground",
 };
 
 const BARS: Record<string, string> = {
-  planifie: "bg-amber-500",
+  planifie: "bg-blue-600",
   confirme: "bg-sky-500",
   realise: "bg-emerald-500",
   annule: "bg-muted-foreground",

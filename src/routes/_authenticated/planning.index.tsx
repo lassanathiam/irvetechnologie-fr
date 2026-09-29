@@ -130,10 +130,10 @@ const STATUT_STYLE: Record<
 > = {
   planifie: {
     label: "Planifié",
-    badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/50",
-    barre: "before:bg-amber-500",
-    point: "bg-amber-500",
-    fond: "bg-amber-50 dark:bg-amber-500/10 border-amber-300/70 dark:border-amber-500/30",
+    badge: "bg-blue-600/15 text-blue-700 dark:text-blue-300 border-blue-600/50",
+    barre: "before:bg-blue-600",
+    point: "bg-blue-600",
+    fond: "bg-blue-50 dark:bg-blue-600/10 border-blue-300/70 dark:border-blue-600/30",
   },
   confirme: {
     label: "Confirmé",
