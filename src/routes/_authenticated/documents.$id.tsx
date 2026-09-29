@@ -273,6 +273,9 @@ function DocumentPage() {
               <p className="flex items-center gap-2 text-sm font-bold text-emerald-600"><Check className="h-5 w-5" /> Document signé et terminé</p>
               <Button className="w-full" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger le document signé</Button>
               <Button className="w-full" variant="outline" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
+              <Button className="w-full" variant="ghost" size="sm" onClick={faireAnnuler} disabled={busy === "annuler"}>
+                {busy === "annuler" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />} Signature posée par erreur ? Annuler
+              </Button>
             </aside>
           )}
           {!verrouille && (
@@ -402,6 +405,11 @@ function DocumentPage() {
                 <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> {irveSigne ? "Télécharger (signé par IRVE)" : "Télécharger"}</Button>
                 {irveSigne && (
                   <Button className="w-full" variant="ghost" asChild><Link to="/documents"><Check className="h-4 w-4" /> Laisser dans la plateforme</Link></Button>
+                )}
+                {irveSigne && (
+                  <Button className="w-full" variant="ghost" size="sm" onClick={faireAnnuler} disabled={busy === "annuler"}>
+                    {busy === "annuler" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Undo2 className="h-4 w-4" />} Annuler ma signature (erreur)
+                  </Button>
                 )}
                 {lien && (
                   <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
