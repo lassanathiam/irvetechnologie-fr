@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2, X } from "lucide-react";
 import { nouvelleZone, ZONE_LABEL, type Role, type Zone, type ZoneType } from "@/lib/documents";
+import { Button } from "@/components/ui/button";
 
 type PdfDoc = { numPages: number; getPage: (n: number) => Promise<any> };
 
@@ -151,15 +152,17 @@ export function PdfZones({
                       <span className="truncate px-1">{val || `${ZONE_LABEL[z.type]} · ${client ? "Client" : "IRVE"}`}</span>
                     )}
                     {onChange && (
-                      <button
+                      <Button
                         type="button"
+                        size="icon"
+                        variant="destructive"
                         aria-label="Supprimer la zone"
-                        className="absolute -right-2 -top-2 rounded-full bg-destructive p-0.5 text-destructive-foreground"
+                        className="absolute -right-2 -top-2 h-5 w-5 rounded-full"
                         onPointerDown={(e) => e.stopPropagation()}
                         onClick={() => onChange(zones.filter((o) => o.id !== z.id))}
                       >
                         <X className="h-3 w-3" />
-                      </button>
+                      </Button>
                     )}
                   </div>
                 );

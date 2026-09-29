@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp } from "lucide-react";
+import { ArrowLeft, Check, CircleAlert, Copy, Download, Loader2, Mail, MessageCircle, PenLine, Send, Sparkles, Stamp, UserRound } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { PdfZones, detecterZones, ouvrirPdf } from "@/components/PdfZones";
@@ -45,7 +45,9 @@ async function cachetIrve(): Promise<string> {
   const c = document.createElement("canvas");
   c.width = w;
   c.height = h;
-  c.getContext("2d")!.drawImage(img, 0, 0, w, h);
+  const ctx = c.getContext("2d");
+  if (!ctx) throw new Error("Le cachet ne peut pas être préparé.");
+  ctx.drawImage(img, 0, 0, w, h);
   return c.toDataURL("image/png");
 }
 
@@ -146,6 +148,8 @@ function DocumentPage() {
   };
 
   const nbZones = (r: Role) => zones.filter((z) => z.role === r).length;
+  const clientPret = nbZones("client") === 0 || client.nom.trim().length > 1;
+  const preparationPrete = zones.length > 0 && clientPret;
 
   return (
     <ProShell>
@@ -163,20 +167,40 @@ function DocumentPage() {
           <Button variant="outline" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger</Button>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-[1fr_320px]">
-          <div className="rounded-lg border border-border bg-muted/30 p-3">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
+          <div className="rounded-lg border border-border bg-muted/30 p-2 sm:p-3">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card p-3 text-xs">
+              <p className="font-semibold">Aperçu du document</p>
+              <div className="flex flex-wrap gap-3 text-muted-foreground">
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-sky-500" />IRVE Technologie ({nbZones("irve")})</span>
+                <span><span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm bg-amber-500" />Client ({nbZones("client")})</span>
+              </div>
+            </div>
             <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} />
           </div>
 
           {!verrouille && (
             <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
-              <section className="space-y-2 rounded-lg border border-border bg-card p-3">
-                <h2 className="text-sm font-bold">1. Emplacements</h2>
-                <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={paraphes} onChange={(e) => setParaphes(e.target.checked)} /> Paraphe sur chaque page</label>
+              <div className={`flex items-start gap-3 rounded-lg border p-3 ${preparationPrete ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
+                {preparationPrete ? <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" /> : <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />}
+                <div>
+                  <p className="text-sm font-bold">{preparationPrete ? "Prêt à signer ou envoyer" : "Préparation à terminer"}</p>
+                  <p className="text-xs text-muted-foreground">
+                    {zones.length === 0 ? "Ajoutez au moins une zone sur le document." : !clientPret ? "Indiquez le nom du client." : `${zones.length} zone${zones.length > 1 ? "s" : ""} placée${zones.length > 1 ? "s" : ""}.`}
+                  </p>
+                </div>
+              </div>
+
+              <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">1</span>
+                  <div><h2 className="text-sm font-bold">Placer les zones</h2><p className="text-xs text-muted-foreground">Choisissez où chacun doit écrire ou signer.</p></div>
+                </div>
+                <label className="flex items-center gap-2 text-xs"><input type="checkbox" checked={paraphes} onChange={(e) => setParaphes(e.target.checked)} /> Ajouter un paraphe sur chaque page</label>
                 <Button className="w-full" variant="secondary" onClick={detecter} disabled={!pdf || busy === "detect"}>
-                  {busy === "detect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Détecter automatiquement
+                  {busy === "detect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Proposer les zones automatiquement
                 </Button>
-                <p className="text-xs text-muted-foreground">Ou ajoutez à la main :</p>
+                <p className="border-t border-border pt-2 text-xs font-semibold">Ajouter une zone manuellement</p>
                 <div className="flex gap-2 text-xs">
                   <select value={role} onChange={(e) => setRole(e.target.value as Role)} className="h-8 flex-1 rounded border border-input bg-background px-2">
                     <option value="client">Pour le client</option>
@@ -186,25 +210,34 @@ function DocumentPage() {
                     {Array.from({ length: pdf?.numPages ?? 1 }, (_, i) => <option key={i} value={i}>Page {i + 1}</option>)}
                   </select>
                 </div>
-                <div className="flex flex-wrap gap-1">
+                <div className="grid grid-cols-2 gap-2">
                   {(Object.keys(ZONE_LABEL) as ZoneType[]).map((t) => (
-                    <button key={t} type="button" onClick={() => ajouter(t)} className="rounded border border-border px-2 py-1 text-xs hover:bg-muted">+ {ZONE_LABEL[t]}</button>
+                    <Button key={t} type="button" size="sm" variant="outline" onClick={() => ajouter(t)}>+ {ZONE_LABEL[t]}</Button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground"><span className="font-bold text-sky-600">Bleu</span> = IRVE ({nbZones("irve")}) · <span className="font-bold text-amber-600">Orange</span> = client ({nbZones("client")}). Glissez les zones pour les déplacer.</p>
+                <p className="text-xs text-muted-foreground">Touchez et faites glisser une zone pour la déplacer. Utilisez la croix pour la supprimer.</p>
               </section>
 
-              <section className="space-y-2 rounded-lg border border-border bg-card p-3">
-                <h2 className="text-sm font-bold">2. Signataires</h2>
-                <Input value={irveNom} onChange={(e) => setIrveNom(e.target.value)} placeholder="Signataire IRVE Technologie" />
-                <Input value={client.nom} onChange={(e) => setClient({ ...client, nom: e.target.value })} placeholder="Nom du client" />
-                <Input type="email" value={client.email ?? ""} onChange={(e) => setClient({ ...client, email: e.target.value })} placeholder="Email du client" />
-                <Input value={client.telephone ?? ""} onChange={(e) => setClient({ ...client, telephone: e.target.value })} placeholder="Téléphone du client" />
-                <Button variant="ghost" size="sm" onClick={() => enregistrer().then(() => toast.success("Préparation enregistrée"))}>Enregistrer la préparation</Button>
+              <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">2</span>
+                  <div><h2 className="text-sm font-bold">Identifier les signataires</h2><p className="text-xs text-muted-foreground">Les coordonnées servent à envoyer le lien au client.</p></div>
+                </div>
+                <label className="space-y-1 text-xs font-semibold">Signataire IRVE Technologie<Input value={irveNom} onChange={(e) => setIrveNom(e.target.value)} placeholder="Nom et prénom" /></label>
+                <div className="space-y-2 rounded-md border border-border p-3">
+                  <p className="flex items-center gap-2 text-xs font-bold"><UserRound className="h-4 w-4" /> Client</p>
+                  <label className="space-y-1 text-xs font-semibold">Nom complet<Input value={client.nom} onChange={(e) => setClient({ ...client, nom: e.target.value })} placeholder="Nom et prénom du client" /></label>
+                  <label className="space-y-1 text-xs font-semibold">Adresse email<Input type="email" value={client.email ?? ""} onChange={(e) => setClient({ ...client, email: e.target.value })} placeholder="client@exemple.fr" /></label>
+                  <label className="space-y-1 text-xs font-semibold">Téléphone<Input value={client.telephone ?? ""} onChange={(e) => setClient({ ...client, telephone: e.target.value })} placeholder="06 00 00 00 00" /></label>
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => enregistrer().then(() => toast.success("Préparation enregistrée"))}>Enregistrer sans envoyer</Button>
               </section>
 
-              <section className="space-y-2 rounded-lg border border-border bg-card p-3">
-                <h2 className="text-sm font-bold">3. Que voulez-vous faire ?</h2>
+              <section className="space-y-3 rounded-lg border border-border bg-card p-4">
+                <div className="flex items-center gap-3">
+                  <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">3</span>
+                  <div><h2 className="text-sm font-bold">Signer ou envoyer</h2><p className="text-xs text-muted-foreground">Choisissez une seule action selon votre besoin.</p></div>
+                </div>
                 {nbZones("irve") > 0 && !irveSigne && (
                   signe ? (
                     <div className="space-y-2">
@@ -227,20 +260,18 @@ function DocumentPage() {
                 {irveSigne && <p className="text-xs text-emerald-600">✓ Signé par IRVE Technologie</p>}
                 {nbZones("client") > 0 && (
                   <>
-                    <Button className="w-full" variant="secondary" onClick={() => faireEnvoyer(true)} disabled={busy === "send"}><Mail className="h-4 w-4" /> Envoyer au client par email</Button>
-                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send"}><Send className="h-4 w-4" /> Obtenir le lien de signature</Button>
+                    <Button className="w-full" variant="secondary" onClick={() => faireEnvoyer(true)} disabled={busy === "send" || !preparationPrete}><Mail className="h-4 w-4" /> Envoyer le lien par email</Button>
+                    <Button className="w-full" variant="outline" onClick={() => faireEnvoyer(false)} disabled={busy === "send" || !preparationPrete}><Send className="h-4 w-4" /> Créer un lien à partager</Button>
                   </>
                 )}
                 <Button className="w-full" variant="ghost" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger pour l'envoyer moi-même</Button>
                 {lien && (
-                  <div className="space-y-2 rounded border border-border p-2 text-xs">
-                    <p className="break-all">{lien}</p>
+                  <div className="space-y-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs">
+                    <p className="font-bold">Lien de signature prêt</p>
+                    <p className="break-all text-muted-foreground">{lien}</p>
                     <div className="flex gap-2">
                       <Button size="sm" variant="outline" onClick={() => navigator.clipboard.writeText(lien).then(() => toast.success("Lien copié"))}><Copy className="h-3 w-3" /> Copier</Button>
-                      <a className="inline-flex items-center gap-1 rounded border border-border px-2 text-xs" target="_blank" rel="noreferrer"
-                        href={`https://wa.me/${(client.telephone ?? "").replace(/\D/g, "").replace(/^0/, "33")}?text=${encodeURIComponent(`Bonjour, merci de signer ce document : ${lien}`)}`}>
-                        <MessageCircle className="h-3 w-3" /> WhatsApp
-                      </a>
+                      <Button size="sm" variant="outline" asChild><a target="_blank" rel="noreferrer" href={`https://wa.me/${(client.telephone ?? "").replace(/\D/g, "").replace(/^0/, "33")}?text=${encodeURIComponent(`Bonjour, merci de signer ce document : ${lien}`)}`}><MessageCircle className="h-3 w-3" /> WhatsApp</a></Button>
                     </div>
                   </div>
                 )}

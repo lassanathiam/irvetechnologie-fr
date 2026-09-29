@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useRef, useState } from "react";
-import { FileSignature, FolderOpen, Loader2, Search, Trash2, Upload } from "lucide-react";
+import { ChevronRight, FileCheck2, FileClock, FileSignature, FolderOpen, Loader2, Search, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -58,6 +58,8 @@ function DocumentsPage() {
     () => data.filter((d) => (dossier === "tous" || d.dossier === dossier) && d.nom.toLowerCase().includes(q.toLowerCase())),
     [data, dossier, q],
   );
+  const signes = data.filter((d) => d.statut === "signe").length;
+  const enAttente = data.filter((d) => d.statut === "envoye" || d.statut === "consulte").length;
 
   const importer = async (files: FileList | null) => {
     if (!files?.length) return;
@@ -89,28 +91,45 @@ function DocumentsPage() {
   return (
     <ProShell>
       <div className="mx-auto max-w-6xl space-y-4">
-        <div className="flex flex-wrap items-end justify-between gap-3">
+        <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
             <h1 className="font-display text-2xl font-bold">Documents</h1>
             <p className="text-sm text-muted-foreground">Rangez vos documents importants et faites-les signer en ligne.</p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <select value={cible} onChange={(e) => setCible(e.target.value)} className="h-10 rounded-md border border-input bg-background px-3 text-sm" aria-label="Dossier de rangement">
-              {DOSSIERS.map((d) => <option key={d.cle} value={d.cle}>{d.label}</option>)}
-            </select>
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
+            <label className="space-y-1 text-xs font-semibold text-muted-foreground">
+              Ranger dans
+              <select value={cible} onChange={(e) => setCible(e.target.value)} className="block h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground sm:w-52" aria-label="Dossier de rangement">
+                {DOSSIERS.map((d) => <option key={d.cle} value={d.cle}>{d.label}</option>)}
+              </select>
+            </label>
             <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" multiple hidden onChange={(e) => importer(e.target.files)} />
-            <Button onClick={() => input.current?.click()} disabled={envoi}>
+            <Button className="w-full sm:w-auto" onClick={() => input.current?.click()} disabled={envoi}>
               {envoi ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />} Ajouter un document
             </Button>
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-2">
+        <div className="grid gap-2 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-card p-3">
+            <p className="text-xs font-semibold text-muted-foreground">Tous les documents</p>
+            <p className="mt-1 text-2xl font-bold">{data.length}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><FileClock className="h-4 w-4" /> En attente de signature</p>
+            <p className="mt-1 text-2xl font-bold">{enAttente}</p>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-3">
+            <p className="flex items-center gap-2 text-xs font-semibold text-muted-foreground"><FileCheck2 className="h-4 w-4" /> Signés</p>
+            <p className="mt-1 text-2xl font-bold">{signes}</p>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap gap-2" aria-label="Filtrer par dossier">
           {[{ cle: "tous", label: "Tous" }, ...DOSSIERS].map((d) => (
-            <button key={d.cle} type="button" onClick={() => setDossier(d.cle)}
-              className={`rounded-full border px-3 py-1 text-xs font-semibold ${dossier === d.cle ? "border-primary bg-primary text-primary-foreground" : "border-border text-muted-foreground hover:text-foreground"}`}>
+            <Button key={d.cle} type="button" size="sm" variant={dossier === d.cle ? "default" : "outline"} onClick={() => setDossier(d.cle)}>
               {d.label} ({d.cle === "tous" ? data.length : data.filter((x) => x.dossier === d.cle).length})
-            </button>
+            </Button>
           ))}
         </div>
 
@@ -119,7 +138,7 @@ function DocumentsPage() {
           <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Rechercher un document" className="pl-9" />
         </div>
 
-        <div className="rounded-lg border border-border bg-card">
+        <div>
           {isLoading ? (
             <p className="p-6 text-sm text-muted-foreground">Chargement…</p>
           ) : liste.length === 0 ? (
@@ -128,24 +147,25 @@ function DocumentsPage() {
               <p className="text-sm">Aucun document ici. Ajoutez un PDF ou une photo.</p>
             </div>
           ) : (
-            <ul className="divide-y divide-border">
+            <ul className="grid gap-3 md:grid-cols-2">
               {liste.map((d) => {
                 const st = STATUT_DOC[d.statut] ?? STATUT_DOC["brouillon"]!;
                 return (
-                  <li key={d.id} className="flex flex-wrap items-center gap-3 p-3">
-                    <FileSignature className="h-5 w-5 shrink-0 text-primary" />
-                    <Link to="/documents/$id" params={{ id: d.id }} className="min-w-0 flex-1">
-                      <span className="block truncate font-semibold">{d.nom}</span>
-                      <span className="block text-xs text-muted-foreground">
+                  <li key={d.id} className="flex min-w-0 items-center gap-3 rounded-lg border border-border bg-card p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary"><FileSignature className="h-5 w-5" /></div>
+                    <Link to="/documents/$id" params={{ id: d.id }} className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+                      <span className="block truncate font-semibold text-foreground">{d.nom}</span>
+                      <span className="mt-1 block text-xs text-muted-foreground">
                         {DOSSIERS.find((x) => x.cle === d.dossier)?.label ?? d.dossier} · {new Date(d.created_at).toLocaleDateString("fr-FR")}
-                        {d.viewed_at && d.statut !== "signe" ? ` · Lu le ${new Date(d.viewed_at).toLocaleDateString("fr-FR")}` : ""}
-                        {d.signed_at ? ` · Signé le ${new Date(d.signed_at).toLocaleDateString("fr-FR")}` : ""}
                       </span>
+                      <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span>
+                      {d.viewed_at && d.statut !== "signe" ? <span className="ml-2 text-[11px] text-muted-foreground">Lu le {new Date(d.viewed_at).toLocaleDateString("fr-FR")}</span> : null}
+                      {d.signed_at ? <span className="ml-2 text-[11px] text-muted-foreground">Signé le {new Date(d.signed_at).toLocaleDateString("fr-FR")}</span> : null}
                     </Link>
-                    <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span>
                     <Button variant="ghost" size="icon" aria-label="Supprimer" onClick={() => confirm(`Supprimer « ${d.nom} » ?`) && supprimer.mutate(d.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
+                    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground" />
                   </li>
                 );
               })}

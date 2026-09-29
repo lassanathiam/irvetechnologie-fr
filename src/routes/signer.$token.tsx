@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { CheckCircle2, Download, Loader2 } from "lucide-react";
+import { CheckCircle2, Download, FileSignature, Loader2, ShieldCheck } from "lucide-react";
 import { PdfZones, ouvrirPdf } from "@/components/PdfZones";
 import { SignaturePad } from "@/components/SignaturePad";
 import { Button } from "@/components/ui/button";
@@ -79,12 +79,15 @@ function SignerPage() {
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900">
-      <header className="border-b border-slate-200 bg-white px-4 py-3">
-        <p className="text-sm font-bold">{COMPANY.raisonSociale}</p>
-        <p className="text-xs text-slate-500">Document à signer : {data.nom}</p>
+      <header className="border-b border-slate-200 bg-white px-4 py-4">
+        <div className="mx-auto flex max-w-5xl items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-md bg-slate-100"><FileSignature className="h-5 w-5 text-slate-700" /></div>
+          <div><p className="text-sm font-bold">{COMPANY.raisonSociale}</p><p className="text-xs text-slate-500">Signature sécurisée d’un document</p></div>
+        </div>
       </header>
-      <main className="mx-auto grid max-w-5xl gap-4 p-3 lg:grid-cols-[1fr_300px]">
+      <main className="mx-auto grid max-w-5xl gap-4 p-3 sm:p-4 lg:grid-cols-[minmax(0,1fr)_340px]">
         <div className="rounded-lg bg-white p-2">
+          <div className="border-b border-slate-200 p-3"><p className="text-xs text-slate-500">Document à consulter</p><h1 className="font-bold">{data.nom}</h1></div>
           <PdfZones pdf={pdf} zones={signe ? [] : data.zones} remplissage={{ signature: sig ?? undefined, paraphe: par ?? undefined, nom, date: new Date().toLocaleDateString("fr-FR"), mention: "Lu et approuvé" }} />
         </div>
         <aside className="space-y-3 lg:sticky lg:top-4 lg:self-start">
@@ -97,20 +100,22 @@ function SignerPage() {
           ) : data.statut === "refuse" ? (
             <div className="rounded-lg bg-white p-4 text-sm">Vous avez refusé ce document.</div>
           ) : (
-            <div className="space-y-3 rounded-lg bg-white p-4">
+            <div className="space-y-4 rounded-lg bg-white p-4">
+              <div><p className="text-base font-bold">Vos informations</p><p className="mt-1 text-xs text-slate-500">Lisez le document, complétez les éléments ci-dessous, puis signez.</p></div>
               <p className="text-sm">Les zones en orange seront remplies avec vos informations.</p>
-              <Input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Votre nom et prénom" className="bg-white" />
+              <label className="block space-y-1 text-xs font-semibold">Nom et prénom<Input value={nom} onChange={(e) => setNom(e.target.value)} placeholder="Votre nom et prénom" className="bg-white" /></label>
               <SignaturePad label="Votre signature" value={sig} onChange={setSig} />
               {aParaphe && <SignaturePad label="Votre paraphe (initiales)" value={par} onChange={setPar} />}
-              <label className="flex items-start gap-2 text-xs"><input type="checkbox" checked={accord} onChange={(e) => setAccord(e.target.checked)} className="mt-0.5" /> J'ai lu le document et j'accepte de le signer électroniquement.</label>
+              <label className="flex items-start gap-2 rounded-md border border-slate-200 p-3 text-xs"><input type="checkbox" checked={accord} onChange={(e) => setAccord(e.target.checked)} className="mt-0.5" /> J’ai lu le document et j’accepte de le signer électroniquement.</label>
               {msg && <p className="text-sm text-red-600">{msg}</p>}
               <Button className="w-full" onClick={valider} disabled={busy}>{busy && <Loader2 className="h-4 w-4 animate-spin" />} Signer le document</Button>
               <Button variant="ghost" className="w-full" onClick={telecharger}><Download className="h-4 w-4" /> Télécharger</Button>
-              <button type="button" className="w-full text-xs text-slate-500 underline" onClick={async () => {
+              <Button type="button" variant="ghost" size="sm" className="w-full text-xs text-slate-500 underline" onClick={async () => {
                 const motif = prompt("Pourquoi refusez-vous ? (facultatif)") ?? "";
                 await refuser({ data: { token, motif } });
                 refetch();
-              }}>Refuser de signer</button>
+              }}>Refuser de signer</Button>
+              <p className="flex items-start gap-2 border-t border-slate-200 pt-3 text-[11px] text-slate-500"><ShieldCheck className="h-4 w-4 shrink-0" /> La date et les informations de validation sont conservées avec le document signé.</p>
             </div>
           )}
         </aside>
