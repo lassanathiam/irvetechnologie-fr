@@ -22,7 +22,7 @@ export async function appliquerSignatures(pdf: Uint8Array, zones: Zone[], role: 
   }
   const pages = doc.getPages();
   const dateTxt = quand.toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" });
-  for (const z of zones.filter((z) => z.role === role)) {
+  for (const z of zones.filter((z) => z.role === role && (role === "irve" || !cle || z.signataire === cle))) {
     const page = pages[z.page];
     if (!page) continue;
     const { width: W, height: H } = page.getSize();
@@ -63,7 +63,7 @@ export async function ajouterPreuve(pdf: Uint8Array, nomDoc: string, signataires
   line(empreinteOriginal, font, 8);
   y -= 10;
   for (const s of signataires) {
-    line(`${s.role === "irve" ? "IRVE Technologie" : "Client"} — ${s.nom}`, bold, 12);
+    line(`${s.role === "irve" ? "IRVE Technologie" : "Signataire"} — ${s.nom}`, bold, 12);
     if (s.email) line(`Email : ${s.email}`);
     if (s.signed_at)
       line(`Signé le ${new Date(s.signed_at).toLocaleString("fr-FR", { timeZone: "Europe/Paris" })} (heure de Paris)`);
