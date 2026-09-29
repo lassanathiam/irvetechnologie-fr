@@ -921,7 +921,7 @@ function PlanningPage() {
         </div>
       </div>
 
-      <section className="mb-6">
+      <section className="mx-auto mb-6 w-full min-w-0 max-w-full">
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h2>
@@ -974,7 +974,7 @@ function PlanningPage() {
                   {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link></Button>}
                 </EtapeMission>
                 <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 h-14 w-full bg-teal-600 text-base font-bold text-slate-50 hover:bg-teal-700" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag /> Terminer et prévenir le client</Button>}
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 min-h-14 h-auto w-full min-w-0 whitespace-normal bg-teal-600 px-3 py-3 text-center text-sm font-bold leading-tight text-slate-50 hover:bg-teal-700 sm:text-base" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag className="shrink-0" /> <span className="min-w-0">Terminer et prévenir le client</span></Button>}
                 </EtapeMission>
               </div>
 
@@ -1368,9 +1368,9 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="grid gap-6 lg:grid-cols-[1fr_400px] items-start">
+      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
         {/* Colonne gauche : carte puis liste des rendez-vous, sans espace vide */}
-        <div className="space-y-6 min-w-0">
+        <div className="w-full min-w-0 max-w-full space-y-6">
         <MobileSectionTrigger
           label="Carte des interventions"
           count={points.length}
@@ -1378,19 +1378,19 @@ function PlanningPage() {
           onToggle={() => toggleMobileSection("carte")}
         />
         {/* CARTE — en haut à gauche */}
-        <section className={`bg-card border border-border rounded-xl overflow-hidden shadow-sm min-w-0 ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
-          <div className="px-5 py-4 border-b border-border flex flex-wrap items-center gap-x-5 gap-y-2">
+        <section className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
+          <div className="grid min-w-0 gap-2 border-b border-border px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 sm:px-5">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
             </h2>
-            <div className="flex w-full flex-wrap items-center gap-3 text-[11px] font-semibold text-muted-foreground sm:ml-auto sm:w-auto sm:gap-4">
+            <div className="grid w-full min-w-0 grid-cols-2 gap-x-3 gap-y-2 text-[11px] font-semibold text-muted-foreground sm:ml-auto sm:flex sm:w-auto sm:flex-wrap sm:gap-4">
               <Legende color={STATUT_COLORS.planifie!} label="Programmé" />
               <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
               <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
               <Legende color={STATUT_COLORS.annule!} label="Annulé" />
             </div>
           </div>
-          <div className="p-4">
+          <div className="w-full min-w-0 max-w-full p-2.5 sm:p-4">
             {modeSelection && (
               <p className="mb-3 rounded-lg border border-blue-500/50 bg-blue-500/10 px-3 py-2 text-sm font-semibold text-blue-700 dark:text-blue-300">
                 Cliquez directement les repères sur la carte pour cocher les chantiers à faire
@@ -1413,13 +1413,13 @@ function PlanningPage() {
               visible={!modeIntervention || mobileSections.carte || !isMobile}
             />
 
-            <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-1 text-[11px] font-semibold text-muted-foreground">
+            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 break-words text-[11px] font-semibold text-muted-foreground">
               {itineraire.isFetching ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
                 </span>
               ) : itineraire.data ? (
-                <span className="text-primary text-mono">
+                <span className="min-w-0 break-words text-primary text-mono">
                   {depart.label} → chantier : {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
                   {itineraire.data.estime ? " (estimé)" : " par la route"}
                 </span>
@@ -2688,7 +2688,7 @@ function PlanningPage() {
         </section>
         </div>
 
-        <aside className="space-y-6">
+        <aside className="w-full min-w-0 max-w-full space-y-6">
           <MobileSectionTrigger
             label="Agenda"
             count={rows.length}
@@ -2722,7 +2722,7 @@ function PlanningPage() {
             open={!modeIntervention || mobileSections.trajet}
             onToggle={() => toggleMobileSection("trajet")}
           />
-          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
+          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
               {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
@@ -2832,7 +2832,7 @@ function PlanningPage() {
             open={!modeIntervention || mobileSections.programme}
             onToggle={() => toggleMobileSection("programme")}
           />
-          <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
+          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
             </h2>
@@ -2990,7 +2990,7 @@ function PlanningPage() {
               open={!modeIntervention || mobileSections.proches}
               onToggle={() => toggleMobileSection("proches")}
             />
-            <div className={`bg-card border border-border rounded-xl p-5 shadow-sm min-w-0 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
+            <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
@@ -3034,7 +3034,7 @@ function MobileSectionTrigger({
     <button
       type="button"
       onClick={onToggle}
-      className="grid min-h-12 w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden"
+      className="mx-auto grid min-h-12 w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden"
       aria-expanded={open}
     >
       <span className="min-w-0 truncate font-bold">{label}</span>
@@ -3069,9 +3069,9 @@ function EtapeMission({
       <span className={`relative z-10 grid h-8 w-8 place-items-center rounded-full [&_svg]:h-4 [&_svg]:w-4 ${etat === "termine" ? "bg-emerald-500 text-slate-50" : etat === "active" ? "bg-blue-600 text-slate-50 ring-4 ring-blue-100 dark:ring-blue-950" : "bg-muted text-muted-foreground"}`}>
         {etat === "termine" ? <CheckCircle2 /> : icone}
       </span>
-      <div className={`min-w-0 rounded-lg p-3 ${etat === "active" ? "border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30" : ""}`}>
-        <h4 className={`font-bold ${etat === "attente" ? "text-muted-foreground" : "text-foreground"}`}>{titre}</h4>
-        <p className="mt-0.5 text-xs text-muted-foreground">{detail}</p>
+      <div className={`min-w-0 max-w-full overflow-hidden rounded-lg p-3 ${etat === "active" ? "border border-blue-200 bg-blue-50 dark:border-blue-900 dark:bg-blue-950/30" : ""}`}>
+        <h4 className={`break-words font-bold ${etat === "attente" ? "text-muted-foreground" : "text-foreground"}`}>{titre}</h4>
+        <p className="mt-0.5 break-words text-xs text-muted-foreground">{detail}</p>
         {children}
       </div>
     </div>
