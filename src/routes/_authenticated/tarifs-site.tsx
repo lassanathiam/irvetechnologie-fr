@@ -13,6 +13,7 @@ import {
   updateTarifsSite,
   type TarifsSite,
 } from "@/lib/tarifs-site.functions";
+import { BORNES_CATALOGUE } from "@/lib/bornes-catalogue";
 
 export const Route = createFileRoute("/_authenticated/tarifs-site")({
   head: () => ({
@@ -29,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/tarifs-site")({
   component: TarifsSitePage,
 });
 
-const CHAMPS: { cle: keyof TarifsSite; titre: string; aide: string; suffixe: string }[] = [
+const CHAMPS: { cle: Exclude<keyof TarifsSite, "bornes">; titre: string; aide: string; suffixe: string }[] = [
   { cle: "installation_ttc", titre: "Installation d’une borne", aide: "Borne et pose standard, selon configuration.", suffixe: "€ TTC" },
   { cle: "maintenance_ttc", titre: "Entretien annuel", aide: "Contrôle préventif d’une borne.", suffixe: "€ TTC/an" },
   { cle: "depannage_ttc", titre: "Diagnostic / dépannage", aide: "Prix de départ, hors pièces et trajet exceptionnel.", suffixe: "€ TTC" },
@@ -92,6 +93,36 @@ function TarifsSitePage() {
                 </span>
               </label>
             ))}
+            <div className="pt-3">
+              <h2 className="font-semibold">Catalogue « Nos bornes »</h2>
+              <p className="mt-0.5 text-xs text-dashboard-muted">Prix « À partir de » posée, affiché sous chaque borne. Laissez vide pour ne pas afficher de prix.</p>
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2">
+              {BORNES_CATALOGUE.map((b) => (
+                <label key={b.id} className="grid grid-cols-[3rem_minmax(0,1fr)_7rem] items-center gap-3 rounded-lg border border-dashboard-line bg-dashboard-raised/50 p-3">
+                  <img src={b.img} alt="" className="h-12 w-12 rounded-md bg-white object-contain p-1" />
+                  <span className="min-w-0">
+                    <span className="block truncate text-sm font-semibold">{b.nom}</span>
+                    <span className="block text-xs text-dashboard-muted">{b.puissance} · {b.phase}</span>
+                  </span>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    placeholder="€ TTC"
+                    value={tarifs.bornes?.[b.id] ?? ""}
+                    onChange={(event) =>
+                      setTarifs((a) => {
+                        const bornes = { ...(a.bornes ?? {}) };
+                        if (event.target.value === "") delete bornes[b.id];
+                        else bornes[b.id] = Number(event.target.value);
+                        return { ...a, bornes };
+                      })
+                    }
+                  />
+                </label>
+              ))}
+            </div>
             <p className="text-xs text-dashboard-muted">Les montants restent indicatifs. Le devis final dépend de la borne, de la distance et des travaux nécessaires.</p>
             <Button onClick={() => save.mutate()} disabled={save.isPending}>
               {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

@@ -3,6 +3,9 @@ import { ArrowRight } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { BORNES_CATALOGUE } from "@/lib/bornes-catalogue";
+import { useQuery } from "@tanstack/react-query";
+import { useServerFn } from "@tanstack/react-start";
+import { getTarifsSitePublic } from "@/lib/tarifs-site.functions";
 
 export const Route = createFileRoute("/bornes")({
   head: () => ({
@@ -27,6 +30,8 @@ export const Route = createFileRoute("/bornes")({
 });
 
 function Bornes() {
+  const getTarifs = useServerFn(getTarifsSitePublic);
+  const prix = useQuery({ queryKey: ["tarifs-site-publics"], queryFn: () => getTarifs() }).data?.bornes;
   return (
     <div className="public-premium min-h-screen bg-background text-foreground">
       <SiteNav />
@@ -68,6 +73,11 @@ function Bornes() {
                 {b.puissance} · {b.phase}
               </span>
               <p className="text-center text-sm text-muted-foreground">{b.atout}</p>
+              {prix?.[b.id] != null && (
+                <p className="text-center text-sm">
+                  À partir de <span className="font-semibold text-primary">{prix[b.id].toLocaleString("fr-FR")} € TTC</span> posée
+                </p>
+              )}
               <p className="text-center text-xs text-muted-foreground/80">Idéal : {b.usage}</p>
               {b.badge && (
                 <span className="rounded-full border border-primary/50 bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">

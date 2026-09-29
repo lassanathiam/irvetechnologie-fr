@@ -8,12 +8,15 @@ export type TarifsSite = {
   installation_ttc: number;
   maintenance_ttc: number;
   depannage_ttc: number;
+  /** Prix « à partir de » par borne (id catalogue -> € TTC posée). Absent = non affiché. */
+  bornes: Record<string, number>;
 };
 
 export const TARIFS_SITE_DEFAUT: TarifsSite = {
   installation_ttc: 1290,
   maintenance_ttc: 149,
   depannage_ttc: 150,
+  bornes: {},
 };
 
 const CLE = "tarifs_site_public";
@@ -21,6 +24,7 @@ const schema = z.object({
   installation_ttc: z.coerce.number().min(0).max(100_000),
   maintenance_ttc: z.coerce.number().min(0).max(100_000),
   depannage_ttc: z.coerce.number().min(0).max(100_000),
+  bornes: z.record(z.string().max(80), z.coerce.number().min(0).max(100_000)).optional().default({}),
 });
 
 function lireTarifs(valeur: string | null | undefined): TarifsSite {
