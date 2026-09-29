@@ -457,8 +457,8 @@
 }
 
 @keyframes kenburns {
-  0%   { transform: scale(1.08) translate(-1%, 1%); }
-  100% { transform: scale(1.18) translate(1%, -1%); }
+  0%   { transform: scale(1.04) translate(0, 0); }
+  100% { transform: scale(1.12) translate(1%, -1%); }
 }
 @keyframes fade-up {
   from { opacity: 0; transform: translateY(24px); }
@@ -511,7 +511,7 @@
   50% { opacity: 1; transform: translateY(5px); }
 }
 
-@utility animate-kenburns   { animation: kenburns 9s ease-in-out infinite alternate; }
+@utility animate-kenburns   { animation: kenburns 22s ease-in-out infinite alternate; }
 @utility animate-fade-up    { animation: fade-up 0.7s ease-out both; }
 @utility animate-fade-soft  { animation: fade-in-soft 0.6s ease-out both; }
 @utility animate-glow       { animation: glow-pulse 3s ease-in-out infinite; }
