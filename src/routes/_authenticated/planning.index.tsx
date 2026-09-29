@@ -1306,18 +1306,18 @@ function PlanningPage() {
         <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-border bg-card px-4 py-3">
           <p className="text-sm">
             <strong>{aRanger.length}</strong> chantier{aRanger.length > 1 ? "s" : ""} terminé
-            {aRanger.length > 1 ? "s" : ""} peu{aRanger.length > 1 ? "vent" : "t"} être rangé
-            {aRanger.length > 1 ? "s" : ""} dans les archives.
+            {aRanger.length > 1 ? "s" : ""} peu{aRanger.length > 1 ? "vent" : "t"} être clôturé
+            {aRanger.length > 1 ? "s" : ""} dans « Chantiers clôturés ».
           </p>
           <button
             type="button"
             onClick={() => {
-              if (!window.confirm(`Ranger ${aRanger.length} chantier(s) terminé(s) ?`)) return;
+              if (!window.confirm(`Clôturer ${aRanger.length} chantier(s) terminé(s) ?`)) return;
               for (const r of aRanger) archiver.mutate({ id: r.id, archive: true });
             }}
             className="text-mono text-xs px-4 py-2.5 rounded-sm border border-border hover:border-primary inline-flex items-center gap-2"
           >
-            <Archive className="h-4 w-4" /> Tout ranger
+            <Archive className="h-4 w-4" /> Tout clôturer
           </button>
         </div>
       )}
