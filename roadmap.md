@@ -34,4 +34,4 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Refaire le hero de la page d accueil : style radicalement différent du sombre actuel (demande utilisateur 29/09), proposer 3 directions tranchées puis implémenter le choix
+- [x] Hero accueil refait en immersif plein écran (direction v2 choisie), vérifié
