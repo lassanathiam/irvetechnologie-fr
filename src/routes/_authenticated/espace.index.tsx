@@ -170,7 +170,7 @@ function EspacePage() {
               label="À encaisser"
               value={euro(q.data?.stats.caEnAttente ?? 0)}
               hint={`${q.data?.aEncaisser?.length ?? 0} facture(s) validée(s)${q.data?.brouillonsNb ? ` · ${q.data.brouillonsNb} brouillon(s) à valider` : ""}`}
-              to="/factures"
+              to="/facturation"
             />
             <SimpleStat
               icon={CalendarClock}
@@ -184,7 +184,7 @@ function EspacePage() {
               label="Retards de règlement"
               value={String(facturation.data?.totaux.retard_nb ?? 0)}
               hint={euro(facturation.data?.totaux.retard_ht ?? 0)}
-              to="/factures"
+              to="/facturation"
             />
           </div>
 

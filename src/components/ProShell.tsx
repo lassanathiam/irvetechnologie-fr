@@ -43,6 +43,7 @@ const LINKS: LienPro[] = [
   { to: "/demandes", label: "Demandes", icon: Inbox },
   { to: "/devis", label: "Devis", icon: FileText },
   { to: "/attachements", label: "Attachements travaux", icon: ClipboardList },
+  { to: "/facturation", label: "À facturer", icon: Euro },
   { to: "/factures", label: "Mes factures", icon: Receipt },
   { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
   { to: "/partenaires", label: "Partenaires", icon: Handshake },
