@@ -116,8 +116,18 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
       .parse(d),
   )
   .handler(async ({ data, context }) => {
-    const zones = normaliserZones(data.zones, data.nbPages);
-    const patch: Record<string, unknown> = { zones, signataires: data.signataires };
+    // Chaque signataire client reçoit une cle stable et son lien individuel.
+    let n = 0;
+    const signataires = data.signataires.map((s) => {
+      if (s.role !== "client") return s;
+      n += 1;
+      return { ...s, cle: s.cle || `c${n}`, token: s.token || crypto.randomUUID() };
+    });
+    const premierClient = signataires.find((s) => s.role === "client")?.cle ?? null;
+    const zones = normaliserZones(data.zones, data.nbPages).map((zn) =>
+      zn.role === "client" && !zn.signataire ? { ...zn, signataire: premierClient } : zn,
+    );
+    const patch: Record<string, unknown> = { zones, signataires };
     if (data.dossier) patch["dossier"] = data.dossier;
     const { error } = await context.supabase.from("documents").update(patch as never).eq("id", data.id);
     if (error) throw new Error(error.message);
