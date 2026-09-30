@@ -1749,6 +1749,7 @@ function PlanningPage() {
 
                             {dossierOuvert && <>
 
+                            <div className="mt-1 grid gap-x-6 gap-y-2 sm:grid-cols-2 [&>*]:min-w-0">
                             {(tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {tel && (
@@ -1867,7 +1868,7 @@ function PlanningPage() {
                                 ))}
                               </p>
                             )}
-
+                            </div>
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
