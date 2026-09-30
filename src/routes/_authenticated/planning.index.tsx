@@ -1776,6 +1776,7 @@ function PlanningPage() {
 
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
+                            {toutOuvert && (
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {!r.demarre_at && !r.termine_at && (
                                 <button
