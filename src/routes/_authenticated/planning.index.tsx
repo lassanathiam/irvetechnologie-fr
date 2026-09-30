@@ -1441,43 +1441,46 @@ function PlanningPage() {
               visible={!modeIntervention || mobileSections.carte || !isMobile}
             />
 
-            <div className="mt-3 flex min-w-0 flex-wrap items-center gap-x-5 gap-y-1 break-words text-[11px] font-semibold text-muted-foreground">
+            <div className="mt-3 min-w-0 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-[11px] font-semibold text-muted-foreground">
               {itineraire.isFetching ? (
                 <span className="inline-flex items-center gap-1.5">
                   <Loader2 className="h-3 w-3 animate-spin" /> Calcul de l'itinéraire routier…
                 </span>
               ) : itineraire.data ? (
-                <span className="min-w-0 break-words text-primary text-mono">
+                <div className="min-w-0 space-y-2">
                   {itineraire.data.estime ? (
-                    <>Itinéraire routier indisponible — ouvrez Waze</>
+                    <p className="text-primary">Itinéraire routier indisponible — ouvrez Waze</p>
                   ) : (
-                    <span className="flex flex-wrap items-center gap-2">
-                      <span>Départ {departTrajet.nom.split(" ")[0]} ({departTrajet.label}) :</span>
-                      <button type="button" onClick={() => setAvecPeage(true)} className={`rounded-md border px-3 py-2 text-xs font-bold ${avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                        Avec péage · {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
-                        {itineraire.data.prixPeage > 0 ? ` · ≈ ${itineraire.data.prixPeage.toFixed(2).replace(".", ",")} €` : " · sans péage sur ce trajet"}
-                      </button>
-                      {itineraire.data.sansPeage && (
-                        <button type="button" onClick={() => setAvecPeage(false)} className={`rounded-md border px-3 py-2 text-xs font-bold ${!avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
-                          Sans péage · {itineraire.data.sansPeage.km} km · {dureeFr(itineraire.data.sansPeage.minutes)} · 0 €
+                    <>
+                      <p className="text-mono text-primary">Départ {departTrajet.nom.split(" ")[0]} ({departTrajet.label})</p>
+                      <div className="grid grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+                        <button type="button" onClick={() => setAvecPeage(true)} className={`w-full rounded-md border px-3 py-2 text-left text-xs font-bold sm:w-auto ${avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                          Avec péage · {itineraire.data.km} km · {dureeFr(itineraire.data.minutes)}
+                          {itineraire.data.prixPeage > 0 ? ` · ≈ ${itineraire.data.prixPeage.toFixed(2).replace(".", ",")} €` : " · sans péage sur ce trajet"}
                         </button>
-                      )}
-                    </span>
+                        {itineraire.data.sansPeage && (
+                          <button type="button" onClick={() => setAvecPeage(false)} className={`w-full rounded-md border px-3 py-2 text-left text-xs font-bold sm:w-auto ${!avecPeage ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+                            Sans péage · {itineraire.data.sansPeage.km} km · {dureeFr(itineraire.data.sansPeage.minutes)} · 0 €
+                          </button>
+                        )}
+                      </div>
+                    </>
                   )}
-                  {activeRow && (
-                    <a className="ml-2 underline" href={wazeLien(activeRow.adresse, activeRow.cp_ville, activeRow.lat, activeRow.lng)} target="_blank" rel="noreferrer">
-                      Ouvrir dans Waze
-                    </a>
-                  )}
-                </span>
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                    {activeRow && (
+                      <a className="inline-flex items-center gap-1 text-primary underline" href={wazeLien(activeRow.adresse, activeRow.cp_ville, activeRow.lat, activeRow.lng)} target="_blank" rel="noreferrer">
+                        <Navigation className="h-3 w-3" /> Ouvrir dans Waze
+                      </a>
+                    )}
+                    {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
+                      <span>
+                        Boucle complète : {tourneeReel.data.kmTotal} km · {dureeFr(tourneeReel.data.minutes)}
+                      </span>
+                    )}
+                  </div>
+                </div>
               ) : (
                 <span>Cliquez une intervention pour afficher l'itinéraire routier réel.</span>
-              )}
-              {tourneeReel.data && tourneeReel.data.etapes.length > 1 && (
-                <span>
-                  Boucle complète : {tourneeReel.data.kmTotal} km ·{" "}
-                  {dureeFr(tourneeReel.data.minutes)}
-                </span>
               )}
             </div>
           </div>
