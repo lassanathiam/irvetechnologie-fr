@@ -53,3 +53,4 @@
 - [x] Fiabiliser les indicateurs du tableau de bord, déplier le menu complet et compacter le planning en deux zones (30/09/2026)
 
 - [x] Compacter les fiches de planning dépliées et les devis/PDF sans retirer d’informations
+- [x] Recentrer la carte, moderniser les commandes de géolocalisation et fiabiliser l’affectation depuis un repère

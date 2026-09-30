@@ -1,5 +1,7 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
+import { Crosshair, LocateFixed } from "lucide-react";
 import { TECHNICIENS } from "@/lib/geo";
+import { Button } from "@/components/ui/button";
 
 export type MapMarker = {
   id: string;
@@ -97,6 +99,7 @@ export function InterventionsMap({
   const moiRef = useRef<any>(null);
   /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
   const fitRef = useRef<string>("");
+  const [locationPending, setLocationPending] = useState(false);
 
   function refreshSize() {
     if (!map.current) return;
@@ -106,6 +109,20 @@ export function InterventionsMap({
     window.setTimeout(() => {
       map.current?.invalidateSize(false);
     }, 160);
+  }
+
+  function cadrerCarte() {
+    const leaflet = L.current;
+    if (!leaflet || !map.current) return;
+    const positions = [
+      ...(basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]),
+      ...markers.map((m) => [m.lat, m.lng] as [number, number]),
+    ];
+    if (!positions.length) return;
+    map.current.fitBounds(leaflet.latLngBounds(positions), {
+      padding: [28, 28],
+      maxZoom: 10,
+    });
   }
 
   const assignRef = useRef(onAssign);
@@ -213,41 +230,55 @@ export function InterventionsMap({
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
         .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
-        .addTo(layer.current)
-        .bindPopup(
-          `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
-            m.sub ? `<br/>${escapeHtml(m.sub)}` : ""
-          }${m.date ? `<br/><span style="opacity:.7">${escapeHtml(m.date)}</span>` : ""}${
-            m.trajet
-              ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
-              : ""
-          }${
-            selectionMode
-              ? `<br/><span style="font-weight:700;color:#2563eb">${
-                  rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
-                }</span>`
-              : ""
-          }${
-            onAssign && !selectionMode
-              ? `<div style="margin-top:8px;font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
-                  (t) =>
-                    `<button type="button" data-assign="${escapeHtml(t.nom)}" style="padding:6px 10px;border-radius:8px;border:1px solid #2563eb;font-weight:700;${m.technicien === t.nom ? "background:#2563eb;color:#fff" : "background:#fff;color:#2563eb"}">${escapeHtml(t.nom.split(" ")[0])}</button>`,
-                ).join("")}</div>`
-              : ""
-          }`,
-        );
-      mk.on("popupopen", (ev: { popup: { getElement: () => HTMLElement | undefined } }) => {
-        ev.popup.getElement()?.querySelectorAll<HTMLButtonElement>("[data-assign]").forEach((b) => {
-          b.onclick = (e) => {
-            e.stopPropagation();
-            const nom = b.dataset["assign"] ?? null;
-            if (window.confirm(`Affecter ce chantier (${m.label}) à ${nom} ?`)) {
-              assignRef.current?.(m.id, nom);
-              mk.closePopup();
+        .addTo(layer.current);
+      mk.bindPopup(
+        () => {
+          const contenu = document.createElement("div");
+          contenu.className = "rdv-map-popup-content";
+          const titre = document.createElement("strong");
+          titre.textContent = m.label;
+          contenu.append(titre);
+          for (const texte of [m.sub, m.date, m.trajet ? `Trajet : ${m.trajet}` : null]) {
+            if (!texte) continue;
+            const ligne = document.createElement("span");
+            ligne.textContent = texte;
+            contenu.append(ligne);
+          }
+          if (selectionMode) {
+            const aide = document.createElement("span");
+            aide.className = "rdv-map-popup-accent";
+            aide.textContent = rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier";
+            contenu.append(aide);
+          }
+          if (assignRef.current && !selectionMode) {
+            const affectation = document.createElement("div");
+            affectation.className = "rdv-map-assignment";
+            const libelle = document.createElement("strong");
+            libelle.textContent = `Intervenant : ${m.technicien || "non affecté"}`;
+            affectation.append(libelle);
+            const actions = document.createElement("div");
+            actions.className = "rdv-map-assignment-actions";
+            for (const technicien of TECHNICIENS) {
+              const bouton = document.createElement("button");
+              bouton.type = "button";
+              bouton.className = m.technicien === technicien.nom ? "is-active" : "";
+              bouton.textContent = technicien.nom.split(" ")[0] ?? technicien.nom;
+              bouton.addEventListener("click", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!window.confirm(`Affecter ce chantier (${m.label}) à ${technicien.nom} ?`)) return;
+                assignRef.current?.(m.id, technicien.nom);
+                mk.closePopup();
+              });
+              actions.append(bouton);
             }
-          };
-        });
-      });
+            affectation.append(actions);
+            contenu.append(affectation);
+          }
+          return contenu;
+        },
+        { className: "rdv-popup", maxWidth: 280 },
+      );
       mk.on("click", () => {
         if (selectionMode) onToggleSelect?.(m.id);
         onSelect?.(m.id);
@@ -263,7 +294,7 @@ export function InterventionsMap({
         ...(basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]),
         ...markers.map((m) => [m.lat, m.lng] as [number, number]),
       ]);
-      map.current.fitBounds(bounds, { padding: [34, 34], maxZoom: 9 });
+      map.current.fitBounds(bounds, { padding: [28, 28], maxZoom: 10 });
     }
   }
 
@@ -319,6 +350,7 @@ export function InterventionsMap({
   /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
   function maPosition() {
     if (!navigator.geolocation || !map.current) return;
+    setLocationPending(true);
     navigator.geolocation.getCurrentPosition(
       (pos) => {
         const leaflet = L.current;
@@ -335,9 +367,11 @@ export function InterventionsMap({
           .addTo(map.current)
           .bindTooltip("Ma position", { direction: "top" });
         map.current.setView(p, 11);
+        setLocationPending(false);
       },
       () => {
         // Position refusée ou indisponible : la carte reste inchangée.
+        setLocationPending(false);
       },
       { enableHighAccuracy: true, timeout: 8000 },
     );
@@ -345,14 +379,31 @@ export function InterventionsMap({
 
   return (
     <div className="relative w-full min-w-0 max-w-full overflow-hidden rounded-sm border border-border">
-      <button
-        type="button"
-        onClick={maPosition}
-        className="absolute right-2 top-2 z-[500] text-mono text-[11px] font-bold px-3 py-2 rounded-sm bg-card/95 border border-border shadow hover:border-primary hover:text-primary"
-      >
-        Ma position
-      </button>
       <div ref={el} style={{ height }} className="w-full min-w-0 max-w-full bg-muted" />
+      <div className="absolute bottom-3 left-3 z-[500] flex flex-col gap-2">
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={cadrerCarte}
+          className="h-11 w-11 rounded-full bg-card/95 shadow-md"
+          title="Recentrer la carte"
+          aria-label="Recentrer la carte"
+        >
+          <Crosshair className="h-5 w-5" />
+        </Button>
+        <Button
+          type="button"
+          size="icon"
+          onClick={maPosition}
+          disabled={locationPending}
+          className="h-11 w-11 rounded-full shadow-md"
+          title="Afficher ma position"
+          aria-label="Afficher ma position"
+        >
+          <LocateFixed className={locationPending ? "h-5 w-5 animate-pulse" : "h-5 w-5"} />
+        </Button>
+      </div>
     </div>
   );
 }
