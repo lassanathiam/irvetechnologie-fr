@@ -181,15 +181,15 @@ export function InterventionsMap({
     const coche = rang != null;
     const fond = coche ? "#2563eb" : color;
     const w = 30;
-    const h = 42;
+    const h = 38;
     return L.current.divIcon({
       className: "rdv-map-label",
       iconSize: [w, h],
       iconAnchor: [w / 2, h],
       popupAnchor: [0, -h],
-      html: `<div style="display:flex;flex-direction:column;align-items:center;width:${w}px;height:${h}px">
-        <div style="display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:${fond};border:2px solid #fff;box-shadow:0 2px 7px rgba(15,23,42,.32)${active ? `,0 0 0 3px ${fond}55` : ""}${active ? ";transform:scale(1.12)" : ""};color:#fff;font:800 12px/1 system-ui">${coche ? rang : (n ?? "")}</div>
-        <div style="width:2px;height:10px;background:#334155"></div>
+      html: `<div style="position:relative;width:${w}px;height:${h}px;${active ? "transform:scale(1.12);transform-origin:bottom center;" : ""}">
+        <div style="position:absolute;left:1px;top:0;width:28px;height:28px;border-radius:50% 50% 50% 0;transform:rotate(-45deg);background:${fond};border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35)"></div>
+        <div style="position:absolute;left:0;top:0;width:30px;height:30px;display:flex;align-items:center;justify-content:center;color:#fff;font:700 13px/1 system-ui,sans-serif">${coche ? rang : (n ?? "")}</div>
       </div>`,
     });
   }
