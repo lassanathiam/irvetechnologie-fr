@@ -1388,7 +1388,11 @@ export const RETOUR_CATEGORIES = [
   ...RETOUR_CATEGORIES_MAINTENANCE,
   ...RETOUR_CATEGORIES_OPTIONNELLES,
   ...RETOUR_CATEGORIES_ENSIO,
-  ...RETOUR_CATEGORIES_ENSIO_OPTION.filter((c) => c !== "autre"),
+  "ensio_tore_emplacement",
+  "ensio_tore_connexions",
+  "ensio_gaine_traversee",
+  "ensio_sms_supervision",
+  "ensio_etiquette_autel",
 ] as const;
 
 export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
