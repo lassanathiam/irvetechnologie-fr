@@ -1653,7 +1653,7 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
 
-                            {(tel || wa || r.client_email) && (
+                            {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {tel && (
                                   <a
@@ -1725,8 +1725,8 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
-                            {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
+                            {toutOuvert && notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
+                            {toutOuvert && (Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
                               <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
                                 {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
                                 {r.puissance_borne && <span>{r.puissance_borne}</span>}
