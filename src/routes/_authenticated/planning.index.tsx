@@ -647,8 +647,14 @@ function PlanningPage() {
 
   const points: MapMarker[] = useMemo(
     () =>
-      rows
-        .filter((r) => r.lat != null && r.lng != null)
+      toutes
+        .filter(
+          (r) =>
+            r.lat != null &&
+            r.lng != null &&
+            r.statut !== "annule" &&
+            ["planifie", "confirme", "en_cours"].includes(r.statut),
+        )
         .map((r) => ({
           id: r.id,
           lat: Number(r.lat),
@@ -665,7 +671,7 @@ function PlanningPage() {
               : null,
         })),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [rows, partenaires.data],
+    [toutes, partenaires.data],
   );
 
   /** Chantiers à venir non annulés : base de la tournée optimisée. */
