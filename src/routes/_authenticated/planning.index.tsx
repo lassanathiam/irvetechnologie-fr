@@ -1898,7 +1898,19 @@ function PlanningPage() {
                                 }`}
                               >
                                 <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
-                              </button>
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() =>
+                                   setOuverts((o) => ({ ...o, [r.id]: !toutOuvert }))
+                                 }
+                                 className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border border-border inline-flex items-center gap-1.5 hover:border-primary hover:text-primary"
+                               >
+                                 <ChevronDown
+                                   className={`h-3.5 w-3.5 transition-transform ${toutOuvert ? "rotate-180" : ""}`}
+                                 />
+                                 {toutOuvert ? "Réduire" : "Afficher tout"}
+                               </button>
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
