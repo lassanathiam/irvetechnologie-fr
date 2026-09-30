@@ -942,7 +942,7 @@ function PlanningPage() {
         </div>
       </div>
 
-      <section className="mx-auto mb-6 w-full min-w-0 max-w-full">
+      <section className="mx-auto mb-6 w-full min-w-0 max-w-full lg:hidden">
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h2>
@@ -1394,9 +1394,77 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
-        {/* Colonne gauche : carte puis liste des rendez-vous, sans espace vide */}
-        <div className="w-full min-w-0 max-w-full space-y-6">
+      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)_340px] lg:[grid-template-areas:'missions_list_map'_'missions_list_tools']">
+        <aside className="hidden min-w-0 lg:block lg:[grid-area:missions] lg:sticky lg:top-6">
+          <div className="overflow-hidden rounded-lg border border-primary/30 bg-card shadow-sm">
+            <div className="border-b border-border bg-primary/10 px-4 py-4">
+              <p className="text-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Missions actuelles</p>
+              <h2 className="mt-1 text-base font-bold">Mission terrain</h2>
+            </div>
+            <div className="space-y-4 p-4">
+              <div className="flex flex-wrap gap-2">
+                {TECHNICIENS.map((t) => (
+                  <Button key={t.id} size="sm" variant={moiId === t.id ? "default" : "outline"} onClick={() => choisirMoi(t.id)}>
+                    {t.nom.split(" ")[0]}
+                  </Button>
+                ))}
+                <Button size="sm" variant={!moi ? "default" : "outline"} onClick={() => choisirMoi(null)}>Tous</Button>
+              </div>
+
+              {missionTerrain ? (
+                <div className="border-l-2 border-primary pl-3">
+                  <p className="text-mono text-[10px] font-bold uppercase text-primary">{styleStatut(missionTerrain.statut).label}</p>
+                  <p className="mt-1 font-bold leading-tight">{missionTerrain.client_nom}</p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                  </p>
+                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
+                  <div className="mt-3 grid gap-2">
+                    {!missionTerrain.demarre_at && (
+                      <Button className="h-auto min-h-11 w-full whitespace-normal text-center" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}>
+                        <Play /> Démarrer les travaux
+                      </Button>
+                    )}
+                    {missionTerrain.demarre_at && !missionTerrain.termine_at && (
+                      <Button variant="outline" className="h-auto min-h-11 w-full whitespace-normal" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}>
+                        <Camera /> Photos et métrage
+                      </Button>
+                    )}
+                    {missionTerrain.demarre_at && (
+                      <Button asChild variant="outline" className="h-auto min-h-11 w-full whitespace-normal">
+                        <Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link>
+                      </Button>
+                    )}
+                    <Button asChild variant="outline" className="h-auto min-h-11 w-full whitespace-normal">
+                      <a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a>
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <div className="rounded-md border border-dashed border-border p-4 text-center">
+                  <CalendarClock className="mx-auto h-6 w-6 text-muted-foreground" />
+                  <p className="mt-2 text-sm font-semibold">Aucune mission aujourd’hui</p>
+                </div>
+              )}
+
+              {enCours.length > 0 && (
+                <div className="border-t border-border pt-3">
+                  <p className="text-mono text-[10px] font-bold uppercase text-violet-500">Travaux en cours · {enCours.length}</p>
+                  <div className="mt-2 space-y-1">
+                    {enCours.slice(0, 3).map((r) => (
+                      <button key={r.id} type="button" onClick={() => { setActive(r.id); setDossier(r.id); }} className="w-full truncate rounded-md px-2 py-2 text-left text-sm font-semibold hover:bg-muted">
+                        {r.client_nom}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        </aside>
+
+        {/* Au téléphone les blocs restent empilés ; sur ordinateur ils deviennent trois zones stables. */}
+        <div className="w-full min-w-0 max-w-full space-y-6 lg:contents">
         <MobileSectionTrigger
           label="Carte des interventions"
           count={points.length}
@@ -1404,7 +1472,7 @@ function PlanningPage() {
           onToggle={() => toggleMobileSection("carte")}
         />
         {/* CARTE — en haut à gauche */}
-        <section className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
+        <section className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm lg:[grid-area:map] ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
           <div className="grid min-w-0 gap-2 border-b border-border px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 sm:px-5">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
@@ -1427,7 +1495,7 @@ function PlanningPage() {
               markers={points}
               activeId={active}
               onSelect={setActive}
-              height={isMobile ? 300 : 620}
+              height={isMobile ? 300 : 330}
               scrollWheelZoom
               selectionMode={modeSelection}
               selectedIds={selection}
@@ -1488,7 +1556,7 @@ function PlanningPage() {
           open={!modeIntervention || mobileSections.rendezvous}
           onToggle={() => toggleMobileSection("rendezvous")}
         />
-        <section className={`space-y-6 ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
+        <section className={`space-y-6 lg:[grid-area:list] ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
@@ -1589,7 +1657,7 @@ function PlanningPage() {
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
-                <ul className="grid gap-3 xl:grid-cols-2">
+                <ul className="grid gap-3">
 
                   {items.map((r) => {
                     const v = voirieByRdv.get(r.id);
@@ -2734,7 +2802,7 @@ function PlanningPage() {
         </section>
         </div>
 
-        <aside className="w-full min-w-0 max-w-full space-y-6">
+        <aside className="w-full min-w-0 max-w-full space-y-6 lg:[grid-area:tools]">
           <MobileSectionTrigger
             label="Agenda"
             count={rows.length}
