@@ -836,3 +836,21 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   opacity: 1;
   padding: 0.25rem;
 }
+
+/* Garde-fou téléphone : rien ne doit dépasser la largeur de l'écran dans l'espace pro. */
+@media (max-width: 640px) {
+  html, body { max-width: 100%; overflow-x: hidden; }
+  .pro-main { min-width: 0; }
+  .pro-main :where(div, section, article, header, footer, form, li, label, p, span, a, button, h1, h2, h3, h4) {
+    min-width: 0;
+    max-width: 100%;
+  }
+  .pro-main :where(p, span, a, h1, h2, h3, h4, td, th, label, dd, dt) { overflow-wrap: anywhere; }
+  .pro-main :where(img, video, canvas, svg, iframe) { max-width: 100%; }
+  .pro-main :where(input, select, textarea) { max-width: 100%; min-width: 0; }
+  .pro-main :where(button, a) { white-space: normal; }
+  .pro-main :where(table) { display: block; max-width: 100%; overflow-x: auto; }
+  .pro-main .print-doc :where(table) { display: table; }
+  .pro-main :where(.leaflet-container) { max-width: 100%; }
+  .pro-main :where(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
+}
