@@ -1073,6 +1073,7 @@ export type Database = {
           delai_paiement_jours: number
           dernier_acces_at: string | null
           email: string | null
+          email_copie: string | null
           id: string
           nom: string
           notes: string | null
@@ -1101,6 +1102,7 @@ export type Database = {
           delai_paiement_jours?: number
           dernier_acces_at?: string | null
           email?: string | null
+          email_copie?: string | null
           id?: string
           nom: string
           notes?: string | null
@@ -1129,6 +1131,7 @@ export type Database = {
           delai_paiement_jours?: number
           dernier_acces_at?: string | null
           email?: string | null
+          email_copie?: string | null
           id?: string
           nom?: string
           notes?: string | null
