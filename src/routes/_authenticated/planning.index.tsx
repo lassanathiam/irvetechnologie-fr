@@ -1694,7 +1694,7 @@ function PlanningPage() {
                             : "border-border"
                         } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
-                        <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                           <div className="min-w-0">
                             <p className="flex min-w-0 flex-wrap items-center gap-2 font-medium">
                               <span className="min-w-0 truncate text-base font-bold">{r.client_nom}</span>
@@ -1749,29 +1749,6 @@ function PlanningPage() {
 
                             {dossierOuvert && <>
 
-                            <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-                              <div className="min-w-0 rounded-md border border-border bg-background/55 p-3">
-                                <p className="text-mono text-[10px] font-bold uppercase text-muted-foreground">Contact</p>
-                                <p className="mt-1 truncate text-sm font-semibold">{r.client_nom}</p>
-                                <p className="truncate text-xs text-muted-foreground">{r.client_email || r.client_telephone || "Non renseigné"}</p>
-                              </div>
-                              <div className="min-w-0 rounded-md border border-border bg-background/55 p-3">
-                                <p className="text-mono text-[10px] font-bold uppercase text-muted-foreground">Intervention</p>
-                                <p className="mt-1 text-sm font-semibold">{r.date_a_confirmer ? "Date à confirmer" : dateTimeFr(r.date_debut)}</p>
-                                <p className="truncate text-xs text-muted-foreground">{dureeFr(r.duree_min)} · {r.technicien || "À attribuer"}</p>
-                              </div>
-                              <div className="min-w-0 rounded-md border border-border bg-background/55 p-3">
-                                <p className="text-mono text-[10px] font-bold uppercase text-muted-foreground">Technique</p>
-                                <p className="mt-1 truncate text-sm font-semibold">{r.puissance_borne || "Puissance à définir"}</p>
-                                <p className="truncate text-xs text-muted-foreground">{Number(r.metrage_m ?? 0) > 0 ? `${Number(r.metrage_m)} m` : "Métrage à définir"}{r.phase_installation ? ` · ${r.phase_installation}` : ""}</p>
-                              </div>
-                              <div className="min-w-0 rounded-md border border-border bg-background/55 p-3">
-                                <p className="text-mono text-[10px] font-bold uppercase text-muted-foreground">Facturation</p>
-                                <p className="mt-1 truncate text-sm font-semibold">{montantsVisibles ? `${eurosFr(Number(r.montant_ht ?? 0))} HT` : "Montant masqué"}</p>
-                                <p className="truncate text-xs text-muted-foreground">{FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}</p>
-                              </div>
-                            </div>
-
                             {(tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {tel && (
@@ -1802,6 +1779,12 @@ function PlanningPage() {
 
 
                             <p className="text-xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600/10 px-3 py-2 text-base font-bold text-foreground sm:text-lg">
+                                <CalendarClock className="h-5 w-5 shrink-0 text-blue-600" />{" "}
+                                {r.date_a_confirmer
+                                  ? "Rendez-vous à prendre"
+                                  : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
+                               </span>
                               {r.date_a_confirmer && (
                                 <button
                                   type="button"
@@ -1839,6 +1822,15 @@ function PlanningPage() {
                               )}
                             </p>
                             {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
+                            {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
+                              <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                                {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
+                                {r.puissance_borne && <span>{r.puissance_borne}</span>}
+                                {r.phase_installation && <span>{r.phase_installation}</span>}
+                                {r.type_pose && <span>Pose {r.type_pose.toLowerCase()}</span>}
+                              </p>
+                            )}
+
                             <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
                                 className={`px-2 py-0.5 rounded-full border ${
@@ -1856,6 +1848,10 @@ function PlanningPage() {
                                 {r.origine === "sous_traitance"
                                   ? `Sous-traitance${r.partenaire ? ` · ${r.partenaire}` : ""}`
                                   : "Client direct"}
+                              </span>
+                              <span className="text-muted-foreground">
+                                {montantsVisibles ? `${eurosFr(Number(r.montant_ht ?? 0))} HT` : "montant masqué"}{" "}
+                                · {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
 
@@ -2068,7 +2064,7 @@ function PlanningPage() {
 
                             {dossierOuvert && (
 
-                              <div className="mt-2 grid grid-cols-2 gap-2 border-t border-border pt-2 sm:flex sm:flex-wrap">
+                              <div className="mt-2 flex flex-wrap items-center gap-2 border-t border-border pt-2">
                                 <button
                                   type="button"
                                   onClick={() =>
@@ -2226,7 +2222,7 @@ function PlanningPage() {
                             )}
                             </>}
                           </div>
-                          {dossierOuvert && <div className="order-first flex min-w-0 items-center justify-end gap-2 sm:order-none sm:shrink-0">
+                          {dossierOuvert && <div className="flex shrink-0 items-center justify-end gap-2">
                             <select
                               value={r.statut}
                               onChange={(e) =>
