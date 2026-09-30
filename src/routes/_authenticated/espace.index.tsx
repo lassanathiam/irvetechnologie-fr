@@ -229,7 +229,7 @@ function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
           <p className="text-sm font-semibold text-dashboard-copy-muted">{label}</p>
-          <p className="mt-2 break-words text-[1.7rem] font-extrabold leading-none text-dashboard-copy 2xl:text-3xl">{value}</p>
+          <p className="mt-2 whitespace-nowrap text-xl font-extrabold leading-none text-dashboard-copy min-[1450px]:text-2xl">{value}</p>
         </div>
         <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-current/10">
           <Icon className="h-5 w-5 stroke-[2.25]" />
