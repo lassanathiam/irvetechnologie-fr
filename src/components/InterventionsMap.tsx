@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Crosshair, LocateFixed } from "lucide-react";
+import { LocateFixed } from "lucide-react";
 import { TECHNICIENS } from "@/lib/geo";
 import { Button } from "@/components/ui/button";
 
@@ -97,6 +97,8 @@ export function InterventionsMap({
   const byId = useRef<Record<string, any>>({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const moiRef = useRef<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const precisionRef = useRef<any>(null);
   /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
   const fitRef = useRef<string>("");
   const [locationPending, setLocationPending] = useState(false);
@@ -111,17 +113,22 @@ export function InterventionsMap({
     }, 160);
   }
 
-  function cadrerCarte() {
+  function positionsUtiles() {
+    const chantiersEnFrance = markers
+      .filter((m) => m.lat >= 41.2 && m.lat <= 51.3 && m.lng >= -5.4 && m.lng <= 9.8)
+      .map((m) => [m.lat, m.lng] as [number, number]);
+    if (chantiersEnFrance.length) return chantiersEnFrance;
+    return (basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]);
+  }
+
+  function cadrerChantiers() {
     const leaflet = L.current;
     if (!leaflet || !map.current) return;
-    const positions = [
-      ...(basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]),
-      ...markers.map((m) => [m.lat, m.lng] as [number, number]),
-    ];
+    const positions = positionsUtiles();
     if (!positions.length) return;
     map.current.fitBounds(leaflet.latLngBounds(positions), {
-      padding: [28, 28],
-      maxZoom: 10,
+      padding: [36, 36],
+      maxZoom: 12,
     });
   }
 
@@ -167,6 +174,8 @@ export function InterventionsMap({
   useEffect(() => {
     if (!map.current || !visible) return;
     refreshSize();
+    window.setTimeout(() => cadrerChantiers(), 180);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible, height]);
 
   useEffect(() => {
@@ -290,11 +299,7 @@ export function InterventionsMap({
     const cle = markers.map((m) => m.id).join("|");
     if (markers.length && fitRef.current !== cle) {
       fitRef.current = cle;
-      const bounds = leaflet.latLngBounds([
-        ...(basesRef.current ?? BASES).map((b) => [b.lat, b.lng] as [number, number]),
-        ...markers.map((m) => [m.lat, m.lng] as [number, number]),
-      ]);
-      map.current.fitBounds(bounds, { padding: [28, 28], maxZoom: 10 });
+      cadrerChantiers();
     }
   }
 
@@ -347,7 +352,7 @@ export function InterventionsMap({
   }, [routeCoords, routeEstime, tourneeCoords, lienCoords]);
 
 
-  /** Centre la carte sur la position réelle de l'appareil (« Ma position »). */
+  /** Centre la carte sur la position GPS réelle de l'appareil. */
   function maPosition() {
     if (!navigator.geolocation || !map.current) return;
     setLocationPending(true);
@@ -356,6 +361,16 @@ export function InterventionsMap({
         const leaflet = L.current;
         const p: [number, number] = [pos.coords.latitude, pos.coords.longitude];
         if (moiRef.current) moiRef.current.remove();
+        if (precisionRef.current) precisionRef.current.remove();
+        precisionRef.current = leaflet
+          .circle(p, {
+            radius: Math.max(pos.coords.accuracy, 10),
+            color: "#2563eb",
+            weight: 1,
+            fillColor: "#2563eb",
+            fillOpacity: 0.08,
+          })
+          .addTo(map.current);
         moiRef.current = leaflet
           .circleMarker(p, {
             radius: 8,
@@ -365,33 +380,22 @@ export function InterventionsMap({
             fillOpacity: 1,
           })
           .addTo(map.current)
-          .bindTooltip("Ma position", { direction: "top" });
-        map.current.setView(p, 11);
+          .bindTooltip(`Ma position · précision ${Math.round(pos.coords.accuracy)} m`, { direction: "top" });
+        map.current.setView(p, pos.coords.accuracy <= 100 ? 15 : 13);
         setLocationPending(false);
       },
       () => {
         // Position refusée ou indisponible : la carte reste inchangée.
         setLocationPending(false);
       },
-      { enableHighAccuracy: true, timeout: 8000 },
+      { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 },
     );
   }
 
   return (
     <div className="relative w-full min-w-0 max-w-full overflow-hidden rounded-sm border border-border">
       <div ref={el} style={{ height }} className="w-full min-w-0 max-w-full bg-muted" />
-      <div className="absolute bottom-3 left-3 z-[500] flex flex-col gap-2">
-        <Button
-          type="button"
-          size="icon"
-          variant="outline"
-          onClick={cadrerCarte}
-          className="h-11 w-11 rounded-full bg-card/95 shadow-md"
-          title="Recentrer la carte"
-          aria-label="Recentrer la carte"
-        >
-          <Crosshair className="h-5 w-5" />
-        </Button>
+      <div className="absolute bottom-3 left-3 z-[500]">
         <Button
           type="button"
           size="icon"
