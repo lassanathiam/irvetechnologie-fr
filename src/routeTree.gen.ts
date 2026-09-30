@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as ZzTestCarteRouteImport } from './routes/zz-test-carte'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as DemandeRouteImport } from './routes/demande'
@@ -58,11 +57,6 @@ import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/re
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
 
-const ZzTestCarteRoute = ZzTestCarteRouteImport.update({
-  id: '/zz-test-carte',
-  path: '/zz-test-carte',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
@@ -328,7 +322,6 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/zz-test-carte': typeof ZzTestCarteRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -377,7 +370,6 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/zz-test-carte': typeof ZzTestCarteRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -428,7 +420,6 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
-  '/zz-test-carte': typeof ZzTestCarteRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -479,7 +470,6 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
-    | '/zz-test-carte'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
@@ -528,7 +518,6 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
-    | '/zz-test-carte'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
@@ -578,7 +567,6 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
-    | '/zz-test-carte'
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
@@ -629,7 +617,6 @@ export interface RootRouteChildren {
   DemandeRoute: typeof DemandeRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
-  ZzTestCarteRoute: typeof ZzTestCarteRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
@@ -647,13 +634,6 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/zz-test-carte': {
-      id: '/zz-test-carte'
-      path: '/zz-test-carte'
-      fullPath: '/zz-test-carte'
-      preLoaderRoute: typeof ZzTestCarteRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/sitemap.xml': {
       id: '/sitemap.xml'
       path: '/sitemap.xml'
@@ -1057,7 +1037,6 @@ const rootRouteChildren: RootRouteChildren = {
   DemandeRoute: DemandeRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
-  ZzTestCarteRoute: ZzTestCarteRoute,
   AttachementTokenRoute: AttachementTokenRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
