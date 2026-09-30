@@ -884,7 +884,7 @@ function PlanningPage() {
   }
 
   return (
-    <ProShell>
+    <ProShell referenceStyle>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
@@ -1686,16 +1686,10 @@ function PlanningPage() {
                             : "border-border"
                         } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
                           <div className="min-w-0">
-                            <p className="font-medium flex flex-wrap items-center gap-2">
-                              <span className="min-w-0 break-words">
-                                {r.client_nom}
-                                <span className="text-muted-foreground font-normal">
-                                  {" "}
-                                  — {r.titre}
-                                </span>
-                              </span>
+                            <p className="flex min-w-0 flex-wrap items-center gap-2 font-medium">
+                              <span className="min-w-0 truncate text-base font-bold">{r.client_nom}</span>
                               <span
                                 className={`text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${st.badge}`}
                               >
@@ -1715,9 +1709,37 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {r.designation && (
-                              <p className="text-sm text-primary mt-0.5">{r.designation}</p>
+                            <p className="mt-2 flex min-w-0 items-center gap-2 text-sm font-bold text-foreground">
+                              <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
+                              <span className="truncate">
+                                {r.date_a_confirmer
+                                  ? "Rendez-vous à prendre"
+                                  : new Date(r.date_debut).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "short" })}
+                                {!r.date_a_confirmer && ` · ${new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
+                              </span>
+                            </p>
+                            <p className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
+                              <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-orange" />
+                              <span className="truncate">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
+                            </p>
+                            <p className="mt-1 flex min-w-0 items-center gap-2 text-xs font-semibold text-primary">
+                              <Zap className="h-3.5 w-3.5 shrink-0" />
+                              <span className="truncate">{TYPES.find((type) => type.v === r.type)?.l ?? r.titre}{r.designation ? ` · ${r.designation}` : ""}</span>
+                            </p>
+
+                            {!dossierOuvert && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => setDossier(r.id)}
+                                className="mt-2 h-8 px-0 text-xs font-bold text-primary hover:bg-transparent"
+                              >
+                                Afficher tout <ChevronDown className="h-4 w-4" />
+                              </Button>
                             )}
+
+                            {dossierOuvert && <>
 
                             {(tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -1957,20 +1979,18 @@ function PlanningPage() {
                                 </label>
                               )}
 
-                              <button
+                              <Button
                                 type="button"
+                                variant="outline"
+                                size="sm"
                                 onClick={() => {
-                                  setDossier(dossierOuvert ? null : r.id);
-                                  if (dossierOuvert) setPanel(null);
+                                  setDossier(null);
+                                  setPanel(null);
                                 }}
-                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
-                                  dossierOuvert
-                                    ? "border-primary text-primary bg-primary/10"
-                                    : "border-border hover:border-primary hover:text-primary"
-                                }`}
+                                className="text-xs font-bold"
                               >
-                                <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
-                              </button>
+                                <ChevronDown className="h-4 w-4 rotate-180" /> Réduire
+                              </Button>
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
@@ -2192,8 +2212,9 @@ function PlanningPage() {
                                 Validation : {r.chantier_commentaire}
                               </p>
                             )}
+                            </>}
                           </div>
-                          <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:shrink-0">
+                          {dossierOuvert && <div className="flex shrink-0 items-center justify-end gap-2">
                             <select
                               value={r.statut}
                               onChange={(e) =>
@@ -2224,7 +2245,7 @@ function PlanningPage() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
-                          </div>
+                          </div>}
                         </div>
 
                         {isDossierPanel && (
