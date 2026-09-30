@@ -1749,13 +1749,12 @@ function PlanningPage() {
 
                             {dossierOuvert && <>
 
-                            <div className="mt-1 grid gap-x-6 gap-y-2 sm:grid-cols-2 [&>*]:min-w-0">
                             {(tel || wa || r.client_email) && (
-                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
                                 {tel && (
                                   <a
                                     href={tel}
-                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                                    className="text-mono text-[11px] px-2 py-1 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
                                   >
                                     <Phone className="h-3.5 w-3.5" /> Appeler
                                   </a>
@@ -1765,7 +1764,7 @@ function PlanningPage() {
                                     href={wa}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
+                                    className="text-mono text-[11px] px-2 py-1 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
                                   >
                                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                                   </a>
@@ -1779,9 +1778,9 @@ function PlanningPage() {
                             )}
 
 
-                            <p className="text-xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
-                              <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600/10 px-3 py-2 text-base font-bold text-foreground sm:text-lg">
-                                <CalendarClock className="h-5 w-5 shrink-0 text-blue-600" />{" "}
+                            <p className="text-xs text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex min-w-0 items-center gap-1.5 font-bold text-foreground">
+                                <CalendarClock className="h-3.5 w-3.5 shrink-0 text-blue-600" />{" "}
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
                                   : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
@@ -1822,9 +1821,9 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
+                            {notesVisibles && <p className="text-xs mt-1">{notesVisibles}</p>}
                             {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
-                              <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
+                              <p className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
                                 {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
                                 {r.puissance_borne && <span>{r.puissance_borne}</span>}
                                 {r.phase_installation && <span>{r.phase_installation}</span>}
@@ -1832,7 +1831,7 @@ function PlanningPage() {
                               </p>
                             )}
 
-                            <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
+                            <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
                                 className={`px-2 py-0.5 rounded-full border ${
                                   r.origine === "sous_traitance"
@@ -1857,7 +1856,7 @@ function PlanningPage() {
                             </p>
 
                             {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
-                              <p className="mt-2 flex flex-wrap gap-1.5">
+                              <p className="mt-1 flex flex-wrap gap-1.5">
                                 {normaliserEtiquettes(r.etiquettes).map((et: string, idx: number) => (
                                   <span
                                     key={`${et}-${idx}`}
@@ -1868,7 +1867,6 @@ function PlanningPage() {
                                 ))}
                               </p>
                             )}
-                            </div>
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
