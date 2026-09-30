@@ -286,6 +286,7 @@ function PlanningPage() {
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
   const [dossier, setDossier] = useState<string | null>(recherche.rdv ?? null);
+  const [ouverts, setOuverts] = useState<Record<string, boolean>>({});
   /** Vue « Nos chantiers réalisés » (bilan du mois), ouverte depuis le tableau de bord. */
   const [vueBilan, setVueBilan] = useState(recherche.vue === "realises");
   /** Mois du bilan (AAAA-MM) ; vide = les 12 derniers mois. */
@@ -1599,7 +1600,8 @@ function PlanningPage() {
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
-                    const dossierOuvert = dossier === r.id;
+                     const dossierOuvert = dossier === r.id;
+                     const toutOuvert = !!ouverts[r.id];
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
@@ -1651,7 +1653,7 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
 
-                            {(tel || wa || r.client_email) && (
+                            {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {tel && (
                                   <a
@@ -1723,8 +1725,8 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
-                            {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
+                            {toutOuvert && notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
+                            {toutOuvert && (Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
                               <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
                                 {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
                                 {r.puissance_borne && <span>{r.puissance_borne}</span>}
@@ -1733,6 +1735,7 @@ function PlanningPage() {
                               </p>
                             )}
 
+                            {toutOuvert && (
                             <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
                                 className={`px-2 py-0.5 rounded-full border ${
@@ -1756,8 +1759,9 @@ function PlanningPage() {
                                 · {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
+                            )}
 
-                            {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
+                            {toutOuvert && Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
                               <p className="mt-2 flex flex-wrap gap-1.5">
                                 {normaliserEtiquettes(r.etiquettes).map((et: string, idx: number) => (
                                   <span
@@ -1772,6 +1776,7 @@ function PlanningPage() {
 
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
+                            {toutOuvert && (
                             <div className="mt-3 flex flex-wrap items-center gap-2">
                               {!r.demarre_at && !r.termine_at && (
                                 <button
@@ -1853,9 +1858,10 @@ function PlanningPage() {
                                   className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
                                 >
                                   Facturer le chantier
-                                </Link>
-                              )}
-                            </div>
+                                 </Link>
+                               )}
+                             </div>
+                             )}
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1892,7 +1898,19 @@ function PlanningPage() {
                                 }`}
                               >
                                 <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
-                              </button>
+                               </button>
+                               <button
+                                 type="button"
+                                 onClick={() =>
+                                   setOuverts((o) => ({ ...o, [r.id]: !toutOuvert }))
+                                 }
+                                 className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border border-border inline-flex items-center gap-1.5 hover:border-primary hover:text-primary"
+                               >
+                                 <ChevronDown
+                                   className={`h-3.5 w-3.5 transition-transform ${toutOuvert ? "rotate-180" : ""}`}
+                                 />
+                                 {toutOuvert ? "Réduire" : "Afficher tout"}
+                               </button>
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
