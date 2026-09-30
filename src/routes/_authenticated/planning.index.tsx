@@ -1694,7 +1694,7 @@ function PlanningPage() {
                             : "border-border"
                         } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                        <div className="grid grid-cols-1 items-start gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
                           <div className="min-w-0">
                             <p className="flex min-w-0 flex-wrap items-center gap-2 font-medium">
                               <span className="min-w-0 truncate text-base font-bold">{r.client_nom}</span>
@@ -2226,7 +2226,7 @@ function PlanningPage() {
                             )}
                             </>}
                           </div>
-                          {dossierOuvert && <div className="flex shrink-0 items-center justify-end gap-2">
+                          {dossierOuvert && <div className="order-first flex min-w-0 items-center justify-end gap-2 sm:order-none sm:shrink-0">
                             <select
                               value={r.statut}
                               onChange={(e) =>
