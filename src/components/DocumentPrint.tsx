@@ -63,11 +63,11 @@ export function DocumentPrint({
   const accent = accentColor || "#1459d9";
 
   return (
-    <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-8 text-[13px] leading-relaxed">
+    <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-6 text-[13px] leading-relaxed">
       {/* En-tête : émetteur à gauche, client en face à droite */}
-      <div className="doc-header grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,38%)] items-start gap-4 pb-4 border-b-2" style={{ borderColor: accent }}>
+      <div className="doc-header grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,38%)] items-start gap-4 pb-3 border-b-2" style={{ borderColor: accent }}>
         <div className="flex min-w-0 items-start gap-4">
-          <BrandLogo className="h-16 w-16" />
+          <BrandLogo className="h-14 w-14" />
           <div>
             <div className="text-xl font-extrabold tracking-tight uppercase">
               {COMPANY.raisonSociale}
@@ -129,7 +129,7 @@ export function DocumentPrint({
       </div>
 
       {/* Objet en gras, juste au-dessus des prestations */}
-      <div className="mt-4 text-[13px] font-extrabold tracking-tight">
+      <div className="mt-3 text-[13px] font-extrabold tracking-tight">
         Objet : {doc.objet || "Installation de borne de recharge"}
       </div>
       {(doc.numero_ticket || doc.numero_affaire || doc.bon_commande) && (
@@ -141,31 +141,31 @@ export function DocumentPrint({
       )}
 
       {/* Lignes */}
-      <table className="document-lines mt-5 w-full border-collapse">
+      <table className="document-lines mt-3 w-full border-collapse">
         <thead>
           <tr className="bg-muted text-mono text-[10px] font-bold uppercase tracking-[0.14em]">
-            <th className="text-left py-2.5 px-3 w-8">#</th>
-            <th className="text-left py-2.5 px-3">Prestation</th>
-            <th className="text-right py-2.5 px-3 w-16">Qté</th>
-            <th className="text-right py-2.5 px-3 w-28">Prix unitaire HT</th>
-            <th className="text-right py-2.5 px-3 w-20">Taux TVA</th>
-            <th className="text-right py-2.5 px-3 w-28">Total HT</th>
+            <th className="text-left py-2 px-3 w-8">#</th>
+            <th className="text-left py-2 px-3">Prestation</th>
+            <th className="text-right py-2 px-3 w-16">Qté</th>
+            <th className="text-right py-2 px-3 w-28">Prix unitaire HT</th>
+            <th className="text-right py-2 px-3 w-20">Taux TVA</th>
+            <th className="text-right py-2 px-3 w-28">Total HT</th>
           </tr>
         </thead>
         <tbody>
           {lines.map((line, i) => (
             <tr key={i} className="border-b border-border align-top">
-              <td data-label="N°" className="py-3 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
-              <td data-label="Prestation" className="min-w-0 py-3 px-3">
+              <td data-label="N°" className="py-1.5 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
+              <td data-label="Prestation" className="min-w-0 py-1.5 px-3">
                 <div className="break-words font-bold">{line.libelle}</div>
                 {line.description && (
                   <div className="mt-0.5 whitespace-pre-line break-words text-[12px] text-muted-foreground">{line.description}</div>
                 )}
               </td>
-              <td data-label="Quantité" className="py-3 px-3 text-right text-mono font-semibold">{line.quantite}</td>
-              <td data-label="Prix unitaire HT" className="py-3 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
-              <td data-label="TVA" className="py-3 px-3 text-right text-mono">{line.tva} %</td>
-              <td data-label="Total HT" className="py-3 px-3 text-right text-mono font-bold">
+              <td data-label="Quantité" className="py-1.5 px-3 text-right text-mono font-semibold">{line.quantite}</td>
+              <td data-label="Prix unitaire HT" className="py-1.5 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
+              <td data-label="TVA" className="py-1.5 px-3 text-right text-mono">{line.tva} %</td>
+              <td data-label="Total HT" className="py-1.5 px-3 text-right text-mono font-bold">
                 {euro(line.quantite * line.prix_unitaire)}
               </td>
             </tr>
@@ -174,8 +174,8 @@ export function DocumentPrint({
       </table>
 
       {/* Totaux */}
-      <div className="mt-4 flex justify-end">
-        <div className="w-full sm:w-80 space-y-1.5">
+      <div className="mt-3 flex justify-end">
+        <div className="w-full sm:w-80 space-y-1">
           <TotalRow label="Total HT" value={euro(totals.total_ht_brut)} />
           {totals.total_remise > 0 && (
             <>
@@ -215,8 +215,8 @@ export function DocumentPrint({
       </div>
 
       {/* CGV / conditions */}
-      <div className="mt-5">
-        <div className="space-y-2">
+      <div className="mt-3">
+        <div className="space-y-1">
           <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]">
             Conditions générales de vente (CGV)
           </div>
@@ -246,7 +246,7 @@ export function DocumentPrint({
 
         {/* Signatures côte à côte (horizontal) */}
         {!isFacture && (
-          <div className="mt-5 grid grid-cols-2 gap-4">
+          <div className="mt-3 grid grid-cols-2 gap-4">
             <div className="border-2 rounded-sm p-3" style={{ borderColor: accent }}>
               <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: accent }}>
                 {signature?.signed_at ? "Devis accepté — bon pour accord" : "Client — bon pour accord"}
@@ -298,7 +298,7 @@ export function DocumentPrint({
 
 
       {/* Encart de partage */}
-      <div className="mt-5 border rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed" style={{ borderColor: `${accent}66` }}>
+      <div className="mt-3 border rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed" style={{ borderColor: `${accent}66` }}>
         <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: accent }}>
           Recommandez Borne de l'Ouest
         </div>
