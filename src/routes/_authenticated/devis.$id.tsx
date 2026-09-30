@@ -467,15 +467,45 @@ function DevisDetail() {
                 className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
               />
             </label>
-            <label className="block">
-              <span className="text-mono text-xs text-muted-foreground">Notes</span>
+            <div className="block">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-mono text-xs text-muted-foreground">
+                  Notes (imprimées sur le devis — supprimez ce qui est inutile)
+                </span>
+                <div className="flex flex-wrap gap-2">
+                  {/demande client\s*:/i.test(editState.notes) && (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditState({
+                          ...editState,
+                          notes: editState.notes.split(/demande client\s*:/i)[0].trim(),
+                        })
+                      }
+                      className="rounded-md border border-border px-3 py-1.5 text-xs font-semibold hover:bg-muted"
+                    >
+                      Retirer la demande du client
+                    </button>
+                  )}
+                  {editState.notes.trim() && (
+                    <button
+                      type="button"
+                      onClick={() => setEditState({ ...editState, notes: "" })}
+                      className="rounded-md border border-destructive/40 px-3 py-1.5 text-xs font-semibold text-destructive hover:bg-destructive/10"
+                    >
+                      Tout effacer
+                    </button>
+                  )}
+                </div>
+              </div>
               <textarea
-                rows={3}
+                rows={8}
                 value={editState.notes}
                 onChange={(e) => setEditState({ ...editState, notes: e.target.value })}
-                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
+                placeholder="Aucune note sur le devis"
+                className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-y"
               />
-            </label>
+            </div>
 
             <div className="space-y-3">
               <div className="flex items-center justify-between gap-3">
