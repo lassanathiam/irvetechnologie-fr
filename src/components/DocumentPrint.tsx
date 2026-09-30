@@ -63,9 +63,9 @@ export function DocumentPrint({
   const accent = accentColor || "#1459d9";
 
   return (
-    <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-6 text-[13px] leading-relaxed">
+    <div className="print-doc mx-auto w-full max-w-[210mm] overflow-hidden bg-card border border-border rounded-sm p-4 sm:p-5 text-[12px] leading-snug">
       {/* En-tête : émetteur à gauche, client en face à droite */}
-      <div className="doc-header grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,38%)] items-start gap-4 pb-3 border-b-2" style={{ borderColor: accent }}>
+      <div className="doc-header grid grid-cols-1 sm:grid-cols-[minmax(0,1fr)_minmax(200px,38%)] items-start gap-3 pb-2 border-b-2" style={{ borderColor: accent }}>
         <div className="flex min-w-0 items-start gap-4">
           <BrandLogo className="h-14 w-14" />
           <div>
@@ -81,7 +81,7 @@ export function DocumentPrint({
             >
               {COMPANY.qualifications}
             </div>
-            <div className="mt-2 text-[12px] text-muted-foreground space-y-0.5">
+            <div className="mt-1 text-[11px] text-muted-foreground">
               <div>{COMPANY.adresse}</div>
               <div>{COMPANY.cpVille}</div>
               <div className="font-semibold text-foreground">{COMPANY.email}</div>
@@ -94,12 +94,12 @@ export function DocumentPrint({
         </div>
 
         {/* Client en face, à droite */}
-        <div className="min-w-0 break-words bg-muted/40 border border-border rounded-sm p-4">
+        <div className="min-w-0 break-words bg-muted/40 border border-border rounded-sm p-3">
           <div className="text-mono text-[10px] font-bold text-muted-foreground uppercase tracking-[0.2em]">
             {isFacture ? "Facturé à" : "Client"}
           </div>
-          <div className="mt-2 text-base font-extrabold tracking-tight">{doc.client_nom}</div>
-          <div className="text-[12px] text-muted-foreground mt-1 space-y-0.5">
+          <div className="mt-1 text-sm font-extrabold tracking-tight">{doc.client_nom}</div>
+          <div className="text-[11px] text-muted-foreground mt-1">
             {doc.client_adresse && <div>{doc.client_adresse}</div>}
             {doc.client_cp_ville && <div>{doc.client_cp_ville}</div>}
             {doc.client_email && <div>{doc.client_email}</div>}
@@ -109,7 +109,7 @@ export function DocumentPrint({
       </div>
 
       {/* Infos du document, juste sous l'en-tête */}
-      <div className="mt-3 flex flex-wrap items-baseline gap-x-6 gap-y-1 text-[12px]">
+      <div className="mt-2 flex flex-wrap items-baseline gap-x-5 gap-y-1 text-[11px]">
         <div>
           <span className="text-mono text-[10px] font-bold uppercase tracking-[0.18em] text-muted-foreground">
             {isFacture ? "Facture n° " : "Devis n° "}
@@ -129,11 +129,11 @@ export function DocumentPrint({
       </div>
 
       {/* Objet en gras, juste au-dessus des prestations */}
-      <div className="mt-3 text-[13px] font-extrabold tracking-tight">
+      <div className="mt-2 text-[12px] font-extrabold tracking-tight">
         Objet : {doc.objet || "Installation de borne de recharge"}
       </div>
       {(doc.numero_ticket || doc.numero_affaire || doc.bon_commande) && (
-        <div className="mt-3 grid gap-2 sm:grid-cols-3 text-[12px]">
+        <div className="mt-2 grid gap-1 sm:grid-cols-3 text-[11px]">
           {doc.numero_ticket && <div><span className="text-muted-foreground">Ticket : </span><strong>{doc.numero_ticket}</strong></div>}
           {doc.bon_commande && <div><span className="text-muted-foreground">Bon de commande : </span><strong>{doc.bon_commande}</strong></div>}
           {doc.numero_affaire && <div><span className="text-muted-foreground">Affaire : </span><strong>{doc.numero_affaire}</strong></div>}
@@ -144,28 +144,28 @@ export function DocumentPrint({
       <table className="document-lines mt-3 w-full border-collapse">
         <thead>
           <tr className="bg-muted text-mono text-[10px] font-bold uppercase tracking-[0.14em]">
-            <th className="text-left py-2 px-3 w-8">#</th>
-            <th className="text-left py-2 px-3">Prestation</th>
-            <th className="text-right py-2 px-3 w-16">Qté</th>
-            <th className="text-right py-2 px-3 w-28">Prix unitaire HT</th>
-            <th className="text-right py-2 px-3 w-20">Taux TVA</th>
-            <th className="text-right py-2 px-3 w-28">Total HT</th>
+            <th className="text-left py-1.5 px-2 w-7">#</th>
+            <th className="text-left py-1.5 px-2">Prestation</th>
+            <th className="text-right py-1.5 px-2 w-14">Qté</th>
+            <th className="text-right py-1.5 px-2 w-24">PU HT</th>
+            <th className="text-right py-1.5 px-2 w-16">TVA</th>
+            <th className="text-right py-1.5 px-2 w-24">Total HT</th>
           </tr>
         </thead>
         <tbody>
           {lines.map((line, i) => (
             <tr key={i} className="border-b border-border align-top">
-              <td data-label="N°" className="py-1.5 px-3 text-mono text-[11px] text-muted-foreground">{i + 1}</td>
-              <td data-label="Prestation" className="min-w-0 py-1.5 px-3">
+              <td data-label="N°" className="py-1.5 px-2 text-mono text-[10px] text-muted-foreground">{i + 1}</td>
+              <td data-label="Prestation" className="min-w-0 py-1.5 px-2">
                 <div className="break-words font-bold">{line.libelle}</div>
                 {line.description && (
-                  <div className="mt-0.5 whitespace-pre-line break-words text-[12px] text-muted-foreground">{line.description}</div>
+                  <div className="whitespace-pre-line break-words text-[10px] leading-snug text-muted-foreground">{line.description}</div>
                 )}
               </td>
-              <td data-label="Quantité" className="py-1.5 px-3 text-right text-mono font-semibold">{line.quantite}</td>
-              <td data-label="Prix unitaire HT" className="py-1.5 px-3 text-right text-mono">{euro(line.prix_unitaire)}</td>
-              <td data-label="TVA" className="py-1.5 px-3 text-right text-mono">{line.tva} %</td>
-              <td data-label="Total HT" className="py-1.5 px-3 text-right text-mono font-bold">
+              <td data-label="Quantité" className="py-1.5 px-2 text-right text-mono font-semibold">{line.quantite}</td>
+              <td data-label="Prix unitaire HT" className="py-1.5 px-2 text-right text-mono">{euro(line.prix_unitaire)}</td>
+              <td data-label="TVA" className="py-1.5 px-2 text-right text-mono">{line.tva} %</td>
+              <td data-label="Total HT" className="py-1.5 px-2 text-right text-mono font-bold">
                 {euro(line.quantite * line.prix_unitaire)}
               </td>
             </tr>
@@ -232,7 +232,7 @@ export function DocumentPrint({
               {doc.notes}
             </p>
           )}
-          <ul className="text-[11px] text-muted-foreground grid sm:grid-cols-2 gap-x-6 gap-y-0.5">
+          <ul className="text-[9px] leading-snug text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
             {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
               <li key={m}>
                 <span className="font-bold" style={{ color: accent }}>
@@ -246,8 +246,8 @@ export function DocumentPrint({
 
         {/* Signatures côte à côte (horizontal) */}
         {!isFacture && (
-          <div className="mt-3 grid grid-cols-2 gap-4">
-            <div className="border-2 rounded-sm p-3" style={{ borderColor: accent }}>
+          <div className="mt-2 grid grid-cols-2 gap-3">
+            <div className="border-2 rounded-sm p-2" style={{ borderColor: accent }}>
               <div className="text-mono text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: accent }}>
                 {signature?.signed_at ? "Devis accepté — bon pour accord" : "Client — bon pour accord"}
               </div>
@@ -281,12 +281,12 @@ export function DocumentPrint({
                 </div>
               )}
             </div>
-            <div className="border border-border rounded-sm p-3">
+            <div className="border border-border rounded-sm p-2">
               <div className="text-mono text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
                 {COMPANY.raisonSociale}
               </div>
-              <div className="mt-2">
-                <CompanySeal className="w-full max-w-[280px] mx-auto" />
+              <div className="mt-1">
+                <CompanySeal className="h-12 w-full object-contain mx-auto" />
               </div>
               <div className="mt-2 text-[10px] text-muted-foreground text-center">
                 Cachet et signature numériques
@@ -298,7 +298,7 @@ export function DocumentPrint({
 
 
       {/* Encart de partage */}
-      <div className="mt-3 border rounded-sm p-4 bg-muted/30 text-[11px] leading-relaxed" style={{ borderColor: `${accent}66` }}>
+      <div className="mt-2 border rounded-sm p-2.5 bg-muted/30 text-[9px] leading-snug" style={{ borderColor: `${accent}66` }}>
         <div className="text-mono text-[10px] font-bold uppercase tracking-[0.2em]" style={{ color: accent }}>
           Recommandez Borne de l'Ouest
         </div>

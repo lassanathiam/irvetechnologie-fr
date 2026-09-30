@@ -360,9 +360,9 @@ function DevisPage() {
             {lines.length === 0 ? (
               <p className="text-sm text-muted-foreground">Aucune ligne. Ajoutez une prestation.</p>
             ) : (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {lines.map((line) => (
-                  <div key={line.key} className="border border-border rounded-sm p-4 space-y-3 bg-muted/20">
+                  <div key={line.key} className="border border-border rounded-sm p-3 space-y-2 bg-muted/20">
                     <div className="flex items-start justify-between gap-3">
                       <input
                         value={line.libelle}
@@ -379,13 +379,13 @@ function DevisPage() {
                       </button>
                     </div>
                     <textarea
-                      rows={line.description ? 4 : 2}
+                      rows={line.description ? 2 : 1}
                       value={line.description ?? ""}
                       onChange={(e) => updateLine(line.key, { description: e.target.value || null })}
                       placeholder="Description de l'article (matériel, travaux inclus, emplacement de la borne…)"
                       className="w-full bg-input border border-border rounded-sm px-3 py-2 text-xs leading-relaxed focus:outline-none focus:border-primary"
                     />
-                    <div className="flex flex-wrap items-end gap-4">
+                    <div className="grid grid-cols-2 gap-2 sm:grid-cols-[auto_130px_105px_1fr] sm:items-end">
                       <div className="flex items-center gap-2">
                         <span className="text-mono text-xs text-muted-foreground">Qté</span>
                         <button
@@ -430,7 +430,7 @@ function DevisPage() {
                           className="w-20 bg-input border border-border rounded-sm px-2 py-1.5"
                         />
                       </label>
-                      <div className="ml-auto text-mono">{euro(line.quantite * line.prix_unitaire)}</div>
+                      <div className="text-right text-mono font-bold">{euro(line.quantite * line.prix_unitaire)}</div>
                     </div>
                   </div>
                 ))}

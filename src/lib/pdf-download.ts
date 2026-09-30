@@ -58,13 +58,37 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 10;
+  const margin = 7;
   const contentW = pageW - margin * 2;
   const contentH = pageH - margin * 2;
 
   const pxPerCss = canvas.height / (rootH || canvas.height / 2);
   const mmPerPx = contentW / canvas.width;
   const pagePx = contentH / mmPerPx;
+
+  // Un document qui dépasse légèrement tient mieux sur une seule feuille que
+  // sur une deuxième page presque vide. La réduction reste limitée pour garder
+  // les textes lisibles ; les documents réellement longs conservent la pagination.
+  const naturalHeightMm = canvas.height * mmPerPx;
+  if (naturalHeightMm <= contentH * 1.25) {
+    const fittedScale = contentH / canvas.height;
+    const fittedWidth = canvas.width * fittedScale;
+    const x = (pageW - fittedWidth) / 2;
+    pdf.addImage(
+      canvas.toDataURL("image/jpeg", 0.92),
+      "JPEG",
+      x,
+      margin,
+      fittedWidth,
+      contentH,
+      undefined,
+      "FAST",
+    );
+    const safe = `${fileName.replace(/[^a-zA-Z0-9-_]+/g, "-")}.pdf`;
+    const blob = pdf.output("blob") as Blob;
+    await shareOrDownloadPdf(blob, safe);
+    return;
+  }
 
   // Point de coupure sûr : le plus bas possible sans traverser un bloc.
   const safeCut = (start: number, ideal: number) => {
@@ -100,6 +124,10 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
 
   const safe = `${fileName.replace(/[^a-zA-Z0-9-_]+/g, "-")}.pdf`;
   const blob = pdf.output("blob") as Blob;
+  await shareOrDownloadPdf(blob, safe);
+}
+
+async function shareOrDownloadPdf(blob: Blob, safe: string) {
   const file = new File([blob], safe, { type: "application/pdf" });
 
   const nav = navigator as Navigator & {
