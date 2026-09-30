@@ -49,3 +49,4 @@
 
 - [x] Stock matériel : lecture photo du bon de commande, un bon réparti sur 1 à N chantiers (NCO, Charge Expert), sorties au retour terrain — en attente de validation
 - [x] Réorganiser le planning en trois zones lisibles : missions, rendez-vous, carte et trajets
+- [x] Reproduire sur le tableau de bord le rendu de référence bleu marine avec indicateurs colorés, graphique et blocs d’activité (30/09/2026)
