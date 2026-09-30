@@ -34,7 +34,6 @@ import {
   ClipboardCheck,
   Clock3,
   Navigation,
-  Zap,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -105,13 +104,6 @@ export const Route = createFileRoute("/_authenticated/planning/")({
         content:
           "Planification des rendez-vous IRVE : adresse géolocalisée, tournées optimisées, validation de chantier et autorisations de voirie.",
       },
-      { property: "og:title", content: "Planning des interventions — Borne de l'Ouest" },
-      {
-        property: "og:description",
-        content: "Planification et suivi terrain des interventions IRVE de Borne de l'Ouest.",
-      },
-      { property: "og:type", content: "website" },
-      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -892,8 +884,8 @@ function PlanningPage() {
   }
 
   return (
-    <ProShell referenceStyle>
-      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
+    <ProShell>
+      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
           <h1 className="text-2xl font-extrabold tracking-tight mt-1">
@@ -950,7 +942,7 @@ function PlanningPage() {
         </div>
       </div>
 
-      <section className="mx-auto mb-6 w-full min-w-0 max-w-full lg:hidden">
+      <section className="mx-auto mb-6 w-full min-w-0 max-w-full">
         <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
           <div className="min-w-0">
             <h2 className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h2>
@@ -1402,77 +1394,9 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,.85fr)] lg:[grid-template-areas:'mission_map'_'list_tools']">
-        <aside className="hidden min-w-0 lg:block lg:[grid-area:mission]">
-          <div className="overflow-hidden rounded-lg border border-primary/30 bg-card shadow-sm">
-            <div className="border-b border-border bg-primary/10 px-4 py-4">
-              <p className="text-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Missions actuelles</p>
-              <h2 className="mt-1 text-base font-bold">Mission terrain</h2>
-            </div>
-            <div className="space-y-4 p-4">
-              <div className="flex flex-wrap gap-2">
-                {TECHNICIENS.map((t) => (
-                  <Button key={t.id} size="sm" variant={moiId === t.id ? "default" : "outline"} onClick={() => choisirMoi(t.id)}>
-                    {t.nom.split(" ")[0]}
-                  </Button>
-                ))}
-                <Button size="sm" variant={!moi ? "default" : "outline"} onClick={() => choisirMoi(null)}>Tous</Button>
-              </div>
-
-              {missionTerrain ? (
-                <div className="border-l-2 border-primary pl-3">
-                  <p className="text-mono text-[10px] font-bold uppercase text-primary">{styleStatut(missionTerrain.statut).label}</p>
-                  <p className="mt-1 font-bold leading-tight">{missionTerrain.client_nom}</p>
-                  <p className="mt-1 text-sm text-muted-foreground">
-                    {new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
-                  </p>
-                  <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
-                  <div className="mt-3 grid gap-2">
-                    {!missionTerrain.demarre_at && (
-                      <Button className="h-auto min-h-11 w-full whitespace-normal text-center" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}>
-                        <Play /> Démarrer les travaux
-                      </Button>
-                    )}
-                    {missionTerrain.demarre_at && !missionTerrain.termine_at && (
-                      <Button variant="outline" className="h-auto min-h-11 w-full whitespace-normal" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}>
-                        <Camera /> Photos et métrage
-                      </Button>
-                    )}
-                    {missionTerrain.demarre_at && (
-                      <Button asChild variant="outline" className="h-auto min-h-11 w-full whitespace-normal">
-                        <Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link>
-                      </Button>
-                    )}
-                    <Button asChild variant="outline" className="h-auto min-h-11 w-full whitespace-normal">
-                      <a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a>
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-md border border-dashed border-border p-4 text-center">
-                  <CalendarClock className="mx-auto h-6 w-6 text-muted-foreground" />
-                  <p className="mt-2 text-sm font-semibold">Aucune mission aujourd’hui</p>
-                </div>
-              )}
-
-              {enCours.length > 0 && (
-                <div className="border-t border-border pt-3">
-                  <p className="text-mono text-[10px] font-bold uppercase text-violet-500">Travaux en cours · {enCours.length}</p>
-                  <div className="mt-2 space-y-1">
-                    {enCours.slice(0, 3).map((r) => (
-                      <button key={r.id} type="button" onClick={() => { setActive(r.id); setDossier(r.id); }} className="w-full truncate rounded-md px-2 py-2 text-left text-sm font-semibold hover:bg-muted">
-                        {r.client_nom}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          </div>
-        </aside>
-
-        {/* Au téléphone les blocs restent empilés ; sur ordinateur ils deviennent trois zones stables. */}
-        <div className="w-full min-w-0 max-w-full space-y-4 lg:contents">
+      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-6 lg:grid-cols-[minmax(0,1fr)_400px]">
+        {/* Colonne gauche : carte puis liste des rendez-vous, sans espace vide */}
+        <div className="w-full min-w-0 max-w-full space-y-6">
         <MobileSectionTrigger
           label="Carte des interventions"
           count={points.length}
@@ -1480,7 +1404,7 @@ function PlanningPage() {
           onToggle={() => toggleMobileSection("carte")}
         />
         {/* CARTE — en haut à gauche */}
-        <section className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm lg:[grid-area:map] ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
+        <section className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card shadow-sm ${modeIntervention && !mobileSections.carte ? "hidden md:block" : ""}`}>
           <div className="grid min-w-0 gap-2 border-b border-border px-4 py-4 sm:flex sm:flex-wrap sm:items-center sm:gap-x-5 sm:px-5">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] flex items-center gap-2">
               <MapPin className="h-4 w-4 text-primary" /> Carte des interventions
@@ -1503,7 +1427,7 @@ function PlanningPage() {
               markers={points}
               activeId={active}
               onSelect={setActive}
-              height={isMobile ? 300 : 330}
+              height={isMobile ? 300 : 620}
               scrollWheelZoom
               selectionMode={modeSelection}
               selectedIds={selection}
@@ -1564,7 +1488,7 @@ function PlanningPage() {
           open={!modeIntervention || mobileSections.rendezvous}
           onToggle={() => toggleMobileSection("rendezvous")}
         />
-        <section className={`space-y-4 lg:[grid-area:list] ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
+        <section className={`space-y-6 ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
@@ -1665,7 +1589,7 @@ function PlanningPage() {
             groups.map(([day, items]) => (
               <div key={day}>
                 <h2 className="text-mono text-xs text-primary uppercase mb-3">{day}</h2>
-                <ul className="grid gap-3">
+                <ul className="grid gap-3 xl:grid-cols-2">
 
                   {items.map((r) => {
                     const v = voirieByRdv.get(r.id);
@@ -1694,10 +1618,16 @@ function PlanningPage() {
                             : "border-border"
                         } ${r.statut === "annule" ? "opacity-75" : ""}`}
                       >
-                        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-3">
+                        <div className="flex flex-wrap items-start justify-between gap-3">
                           <div className="min-w-0">
-                            <p className="flex min-w-0 flex-wrap items-center gap-2 font-medium">
-                              <span className="min-w-0 truncate text-base font-bold">{r.client_nom}</span>
+                            <p className="font-medium flex flex-wrap items-center gap-2">
+                              <span className="min-w-0 break-words">
+                                {r.client_nom}
+                                <span className="text-muted-foreground font-normal">
+                                  {" "}
+                                  — {r.titre}
+                                </span>
+                              </span>
                               <span
                                 className={`text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border ${st.badge}`}
                               >
@@ -1717,44 +1647,16 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            <p className="mt-2 flex min-w-0 items-center gap-2 text-sm font-bold text-foreground">
-                              <CalendarClock className="h-4 w-4 shrink-0 text-primary" />
-                              <span className="truncate">
-                                {r.date_a_confirmer
-                                  ? "Rendez-vous à prendre"
-                                  : new Date(r.date_debut).toLocaleDateString("fr-FR", { weekday: "short", day: "2-digit", month: "short" })}
-                                {!r.date_a_confirmer && ` · ${new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}`}
-                              </span>
-                            </p>
-                            <p className="mt-1 flex min-w-0 items-center gap-2 text-xs text-muted-foreground">
-                              <MapPin className="h-3.5 w-3.5 shrink-0 text-dashboard-orange" />
-                              <span className="truncate">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
-                            </p>
-                            <p className="mt-1 flex min-w-0 items-center gap-2 text-xs font-semibold text-primary">
-                              <Zap className="h-3.5 w-3.5 shrink-0" />
-                              <span className="truncate">{TYPES.find((type) => type.v === r.type)?.l ?? r.titre}{r.designation ? ` · ${r.designation}` : ""}</span>
-                            </p>
-
-                            {!dossierOuvert && (
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => setDossier(r.id)}
-                                className="mt-2 h-8 px-0 text-xs font-bold text-primary hover:bg-transparent"
-                              >
-                                Afficher tout <ChevronDown className="h-4 w-4" />
-                              </Button>
+                            {r.designation && (
+                              <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
 
-                            {dossierOuvert && <>
-
                             {(tel || wa || r.client_email) && (
-                              <div className="mt-1 flex min-w-0 flex-wrap items-center gap-1.5">
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
                                 {tel && (
                                   <a
                                     href={tel}
-                                    className="text-mono text-[11px] px-2 py-1 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-border text-foreground inline-flex items-center gap-1.5 transition hover:border-primary hover:text-primary"
                                   >
                                     <Phone className="h-3.5 w-3.5" /> Appeler
                                   </a>
@@ -1764,7 +1666,7 @@ function PlanningPage() {
                                     href={wa}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-mono text-[11px] px-2 py-1 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
+                                    className="text-mono text-[11px] px-2.5 py-1.5 rounded-full border border-emerald-500/50 text-emerald-600 dark:text-emerald-400 inline-flex items-center gap-1.5 transition hover:bg-emerald-500/10"
                                   >
                                     <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
                                   </a>
@@ -1778,9 +1680,9 @@ function PlanningPage() {
                             )}
 
 
-                            <p className="text-xs text-muted-foreground mt-1 flex min-w-0 flex-wrap items-center gap-x-3 gap-y-1">
-                              <span className="inline-flex min-w-0 items-center gap-1.5 font-bold text-foreground">
-                                <CalendarClock className="h-3.5 w-3.5 shrink-0 text-blue-600" />{" "}
+                            <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex items-center gap-1">
+                                <CalendarClock className="h-3 w-3" />{" "}
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
                                   : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
@@ -1821,9 +1723,9 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
-                            {notesVisibles && <p className="text-xs mt-1">{notesVisibles}</p>}
+                            {notesVisibles && <p className="text-xs mt-2">{notesVisibles}</p>}
                             {(Number(r.metrage_m ?? 0) > 0 || r.puissance_borne || r.phase_installation || r.type_pose) && (
-                              <p className="text-xs text-muted-foreground mt-1 flex flex-wrap gap-x-3 gap-y-1">
+                              <p className="text-xs text-muted-foreground mt-2 flex flex-wrap gap-x-3 gap-y-1">
                                 {Number(r.metrage_m ?? 0) > 0 && <span>{Number(r.metrage_m)} m</span>}
                                 {r.puissance_borne && <span>{r.puissance_borne}</span>}
                                 {r.phase_installation && <span>{r.phase_installation}</span>}
@@ -1831,7 +1733,7 @@ function PlanningPage() {
                               </p>
                             )}
 
-                            <p className="mt-1 flex flex-wrap items-center gap-2 text-[11px] text-mono">
+                            <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
                                 className={`px-2 py-0.5 rounded-full border ${
                                   r.origine === "sous_traitance"
@@ -1856,7 +1758,7 @@ function PlanningPage() {
                             </p>
 
                             {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
-                              <p className="mt-1 flex flex-wrap gap-1.5">
+                              <p className="mt-2 flex flex-wrap gap-1.5">
                                 {normaliserEtiquettes(r.etiquettes).map((et: string, idx: number) => (
                                   <span
                                     key={`${et}-${idx}`}
@@ -1867,6 +1769,7 @@ function PlanningPage() {
                                 ))}
                               </p>
                             )}
+
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -1889,16 +1792,6 @@ function PlanningPage() {
                                       minute: "2-digit",
                                     })}
                                   </span>
-                                  <button
-                                    type="button"
-                                    disabled={demarrer.isPending}
-                                    onClick={() => {
-                                      if (window.confirm(`Annuler le démarrage des travaux chez ${r.client_nom} ?\n\nLe rendez-vous est conservé et repasse en « confirmé ».`)) demarrer.mutate({ id: r.id, demarre: false });
-                                    }}
-                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border-2 border-destructive/60 text-destructive inline-flex items-center gap-1.5 disabled:opacity-50"
-                                  >
-                                    Annuler le démarrage
-                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}
@@ -1986,18 +1879,20 @@ function PlanningPage() {
                                 </label>
                               )}
 
-                              <Button
+                              <button
                                 type="button"
-                                variant="outline"
-                                size="sm"
                                 onClick={() => {
-                                  setDossier(null);
-                                  setPanel(null);
+                                  setDossier(dossierOuvert ? null : r.id);
+                                  if (dossierOuvert) setPanel(null);
                                 }}
-                                className="text-xs font-bold"
+                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
+                                  dossierOuvert
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border hover:border-primary hover:text-primary"
+                                }`}
                               >
-                                <ChevronDown className="h-4 w-4 rotate-180" /> Réduire
-                              </Button>
+                                <Pencil className="h-3.5 w-3.5" /> Gérer le dossier
+                              </button>
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
@@ -2219,9 +2114,8 @@ function PlanningPage() {
                                 Validation : {r.chantier_commentaire}
                               </p>
                             )}
-                            </>}
                           </div>
-                          {dossierOuvert && <div className="flex shrink-0 items-center justify-end gap-2">
+                          <div className="flex w-full items-center justify-end gap-2 sm:w-auto sm:shrink-0">
                             <select
                               value={r.statut}
                               onChange={(e) =>
@@ -2252,7 +2146,7 @@ function PlanningPage() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
-                          </div>}
+                          </div>
                         </div>
 
                         {isDossierPanel && (
@@ -2840,15 +2734,14 @@ function PlanningPage() {
         </section>
         </div>
 
-        <aside className="w-full min-w-0 max-w-full space-y-6 lg:[grid-area:tools]">
+        <aside className="w-full min-w-0 max-w-full space-y-6">
           <MobileSectionTrigger
             label="Agenda"
             count={rows.length}
             open={!modeIntervention || mobileSections.agenda}
             onToggle={() => toggleMobileSection("agenda")}
-            className="order-3"
           />
-          <div className={`order-4 min-w-0 ${modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}`}>
+          <div className={`min-w-0 ${modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}`}>
             <AgendaMois
               events={rows.map((r) => ({
                 id: r.id,
@@ -2874,9 +2767,8 @@ function PlanningPage() {
             count={tourneeAff.etapes.length}
             open={!modeIntervention || mobileSections.trajet}
             onToggle={() => toggleMobileSection("trajet")}
-            className="order-1"
           />
-          <div className={`order-2 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
+          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
               {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
@@ -2985,9 +2877,8 @@ function PlanningPage() {
             label="Programme des tournées"
             open={!modeIntervention || mobileSections.programme}
             onToggle={() => toggleMobileSection("programme")}
-            className="order-5"
           />
-          <div className={`order-6 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
+          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
             </h2>
@@ -3144,9 +3035,8 @@ function PlanningPage() {
               count={grappes.length}
               open={!modeIntervention || mobileSections.proches}
               onToggle={() => toggleMobileSection("proches")}
-              className="order-7"
             />
-            <div className={`order-8 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
+            <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
@@ -3180,19 +3070,17 @@ function MobileSectionTrigger({
   count,
   open,
   onToggle,
-  className = "",
 }: {
   label: string;
   count?: number;
   open: boolean;
   onToggle: () => void;
-  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className={`mx-auto grid min-h-12 w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden ${className}`}
+      className="mx-auto grid min-h-12 w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden"
       aria-expanded={open}
     >
       <span className="min-w-0 truncate font-bold">{label}</span>
