@@ -43,10 +43,10 @@ function estSessionExpiree(error: Error): boolean {
   return /unauthorized|non autoris|401|jwt|token (expired|invalide)|invalid claim/i.test(message);
 }
 
-function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
+function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  const sessionExpiree = estSessionExpiree(error);
+  const sessionExpiree = estSessionExpiree(error as Error);
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });

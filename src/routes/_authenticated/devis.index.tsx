@@ -92,7 +92,20 @@ function DevisPage() {
     notes: "",
   });
   const [error, setError] = useState<string | null>(null);
-  const [openSection, setOpenSection] = useState<SectionKey | null>("client");
+  const [openSections, setOpenSections] = useState<Set<SectionKey>>(
+    () => new Set<SectionKey>(["client", "dates", "prestations", "conditions"]),
+  );
+  const openSection = {
+    has: (k: SectionKey) => openSections.has(k),
+  };
+  const toggleSection = (k: SectionKey) =>
+    setOpenSections((s) => {
+      const n = new Set(s);
+      if (n.has(k)) n.delete(k);
+      else n.add(k);
+      return n;
+    });
+  const [infoDemande, setInfoDemande] = useState<string | null>(null);
 
   // Demande client acceptée : préremplissage automatique des coordonnées.
   const { demande: demandeId } = Route.useSearch();
@@ -107,24 +120,31 @@ function DevisPage() {
     const d = demande.data;
     if (!d || prefilled === d.id) return;
     setPrefilled(d.id);
+    // Les informations de la demande restent internes : elles ne sont pas imprimées sur le devis.
+    setInfoDemande(
+      [
+        d.type_bien ? `Type de bien : ${d.type_bien}` : null,
+        d.puissance ? `Puissance borne : ${d.puissance}` : null,
+        d.nb_bornes ? `Nombre de bornes : ${d.nb_bornes}` : null,
+        d.abonnement_kva ? `Abonnement compteur : ${d.abonnement_kva}` : null,
+        d.type_compteur ? `Compteur : ${d.type_compteur}` : null,
+        d.phase ? `Alimentation : ${d.phase}` : null,
+        d.type_installation ? `Emplacement / installation : ${d.type_installation}` : null,
+        d.distance_m ? `Distance tableau → borne : ${d.distance_m} m` : null,
+        d.notes ? `Message du client : ${d.notes}` : null,
+      ]
+        .filter(Boolean)
+        .join("\n") || null,
+    );
     setClient((c) => ({
       ...c,
       client_nom: d.nom,
       client_email: d.email ?? "",
       client_telephone: d.telephone ?? "",
       client_cp_ville: d.code_postal ?? "",
-      notes: [
-        d.type_bien ? `Type de bien : ${d.type_bien}` : null,
-        d.puissance ? `Puissance borne : ${d.puissance}` : null,
-        d.abonnement_kva ? `Abonnement compteur : ${d.abonnement_kva}` : null,
-        d.type_compteur ? `Compteur : ${d.type_compteur}` : null,
-        d.phase ? `Alimentation : ${d.phase}` : null,
-        d.type_installation ? `Installation : ${d.type_installation}` : null,
-        d.distance_m ? `Distance tableau → borne : ${d.distance_m} m` : null,
-        d.notes ? `Demande client : ${d.notes}` : null,
-      ]
-        .filter(Boolean)
-        .join("\n"),
+      objet: d.puissance
+        ? `Installation d'une borne de recharge ${d.puissance}`
+        : c.objet,
     }));
   }, [demande.data, prefilled]);
 
@@ -220,11 +240,19 @@ function DevisPage() {
 
       <div className="mt-8 grid lg:grid-cols-[1fr_340px] gap-6 items-start">
         <div className="space-y-5">
+          {infoDemande && (
+            <div className="border border-primary/40 bg-primary/5 rounded-sm p-5">
+              <div className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+                Demande du client — pour vous seulement (non affiché sur le devis)
+              </div>
+              <p className="mt-3 text-sm whitespace-pre-line leading-relaxed">{infoDemande}</p>
+            </div>
+          )}
           <Card
             step="01"
             title="Client"
-            open={openSection === "client"}
-            onToggle={() => setOpenSection((v) => (v === "client" ? null : "client"))}
+            open={openSection.has("client")}
+            onToggle={() => toggleSection("client")}
           >
             <div className="mb-4"><ClientPicker onPick={(c) => setClient({ ...client, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "", client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "" })} /></div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -240,8 +268,8 @@ function DevisPage() {
           <Card
             step="02"
             title="Dates & validité"
-            open={openSection === "dates"}
-            onToggle={() => setOpenSection((v) => (v === "dates" ? null : "dates"))}
+            open={openSection.has("dates")}
+            onToggle={() => toggleSection("dates")}
           >
             <div className="grid sm:grid-cols-2 gap-4">
               <Field
@@ -279,8 +307,8 @@ function DevisPage() {
           <Card
             step="03"
             title="Prestations"
-            open={openSection === "prestations"}
-            onToggle={() => setOpenSection((v) => (v === "prestations" ? null : "prestations"))}
+            open={openSection.has("prestations")}
+            onToggle={() => toggleSection("prestations")}
           >
             <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
               <label className="block">
@@ -310,11 +338,11 @@ function DevisPage() {
               <button
                 type="button"
                 onClick={() =>
-                  addPrestation({ libelle: "Ligne libre", description: null, prix_unitaire: 0, tva: 20 })
+                  addPrestation({ libelle: "Nouvel article", description: null, prix_unitaire: 0, tva: 20 })
                 }
                 className="border border-dashed border-border rounded-sm px-3 py-2.5 text-sm text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center justify-center gap-2"
               >
-                <Plus className="h-3.5 w-3.5" /> Ligne libre
+                <Plus className="h-3.5 w-3.5" /> Nouvel article
               </button>
             </div>
 
@@ -350,9 +378,13 @@ function DevisPage() {
                         <Trash2 className="h-4 w-4" />
                       </button>
                     </div>
-                    {line.description && (
-                      <p className="text-xs text-muted-foreground leading-relaxed whitespace-pre-line">{line.description}</p>
-                    )}
+                    <textarea
+                      rows={line.description ? 4 : 2}
+                      value={line.description ?? ""}
+                      onChange={(e) => updateLine(line.key, { description: e.target.value || null })}
+                      placeholder="Description de l'article (matériel, travaux inclus, emplacement de la borne…)"
+                      className="w-full bg-input border border-border rounded-sm px-3 py-2 text-xs leading-relaxed focus:outline-none focus:border-primary"
+                    />
                     <div className="flex flex-wrap items-end gap-4">
                       <div className="flex items-center gap-2">
                         <span className="text-mono text-xs text-muted-foreground">Qté</span>
@@ -404,13 +436,22 @@ function DevisPage() {
                 ))}
               </div>
             )}
+            <button
+              type="button"
+              onClick={() =>
+                addPrestation({ libelle: "Nouvel article", description: null, prix_unitaire: 0, tva: 20 })
+              }
+              className="w-full border border-dashed border-primary/60 rounded-sm px-3 py-3 text-sm text-primary hover:bg-primary/5 inline-flex items-center justify-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Ajouter un nouvel article
+            </button>
           </Card>
 
           <Card
             step="04"
             title="Remise, acompte & conditions"
-            open={openSection === "conditions"}
-            onToggle={() => setOpenSection((v) => (v === "conditions" ? null : "conditions"))}
+            open={openSection.has("conditions")}
+            onToggle={() => toggleSection("conditions")}
           >
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block">
