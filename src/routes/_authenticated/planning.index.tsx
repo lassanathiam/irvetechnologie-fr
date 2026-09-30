@@ -1735,6 +1735,7 @@ function PlanningPage() {
                               </p>
                             )}
 
+                            {toutOuvert && (
                             <p className="mt-2 flex flex-wrap items-center gap-2 text-[11px] text-mono">
                               <span
                                 className={`px-2 py-0.5 rounded-full border ${
@@ -1758,8 +1759,9 @@ function PlanningPage() {
                                 · {FACTU_LABEL[r.statut_facturation] ?? r.statut_facturation}
                               </span>
                             </p>
+                            )}
 
-                            {Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
+                            {toutOuvert && Array.isArray(r.etiquettes) && r.etiquettes.length > 0 && (
                               <p className="mt-2 flex flex-wrap gap-1.5">
                                 {normaliserEtiquettes(r.etiquettes).map((et: string, idx: number) => (
                                   <span
