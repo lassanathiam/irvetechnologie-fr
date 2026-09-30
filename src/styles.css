@@ -732,3 +732,20 @@
     grid-template-columns: minmax(0, 1fr) minmax(200px, 38%) !important;
   }
 }
+
+/* Champs date/heure lisibles et cliquables dans les deux thèmes */
+.dark { color-scheme: dark; }
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"] {
+  color: var(--foreground);
+  min-height: 2.75rem;
+  cursor: pointer;
+}
+input[type="date"]::-webkit-calendar-picker-indicator,
+input[type="time"]::-webkit-calendar-picker-indicator,
+input[type="datetime-local"]::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  opacity: 1;
+  padding: 0.25rem;
+}
