@@ -1106,7 +1106,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
       .select("categorie, path")
       .eq("rendezvous_id", data.id);
     const presentes = new Set((photosRows ?? []).map((p) => p.categorie));
-    const manquantes = categoriesRetourObligatoires(rdv.type).filter((c) => !presentes.has(c));
+    const manquantes = categoriesRetourObligatoires(rdv.type, rdv.partenaire).filter((c) => !presentes.has(c));
     if (manquantes.length) {
       throw new Error(
         `Retour de travaux incomplet — photos manquantes : ${manquantes
@@ -1346,10 +1346,53 @@ export const RETOUR_CATEGORIES_OPTIONNELLES = [
   "autre",
 ] as const;
 
+/** Liste imposée par ENSIO pour attester la conformité de chaque installation. */
+export const RETOUR_CATEGORIES_ENSIO = [
+  "ensio_av_tableau_ferme",
+  "ensio_av_tableau_ouvert",
+  "ensio_av_emplacement_borne",
+  "ensio_tableau_ferme_etiquette",
+  "ensio_tableau_ouvert",
+  "ensio_alim_protections",
+  "ensio_liaison_pe",
+  "ensio_protections_refs",
+  "ensio_cheminement_cable",
+  "ensio_borne_ouverte_ensemble",
+  "ensio_borne_ouverte_alim",
+  "ensio_borne_ouverte_cable_info",
+  "ensio_borne_fermee_face",
+  "ensio_borne_fermee_gauche",
+  "ensio_borne_fermee_droite",
+  "ensio_simulateur_charge",
+  "ensio_tension_sortie",
+  "ensio_resistance_pe",
+  "ensio_numero_serie",
+  "ensio_carte_sim",
+  "ensio_badges",
+  "ensio_parametrages",
+  "ensio_appel_supervision",
+] as const;
+
+/** ENSIO : photos à fournir seulement si la situation le demande. */
+export const RETOUR_CATEGORIES_ENSIO_OPTION = [
+  "ensio_tore_emplacement",
+  "ensio_tore_connexions",
+  "ensio_gaine_traversee",
+  "ensio_sms_supervision",
+  "ensio_etiquette_autel",
+  "autre",
+] as const;
+
 export const RETOUR_CATEGORIES = [
   ...RETOUR_CATEGORIES_OBLIGATOIRES,
   ...RETOUR_CATEGORIES_MAINTENANCE,
   ...RETOUR_CATEGORIES_OPTIONNELLES,
+  ...RETOUR_CATEGORIES_ENSIO,
+  "ensio_tore_emplacement",
+  "ensio_tore_connexions",
+  "ensio_gaine_traversee",
+  "ensio_sms_supervision",
+  "ensio_etiquette_autel",
 ] as const;
 
 export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
@@ -1369,18 +1412,51 @@ export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   autre: "Autre",
   emplacement_borne: "Emplacement de la borne",
   emplacement_tableau: "Emplacement du tableau",
+  ensio_av_tableau_ferme: "AVANT — Tableau électrique fermé",
+  ensio_av_tableau_ouvert: "AVANT — Tableau électrique ouvert",
+  ensio_av_emplacement_borne: "AVANT — Emplacement de la borne (dossier technique)",
+  ensio_tableau_ferme_etiquette: "Tableau fermé avec étiquette « Borne de recharge »",
+  ensio_tableau_ouvert: "Tableau électrique ouvert",
+  ensio_alim_protections: "Connexion de l'alimentation des protections de borne",
+  ensio_liaison_pe: "Connexion de la liaison PE dans le tableau",
+  ensio_protections_refs: "Protections électriques (références lisibles)",
+  ensio_tore_emplacement: "Emplacement du tore de mesure (si applicable)",
+  ensio_tore_connexions: "Connexions du tore (couleurs du câble info)",
+  ensio_cheminement_cable: "Cheminement du câble en tube ou en gaine",
+  ensio_gaine_traversee: "Gaine en traversée de mur (si traversée)",
+  ensio_borne_ouverte_ensemble: "Borne ouverte — vue d'ensemble",
+  ensio_borne_ouverte_alim: "Borne ouverte — connexion de l'alimentation",
+  ensio_borne_ouverte_cable_info: "Borne ouverte — connexion du câble info",
+  ensio_borne_fermee_face: "Borne fermée, vue de face (alimentée)",
+  ensio_borne_fermee_gauche: "Borne fermée, vue de gauche",
+  ensio_borne_fermee_droite: "Borne fermée, vue de droite",
+  ensio_simulateur_charge: "Borne avec simulateur en mode « Charge »",
+  ensio_tension_sortie: "Relevé de tension en sortie (simulateur)",
+  ensio_resistance_pe: "Relevé de résistance PE en sortie (simulateur)",
+  ensio_numero_serie: "Numéro de série de la borne",
+  ensio_carte_sim: "Numéro de la carte SIM",
+  ensio_badges: "Numéro du ou des badges",
+  ensio_parametrages: "Paramétrages (borne et délesteur)",
+  ensio_appel_supervision: "Capture de l'appel à la supervision",
+  ensio_sms_supervision: "Capture SMS avec la supervision (selon client)",
+  ensio_etiquette_autel: "Étiquette de la poche plastique (bornes AUTEL)",
 };
 
-export function categoriesRetourObligatoires(type?: string | null): readonly RetourCategorie[] {
-  return type === "maintenance"
-    ? RETOUR_CATEGORIES_MAINTENANCE
-    : RETOUR_CATEGORIES_OBLIGATOIRES;
+/** Le donneur d'ordre est-il ENSIO ? */
+export function estEnsio(partenaire?: string | null): boolean {
+  return /ensio/i.test(partenaire ?? "");
 }
 
-export function categoriesRetourOptionnelles(type?: string | null): readonly RetourCategorie[] {
-  return type === "maintenance"
-    ? ["tableau_electrique", "compteur_linky", "plaque_serie", "autre"]
-    : RETOUR_CATEGORIES_OPTIONNELLES;
+export function categoriesRetourObligatoires(type?: string | null, partenaire?: string | null): readonly RetourCategorie[] {
+  if (type === "maintenance") return RETOUR_CATEGORIES_MAINTENANCE;
+  if (estEnsio(partenaire)) return RETOUR_CATEGORIES_ENSIO;
+  return RETOUR_CATEGORIES_OBLIGATOIRES;
+}
+
+export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null): readonly string[] {
+  if (type === "maintenance") return ["tableau_electrique", "compteur_linky", "plaque_serie", "autre"];
+  if (estEnsio(partenaire)) return RETOUR_CATEGORIES_ENSIO_OPTION;
+  return RETOUR_CATEGORIES_OPTIONNELLES;
 }
 
 const MAX_PHOTOS_CHANTIER = 40;
