@@ -34,6 +34,7 @@ import {
   ClipboardCheck,
   Clock3,
   Navigation,
+  Zap,
 } from "lucide-react";
 import {
   appliquerProgramme,
