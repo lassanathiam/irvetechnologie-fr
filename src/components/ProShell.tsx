@@ -24,6 +24,7 @@ import {
   ShieldCheck,
   X,
   Zap,
+  Package,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";

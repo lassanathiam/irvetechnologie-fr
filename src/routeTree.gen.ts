@@ -27,6 +27,7 @@ import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$tok
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
+import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock.index'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
 import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
@@ -146,6 +147,11 @@ const AuthenticatedBornesCatalogueRoute =
     path: '/bornes-catalogue',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStockIndexRoute = AuthenticatedStockIndexRouteImport.update({
+  id: '/stock/',
+  path: '/stock/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedRealisationsIndexRoute =
   AuthenticatedRealisationsIndexRouteImport.update({
     id: '/realisations/',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
+  '/stock': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
@@ -443,6 +451,7 @@ export interface FileRoutesById {
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/_authenticated/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
@@ -492,6 +501,7 @@ export interface FileRouteTypes {
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
+    | '/stock/'
     | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
@@ -539,6 +549,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/rapports'
     | '/realisations'
+    | '/stock'
     | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
@@ -587,6 +598,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
+    | '/_authenticated/stock/'
     | '/api/public/borne-photo/$'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
@@ -746,6 +758,13 @@ declare module '@tanstack/react-router' {
       path: '/bornes-catalogue'
       fullPath: '/bornes-catalogue'
       preLoaderRoute: typeof AuthenticatedBornesCatalogueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stock/': {
+      id: '/_authenticated/stock/'
+      path: '/stock'
+      fullPath: '/stock/'
+      preLoaderRoute: typeof AuthenticatedStockIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/realisations/': {
@@ -972,6 +991,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
   AuthenticatedRealisationsIndexRoute: typeof AuthenticatedRealisationsIndexRoute
+  AuthenticatedStockIndexRoute: typeof AuthenticatedStockIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -1001,6 +1021,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
   AuthenticatedRealisationsIndexRoute: AuthenticatedRealisationsIndexRoute,
+  AuthenticatedStockIndexRoute: AuthenticatedStockIndexRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
