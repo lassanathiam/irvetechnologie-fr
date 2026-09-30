@@ -1858,9 +1858,10 @@ function PlanningPage() {
                                   className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm bg-primary text-primary-foreground inline-flex items-center gap-1.5"
                                 >
                                   Facturer le chantier
-                                </Link>
-                              )}
-                            </div>
+                                 </Link>
+                               )}
+                             </div>
+                             )}
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
