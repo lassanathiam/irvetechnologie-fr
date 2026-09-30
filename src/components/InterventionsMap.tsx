@@ -217,17 +217,18 @@ export function InterventionsMap({
         .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
         .addTo(layer.current)
         .bindPopup(
-          `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
-            m.sub ? `<br/>${escapeHtml(m.sub)}` : ""
-          }${m.date ? `<br/><span style="opacity:.7">${escapeHtml(m.date)}</span>` : ""}${
+          `<div style="font:13px/1.45 system-ui,sans-serif;color:#0f172a;white-space:normal;word-break:normal;overflow-wrap:break-word">` +
+          `<div style="font-weight:700;font-size:14px">${escapeHtml(m.label)}</div>${
+            m.sub ? `<div style="margin-top:2px">${escapeHtml(m.sub)}</div>` : ""
+          }${m.date ? `<div style="opacity:.7">${escapeHtml(m.date)}</div>` : ""}${
             m.trajet
-              ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
+              ? `<div style="font-weight:600;margin-top:2px">Trajet : ${escapeHtml(m.trajet)}</div>`
               : ""
           }${
             selectionMode
-              ? `<br/><span style="font-weight:700;color:#2563eb">${
+              ? `<div style="font-weight:700;color:#2563eb;margin-top:4px">${
                   rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
-                }</span>`
+                }</div>`
               : ""
           }${
             onAssign && !selectionMode
@@ -236,7 +237,8 @@ export function InterventionsMap({
                     `<button type="button" data-assign="${escapeHtml(t.nom)}" style="padding:6px 10px;border-radius:8px;border:1px solid #2563eb;font-weight:700;${m.technicien === t.nom ? "background:#2563eb;color:#fff" : "background:#fff;color:#2563eb"}">${escapeHtml(t.nom.split(" ")[0])}</button>`,
                 ).join("")}</div></div>`
               : ""
-          }`,
+          }</div>`,
+          { minWidth: 220, maxWidth: 280, className: "rdv-popup" },
         );
       mk.on("popupopen", (ev: { popup: { getElement: () => HTMLElement | undefined } }) => {
         // L'affectation n'apparaît que si le repère a été cliqué directement sur la carte.
