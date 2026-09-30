@@ -14,6 +14,7 @@ import {
   FilePlus2,
   FileText,
   HeartPulse,
+  Hand,
   Loader2,
   MapPin,
   Receipt,
@@ -25,6 +26,7 @@ import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
 import { Button } from "@/components/ui/button";
+import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
   head: () => ({
@@ -179,7 +181,7 @@ function DashboardHeader() {
   return (
     <header className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 className="text-2xl font-extrabold text-dashboard-copy sm:text-3xl">Bonjour Lassana <span aria-hidden="true">👋</span></h1>
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold text-dashboard-copy sm:text-3xl">Bonjour Lassana <Hand className="h-6 w-6 text-dashboard-orange" aria-hidden="true" /></h1>
         <p className="mt-1 text-sm text-dashboard-copy-muted">Voici un aperçu de votre activité IRVE aujourd’hui.</p>
       </div>
       <div className="rounded-md border border-dashboard-rule bg-card px-4 py-2 text-sm font-semibold text-dashboard-copy shadow-sm">{new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }).format(new Date())}</div>
@@ -188,10 +190,17 @@ function DashboardHeader() {
 }
 
 const metricClasses = {
-  green: "border-dashboard-green bg-dashboard-green-soft text-dashboard-green",
-  blue: "border-dashboard-blue bg-dashboard-blue-soft text-dashboard-blue",
-  violet: "border-dashboard-purple bg-dashboard-purple-soft text-dashboard-purple",
-  orange: "border-dashboard-orange bg-dashboard-orange-soft text-dashboard-orange",
+  green: "border-dashboard-green bg-dashboard-green-soft",
+  blue: "border-dashboard-blue bg-dashboard-blue-soft",
+  violet: "border-dashboard-purple bg-dashboard-purple-soft",
+  orange: "border-dashboard-orange bg-dashboard-orange-soft",
+} as const;
+
+const metricIconClasses = {
+  green: "bg-dashboard-green",
+  blue: "bg-dashboard-blue",
+  violet: "bg-dashboard-purple",
+  orange: "bg-dashboard-orange",
 } as const;
 
 function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
@@ -206,7 +215,7 @@ function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     <Link to={to as any} className={`group block min-h-32 min-w-0 rounded-md border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${metricClasses[tone]}`}>
       <div className="flex items-start justify-between gap-2">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-current text-dashboard-on-navy">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-dashboard-on-navy ${metricIconClasses[tone]}`}>
           <Icon className="h-5 w-5 stroke-[2.25]" />
         </span>
         <div className="min-w-0 flex-1">
@@ -261,7 +270,7 @@ function QuickOverview({ devis, factures, rendezvous, termines }: { devis: numbe
 
 function NextAppointments({ rendezvous }: { rendezvous: Array<{ id: string; date_debut: string; client_nom: string; titre: string; cp_ville: string | null; adresse: string }> }) {
   return (
-    <DashboardPanel title="Prochains rendez-vous" icon={CalendarDays} action={{ to: "/planning", label: "Voir le planning" }}>
+    <DashboardPanel title="Prochain rendez-vous" icon={CalendarDays}>
       {!rendezvous.length ? <Empty>Aucun rendez-vous planifié.</Empty> : (
         <ul className="divide-y divide-dashboard-rule">
           {rendezvous.map((rdv) => {
@@ -302,7 +311,7 @@ function RecentQuotes({ devis }: { devis: Array<{ id: string; numero: string; cl
 }
 
 function PromoCard() {
-  return <section className="relative min-h-32 overflow-hidden rounded-md bg-dashboard-green p-5 text-dashboard-on-navy shadow-sm"><div className="absolute inset-0 bg-dashboard-promo" /><div className="relative ml-auto max-w-[68%]"><h2 className="font-bold">IRVE Technologie</h2><p className="mt-1 text-xs leading-relaxed">Des solutions de recharge pour aujourd’hui et demain</p><Button asChild size="sm" className="mt-3 bg-card text-dashboard-green hover:bg-card/90"><Link to="/devis"><FilePlus2 /> Nouveau devis</Link></Button></div></section>;
+  return <section className="relative min-h-32 overflow-hidden rounded-md bg-dashboard-green p-5 text-dashboard-on-navy shadow-sm"><img src={borneHero} alt="Borne de recharge IRVE" className="absolute inset-0 h-full w-full object-cover opacity-40" /><div className="absolute inset-0 bg-dashboard-promo" /><div className="relative ml-auto max-w-[68%]"><h2 className="font-bold">IRVE Technologie</h2><p className="mt-1 text-xs leading-relaxed">Des solutions de recharge pour aujourd’hui et demain</p><Button asChild size="sm" className="mt-3 bg-card text-dashboard-green hover:bg-card/90"><Link to="/devis"><FilePlus2 /> Nouveau devis</Link></Button></div></section>;
 }
 
 function HealthCard() {

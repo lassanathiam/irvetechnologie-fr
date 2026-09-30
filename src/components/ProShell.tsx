@@ -130,7 +130,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
           {(dashboardReference ? DASHBOARD_LINKS : LINKS).map(({ to, label, icon: Icon, externe }) =>
             externe ? (
               <a
-                key={to}
+                key={`${to}-${label}`}
                 href={to}
                 target="_blank"
                 rel="noreferrer"
@@ -143,7 +143,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
               </a>
             ) : (
               <Link
-                key={to}
+                key={`${to}-${label}`}
                 to={to}
                 onClick={() => setMenuOuvert(false)}
                 title={reduit ? label : undefined}
