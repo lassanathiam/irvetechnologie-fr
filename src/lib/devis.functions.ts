@@ -13,7 +13,7 @@ export type { BillingTotals as DevisTotals } from "@/lib/billing";
 
 const itemSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
-  description: z.string().trim().max(1000).optional().nullable(),
+  description: z.string().trim().max(10000).optional().nullable(),
   quantite: z.number().min(0).max(10000),
   prix_unitaire: z.number().min(0).max(1_000_000),
   tva: z.number().min(0).max(100),
