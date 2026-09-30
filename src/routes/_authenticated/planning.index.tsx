@@ -893,7 +893,7 @@ function PlanningPage() {
 
   return (
     <ProShell referenceStyle>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-4">
         <div>
           <p className="text-mono text-primary">Planning</p>
           <h1 className="text-2xl font-extrabold tracking-tight mt-1">
@@ -1402,8 +1402,8 @@ function PlanningPage() {
         </form>
       )}
 
-      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-4 lg:grid-cols-[260px_minmax(0,1fr)_340px] lg:[grid-template-areas:'missions_list_map'_'missions_list_tools']">
-        <aside className="hidden min-w-0 lg:block lg:[grid-area:missions] lg:sticky lg:top-6">
+      <div className="mx-auto grid w-full min-w-0 max-w-full items-start gap-4 lg:grid-cols-[minmax(0,1.35fr)_minmax(360px,.85fr)] lg:[grid-template-areas:'mission_map'_'list_tools']">
+        <aside className="hidden min-w-0 lg:block lg:[grid-area:mission]">
           <div className="overflow-hidden rounded-lg border border-primary/30 bg-card shadow-sm">
             <div className="border-b border-border bg-primary/10 px-4 py-4">
               <p className="text-mono text-[10px] font-bold uppercase tracking-[0.14em] text-primary">Missions actuelles</p>
@@ -1472,7 +1472,7 @@ function PlanningPage() {
         </aside>
 
         {/* Au téléphone les blocs restent empilés ; sur ordinateur ils deviennent trois zones stables. */}
-        <div className="w-full min-w-0 max-w-full space-y-6 lg:contents">
+        <div className="w-full min-w-0 max-w-full space-y-4 lg:contents">
         <MobileSectionTrigger
           label="Carte des interventions"
           count={points.length}
@@ -1564,7 +1564,7 @@ function PlanningPage() {
           open={!modeIntervention || mobileSections.rendezvous}
           onToggle={() => toggleMobileSection("rendezvous")}
         />
-        <section className={`space-y-6 lg:[grid-area:list] ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
+        <section className={`space-y-4 lg:[grid-area:list] ${modeIntervention && !mobileSections.rendezvous ? "hidden md:block" : ""}`}>
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
