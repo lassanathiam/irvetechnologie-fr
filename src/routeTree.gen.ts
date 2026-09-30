@@ -18,6 +18,7 @@ import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
 import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ZzTestCarteRouteImport } from './routes/zz-test-carte'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
@@ -99,6 +100,11 @@ const InstallerRoute = InstallerRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZzTestCarteRoute = ZzTestCarteRouteImport.update({
+  id: '/zz-test-carte',
+  path: '/zz-test-carte',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedBornesCatalogueRoute =
@@ -322,6 +328,7 @@ export interface FileRoutesByFullPath {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zz-test-carte': typeof ZzTestCarteRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -370,6 +377,7 @@ export interface FileRoutesByTo {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zz-test-carte': typeof ZzTestCarteRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -420,6 +428,7 @@ export interface FileRoutesById {
   '/demande': typeof DemandeRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zz-test-carte': typeof ZzTestCarteRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
@@ -470,6 +479,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/zz-test-carte'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
@@ -518,6 +528,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/zz-test-carte'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
@@ -567,6 +578,7 @@ export interface FileRouteTypes {
     | '/demande'
     | '/installer'
     | '/sitemap.xml'
+    | '/zz-test-carte'
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
@@ -617,6 +629,7 @@ export interface RootRouteChildren {
   DemandeRoute: typeof DemandeRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ZzTestCarteRoute: typeof ZzTestCarteRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
@@ -695,6 +708,13 @@ declare module '@tanstack/react-router' {
       path: '/sitemap.xml'
       fullPath: '/sitemap.xml'
       preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/zz-test-carte': {
+      id: '/zz-test-carte'
+      path: '/zz-test-carte'
+      fullPath: '/zz-test-carte'
+      preLoaderRoute: typeof ZzTestCarteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated/bornes-catalogue': {
@@ -1037,6 +1057,7 @@ const rootRouteChildren: RootRouteChildren = {
   DemandeRoute: DemandeRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ZzTestCarteRoute: ZzTestCarteRoute,
   AttachementTokenRoute: AttachementTokenRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
