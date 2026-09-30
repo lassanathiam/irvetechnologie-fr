@@ -72,7 +72,15 @@ const DASHBOARD_LINKS: LienPro[] = [
   { to: "/tarifs-site", label: "Paramètres", icon: Settings },
 ];
 
-export function ProShell({ children, dashboardReference = false }: { children: React.ReactNode; dashboardReference?: boolean }) {
+export function ProShell({
+  children,
+  dashboardReference = false,
+  referenceStyle = false,
+}: {
+  children: React.ReactNode;
+  dashboardReference?: boolean;
+  referenceStyle?: boolean;
+}) {
   const [menuOuvert, setMenuOuvert] = useState(false);
   const [reduit, setReduit] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
@@ -83,6 +91,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
     refetchInterval: 60_000,
   });
   const nbNonLues = nonLues?.nb ?? 0;
+  const visualReference = dashboardReference || referenceStyle;
 
   useEffect(() => {
     const key = "irve-mobile-welcome-dismissed";
@@ -96,7 +105,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
   };
 
   return (
-    <div className={`pro-shell flex min-h-screen w-full bg-background text-foreground ${dashboardReference ? "pro-shell-reference" : ""}`}>
+    <div className={`pro-shell flex min-h-screen w-full bg-background text-foreground ${visualReference ? "pro-shell-reference" : ""}`}>
       <aside
         className={`pro-sidebar fixed inset-y-0 left-0 z-50 flex w-64 shrink-0 flex-col border-r border-sidebar-line bg-sidebar/90 text-sidebar-foreground backdrop-blur-xl transition-[width,transform] duration-200 md:sticky md:top-0 md:h-screen md:translate-x-0 ${
           menuOuvert ? "translate-x-0" : "-translate-x-full"
@@ -163,7 +172,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
         </nav>
 
         <div className="border-t border-sidebar-line p-3">
-          {!reduit && !dashboardReference && (
+          {!reduit && !visualReference && (
             <div className="pro-certification mb-3 rounded-lg border border-sidebar-line bg-sidebar-hover p-3">
               <div className="flex items-center gap-2 text-sidebar-accent">
                 <ShieldCheck className="h-4 w-4 shrink-0" />
@@ -195,7 +204,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
       )}
 
       <div className="min-w-0 flex-1 overflow-x-hidden">
-        <header className={`pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b px-3 backdrop-blur-xl sm:px-6 ${dashboardReference ? "border-dashboard-navy-line bg-dashboard-navy text-dashboard-on-navy" : "border-border bg-card/95"}`}>
+        <header className={`pro-header sticky top-0 z-30 flex h-16 items-center justify-between border-b px-3 backdrop-blur-xl sm:px-6 ${visualReference ? "border-dashboard-navy-line bg-dashboard-navy text-dashboard-on-navy" : "border-border bg-card/95"}`}>
           <div className="flex items-center gap-2">
             <Button
               type="button"
@@ -218,12 +227,12 @@ export function ProShell({ children, dashboardReference = false }: { children: R
             >
               {reduit ? <ChevronRight /> : <ChevronLeft />}
             </Button>
-             <span className={`hidden text-sm italic sm:block ${dashboardReference ? "text-dashboard-on-navy-muted" : "font-semibold text-muted-foreground"}`}>
-               {dashboardReference ? "La mobilité électrique, un avenir durable" : "Centre de pilotage"}
+             <span className={`hidden text-sm italic sm:block ${visualReference ? "text-dashboard-on-navy-muted" : "font-semibold text-muted-foreground"}`}>
+                {visualReference ? "La mobilité électrique, un avenir durable" : "Centre de pilotage"}
              </span>
           </div>
           <div className="flex items-center gap-1.5">
-            {dashboardReference ? (
+            {visualReference ? (
               <>
                 <Link to="/notifications" aria-label="Notifications" className="relative inline-flex h-9 w-9 items-center justify-center rounded-md text-dashboard-on-navy hover:bg-dashboard-navy-raised">
                   <Bell className="h-5 w-5" />
@@ -256,7 +265,7 @@ export function ProShell({ children, dashboardReference = false }: { children: R
           </div>
         </header>
         <main className="pro-main w-full max-w-full overflow-x-hidden p-3 sm:p-5 lg:p-6">
-          {showWelcome && !dashboardReference && (
+          {showWelcome && !visualReference && (
             <div className="mb-4 rounded-xl border border-primary/30 bg-primary/10 px-4 py-3 md:hidden">
               <div className="flex items-start gap-3">
                 <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
