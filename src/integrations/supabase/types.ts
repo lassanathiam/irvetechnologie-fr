@@ -1710,6 +1710,168 @@ export type Database = {
           },
         ]
       }
+      stock_bon_chantiers: {
+        Row: {
+          bon_id: string
+          rendezvous_id: string
+        }
+        Insert: {
+          bon_id: string
+          rendezvous_id: string
+        }
+        Update: {
+          bon_id?: string
+          rendezvous_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_bon_chantiers_bon_id_fkey"
+            columns: ["bon_id"]
+            isOneToOne: false
+            referencedRelation: "stock_bons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_bon_chantiers_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_bons: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          date_bon: string
+          donneur_ordre: string
+          id: string
+          notes: string | null
+          numero: string | null
+          photo_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          date_bon?: string
+          donneur_ordre: string
+          id?: string
+          notes?: string | null
+          numero?: string | null
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          date_bon?: string
+          donneur_ordre?: string
+          id?: string
+          notes?: string | null
+          numero?: string | null
+          photo_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      stock_lignes: {
+        Row: {
+          article: string
+          bon_id: string
+          created_at: string
+          id: string
+          ordre: number
+          prix_unitaire: number | null
+          quantite: number
+          reference: string | null
+          rendezvous_id: string | null
+          unite: string
+        }
+        Insert: {
+          article: string
+          bon_id: string
+          created_at?: string
+          id?: string
+          ordre?: number
+          prix_unitaire?: number | null
+          quantite?: number
+          reference?: string | null
+          rendezvous_id?: string | null
+          unite?: string
+        }
+        Update: {
+          article?: string
+          bon_id?: string
+          created_at?: string
+          id?: string
+          ordre?: number
+          prix_unitaire?: number | null
+          quantite?: number
+          reference?: string | null
+          rendezvous_id?: string | null
+          unite?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_lignes_bon_id_fkey"
+            columns: ["bon_id"]
+            isOneToOne: false
+            referencedRelation: "stock_bons"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_lignes_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      stock_sorties: {
+        Row: {
+          created_at: string
+          id: string
+          ligne_id: string
+          par: string | null
+          quantite: number
+          rendezvous_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          ligne_id: string
+          par?: string | null
+          quantite: number
+          rendezvous_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          ligne_id?: string
+          par?: string | null
+          quantite?: number
+          rendezvous_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_sorties_ligne_id_fkey"
+            columns: ["ligne_id"]
+            isOneToOne: false
+            referencedRelation: "stock_lignes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_sorties_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_roles: {
         Row: {
           created_at: string

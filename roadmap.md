@@ -47,4 +47,4 @@
 - [x] Rétablir l’espace « À facturer » et ses liens depuis les notifications et le tableau de bord
 - [x] Ajouter « Réponse express » préremplie sur chaque demande client
 
-- [ ] Stock matériel : lecture photo du bon de commande, un bon réparti sur 1 à N chantiers (NCO, Charge Expert), sorties au retour terrain — en attente de validation
+- [x] Stock matériel : lecture photo du bon de commande, un bon réparti sur 1 à N chantiers (NCO, Charge Expert), sorties au retour terrain — en attente de validation
