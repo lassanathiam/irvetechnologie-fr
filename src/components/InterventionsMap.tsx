@@ -168,7 +168,7 @@ export function InterventionsMap({
     };
   }, []);
 
-  /** Étiquette compacte et toujours lisible pour chaque rendez-vous. */
+  /** Petite pancarte numérotée, fermée par défaut : les détails s'ouvrent au clic. */
   function appointmentLabel(
     color: string,
     active: boolean,
@@ -180,23 +180,15 @@ export function InterventionsMap({
   ) {
     const coche = rang != null;
     const fond = coche ? "#2563eb" : color;
-    const w = 176;
-    const h = 58;
-    const eclair = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>`;
+    const w = 30;
+    const h = 42;
     return L.current.divIcon({
       className: "rdv-map-label",
       iconSize: [w, h],
       iconAnchor: [w / 2, h],
       popupAnchor: [0, -h],
-      html: `<div class="rdv-map-label-card" style="width:${w}px;${active ? "transform:scale(1.06);transform-origin:bottom center;" : ""}">
-        <div style="display:flex;align-items:center;gap:5px;min-width:0;padding:5px 7px;border-radius:6px;background:#fff;border:2px solid ${fond};box-shadow:0 2px 7px rgba(15,23,42,.32)${active ? `,0 0 0 3px ${fond}55` : ""};color:#0f172a">
-          <span style="display:grid;place-items:center;flex:0 0 22px;height:22px;border-radius:4px;background:${fond};color:#fff;font:800 10px/1 system-ui">${eclair}<span style="position:absolute;margin-top:1px">${coche ? rang : (n ?? "")}</span></span>
-          <span style="display:block;min-width:0;text-align:left;font:600 9px/1.2 system-ui;white-space:normal;word-break:normal;overflow-wrap:normal">
-            <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${escapeHtml(label)}</strong>
-            ${date ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(date)}</span>` : ""}
-            ${address ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569">${escapeHtml(address)}</span>` : ""}
-          </span>
-        </div>
+      html: `<div style="display:flex;flex-direction:column;align-items:center;width:${w}px;height:${h}px">
+        <div style="display:grid;place-items:center;width:26px;height:26px;border-radius:7px;background:${fond};border:2px solid #fff;box-shadow:0 2px 7px rgba(15,23,42,.32)${active ? `,0 0 0 3px ${fond}55` : ""}${active ? ";transform:scale(1.12)" : ""};color:#fff;font:800 12px/1 system-ui">${coche ? rang : (n ?? "")}</div>
         <div style="width:2px;height:10px;background:#334155"></div>
       </div>`,
     });
