@@ -95,6 +95,8 @@ export function InterventionsMap({
   const byId = useRef<Record<string, any>>({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const moiRef = useRef<any>(null);
+  /** Dernier repère cliqué directement sur la carte : seul lui ouvre l'affectation. */
+  const clicDirect = useRef<string | null>(null);
   /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
   const fitRef = useRef<string>("");
 
@@ -229,14 +231,17 @@ export function InterventionsMap({
               : ""
           }${
             onAssign && !selectionMode
-              ? `<div style="margin-top:8px;font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
+              ? `<div data-assign-block style="margin-top:8px"><div style="font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
                   (t) =>
                     `<button type="button" data-assign="${escapeHtml(t.nom)}" style="padding:6px 10px;border-radius:8px;border:1px solid #2563eb;font-weight:700;${m.technicien === t.nom ? "background:#2563eb;color:#fff" : "background:#fff;color:#2563eb"}">${escapeHtml(t.nom.split(" ")[0])}</button>`,
-                ).join("")}</div>`
+                ).join("")}</div></div>`
               : ""
           }`,
         );
       mk.on("popupopen", (ev: { popup: { getElement: () => HTMLElement | undefined } }) => {
+        // L'affectation n'apparaît que si le repère a été cliqué directement sur la carte.
+        const bloc = ev.popup.getElement()?.querySelector<HTMLElement>("[data-assign-block]");
+        if (bloc) bloc.style.display = clicDirect.current === m.id ? "" : "none";
         ev.popup.getElement()?.querySelectorAll<HTMLButtonElement>("[data-assign]").forEach((b) => {
           b.onclick = (e) => {
             e.stopPropagation();
@@ -248,7 +253,11 @@ export function InterventionsMap({
           };
         });
       });
+      mk.on("popupclose", () => {
+        if (clicDirect.current === m.id) clicDirect.current = null;
+      });
       mk.on("click", () => {
+        clicDirect.current = m.id;
         if (selectionMode) onToggleSelect?.(m.id);
         onSelect?.(m.id);
       });
@@ -348,9 +357,18 @@ export function InterventionsMap({
       <button
         type="button"
         onClick={maPosition}
-        className="absolute right-2 top-2 z-[500] text-mono text-[11px] font-bold px-3 py-2 rounded-sm bg-card/95 border border-border shadow hover:border-primary hover:text-primary"
+        title="Ma position"
+        aria-label="Ma position"
+        className="absolute bottom-3 left-3 z-[500] flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-md transition-colors hover:border-primary hover:text-primary"
       >
-        Ma position
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
+          <circle cx="12" cy="12" r="4.5" />
+          <circle cx="12" cy="12" r="0.5" fill="currentColor" />
+          <line x1="12" y1="1.5" x2="12" y2="4.5" />
+          <line x1="12" y1="19.5" x2="12" y2="22.5" />
+          <line x1="1.5" y1="12" x2="4.5" y2="12" />
+          <line x1="19.5" y1="12" x2="22.5" y2="12" />
+        </svg>
       </button>
       <div ref={el} style={{ height }} className="w-full min-w-0 max-w-full bg-muted" />
     </div>
