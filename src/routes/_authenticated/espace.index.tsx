@@ -13,16 +13,20 @@ import {
   FileCheck2,
   FilePlus2,
   FileText,
+  HeartPulse,
+  Hand,
   Loader2,
+  MapPin,
   Receipt,
   TrendingUp,
 } from "lucide-react";
-import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getDashboard } from "@/lib/planning.functions";
 import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
 import { Button } from "@/components/ui/button";
+import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
   head: () => ({
@@ -84,45 +88,43 @@ function EspacePage() {
   const facturesEnAttente = q.data?.aEncaisser ?? [];
 
   const activite = useMemo(() => {
-    const formatter = new Intl.DateTimeFormat("fr-FR", { month: "short" });
-    const mois = Array.from({ length: 6 }, (_, index) => {
+    const formatter = new Intl.DateTimeFormat("fr-FR", { weekday: "short" });
+    const jours = Array.from({ length: 7 }, (_, index) => {
       const date = new Date();
-      date.setDate(1);
-      date.setMonth(date.getMonth() - (5 - index));
+      date.setHours(0, 0, 0, 0);
+      date.setDate(date.getDate() - (6 - index));
       return {
-        key: `${date.getFullYear()}-${date.getMonth()}`,
-        mois: formatter.format(date).replace(".", ""),
-        devis: 0,
-        factures: 0,
+        key: date.toISOString().slice(0, 10),
+        jour: formatter.format(date).replace(".", ""),
+        activite: 0,
       };
     });
-    const index = new Map(mois.map((item) => [item.key, item]));
+    const index = new Map(jours.map((item) => [item.key, item]));
     for (const document of devis) {
       const date = new Date(document.created_at);
-      const item = index.get(`${date.getFullYear()}-${date.getMonth()}`);
-      if (item) item.devis += Number(document.total_ttc ?? 0);
+      const item = index.get(date.toISOString().slice(0, 10));
+      if (item) item.activite += Number(document.total_ttc ?? 0);
     }
     for (const facture of q.data?.factures ?? []) {
       const date = new Date(facture.date_emission);
-      const item = index.get(`${date.getFullYear()}-${date.getMonth()}`);
-      if (item) item.factures += Number(facture.total_ttc ?? 0);
+      const item = index.get(date.toISOString().slice(0, 10));
+      if (item) item.activite += Number(facture.total_ttc ?? 0);
     }
-    return mois;
+    return jours;
   }, [devis, q.data?.factures]);
 
   return (
-    <ProShell>
-      <div className="dashboard-reference -m-3 min-h-[calc(100vh-4rem)] bg-dashboard-canvas sm:-m-5 lg:-m-6">
-        <DashboardHeader />
-
-        <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
+    <ProShell dashboardReference>
+      <div className="dashboard-reference -m-3 min-h-[calc(100vh-4rem)] bg-dashboard-canvas p-3 sm:-m-5 sm:p-5 lg:-m-6 lg:p-6">
+        <div className="mx-auto max-w-[1500px] space-y-4">
           {q.isLoading ? (
             <div className="flex min-h-72 items-center justify-center">
               <Loader2 className="h-7 w-7 animate-spin text-dashboard-blue" />
             </div>
           ) : (
             <>
-              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              <DashboardHeader />
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
                   tone="green"
                   icon={Euro}
@@ -157,27 +159,16 @@ function EspacePage() {
                 />
               </div>
 
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,.72fr)]">
+              <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
                 <ActivityChart data={activite} />
-                <QuickOverview
-                  devis={devisActifs.length}
-                  factures={facturesEnAttente.length}
-                  rendezvous={q.data?.stats.rdvAVenir ?? 0}
-                  termines={q.data?.stats.chantiersValides ?? 0}
-                />
+                <QuickOverview devis={devisActifs.length} factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
+                <div className="grid gap-4">
+                  <PromoCard />
+                  <NextAppointments rendezvous={aVenir.slice(0, 1)} />
+                  <HealthCard />
+                </div>
               </div>
-
-              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(0,.82fr)]">
-                <NextAppointments rendezvous={aVenir} />
-                <RecentQuotes devis={devisActifs.slice(0, 5)} />
-              </div>
-
-              <InvoiceTracking
-                invoices={facturesEnAttente}
-                paid={q.data?.encaissees ?? []}
-                onPaid={(id) => encaisser.mutate(id)}
-                pendingId={encaisser.isPending ? encaisser.variables : undefined}
-              />
+              <RecentQuotes devis={devisActifs.slice(0, 4)} />
             </>
           )}
         </div>
@@ -188,31 +179,28 @@ function EspacePage() {
 
 function DashboardHeader() {
   return (
-    <header className="bg-dashboard-navy text-dashboard-on-navy shadow-sm">
-      <div className="mx-auto flex min-h-40 max-w-[1440px] flex-col justify-center gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
-        <div>
-          <p className="mb-2 text-sm font-bold text-dashboard-green">IRVE Technologie</p>
-          <h1 className="text-3xl font-extrabold sm:text-4xl">Tableau de bord</h1>
-          <p className="mt-2 text-sm text-dashboard-on-navy-muted sm:text-base">Votre activité en un coup d’œil</p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          <Button asChild className="min-h-12 bg-dashboard-green px-6 font-bold text-dashboard-on-green shadow-sm hover:bg-dashboard-green/90">
-            <Link to="/devis"><FilePlus2 /> Nouveau devis</Link>
-          </Button>
-          <Button asChild variant="outline" className="min-h-12 border-dashboard-navy-line bg-dashboard-navy-raised px-6 text-dashboard-on-navy hover:bg-dashboard-navy-raised/80 hover:text-dashboard-on-navy">
-            <Link to="/planning"><CalendarDays /> Nouveau rendez-vous</Link>
-          </Button>
-        </div>
+    <header className="flex flex-col gap-3 py-1 sm:flex-row sm:items-center sm:justify-between">
+      <div>
+        <h1 className="flex items-center gap-2 text-2xl font-extrabold text-dashboard-copy sm:text-3xl">Bonjour Lassana <Hand className="h-6 w-6 text-dashboard-orange" aria-hidden="true" /></h1>
+        <p className="mt-1 text-sm text-dashboard-copy-muted">Voici un aperçu de votre activité IRVE aujourd’hui.</p>
       </div>
+      <div className="rounded-md border border-dashboard-rule bg-card px-4 py-2 text-sm font-semibold text-dashboard-copy shadow-sm">{new Intl.DateTimeFormat("fr-FR", { weekday: "short", day: "2-digit", month: "short", year: "numeric" }).format(new Date())}</div>
     </header>
   );
 }
 
 const metricClasses = {
-  green: "border-dashboard-green bg-dashboard-green-soft text-dashboard-green",
-  blue: "border-dashboard-blue bg-dashboard-blue-soft text-dashboard-blue",
-  violet: "border-dashboard-purple bg-dashboard-purple-soft text-dashboard-purple",
-  orange: "border-dashboard-orange bg-dashboard-orange-soft text-dashboard-orange",
+  green: "border-dashboard-green bg-dashboard-green-soft",
+  blue: "border-dashboard-blue bg-dashboard-blue-soft",
+  violet: "border-dashboard-purple bg-dashboard-purple-soft",
+  orange: "border-dashboard-orange bg-dashboard-orange-soft",
+} as const;
+
+const metricIconClasses = {
+  green: "bg-dashboard-green",
+  blue: "bg-dashboard-blue",
+  violet: "bg-dashboard-purple",
+  orange: "bg-dashboard-orange",
 } as const;
 
 function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
@@ -225,44 +213,33 @@ function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
 }) {
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Link to={to as any} className={`group block min-w-0 rounded-md border-l-[5px] bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${metricClasses[tone]}`}>
+    <Link to={to as any} className={`group block min-h-32 min-w-0 rounded-md border bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${metricClasses[tone]}`}>
       <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <p className="text-sm font-semibold text-dashboard-copy-muted">{label}</p>
-          <p className="mt-2 whitespace-nowrap text-xl font-extrabold leading-none text-dashboard-copy min-[1450px]:text-2xl">{value}</p>
-        </div>
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-current/10">
+        <span className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full text-dashboard-on-navy ${metricIconClasses[tone]}`}>
           <Icon className="h-5 w-5 stroke-[2.25]" />
         </span>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-dashboard-copy-muted">{label}</p>
+          <p className="mt-1 whitespace-nowrap text-2xl font-extrabold leading-none text-dashboard-copy">{value}</p>
+        </div>
       </div>
-      <p className="mt-4 text-xs leading-relaxed text-dashboard-copy-muted">{detail}</p>
+      <p className="mt-5 text-xs font-semibold leading-relaxed text-dashboard-green">↗ {detail}</p>
     </Link>
   );
 }
 
-function ActivityChart({ data }: { data: Array<{ mois: string; devis: number; factures: number }> }) {
+function ActivityChart({ data }: { data: Array<{ jour: string; activite: number }> }) {
   return (
     <DashboardPanel title="Évolution de l’activité" icon={TrendingUp}>
-      <div className="mb-4 flex flex-wrap gap-4 text-xs text-dashboard-copy-muted">
-        <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-dashboard-blue" />Devis</span>
-        <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-dashboard-green" />Factures</span>
-      </div>
-      <div className="h-72 w-full min-w-0 sm:h-80">
+      <div className="h-60 w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="devisFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="var(--dashboard-blue)" stopOpacity={0.26} />
-                <stop offset="100%" stopColor="var(--dashboard-blue)" stopOpacity={0} />
-              </linearGradient>
-            </defs>
+          <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--dashboard-rule)" strokeDasharray="4 4" />
-            <XAxis dataKey="mois" axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} />
+            <XAxis dataKey="jour" axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`} />
             <Tooltip formatter={(value) => euro(Number(value))} contentStyle={{ borderRadius: 6, border: "1px solid var(--dashboard-rule)" }} />
-            <Area isAnimationActive={false} type="monotone" dataKey="devis" stroke="var(--dashboard-blue)" strokeWidth={3} fill="url(#devisFill)" />
-            <Area isAnimationActive={false} type="monotone" dataKey="factures" stroke="var(--dashboard-green)" strokeWidth={3} fill="transparent" />
-          </AreaChart>
+            <Bar dataKey="activite" fill="var(--dashboard-green)" radius={[4, 4, 0, 0]} />
+          </BarChart>
         </ResponsiveContainer>
       </div>
     </DashboardPanel>
@@ -293,7 +270,7 @@ function QuickOverview({ devis, factures, rendezvous, termines }: { devis: numbe
 
 function NextAppointments({ rendezvous }: { rendezvous: Array<{ id: string; date_debut: string; client_nom: string; titre: string; cp_ville: string | null; adresse: string }> }) {
   return (
-    <DashboardPanel title="Prochains rendez-vous" icon={CalendarDays} action={{ to: "/planning", label: "Voir le planning" }}>
+    <DashboardPanel title="Prochain rendez-vous" icon={CalendarDays}>
       {!rendezvous.length ? <Empty>Aucun rendez-vous planifié.</Empty> : (
         <ul className="divide-y divide-dashboard-rule">
           {rendezvous.map((rdv) => {
@@ -321,25 +298,24 @@ function NextAppointments({ rendezvous }: { rendezvous: Array<{ id: string; date
 
 function RecentQuotes({ devis }: { devis: Array<{ id: string; numero: string; client_nom: string; total_ttc: number | string | null; statut: string; created_at: string }> }) {
   return (
-    <DashboardPanel title="Devis récents" icon={FileText} action={{ to: "/devis", label: "Tous les devis" }}>
+    <DashboardPanel title="Devis récents" icon={FileText} action={{ to: "/devis", label: "Tout afficher" }}>
       {!devis.length ? <Empty>Aucun devis récent.</Empty> : (
-        <ul className="divide-y divide-dashboard-rule">
+        <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead className="text-[10px] uppercase text-dashboard-copy-muted"><tr><th className="pb-3">Référence</th><th className="pb-3">Client</th><th className="pb-3">Statut</th><th className="pb-3 text-right">Montant TTC</th><th className="pb-3 text-right">Date</th></tr></thead><tbody className="divide-y divide-dashboard-rule">
           {devis.map((document) => (
-            <li key={document.id}>
-              <Link to="/devis/$id" params={{ id: document.id }} className="group flex items-center gap-3 py-3">
-                <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-dashboard-green-soft text-dashboard-green"><FileText className="h-4 w-4" /></span>
-                <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-semibold text-dashboard-copy">{document.client_nom}</span>
-                  <span className="block truncate text-xs text-dashboard-copy-muted">{document.numero} · {dateFr(document.created_at)}</span>
-                </span>
-                <strong className="whitespace-nowrap text-sm text-dashboard-copy">{euro(Number(document.total_ttc ?? 0))}</strong>
-              </Link>
-            </li>
+            <tr key={document.id}><td className="py-3 font-bold text-dashboard-green"><Link to="/devis/$id" params={{ id: document.id }}>{document.numero}</Link></td><td className="py-3 font-semibold text-dashboard-copy">{document.client_nom}</td><td className="py-3"><span className="rounded bg-dashboard-blue-soft px-3 py-1 font-semibold text-dashboard-blue">Envoyé</span></td><td className="py-3 text-right font-bold text-dashboard-copy">{euro(Number(document.total_ttc ?? 0))}</td><td className="py-3 text-right text-dashboard-copy-muted">{dateFr(document.created_at)}</td></tr>
           ))}
-        </ul>
+        </tbody></table></div>
       )}
     </DashboardPanel>
   );
+}
+
+function PromoCard() {
+  return <section className="relative min-h-32 overflow-hidden rounded-md bg-dashboard-green p-5 text-dashboard-on-navy shadow-sm"><img src={borneHero} alt="Borne de recharge IRVE" className="absolute inset-0 h-full w-full object-cover opacity-40" /><div className="absolute inset-0 bg-dashboard-promo" /><div className="relative ml-auto max-w-[68%]"><h2 className="font-bold">IRVE Technologie</h2><p className="mt-1 text-xs leading-relaxed">Des solutions de recharge pour aujourd’hui et demain</p><Button asChild size="sm" className="mt-3 bg-card text-dashboard-green hover:bg-card/90"><Link to="/devis"><FilePlus2 /> Nouveau devis</Link></Button></div></section>;
+}
+
+function HealthCard() {
+  return <section className="flex min-h-20 items-center gap-3 rounded-md border border-dashboard-health-line bg-dashboard-health p-4 text-dashboard-green"><CheckCircle2 className="h-7 w-7 shrink-0" /><div><h2 className="text-sm font-bold">Votre activité est en bonne santé</h2><p className="mt-1 text-xs text-dashboard-copy-muted">Aucun incident à signaler</p></div><HeartPulse className="ml-auto h-7 w-7" /></section>;
 }
 
 function InvoiceTracking({ invoices, paid, onPaid, pendingId }: { invoices: FactureSuivi[]; paid: FactureSuivi[]; onPaid: (id: string) => void; pendingId?: string }) {
@@ -375,9 +351,9 @@ function InvoiceTracking({ invoices, paid, onPaid, pendingId }: { invoices: Fact
 
 function DashboardPanel({ title, icon: Icon, action, children }: { title: string; icon: typeof Euro; action?: { to: string; label: string }; children: React.ReactNode }) {
   return (
-    <section className="min-w-0 rounded-md border border-dashboard-rule bg-card p-5 shadow-sm sm:p-6">
-      <div className="mb-5 flex items-center justify-between gap-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-lg font-bold text-dashboard-copy"><Icon className="h-5 w-5 shrink-0 text-dashboard-blue" />{title}</h2>
+    <section className="min-w-0 rounded-md border border-dashboard-rule bg-card p-4 shadow-sm">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h2 className="flex min-w-0 items-center gap-2 text-base font-bold text-dashboard-copy"><Icon className="h-5 w-5 shrink-0 text-dashboard-green" />{title}</h2>
         {action && <Link to={action.to} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-dashboard-blue hover:underline">{action.label}<ArrowRight className="h-3.5 w-3.5" /></Link>}
       </div>
       {children}
