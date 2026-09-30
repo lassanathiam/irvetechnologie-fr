@@ -53,7 +53,7 @@ export const listPartenaires = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("partenaires")
-      .select("id, nom, type, base_adresse, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, delai_paiement_jours, created_at, pin_defini_at, dernier_acces_at")
+      .select("id, nom, type, base_adresse, raison_sociale, adresse, cp_ville, pays, siret, tva_intracom, contact_nom, telephone, token, actif, notes, couleur, email, email_copie, delai_paiement_jours, created_at, pin_defini_at, dernier_acces_at")
       .order("created_at", { ascending: true });
     if (error) throw new Error(error.message);
 
@@ -82,6 +82,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
       notes?: string | null;
       couleur?: string | null;
       email?: string | null;
+      email_copie?: string | null;
       delai_paiement_jours?: number | string | null;
       raison_sociale?: string | null;
       adresse?: string | null;
@@ -108,6 +109,12 @@ export const savePartenaire = createServerFn({ method: "POST" })
             .preprocess(
               (v) => (typeof v === "string" && v.trim() === "" ? null : v),
               z.string().trim().email("Adresse email invalide").max(255).nullable(),
+            )
+            .default(null),
+          email_copie: z
+            .preprocess(
+              (v) => (typeof v === "string" && v.trim() === "" ? null : v),
+              z.string().trim().email("Adresse email de copie invalide").max(255).nullable(),
             )
             .default(null),
           delai_paiement_jours: z
@@ -144,6 +151,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
           notes: data.notes ?? null,
           couleur: data.couleur,
           email: data.email ?? null,
+          email_copie: data.email_copie ?? null,
           delai_paiement_jours: data.delai_paiement_jours,
           raison_sociale: data.raison_sociale ?? null,
           adresse: data.adresse ?? null,
@@ -167,6 +175,7 @@ export const savePartenaire = createServerFn({ method: "POST" })
         notes: data.notes ?? null,
         couleur: data.couleur,
         email: data.email ?? null,
+        email_copie: data.email_copie ?? null,
         delai_paiement_jours: data.delai_paiement_jours,
         raison_sociale: data.raison_sociale ?? null,
         adresse: data.adresse ?? null,

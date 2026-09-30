@@ -233,25 +233,41 @@ export const envoyerRapportRempli = createServerFn({ method: "POST" })
     const [{ data: modele }, { data: rdv }, { count }] = await Promise.all([
       context.supabase.from("rapport_modeles").select("nom, donneur_ordre").eq("id", r.modele_id).maybeSingle(),
       r.rendezvous_id
-        ? context.supabase.from("rendezvous").select("client_nom, adresse, cp_ville, public_token").eq("id", r.rendezvous_id).maybeSingle()
+        ? context.supabase.from("rendezvous").select("client_nom, adresse, cp_ville, public_token, partenaire_id").eq("id", r.rendezvous_id).maybeSingle()
         : Promise.resolve({ data: null }),
       r.rendezvous_id
         ? context.supabase.from("rendezvous_photos").select("id", { count: "exact", head: true }).eq("rendezvous_id", r.rendezvous_id)
         : Promise.resolve({ count: 0 }),
     ]);
+    const { data: partenaire } = rdv?.partenaire_id
+      ? await context.supabase
+          .from("partenaires")
+          .select("nom, email_copie")
+          .eq("id", rdv.partenaire_id)
+          .maybeSingle()
+      : { data: null };
+    const templateData = {
+      modele_nom: modele?.nom ?? "Rapport d'intervention",
+      donneur_ordre: partenaire?.nom ?? modele?.donneur_ordre ?? "",
+      client_nom: rdv?.client_nom ?? "",
+      adresse: [rdv?.adresse, rdv?.cp_ville].filter(Boolean).join(", "),
+      rapport_url: `${siteBase()}/rapport-donneur/${r.public_token}`,
+      zip_url: rdv && (count ?? 0) > 0 ? `${siteBase()}/api/public/retour/${rdv.public_token}.zip` : null,
+    };
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const res = await sendTemplateEmail("rapport-donneur", data.destinataire, {
       idempotencyKey: `rapport-donneur-${r.id}-${data.destinataire}`,
-      templateData: {
-        modele_nom: modele?.nom ?? "Rapport d'intervention",
-        donneur_ordre: modele?.donneur_ordre ?? "",
-        client_nom: rdv?.client_nom ?? "",
-        adresse: [rdv?.adresse, rdv?.cp_ville].filter(Boolean).join(", "),
-        rapport_url: `${siteBase()}/rapport-donneur/${r.public_token}`,
-        zip_url: rdv && (count ?? 0) > 0 ? `${siteBase()}/api/public/retour/${rdv.public_token}.zip` : null,
-      },
+      templateData,
     });
     if (!res.sent) throw new Error("Email non envoyé (adresse bloquée ou service indisponible).");
+    const emailCopie = partenaire?.email_copie?.trim();
+    if (emailCopie && emailCopie.toLowerCase() !== data.destinataire.toLowerCase()) {
+      const copie = await sendTemplateEmail("rapport-donneur", emailCopie, {
+        idempotencyKey: `rapport-donneur-${r.id}-copie-${emailCopie}`,
+        templateData,
+      });
+      if (!copie.sent) throw new Error("Le rapport a été envoyé au destinataire principal, mais pas à la personne en copie.");
+    }
     await context.supabase
       .from("rapport_remplis")
       .update({ sent_at: new Date().toISOString(), sent_to: data.destinataire })

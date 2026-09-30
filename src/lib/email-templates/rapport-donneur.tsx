@@ -35,9 +35,7 @@ function RapportDonneurEmail(data: Data) {
         <Container style={{ padding: "24px", maxWidth: 580 }}>
           <Text style={{ fontSize: 13, color: "#00a86b", fontWeight: "bold", margin: 0 }}>Borne de l&apos;Ouest — {COMPANY.raisonSociale}</Text>
           <Heading style={{ fontSize: 20, margin: "8px 0 16px" }}>Retour de travaux : intervention terminée</Heading>
-          <Text style={{ fontSize: 14, lineHeight: "22px" }}>
-            Bonjour{data.donneur_ordre ? ` ${data.donneur_ordre}` : ""},
-          </Text>
+          <Text style={{ fontSize: 14, lineHeight: "22px" }}>Bonjour,</Text>
           <Text style={{ fontSize: 14, lineHeight: "22px" }}>
             Nous vous informons que l&apos;intervention ci-dessous a été réalisée. Le rapport ({data.modele_nom}) a été signé par le client et par notre technicien.
           </Text>

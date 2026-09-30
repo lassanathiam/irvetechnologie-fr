@@ -55,6 +55,7 @@ function PartenairesAdmin() {
   const [typeP, setTypeP] = useState<"donneur_ordre" | "sous_traitant">("donneur_ordre");
   const [notes, setNotes] = useState("");
   const [email, setEmail] = useState("");
+  const [emailCopie, setEmailCopie] = useState("");
   const [couleur, setCouleur] = useState(COULEURS[0]!);
   const [delai, setDelai] = useState("30");
   const [fiche, setFiche] = useState({
@@ -87,6 +88,7 @@ function PartenairesAdmin() {
     notes: p.notes,
     couleur: p.couleur ?? "#0284c7",
     email: p.email,
+    email_copie: p.email_copie,
     delai_paiement_jours: p.delai_paiement_jours ?? 30,
     raison_sociale: p.raison_sociale,
     adresse: p.adresse,
@@ -114,6 +116,7 @@ function PartenairesAdmin() {
           notes: notes.trim() || null,
           couleur,
           email: email.trim() || null,
+          email_copie: emailCopie.trim() || null,
           delai_paiement_jours: delai || 30,
           ...fiche,
           type: typeP,
@@ -122,6 +125,7 @@ function PartenairesAdmin() {
       setNom("");
       setNotes("");
       setEmail("");
+      setEmailCopie("");
       setDelai("30");
       setFiche({
         raison_sociale: "",
@@ -204,6 +208,18 @@ function PartenairesAdmin() {
               onChange={(e) => setEmail(e.target.value)}
               className={INPUT}
               placeholder="contact@pure-energie.fr"
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-mono text-xs text-muted-foreground">
+              Email en copie systématique des retours de chantier
+            </span>
+            <input
+              type="email"
+              value={emailCopie}
+              onChange={(e) => setEmailCopie(e.target.value)}
+              className={INPUT}
+              placeholder="charge.affaires@entreprise.fr"
             />
           </label>
           <label className="block">
@@ -328,6 +344,28 @@ function PartenairesAdmin() {
                               window.alert(
                                 e instanceof Error ? e.message : "Enregistrement impossible.",
                               );
+                            }
+                          }}
+                          className="underline hover:text-primary"
+                        >
+                          modifier
+                        </button>
+                      </p>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        {p.email_copie ? `Copie systématique : ${p.email_copie}` : "Aucune copie systématique"}{" "}
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const saisie = window.prompt(
+                              `Email à mettre systématiquement en copie pour ${p.nom} :`,
+                              p.email_copie ?? "",
+                            );
+                            if (saisie === null) return;
+                            try {
+                              await save({ data: { ...base(p), email_copie: saisie.trim() || null } });
+                              await list.refetch();
+                            } catch (e) {
+                              window.alert(e instanceof Error ? e.message : "Enregistrement impossible.");
                             }
                           }}
                           className="underline hover:text-primary"
