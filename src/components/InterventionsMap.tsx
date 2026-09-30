@@ -168,23 +168,28 @@ export function InterventionsMap({
     };
   }, []);
 
+  /** Petite pancarte sur piquet : icône éclair + numéro du rendez-vous. */
   function dot(
     color: string,
     active: boolean,
     n?: number,
-    etat?: string,
+    _etat?: string,
     rang?: number | null,
   ) {
     const coche = rang != null;
-    const size = coche ? 48 : active ? 44 : 34;
-    const anneau = coche
-      ? `box-shadow:0 0 0 6px #2563eb;`
-      : `box-shadow:0 0 0 ${active ? 8 : 5}px ${etat ?? color}55;`;
+    const fond = coche ? "#2563eb" : color;
+    const w = 46;
+    const h = 34;
+    const eclair = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>`;
     return L.current.divIcon({
       className: "",
-      iconSize: [size, size],
-      iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${coche ? rang : (n ?? "")}</span>`,
+      iconSize: [w, h],
+      iconAnchor: [w / 2, h],
+      popupAnchor: [0, -h],
+      html: `<div style="display:flex;flex-direction:column;align-items:center;width:${w}px;height:${h}px;${active ? "transform:scale(1.15);transform-origin:bottom center;" : ""}">
+        <div style="display:flex;align-items:center;gap:3px;height:22px;padding:0 6px;border-radius:6px;background:${fond};border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35)${active ? `,0 0 0 3px ${fond}66` : ""};color:#fff;font:800 11px/1 system-ui;white-space:nowrap">${eclair}<span>${coche ? rang : (n ?? "")}</span></div>
+        <div style="width:2px;height:10px;background:#334155"></div>
+      </div>`,
     });
   }
 
@@ -199,9 +204,12 @@ export function InterventionsMap({
         .marker([b.lat, b.lng], {
           icon: leaflet.divIcon({
             className: "",
-            iconSize: [18, 18],
-            iconAnchor: [9, 9],
-            html: `<span style="display:block;width:18px;height:18px;border-radius:4px;background:#0f172a;border:3px solid #fff;box-shadow:0 0 0 3px #0f172a33"></span>`,
+            iconSize: [30, 32],
+            iconAnchor: [15, 32],
+            html: `<div style="display:flex;flex-direction:column;align-items:center;width:30px;height:32px">
+              <div style="display:grid;place-items:center;width:26px;height:22px;border-radius:6px;background:#0f172a;border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg></div>
+              <div style="width:2px;height:10px;background:#334155"></div>
+            </div>`,
           }),
         })
         .addTo(layer.current)
