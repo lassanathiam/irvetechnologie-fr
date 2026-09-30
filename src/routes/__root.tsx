@@ -46,7 +46,7 @@ function estSessionExpiree(error: Error): boolean {
 function ErrorComponent({ error, reset }: { error: unknown; reset: () => void }) {
   console.error(error);
   const router = useRouter();
-  const sessionExpiree = estSessionExpiree(error);
+  const sessionExpiree = estSessionExpiree(error as Error);
 
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
