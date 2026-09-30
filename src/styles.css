@@ -855,9 +855,23 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   .pro-main :where(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
 }
 
-/* Infobulles de la carte planning : compactes et lisibles sur téléphone */
-.rdv-popup .leaflet-popup-content-wrapper { border-radius: 12px; }
-.rdv-popup .leaflet-popup-content { margin: 10px 12px; width: auto !important; max-width: 260px; }
+/* Infobulles de la carte planning : carré propre, coins droits */
+.rdv-popup .leaflet-popup-content-wrapper {
+  border-radius: 3px;
+  background: #fff;
+  border: 1px solid #94a3b8;
+  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+}
+.rdv-popup .leaflet-popup-content-wrapper .leaflet-popup-tip { border-radius: 0; }
+.rdv-popup .leaflet-popup-content {
+  margin: 0;
+  padding: 10px 12px;
+  width: 236px !important;
+  max-width: 236px;
+  min-width: 236px;
+  text-align: left;
+}
+.rdv-popup .leaflet-popup-content > div { text-align: left; }
 .rdv-map-label,
 .rdv-map-label-card,
 .rdv-map-label-card span {
