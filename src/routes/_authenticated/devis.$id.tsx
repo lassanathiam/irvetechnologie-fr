@@ -16,6 +16,7 @@ import {
   updateDevis,
   updateStatutDevis,
 } from "@/lib/devis.functions";
+import { messageDevis } from "@/lib/messages-documents";
 
 export const Route = createFileRoute("/_authenticated/devis/$id")({
   head: () => ({
@@ -120,6 +121,13 @@ function DevisDetail() {
     const saved = window.localStorage.getItem(`devis-accent:${id}`);
     if (saved && /^#[0-9a-fA-F]{6}$/.test(saved)) setAccentColor(saved);
   }, [id]);
+
+  const [messagePret, setMessagePret] = useState(false);
+  useEffect(() => {
+    if (!query.data || messagePret) return;
+    setMessagePret(true);
+    setMessage((m) => m || messageDevis(query.data.devis as never, query.data.items as never));
+  }, [query.data, messagePret]);
 
   useEffect(() => {
     if (!query.data || editState) return;
@@ -642,7 +650,7 @@ function DevisDetail() {
                 : "Aucune adresse email sur ce devis — ajoutez-la pour pouvoir l'envoyer."}
             </p>
             <textarea
-              rows={3}
+              rows={9}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message personnalisé (optionnel)"
