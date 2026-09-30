@@ -854,3 +854,7 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   .pro-main :where(.leaflet-container) { max-width: 100%; }
   .pro-main :where(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
 }
+
+/* Infobulles de la carte planning : compactes et lisibles sur téléphone */
+.rdv-popup .leaflet-popup-content-wrapper { border-radius: 12px; }
+.rdv-popup .leaflet-popup-content { margin: 10px 12px; width: auto !important; max-width: 260px; }
