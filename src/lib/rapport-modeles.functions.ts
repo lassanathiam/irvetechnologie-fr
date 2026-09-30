@@ -170,7 +170,13 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     const modele =
       (rempli && modeles.find((m) => m.id === rempli.modele_id)) ||
       modelePourPartenaire(modeles, rdvQ.data.partenaire);
-    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli };
+    let email_donneur: string | null = null;
+    const { data: rdvP } = await context.supabase.from("rendezvous").select("partenaire_id").eq("id", data.rendezvous_id).maybeSingle();
+    if (rdvP?.partenaire_id) {
+      const { data: p } = await context.supabase.from("partenaires").select("email").eq("id", rdvP.partenaire_id).maybeSingle();
+      email_donneur = p?.email?.trim() || null;
+    }
+    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli, email_donneur };
   });
 
 export const enregistrerRapportRempli = createServerFn({ method: "POST" })

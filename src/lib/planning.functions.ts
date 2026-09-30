@@ -424,10 +424,20 @@ export const createRendezVous = createServerFn({ method: "POST" })
       ? await trajetDepuisBase(geo.lat, geo.lng, tech ? { lat: tech.lat, lng: tech.lng } : undefined)
       : null;
 
+    // Donneur d'ordre reconnu : on relie sa fiche (email des retours, délai de paiement).
+    let lienPartenaire: { partenaire_id?: string; origine?: "sous_traitance"; delai_paiement_jours?: number } = {};
+    const nomP = data.partenaire?.trim();
+    if (nomP) {
+      const { data: parts } = await context.supabase.from("partenaires").select("id, nom, delai_paiement_jours");
+      const norm = (x: string) => x.normalize("NFD").replace(/[^a-zA-Z0-9]/g, "").toLowerCase();
+      const p = (parts ?? []).find((x) => norm(x.nom) === norm(nomP));
+      if (p) lienPartenaire = { partenaire_id: p.id, origine: "sous_traitance", delai_paiement_jours: p.delai_paiement_jours };
+    }
     const { data: row, error } = await context.supabase
       .from("rendezvous")
       .insert({
         ...data,
+        ...lienPartenaire,
         user_id: context.userId,
         lat: geo?.lat ?? null,
         lng: geo?.lng ?? null,
