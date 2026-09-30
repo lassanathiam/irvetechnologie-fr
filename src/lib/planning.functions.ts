@@ -405,11 +405,15 @@ async function geocode(query: string): Promise<{ lat: number; lng: number } | nu
 export const listRendezVous = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    // Pas de limite ni de fenêtre de dates : la carte et les onglets (en cours / annulés /
+    // clôturés) doivent voir tous les rendez-vous, y compris les chantiers archivés anciens
+    // et les rendez-vous à venir. Un plafond de 500 lignes triées par date croissante coupait
+    // silencieusement les rendez-vous les plus récents/futurs dès que la table dépassait 500 lignes.
     const { data, error } = await context.supabase
       .from("rendezvous")
       .select("*")
       .order("date_debut", { ascending: true })
-      .limit(500);
+      .limit(5000);
     if (error) throw new Error(error.message);
     return data ?? [];
   });
