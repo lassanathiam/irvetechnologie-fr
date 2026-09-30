@@ -1868,7 +1868,7 @@ function PlanningPage() {
                                 ))}
                               </p>
                             )}
-
+                            </div>
 
                             {/* Suivi en direct : démarrage puis fin de chantier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
