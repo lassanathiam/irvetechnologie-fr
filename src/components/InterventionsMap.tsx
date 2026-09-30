@@ -95,8 +95,6 @@ export function InterventionsMap({
   const byId = useRef<Record<string, any>>({});
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const moiRef = useRef<any>(null);
-  /** Dernier repère cliqué directement sur la carte : seul lui ouvre l'affectation. */
-  const clicDirect = useRef<string | null>(null);
   /** Signature des repères déjà cadrés (évite de recadrer à chaque clic). */
   const fitRef = useRef<string>("");
 
@@ -168,37 +166,23 @@ export function InterventionsMap({
     };
   }, []);
 
-  /** Étiquette compacte et toujours lisible pour chaque rendez-vous. */
-  function appointmentLabel(
+  function dot(
     color: string,
     active: boolean,
-    label: string,
-    address: string | null | undefined,
-    date: string | null | undefined,
     n?: number,
+    etat?: string,
     rang?: number | null,
   ) {
     const coche = rang != null;
-    const fond = coche ? "#2563eb" : color;
-    const w = 176;
-    const h = 58;
-    const eclair = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>`;
+    const size = coche ? 48 : active ? 44 : 34;
+    const anneau = coche
+      ? `box-shadow:0 0 0 6px #2563eb;`
+      : `box-shadow:0 0 0 ${active ? 8 : 5}px ${etat ?? color}55;`;
     return L.current.divIcon({
-      className: "rdv-map-label",
-      iconSize: [w, h],
-      iconAnchor: [w / 2, h],
-      popupAnchor: [0, -h],
-      html: `<div class="rdv-map-label-card" style="width:${w}px;${active ? "transform:scale(1.06);transform-origin:bottom center;" : ""}">
-        <div style="display:flex;align-items:center;gap:5px;min-width:0;padding:5px 7px;border-radius:6px;background:#fff;border:2px solid ${fond};box-shadow:0 2px 7px rgba(15,23,42,.32)${active ? `,0 0 0 3px ${fond}55` : ""};color:#0f172a">
-          <span style="display:grid;place-items:center;flex:0 0 22px;height:22px;border-radius:4px;background:${fond};color:#fff;font:800 10px/1 system-ui">${eclair}<span style="position:absolute;margin-top:1px">${coche ? rang : (n ?? "")}</span></span>
-          <span style="display:block;min-width:0;text-align:left;font:600 9px/1.2 system-ui;white-space:normal;word-break:normal;overflow-wrap:normal">
-            <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${escapeHtml(label)}</strong>
-            ${date ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(date)}</span>` : ""}
-            ${address ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569">${escapeHtml(address)}</span>` : ""}
-          </span>
-        </div>
-        <div style="width:2px;height:10px;background:#334155"></div>
-      </div>`,
+      className: "",
+      iconSize: [size, size],
+      iconAnchor: [size / 2, size / 2],
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${coche ? rang : (n ?? "")}</span>`,
     });
   }
 
@@ -213,12 +197,9 @@ export function InterventionsMap({
         .marker([b.lat, b.lng], {
           icon: leaflet.divIcon({
             className: "",
-            iconSize: [30, 32],
-            iconAnchor: [15, 32],
-            html: `<div style="display:flex;flex-direction:column;align-items:center;width:30px;height:32px">
-              <div style="display:grid;place-items:center;width:26px;height:22px;border-radius:6px;background:#0f172a;border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35)"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/></svg></div>
-              <div style="width:2px;height:10px;background:#334155"></div>
-            </div>`,
+            iconSize: [18, 18],
+            iconAnchor: [9, 9],
+            html: `<span style="display:block;width:18px;height:18px;border-radius:4px;background:#0f172a;border:3px solid #fff;box-shadow:0 0 0 3px #0f172a33"></span>`,
           }),
         })
         .addTo(layer.current)
@@ -231,38 +212,31 @@ export function InterventionsMap({
       const idx = selectedIds.indexOf(m.id);
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
-        .marker([m.lat, m.lng], {
-          icon: appointmentLabel(color, activeId === m.id, m.label, m.sub, m.date, i + 1, rang),
-        })
+        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
         .addTo(layer.current)
         .bindPopup(
-          `<div style="font:13px/1.45 system-ui,sans-serif;color:#0f172a;white-space:normal;word-break:normal;overflow-wrap:break-word">` +
-          `<div style="font-weight:700;font-size:14px">${escapeHtml(m.label)}</div>${
-            m.sub ? `<div style="margin-top:2px">${escapeHtml(m.sub)}</div>` : ""
-          }${m.date ? `<div style="opacity:.7">${escapeHtml(m.date)}</div>` : ""}${
+          `<strong style="font-weight:700">${escapeHtml(m.label)}</strong>${
+            m.sub ? `<br/>${escapeHtml(m.sub)}` : ""
+          }${m.date ? `<br/><span style="opacity:.7">${escapeHtml(m.date)}</span>` : ""}${
             m.trajet
-              ? `<div style="font-weight:600;margin-top:2px">Trajet : ${escapeHtml(m.trajet)}</div>`
+              ? `<br/><span style="font-weight:600">Trajet : ${escapeHtml(m.trajet)}</span>`
               : ""
           }${
             selectionMode
-              ? `<div style="font-weight:700;color:#2563eb;margin-top:4px">${
+              ? `<br/><span style="font-weight:700;color:#2563eb">${
                   rang ? `Coché n°${rang} — cliquez pour retirer` : "Cliquez pour cocher ce chantier"
-                }</div>`
+                }</span>`
               : ""
           }${
             onAssign && !selectionMode
-              ? `<div data-assign-block style="margin-top:8px"><div style="font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
+              ? `<div style="margin-top:8px;font-weight:700">Intervenant : ${escapeHtml(m.technicien || "non affecté")}</div><div style="display:flex;flex-wrap:wrap;gap:6px;margin-top:6px">${TECHNICIENS.map(
                   (t) =>
                     `<button type="button" data-assign="${escapeHtml(t.nom)}" style="padding:6px 10px;border-radius:8px;border:1px solid #2563eb;font-weight:700;${m.technicien === t.nom ? "background:#2563eb;color:#fff" : "background:#fff;color:#2563eb"}">${escapeHtml(t.nom.split(" ")[0])}</button>`,
-                ).join("")}</div></div>`
+                ).join("")}</div>`
               : ""
-          }</div>`,
-          { minWidth: 220, maxWidth: 280, className: "rdv-popup" },
+          }`,
         );
       mk.on("popupopen", (ev: { popup: { getElement: () => HTMLElement | undefined } }) => {
-        // L'affectation n'apparaît que si le repère a été cliqué directement sur la carte.
-        const bloc = ev.popup.getElement()?.querySelector<HTMLElement>("[data-assign-block]");
-        if (bloc) bloc.style.display = clicDirect.current === m.id ? "" : "none";
         ev.popup.getElement()?.querySelectorAll<HTMLButtonElement>("[data-assign]").forEach((b) => {
           b.onclick = (e) => {
             e.stopPropagation();
@@ -274,11 +248,7 @@ export function InterventionsMap({
           };
         });
       });
-      mk.on("popupclose", () => {
-        if (clicDirect.current === m.id) clicDirect.current = null;
-      });
       mk.on("click", () => {
-        clicDirect.current = m.id;
         if (selectionMode) onToggleSelect?.(m.id);
         onSelect?.(m.id);
       });
@@ -378,18 +348,9 @@ export function InterventionsMap({
       <button
         type="button"
         onClick={maPosition}
-        title="Ma position"
-        aria-label="Ma position"
-        className="absolute bottom-3 left-3 z-[500] flex h-11 w-11 items-center justify-center rounded-full border border-border bg-card/95 text-foreground shadow-md transition-colors hover:border-primary hover:text-primary"
+        className="absolute right-2 top-2 z-[500] text-mono text-[11px] font-bold px-3 py-2 rounded-sm bg-card/95 border border-border shadow hover:border-primary hover:text-primary"
       >
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round">
-          <circle cx="12" cy="12" r="4.5" />
-          <circle cx="12" cy="12" r="0.5" fill="currentColor" />
-          <line x1="12" y1="1.5" x2="12" y2="4.5" />
-          <line x1="12" y1="19.5" x2="12" y2="22.5" />
-          <line x1="1.5" y1="12" x2="4.5" y2="12" />
-          <line x1="19.5" y1="12" x2="22.5" y2="12" />
-        </svg>
+        Ma position
       </button>
       <div ref={el} style={{ height }} className="w-full min-w-0 max-w-full bg-muted" />
     </div>
