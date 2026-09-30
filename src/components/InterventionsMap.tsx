@@ -168,26 +168,35 @@ export function InterventionsMap({
     };
   }, []);
 
-  /** Petite pancarte sur piquet : icône éclair + numéro du rendez-vous. */
-  function dot(
+  /** Étiquette compacte et toujours lisible pour chaque rendez-vous. */
+  function appointmentLabel(
     color: string,
     active: boolean,
+    label: string,
+    address: string | null | undefined,
+    date: string | null | undefined,
     n?: number,
-    _etat?: string,
     rang?: number | null,
   ) {
     const coche = rang != null;
     const fond = coche ? "#2563eb" : color;
-    const w = 46;
-    const h = 34;
+    const w = 176;
+    const h = 58;
     const eclair = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff" stroke="none"><path d="M13 2 4 14h7l-1 8 9-12h-7l1-8z"/></svg>`;
     return L.current.divIcon({
-      className: "",
+      className: "rdv-map-label",
       iconSize: [w, h],
       iconAnchor: [w / 2, h],
       popupAnchor: [0, -h],
-      html: `<div style="display:flex;flex-direction:column;align-items:center;width:${w}px;height:${h}px;${active ? "transform:scale(1.15);transform-origin:bottom center;" : ""}">
-        <div style="display:flex;align-items:center;gap:3px;height:22px;padding:0 6px;border-radius:6px;background:${fond};border:2px solid #fff;box-shadow:0 2px 6px rgba(15,23,42,.35)${active ? `,0 0 0 3px ${fond}66` : ""};color:#fff;font:800 11px/1 system-ui;white-space:nowrap">${eclair}<span>${coche ? rang : (n ?? "")}</span></div>
+      html: `<div class="rdv-map-label-card" style="width:${w}px;${active ? "transform:scale(1.06);transform-origin:bottom center;" : ""}">
+        <div style="display:flex;align-items:center;gap:5px;min-width:0;padding:5px 7px;border-radius:6px;background:#fff;border:2px solid ${fond};box-shadow:0 2px 7px rgba(15,23,42,.32)${active ? `,0 0 0 3px ${fond}55` : ""};color:#0f172a">
+          <span style="display:grid;place-items:center;flex:0 0 22px;height:22px;border-radius:4px;background:${fond};color:#fff;font:800 10px/1 system-ui">${eclair}<span style="position:absolute;margin-top:1px">${coche ? rang : (n ?? "")}</span></span>
+          <span style="display:block;min-width:0;text-align:left;font:600 9px/1.2 system-ui;white-space:normal;word-break:normal;overflow-wrap:normal">
+            <strong style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:10px">${escapeHtml(label)}</strong>
+            ${date ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(date)}</span>` : ""}
+            ${address ? `<span style="display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#475569">${escapeHtml(address)}</span>` : ""}
+          </span>
+        </div>
         <div style="width:2px;height:10px;background:#334155"></div>
       </div>`,
     });
@@ -222,7 +231,9 @@ export function InterventionsMap({
       const idx = selectedIds.indexOf(m.id);
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
+        .marker([m.lat, m.lng], {
+          icon: appointmentLabel(color, activeId === m.id, m.label, m.sub, m.date, i + 1, rang),
+        })
         .addTo(layer.current)
         .bindPopup(
           `<div style="font:13px/1.45 system-ui,sans-serif;color:#0f172a;white-space:normal;word-break:normal;overflow-wrap:break-word">` +
