@@ -866,9 +866,10 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 /* Infobulles de la carte planning : carré propre, coins droits */
 .rdv-popup .leaflet-popup-content-wrapper {
   border-radius: 3px;
-  background: #fff;
-  border: 1px solid #94a3b8;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+  background: var(--card);
+  border: 1px solid var(--border);
+  color: var(--card-foreground);
+  box-shadow: var(--shadow-md);
 }
 .rdv-popup .leaflet-popup-content-wrapper .leaflet-popup-tip { border-radius: 0; }
 .rdv-popup .leaflet-popup-content {
