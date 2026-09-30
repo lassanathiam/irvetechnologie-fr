@@ -81,10 +81,12 @@ export function DevisClientEmail(data: DevisEmailData) {
           </Section>
 
           <Section style={{ padding: "28px 32px 8px" }}>
-            <Heading as="h1" style={{ color: ink, fontSize: 22, margin: "0 0 8px" }}>
-              Bonjour {data.client_nom},
-            </Heading>
-            <Text style={{ color: muted, fontSize: 14, lineHeight: "22px", margin: 0 }}>
+            {!/^\s*bonjour/i.test(data.message ?? "") && (
+              <Heading as="h1" style={{ color: ink, fontSize: 22, margin: "0 0 8px" }}>
+                Bonjour {data.client_nom},
+              </Heading>
+            )}
+            <Text style={{ color: data.message ? ink : muted, fontSize: 14, lineHeight: "22px", margin: 0, whiteSpace: "pre-line" }}>
               {data.message
                 ? data.message
                 : isFacture
