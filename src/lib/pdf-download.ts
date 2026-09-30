@@ -28,7 +28,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
     onclone: (doc, clone) => {
       clone.classList.add("pdf-render");
       const st = doc.createElement("style");
-      st.textContent = "td::before,td::after{content:none!important;display:none!important}";
+      st.textContent = "td::before,td::after{content:none!important;display:none!important}.pdf-render,.pdf-render *{letter-spacing:normal!important}.pdf-render{background:#ffffff!important}";
       doc.head.appendChild(st);
       clone.style.width = `${RENDER_W}px`;
       clone.style.maxWidth = `${RENDER_W}px`;
@@ -48,7 +48,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
       clone.querySelectorAll(sel).forEach((n) => {
         if (n.tagName === "TABLE" || n.tagName === "TBODY" || n.querySelector("table")) return;
         const r = (n as HTMLElement).getBoundingClientRect();
-        if (r.height > 0 && r.height < 900) blocks.push([r.top - top, r.bottom - top]);
+        if (r.height > 0 && r.height < 260) blocks.push([r.top - top, r.bottom - top]);
       });
     },
   });
