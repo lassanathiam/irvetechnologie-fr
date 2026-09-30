@@ -58,7 +58,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   const pdf = new jsPDF({ unit: "mm", format: "a4", orientation: "portrait" });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
-  const margin = 10;
+  const margin = 7;
   const contentW = pageW - margin * 2;
   const contentH = pageH - margin * 2;
 

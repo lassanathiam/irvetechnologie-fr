@@ -262,7 +262,7 @@ function FactureDetail() {
               : "Aucune adresse email sur cette facture."}
           </p>
           <textarea
-            rows={9}
+            rows={5}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Message personnalisé (optionnel)"

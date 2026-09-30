@@ -394,7 +394,7 @@ function DevisDetail() {
         </div>
 
         {editOpen && editState && (
-          <section className="border border-border rounded-sm bg-card p-6 space-y-4">
+          <section className="border border-border rounded-sm bg-card p-4 space-y-3">
             <h2 className="text-mono text-[11px] font-bold uppercase tracking-[0.2em] text-primary">
               Modifier le devis
             </h2>
@@ -461,7 +461,7 @@ function DevisDetail() {
             <label className="block">
               <span className="text-mono text-xs text-muted-foreground">Conditions de paiement</span>
               <textarea
-                rows={3}
+                rows={2}
                 value={editState.conditions_paiement}
                 onChange={(e) => setEditState({ ...editState, conditions_paiement: e.target.value })}
                 className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
@@ -499,7 +499,7 @@ function DevisDetail() {
                 </div>
               </div>
               <textarea
-                rows={8}
+                rows={4}
                 value={editState.notes}
                 onChange={(e) => setEditState({ ...editState, notes: e.target.value })}
                 placeholder="Aucune note sur le devis"
@@ -534,7 +534,7 @@ function DevisDetail() {
                 </button>
               </div>
               {editState.lines.map((line) => (
-                <div key={line.key} className="border border-border rounded-sm p-3 space-y-2">
+                <div key={line.key} className="border border-border rounded-sm p-3 space-y-2 lg:grid lg:grid-cols-[minmax(220px,1fr)_minmax(300px,420px)] lg:gap-3 lg:space-y-0">
                   <div className="flex items-center gap-2">
                     <input
                       value={line.libelle}
@@ -563,7 +563,7 @@ function DevisDetail() {
                     </button>
                   </div>
                   <textarea
-                    rows={2}
+                    rows={1}
                     value={line.description}
                     onChange={(e) =>
                       setEditState({
@@ -573,10 +573,10 @@ function DevisDetail() {
                         ),
                       })
                     }
-                    className="w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-none"
+                    className="w-full bg-input border border-border rounded-sm px-3 py-2 text-sm resize-y lg:col-start-1"
                     placeholder="Description (optionnelle)"
                   />
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-3 gap-2 lg:col-start-2 lg:row-start-1 lg:self-start">
                     <EditField
                       label="Qté"
                       type="number"
@@ -680,7 +680,7 @@ function DevisDetail() {
                 : "Aucune adresse email sur ce devis — ajoutez-la pour pouvoir l'envoyer."}
             </p>
             <textarea
-              rows={9}
+              rows={5}
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               placeholder="Message personnalisé (optionnel)"
