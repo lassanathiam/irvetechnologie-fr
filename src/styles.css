@@ -852,6 +852,14 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   .pro-main :where(table) { display: block; max-width: 100%; overflow-x: auto; }
   .pro-main .print-doc :where(table) { display: table; }
   .pro-main :where(.leaflet-container) { max-width: 100%; }
+  /* Les repères de la carte gardent leur taille (sinon écrasés en traits blancs). */
+  .pro-main .leaflet-container .leaflet-pane *,
+  .pro-main .leaflet-container .leaflet-marker-icon,
+  .pro-main .leaflet-container .leaflet-marker-icon * {
+    max-width: none;
+    min-width: auto;
+    overflow-wrap: normal;
+  }
   .pro-main :where(pre, code) { white-space: pre-wrap; overflow-wrap: anywhere; }
 }
 
