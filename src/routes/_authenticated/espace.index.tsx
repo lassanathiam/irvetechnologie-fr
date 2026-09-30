@@ -96,22 +96,18 @@ function EspacePage() {
       return {
         key: date.toISOString().slice(0, 10),
         jour: formatter.format(date).replace(".", ""),
-        activite: 0,
+        interventions: 0,
       };
     });
     const index = new Map(jours.map((item) => [item.key, item]));
-    for (const document of devis) {
-      const date = new Date(document.created_at);
+    for (const rendezvousTermine of rendezvous) {
+      if (!rendezvousTermine.termine_at || (rendezvousTermine.statut !== "termine" && rendezvousTermine.statut !== "realise")) continue;
+      const date = new Date(rendezvousTermine.termine_at);
       const item = index.get(date.toISOString().slice(0, 10));
-      if (item) item.activite += Number(document.total_ttc ?? 0);
-    }
-    for (const facture of q.data?.factures ?? []) {
-      const date = new Date(facture.date_emission);
-      const item = index.get(date.toISOString().slice(0, 10));
-      if (item) item.activite += Number(facture.total_ttc ?? 0);
+      if (item) item.interventions += 1;
     }
     return jours;
-  }, [devis, q.data?.factures]);
+  }, [rendezvous]);
 
   return (
     <ProShell dashboardReference>
@@ -135,11 +131,11 @@ function EspacePage() {
                 />
                 <MetricCard
                   tone="blue"
-                  icon={FileText}
-                  label="Devis émis"
-                  value={String(devisActifs.length)}
-                  detail={`${euro(q.data?.stats.caDevis ?? 0)} proposés`}
-                  to="/devis"
+                  icon={FileCheck2}
+                  label="Chantiers à facturer"
+                  value={String(q.data?.stats.chantiersTerminesAFacturer ?? 0)}
+                  detail="Terminés et prêts à facturer"
+                  to="/facturation"
                 />
                 <MetricCard
                   tone="violet"
@@ -161,7 +157,7 @@ function EspacePage() {
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
                 <ActivityChart data={activite} />
-                <QuickOverview devis={devisActifs.length} factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
+                <QuickOverview aFacturer={q.data?.stats.chantiersTerminesAFacturer ?? 0} factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
                   <PromoCard />
                   <NextAppointments rendezvous={aVenir.slice(0, 1)} />
@@ -228,17 +224,17 @@ function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
   );
 }
 
-function ActivityChart({ data }: { data: Array<{ jour: string; activite: number }> }) {
+function ActivityChart({ data }: { data: Array<{ jour: string; interventions: number }> }) {
   return (
-    <DashboardPanel title="Évolution de l’activité" icon={TrendingUp}>
+    <DashboardPanel title="Interventions terminées" icon={TrendingUp}>
       <div className="h-60 w-full min-w-0">
         <ResponsiveContainer width="100%" height="100%">
           <BarChart data={data} margin={{ top: 8, right: 8, left: -10, bottom: 0 }}>
             <CartesianGrid vertical={false} stroke="var(--dashboard-rule)" strokeDasharray="4 4" />
             <XAxis dataKey="jour" axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`} />
-            <Tooltip formatter={(value) => euro(Number(value))} contentStyle={{ borderRadius: 6, border: "1px solid var(--dashboard-rule)" }} />
-            <Bar dataKey="activite" fill="var(--dashboard-green)" radius={[4, 4, 0, 0]} />
+            <YAxis allowDecimals={false} axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} />
+            <Tooltip formatter={(value) => [`${Number(value)} chantier${Number(value) > 1 ? "s" : ""}`, "Terminés"]} contentStyle={{ borderRadius: 6, border: "1px solid var(--dashboard-rule)" }} />
+            <Bar dataKey="interventions" fill="var(--dashboard-green)" radius={[4, 4, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
       </div>
@@ -246,9 +242,9 @@ function ActivityChart({ data }: { data: Array<{ jour: string; activite: number 
   );
 }
 
-function QuickOverview({ devis, factures, rendezvous, termines }: { devis: number; factures: number; rendezvous: number; termines: number }) {
+function QuickOverview({ aFacturer, factures, rendezvous, termines }: { aFacturer: number; factures: number; rendezvous: number; termines: number }) {
   const items = [
-    { icon: FileCheck2, label: "Devis en cours", value: devis, tone: "text-dashboard-blue bg-dashboard-blue-soft" },
+    { icon: FileCheck2, label: "À facturer", value: aFacturer, tone: "text-dashboard-blue bg-dashboard-blue-soft" },
     { icon: CircleDollarSign, label: "À encaisser", value: factures, tone: "text-dashboard-purple bg-dashboard-purple-soft" },
     { icon: CalendarDays, label: "À venir", value: rendezvous, tone: "text-dashboard-orange bg-dashboard-orange-soft" },
     { icon: CheckCircle2, label: "Chantiers validés", value: termines, tone: "text-dashboard-green bg-dashboard-green-soft" },

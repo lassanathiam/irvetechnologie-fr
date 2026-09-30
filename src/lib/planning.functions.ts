@@ -882,6 +882,9 @@ export const getDashboard = createServerFn({ method: "GET" })
         ).length,
         installations: rows.filter((r) => r.statut === "realise").length,
         chantiersValides: rows.filter((r) => r.chantier_valide).length,
+        chantiersTerminesAFacturer: rows.filter(
+          (r) => (r.statut === "termine" || r.statut === "realise") && r.statut_facturation === "a_facturer",
+        ).length,
         kmPlanifies: aVenir.reduce((t, r) => t + Number(r.distance_km ?? 0), 0),
         caDevis: devisRows.reduce((t, d) => t + Number(d.total_ttc ?? 0), 0),
         caEncaisse,

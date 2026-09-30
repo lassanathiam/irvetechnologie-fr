@@ -64,7 +64,7 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
   {
     label: "Opérations",
     links: [
-      { to: "/attachements", label: "Attachements", icon: ClipboardList },
+      { to: "/attachements", label: "Attachements travaux", icon: ClipboardList },
       { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
       { to: "/stock", label: "Stock matériel", icon: Package },
       { to: "/realisations", label: "Photos", icon: Images },
@@ -135,6 +135,21 @@ export function ProShell({
               <span className="min-w-0 leading-tight">
                 <span className="block truncate font-display text-sm font-bold text-sidebar-title">Borne de l’Ouest</span>
                 <span className="block truncate text-[9px] font-bold uppercase text-sidebar-accent">IRVE Technologie · Pro</span>
+              </span>
+            )}
+          </Link>
+          <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            className="text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-title md:hidden"
+            aria-label="Fermer le menu"
+            onClick={() => setMenuOuvert(false)}
+          >
+            <X />
+          </Button>
+        </div>
+
         <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Navigation de l’espace professionnel">
           {NAVIGATION_GROUPS.map((group) => (
             <div key={group.label} className="space-y-1">
@@ -180,21 +195,6 @@ export function ProShell({
               </div>
             </div>
           ))}
-        </nav>
-                title={reduit ? label : undefined}
-                className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
-                activeProps={{ className: "pro-nav-active" }}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!reduit && <span>{label}</span>}
-                {to === "/notifications" && nbNonLues > 0 && (
-                  <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-[11px] font-bold text-sidebar">
-                    {nbNonLues > 99 ? "99+" : nbNonLues}
-                  </span>
-                )}
-              </Link>
-            ),
-          )}
         </nav>
 
         <div className="border-t border-sidebar-line p-3">
