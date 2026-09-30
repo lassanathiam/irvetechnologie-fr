@@ -105,6 +105,13 @@ export const Route = createFileRoute("/_authenticated/planning/")({
         content:
           "Planification des rendez-vous IRVE : adresse géolocalisée, tournées optimisées, validation de chantier et autorisations de voirie.",
       },
+      { property: "og:title", content: "Planning des interventions — Borne de l'Ouest" },
+      {
+        property: "og:description",
+        content: "Planification et suivi terrain des interventions IRVE de Borne de l'Ouest.",
+      },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
