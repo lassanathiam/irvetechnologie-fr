@@ -86,6 +86,7 @@ import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagn
 import { useIsMobile } from "@/hooks/use-mobile";
 import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
 import { ImportRdvDialog } from "@/components/ImportRdvDialog";
+import { DonneurOrdreField } from "@/components/DonneurOrdreField";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -1324,7 +1325,10 @@ function PlanningPage() {
               <option value="sous_traitance">Sous-traitance / partenaire</option>
             </select>
           </label>
-          <Field label="Partenaire / donneur d'ordre" name="partenaire" placeholder="Ex. ZePlug" />
+          <label className="block">
+            <span className="text-mono text-xs text-muted-foreground">Partenaire / donneur d&apos;ordre</span>
+            <DonneurOrdreField name="partenaire" />
+          </label>
           <Field label="Montant convenu HT (€)" name="montant_ht" type="number" defaultValue="0" />
           <Field label="TVA (%)" name="tva_pct" type="number" defaultValue="20" />
           <Field label="Objet" name="titre" placeholder="Pose borne 7,4 kW (monophasé 32A)" />
