@@ -25,6 +25,7 @@ export type RetourTravauxRdv = {
   retour_delestage?: boolean | null;
   type_pose?: string | null;
   type?: string | null;
+  partenaire?: string | null;
 };
 
 /** Compte les photos obligatoires déjà présentes. */
@@ -54,8 +55,8 @@ export default function RetourTravauxSheet({
   const [enCours, setEnCours] = useState<string | null>(null);
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
-  const obligatoires = categoriesRetourObligatoires(rdv.type);
-  const optionnelles = categoriesRetourOptionnelles(rdv.type);
+  const obligatoires = categoriesRetourObligatoires(rdv.type, rdv.partenaire);
+  const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
 
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
