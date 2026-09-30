@@ -1748,9 +1748,9 @@ function PlanningPage() {
                             )}
 
 
-                            <p className="text-xs text-muted-foreground mt-1 flex flex-wrap items-center gap-x-3 gap-y-1">
-                              <span className="inline-flex items-center gap-1">
-                                <CalendarClock className="h-3 w-3" />{" "}
+                            <p className="text-xs text-muted-foreground mt-2 flex flex-wrap items-center gap-x-3 gap-y-1">
+                              <span className="inline-flex items-center gap-2 rounded-lg bg-blue-600/10 px-3 py-2 text-base font-bold text-foreground sm:text-lg">
+                                <CalendarClock className="h-5 w-5 shrink-0 text-blue-600" />{" "}
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
                                   : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
@@ -1860,6 +1860,16 @@ function PlanningPage() {
                                       minute: "2-digit",
                                     })}
                                   </span>
+                                  <button
+                                    type="button"
+                                    disabled={demarrer.isPending}
+                                    onClick={() => {
+                                      if (window.confirm(`Annuler le démarrage des travaux chez ${r.client_nom} ?\n\nLe rendez-vous est conservé et repasse en « confirmé ».`)) demarrer.mutate({ id: r.id, demarre: false });
+                                    }}
+                                    className="text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border-2 border-destructive/60 text-destructive inline-flex items-center gap-1.5 disabled:opacity-50"
+                                  >
+                                    Annuler le démarrage
+                                  </button>
                                   <button
                                     type="button"
                                     onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}
