@@ -286,6 +286,7 @@ function PlanningPage() {
   const [prefillDate, setPrefillDate] = useState<string>("");
   /** Dossier dont les outils de gestion sont dépliés (un seul bouton par fiche). */
   const [dossier, setDossier] = useState<string | null>(recherche.rdv ?? null);
+  const [ouverts, setOuverts] = useState<Record<string, boolean>>({});
   /** Vue « Nos chantiers réalisés » (bilan du mois), ouverte depuis le tableau de bord. */
   const [vueBilan, setVueBilan] = useState(recherche.vue === "realises");
   /** Mois du bilan (AAAA-MM) ; vide = les 12 derniers mois. */
@@ -1599,7 +1600,8 @@ function PlanningPage() {
                     const isAdressePanel = panel?.id === r.id && panel.tab === "adresse";
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
-                    const dossierOuvert = dossier === r.id;
+                     const dossierOuvert = dossier === r.id;
+                     const toutOuvert = !!ouverts[r.id];
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
