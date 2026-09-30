@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { messageFacture } from "@/lib/messages-documents";
 import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { downloadElementAsPdf } from "@/lib/pdf-download";
@@ -54,6 +55,13 @@ function FactureDetail() {
     queryFn: () => fetchFacture({ data: { id } }),
     retry: 1,
   });
+
+  const [messagePret, setMessagePret] = useState(false);
+  useEffect(() => {
+    if (!query.data || messagePret) return;
+    setMessagePret(true);
+    setMessage((m) => m || messageFacture(query.data.facture as never, query.data.items as never));
+  }, [query.data, messagePret]);
 
   const invalidate = () => {
     qc.invalidateQueries({ queryKey: ["facture", id] });
@@ -254,7 +262,7 @@ function FactureDetail() {
               : "Aucune adresse email sur cette facture."}
           </p>
           <textarea
-            rows={3}
+            rows={9}
             value={message}
             onChange={(e) => setMessage(e.target.value)}
             placeholder="Message personnalisé (optionnel)"

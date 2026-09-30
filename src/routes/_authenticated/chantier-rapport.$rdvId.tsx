@@ -70,7 +70,7 @@ function RapportChantierPageInner() {
     if (!data) return;
     const m = data.modele;
     setModeleId(m?.id ?? null);
-    setEmail(m?.email_destinataire ?? "");
+    setEmail(data.rempli?.sent_to || m?.email_destinataire || data.email_donneur || "");
     const r = data.rempli;
     if (r) {
       setRempliId(r.id);
@@ -167,7 +167,7 @@ function RapportChantierPageInner() {
             value={modeleId ?? ""}
             onChange={(e) => {
               setModeleId(e.target.value || null);
-              setEmail(data.modeles.find((m) => m.id === e.target.value)?.email_destinataire ?? "");
+              setEmail(data.modeles.find((m) => m.id === e.target.value)?.email_destinataire || data.email_donneur || "");
             }}
             className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
           >

@@ -14,7 +14,7 @@ type Data = {
 
 const btn = {
   display: "inline-block",
-  backgroundColor: "#1d4ed8",
+  backgroundColor: "#00a86b",
   color: "#ffffff",
   borderRadius: 8,
   padding: "12px 20px",
@@ -25,27 +25,40 @@ const btn = {
 } as const;
 
 function RapportDonneurEmail(data: Data) {
+  const ligne = (label: string, v?: string | null) =>
+    v ? <Text style={{ fontSize: 14, margin: "4px 0" }}><strong>{label} :</strong> {v}</Text> : null;
   return (
     <Html lang="fr">
       <Head />
-      <Preview>{`${data.modele_nom} signé — ${data.client_nom ?? ""}`}</Preview>
+      <Preview>{`Retour de travaux — ${data.client_nom ?? ""} — rapport signé disponible`}</Preview>
       <Body style={{ backgroundColor: "#ffffff", fontFamily: "Arial, sans-serif", color: "#0f172a" }}>
-        <Container style={{ padding: "24px", maxWidth: 560 }}>
-          <Heading style={{ fontSize: 20 }}>{data.modele_nom} signé</Heading>
-          <Section>
-            {data.client_nom ? <Text style={{ fontSize: 14, margin: "6px 0" }}>Client : {data.client_nom}</Text> : null}
-            {data.adresse ? <Text style={{ fontSize: 14, margin: "6px 0" }}>Adresse : {data.adresse}</Text> : null}
-            {data.donneur_ordre ? <Text style={{ fontSize: 14, margin: "6px 0" }}>Donneur d&apos;ordre : {data.donneur_ordre}</Text> : null}
+        <Container style={{ padding: "24px", maxWidth: 580 }}>
+          <Text style={{ fontSize: 13, color: "#00a86b", fontWeight: "bold", margin: 0 }}>Borne de l&apos;Ouest — {COMPANY.raisonSociale}</Text>
+          <Heading style={{ fontSize: 20, margin: "8px 0 16px" }}>Retour de travaux : intervention terminée</Heading>
+          <Text style={{ fontSize: 14, lineHeight: "22px" }}>
+            Bonjour{data.donneur_ordre ? ` ${data.donneur_ordre}` : ""},
+          </Text>
+          <Text style={{ fontSize: 14, lineHeight: "22px" }}>
+            Nous vous informons que l&apos;intervention ci-dessous a été réalisée. Le rapport ({data.modele_nom}) a été signé par le client et par notre technicien.
+          </Text>
+          <Section style={{ backgroundColor: "#f7faf9", border: "1px solid #dfe6e3", borderRadius: 6, padding: "12px 16px" }}>
+            {ligne("Client final", data.client_nom)}
+            {ligne("Adresse du chantier", data.adresse)}
+            {ligne("Document", data.modele_nom)}
           </Section>
-          <Hr />
-          <Section>
-            <Link href={data.rapport_url} style={btn}>Consulter et imprimer le rapport</Link>
+          <Section style={{ padding: "16px 0" }}>
+            <Link href={data.rapport_url} style={btn}>Consulter et imprimer le rapport signé</Link>
             <br />
-            {data.zip_url ? <Link href={data.zip_url} style={btn}>Télécharger les photos (ZIP)</Link> : null}
+            {data.zip_url ? <Link href={data.zip_url} style={{ ...btn, backgroundColor: "#0f1a17" }}>Télécharger toutes les photos (ZIP)</Link> : null}
           </Section>
+          <Text style={{ fontSize: 14, lineHeight: "22px" }}>
+            Nous restons à votre disposition pour tout complément d&apos;information.
+          </Text>
+          <Text style={{ fontSize: 14, lineHeight: "22px" }}>Cordialement,<br />L&apos;équipe Borne de l&apos;Ouest</Text>
           <Hr />
-          <Text style={{ fontSize: 12, color: "#667" }}>
-            Intervention réalisée par {COMPANY.raisonSociale} — {COMPANY.telephone}
+          <Text style={{ fontSize: 11, color: "#667", lineHeight: "17px" }}>
+            {COMPANY.raisonSociale} · {COMPANY.adresse}, {COMPANY.cpVille} · {COMPANY.telephone} · {COMPANY.email}<br />
+            {COMPANY.qualifications}
           </Text>
         </Container>
       </Body>
@@ -56,7 +69,7 @@ function RapportDonneurEmail(data: Data) {
 export const template: TemplateEntry = {
   component: RapportDonneurEmail,
   displayName: "Rapport donneur d'ordre signé",
-  subject: (d) => `${d["modele_nom"]} signé — ${d["client_nom"] ?? ""}`,
+  subject: (d) => `Retour de travaux — ${d["client_nom"] ?? ""} — ${d["adresse"] ?? ""}`,
   previewData: {
     modele_nom: "Rapport d'intervention TotalEnergies",
     donneur_ordre: "TotalEnergies",

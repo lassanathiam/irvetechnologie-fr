@@ -1,3 +1,4 @@
+import { DonneurOrdreField } from "@/components/DonneurOrdreField";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { FileUp, Loader2, Trash2, X } from "lucide-react";
@@ -149,8 +150,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
           </label>
           <label className="text-sm">
             <span className="text-xs text-muted-foreground">Partenaire donneur d'ordre</span>
-            <input list="import-partenaires" value={partenaire} onChange={(e) => setPartenaire(e.target.value)} placeholder="Ex. ENSIO" className={champ} />
-            <datalist id="import-partenaires">{partenaires.map((p) => <option key={p} value={p} />)}</datalist>
+            <DonneurOrdreField value={partenaire} onChange={setPartenaire} className={champ} />
           </label>
         </div>
 
