@@ -131,6 +131,20 @@ async function valhalla(
 
 const coordsTrip = (t: ValhallaTrip) => t.legs.flatMap((l) => decodePolyline6(l.shape));
 
+/**
+ * Valhalla sous-estime fortement les vitesses sur routes nationales/départementales.
+ * On recalcule la durée du trajet sans péage avec OSRM en suivant le même tracé
+ * (8 points de passage), ce qui se rapproche davantage des GPS du marché.
+ */
+async function dureeOsrmSurTrace(coords: [number, number][]): Promise<number | null> {
+  if (coords.length < 2) return null;
+  const n = 8;
+  const pts = Array.from({ length: n }, (_, i) => coords[Math.round((i * (coords.length - 1)) / (n - 1))]!);
+  const json = await osrm(`/route/v1/driving/${pts.map(([lat, lng]) => lonlat({ lat, lng })).join(";")}?overview=false`);
+  const r = (json?.["routes"] as { duration: number }[] | undefined)?.[0];
+  return r ? Math.round(r.duration / 60) : null;
+}
+
 /** Itinéraire routier réel (avec et sans péage) entre le départ du technicien et un chantier. */
 export const itineraireDepuisBase = createServerFn({ method: "POST" })
   .inputValidator((d) =>
@@ -157,6 +171,9 @@ export const itineraireDepuisBase = createServerFn({ method: "POST" })
     const kmPeage = Math.round(
       avec.legs.reduce((s2, l) => s2 + l.maneuvers.reduce((s3, m) => s3 + (m.toll ? m.length : 0), 0), 0),
     );
+    const coordsSans = sans ? coordsTrip(sans) : [];
+    const minutesSansOsrm = sans ? await dureeOsrmSurTrace(coordsSans) : null;
+    const minutesSans = sans ? Math.min(Math.round(sans.summary.time / 60), minutesSansOsrm ?? Infinity) : 0;
     const diff = sans && Math.abs(sans.summary.time - avec.summary.time) > 60;
     return {
       km: Math.round(avec.summary.length * 10) / 10,
@@ -169,8 +186,8 @@ export const itineraireDepuisBase = createServerFn({ method: "POST" })
         kmPeage > 0 && sans && diff
           ? {
               km: Math.round(sans.summary.length * 10) / 10,
-              minutes: Math.round(sans.summary.time / 60),
-              coords: coordsTrip(sans),
+              minutes: minutesSans,
+              coords: coordsSans,
             }
           : null,
     };
