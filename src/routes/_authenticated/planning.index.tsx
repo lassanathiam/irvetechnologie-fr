@@ -2847,8 +2847,9 @@ function PlanningPage() {
             count={rows.length}
             open={!modeIntervention || mobileSections.agenda}
             onToggle={() => toggleMobileSection("agenda")}
+            className="order-3"
           />
-          <div className={`min-w-0 ${modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}`}>
+          <div className={`order-4 min-w-0 ${modeIntervention && !mobileSections.agenda ? "hidden md:block" : ""}`}>
             <AgendaMois
               events={rows.map((r) => ({
                 id: r.id,
@@ -2874,8 +2875,9 @@ function PlanningPage() {
             count={tourneeAff.etapes.length}
             open={!modeIntervention || mobileSections.trajet}
             onToggle={() => toggleMobileSection("trajet")}
+            className="order-1"
           />
-          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
+          <div className={`order-2 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.trajet ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-3 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" />
               {tourneeAff.etapes.length > 1 ? "Tournée du jour optimisée" : "Trajet du jour"}
@@ -2984,8 +2986,9 @@ function PlanningPage() {
             label="Programme des tournées"
             open={!modeIntervention || mobileSections.programme}
             onToggle={() => toggleMobileSection("programme")}
+            className="order-5"
           />
-          <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
+          <div className={`order-6 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.programme ? "hidden md:block" : ""}`}>
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] mb-1 flex items-center gap-2">
               <RouteIcon className="h-4 w-4 text-primary" /> Programme des tournées
             </h2>
@@ -3142,8 +3145,9 @@ function PlanningPage() {
               count={grappes.length}
               open={!modeIntervention || mobileSections.proches}
               onToggle={() => toggleMobileSection("proches")}
+              className="order-7"
             />
-            <div className={`w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
+            <div className={`order-8 w-full min-w-0 max-w-full overflow-hidden rounded-xl border border-border bg-card p-4 shadow-sm sm:p-5 ${modeIntervention && !mobileSections.proches ? "hidden md:block" : ""}`}>
               <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground mb-3">
                 Chantiers proches (moins de 25 km)
               </h2>
@@ -3177,17 +3181,19 @@ function MobileSectionTrigger({
   count,
   open,
   onToggle,
+  className = "",
 }: {
   label: string;
   count?: number;
   open: boolean;
   onToggle: () => void;
+  className?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onToggle}
-      className="mx-auto grid min-h-12 w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden"
+      className={`mx-auto grid min-h-12 w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)_auto_auto] items-center gap-3 rounded-xl border border-border bg-card px-4 text-left md:hidden ${className}`}
       aria-expanded={open}
     >
       <span className="min-w-0 truncate font-bold">{label}</span>
