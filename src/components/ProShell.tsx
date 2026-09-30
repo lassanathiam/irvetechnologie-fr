@@ -41,35 +41,50 @@ import { compterNotificationsNonLues } from "@/lib/notifications.functions";
 
 type LienPro = { to: string; label: string; icon: LucideIcon; externe?: boolean };
 
-const LINKS: LienPro[] = [
-  { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/notifications", label: "Notifications", icon: Bell },
-  { to: "/planning", label: "Planning", icon: CalendarClock },
-  { to: "/demandes", label: "Demandes", icon: Inbox },
-  { to: "/devis", label: "Devis", icon: FileText },
-  { to: "/attachements", label: "Attachements travaux", icon: ClipboardList },
-  { to: "/facturation", label: "À facturer", icon: Euro },
-  { to: "/stock", label: "Stock matériel", icon: Package },
-  { to: "/factures", label: "Mes factures", icon: Receipt },
-  { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
-  { to: "/partenaires", label: "Partenaires", icon: Handshake },
-  { to: "/tarifs-site", label: "Tarifs du site", icon: Euro },
-  { to: "/bornes-catalogue", label: "Catalogue bornes", icon: Zap },
-  { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
-  { to: "/documents", label: "Documents", icon: FolderLock },
-  { to: "/realisations", label: "Photos", icon: Images },
-];
+type NavigationGroup = { label: string; links: LienPro[] };
 
-const DASHBOARD_LINKS: LienPro[] = [
-  { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
-  { to: "/devis", label: "Devis", icon: FileText },
-  { to: "/factures", label: "Factures", icon: Receipt },
-  { to: "/partenaires", label: "Partenaires", icon: Users },
-  { to: "/planning", label: "Chantiers", icon: Building2 },
-  { to: "/bornes-catalogue", label: "Bornes & installations", icon: Zap },
-  { to: "/planning", label: "Planning", icon: CalendarClock },
-  { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
-  { to: "/tarifs-site", label: "Paramètres", icon: Settings },
+const NAVIGATION_GROUPS: NavigationGroup[] = [
+  {
+    label: "Pilotage",
+    links: [
+      { to: "/espace", label: "Tableau de bord", icon: LayoutDashboard },
+      { to: "/planning", label: "Planning", icon: CalendarClock },
+      { to: "/notifications", label: "Notifications", icon: Bell },
+    ],
+  },
+  {
+    label: "Commercial & Finance",
+    links: [
+      { to: "/demandes", label: "Demandes", icon: Inbox },
+      { to: "/devis", label: "Devis", icon: FileText },
+      { to: "/facturation", label: "À facturer", icon: Euro },
+      { to: "/factures", label: "Mes factures", icon: Receipt },
+    ],
+  },
+  {
+    label: "Opérations",
+    links: [
+      { to: "/attachements", label: "Attachements", icon: ClipboardList },
+      { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
+      { to: "/stock", label: "Stock matériel", icon: Package },
+      { to: "/realisations", label: "Photos", icon: Images },
+    ],
+  },
+  {
+    label: "Ressources & Outils",
+    links: [
+      { to: "/bornes-catalogue", label: "Catalogue bornes", icon: Zap },
+      { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
+      { to: "/documents", label: "Documents", icon: FolderLock },
+      { to: "/partenaires", label: "Partenaires", icon: Handshake },
+    ],
+  },
+  {
+    label: "Configuration",
+    links: [
+      { to: "/tarifs-site", label: "Tarifs du site", icon: Settings },
+    ],
+  },
 ];
 
 export function ProShell({
@@ -120,41 +135,52 @@ export function ProShell({
               <span className="min-w-0 leading-tight">
                 <span className="block truncate font-display text-sm font-bold text-sidebar-title">Borne de l’Ouest</span>
                 <span className="block truncate text-[9px] font-bold uppercase text-sidebar-accent">IRVE Technologie · Pro</span>
-              </span>
-            )}
-          </Link>
-          <Button
-            type="button"
-            variant="ghost"
-            size="icon"
-            className="text-sidebar-foreground hover:bg-sidebar-hover hover:text-sidebar-title md:hidden"
-            aria-label="Fermer le menu"
-            onClick={() => setMenuOuvert(false)}
-          >
-            <X />
-          </Button>
-        </div>
-
-        <nav className="flex-1 space-y-1 overflow-y-auto px-3 py-4" aria-label="Navigation de l’espace professionnel">
-          {(dashboardReference ? DASHBOARD_LINKS : LINKS).map(({ to, label, icon: Icon, externe }) =>
-            externe ? (
-              <a
-                key={`${to}-${label}`}
-                href={to}
-                target="_blank"
-                rel="noreferrer"
-                title={reduit ? label : undefined}
-                className={`pro-nav-link flex min-h-10 items-center gap-3 rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : ""}`}
-              >
-                <Icon className="h-5 w-5 shrink-0" />
-                {!reduit && <span className="flex-1">{label}</span>}
-                {!reduit && <span className="text-[10px] text-sidebar-muted">↗</span>}
-              </a>
-            ) : (
-              <Link
-                key={`${to}-${label}`}
-                to={to}
-                onClick={() => setMenuOuvert(false)}
+        <nav className="flex-1 space-y-6 overflow-y-auto px-3 py-4" aria-label="Navigation de l’espace professionnel">
+          {NAVIGATION_GROUPS.map((group) => (
+            <div key={group.label} className="space-y-1">
+              {!reduit && (
+                <h3 className="px-3 text-[10px] font-bold uppercase tracking-wider text-sidebar-muted/80">
+                  {group.label}
+                </h3>
+              )}
+              <div className="space-y-1">
+                {group.links.map(({ to, label, icon: Icon, externe }) =>
+                  externe ? (
+                    <a
+                      key={`${to}-${label}`}
+                      href={to}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={reduit ? label : undefined}
+                      className={`pro-nav-link flex min-h-10 items-center gap-3 rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : ""}`}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      {!reduit && <span className="flex-1">{label}</span>}
+                      {!reduit && <span className="text-[10px] text-sidebar-muted">↗</span>}
+                    </a>
+                  ) : (
+                    <Link
+                      key={`${to}-${label}`}
+                      to={to}
+                      onClick={() => setMenuOuvert(false)}
+                      title={reduit ? label : undefined}
+                      className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
+                      activeProps={{ className: "pro-nav-active" }}
+                    >
+                      <Icon className="h-5 w-5 shrink-0" />
+                      {!reduit && <span>{label}</span>}
+                      {to === "/notifications" && nbNonLues > 0 && (
+                        <span className="ml-auto inline-flex min-w-5 items-center justify-center rounded-full bg-sidebar-accent px-1.5 text-[11px] font-bold text-sidebar">
+                          {nbNonLues > 99 ? "99+" : nbNonLues}
+                        </span>
+                      )}
+                    </Link>
+                  ),
+                )}
+              </div>
+            </div>
+          ))}
+        </nav>
                 title={reduit ? label : undefined}
                 className={`pro-nav-link flex min-h-10 items-center rounded-lg border border-transparent px-3 text-[13px] font-medium text-sidebar-foreground transition-colors hover:bg-sidebar-hover hover:text-sidebar-title ${reduit ? "justify-center" : "gap-3"}`}
                 activeProps={{ className: "pro-nav-active" }}
