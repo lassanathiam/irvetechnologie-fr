@@ -251,8 +251,8 @@ function DevisPage() {
           <Card
             step="01"
             title="Client"
-            open={openSection === "client"}
-            onToggle={() => setOpenSection((v) => (v === "client" ? null : "client"))}
+            open={openSection.has("client")}
+            onToggle={() => toggleSection("client")}
           >
             <div className="mb-4"><ClientPicker onPick={(c) => setClient({ ...client, client_nom: c.nom, client_email: c.email ?? "", client_telephone: c.telephone ?? "", client_adresse: c.adresse ?? "", client_cp_ville: c.cp_ville ?? "" })} /></div>
             <div className="grid sm:grid-cols-2 gap-4">
@@ -268,8 +268,8 @@ function DevisPage() {
           <Card
             step="02"
             title="Dates & validité"
-            open={openSection === "dates"}
-            onToggle={() => setOpenSection((v) => (v === "dates" ? null : "dates"))}
+            open={openSection.has("dates")}
+            onToggle={() => toggleSection("dates")}
           >
             <div className="grid sm:grid-cols-2 gap-4">
               <Field
@@ -307,8 +307,8 @@ function DevisPage() {
           <Card
             step="03"
             title="Prestations"
-            open={openSection === "prestations"}
-            onToggle={() => setOpenSection((v) => (v === "prestations" ? null : "prestations"))}
+            open={openSection.has("prestations")}
+            onToggle={() => toggleSection("prestations")}
           >
             <div className="grid sm:grid-cols-[1fr_auto] gap-3 items-end">
               <label className="block">
@@ -450,8 +450,8 @@ function DevisPage() {
           <Card
             step="04"
             title="Remise, acompte & conditions"
-            open={openSection === "conditions"}
-            onToggle={() => setOpenSection((v) => (v === "conditions" ? null : "conditions"))}
+            open={openSection.has("conditions")}
+            onToggle={() => toggleSection("conditions")}
           >
             <div className="grid sm:grid-cols-2 gap-4">
               <label className="block">
