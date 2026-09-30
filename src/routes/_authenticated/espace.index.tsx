@@ -115,14 +115,14 @@ function EspacePage() {
       <div className="dashboard-reference -m-3 min-h-[calc(100vh-4rem)] bg-dashboard-canvas sm:-m-5 lg:-m-6">
         <DashboardHeader />
 
-        <div className="mx-auto max-w-[1500px] space-y-5 px-3 py-4 sm:px-5 sm:py-6 lg:px-7">
+        <div className="mx-auto max-w-[1440px] space-y-6 px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8">
           {q.isLoading ? (
             <div className="flex min-h-72 items-center justify-center">
               <Loader2 className="h-7 w-7 animate-spin text-dashboard-blue" />
             </div>
           ) : (
             <>
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 <MetricCard
                   tone="green"
                   icon={Euro}
@@ -157,7 +157,7 @@ function EspacePage() {
                 />
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.65fr)_minmax(280px,.7fr)]">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.7fr)_minmax(280px,.72fr)]">
                 <ActivityChart data={activite} />
                 <QuickOverview
                   devis={devisActifs.length}
@@ -167,7 +167,7 @@ function EspacePage() {
                 />
               </div>
 
-              <div className="grid gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,.9fr)]">
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1.18fr)_minmax(0,.82fr)]">
                 <NextAppointments rendezvous={aVenir} />
                 <RecentQuotes devis={devisActifs.slice(0, 5)} />
               </div>
@@ -188,18 +188,18 @@ function EspacePage() {
 
 function DashboardHeader() {
   return (
-    <header className="bg-dashboard-navy text-dashboard-on-navy">
-      <div className="mx-auto flex max-w-[1500px] flex-col gap-5 px-4 py-7 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
+    <header className="bg-dashboard-navy text-dashboard-on-navy shadow-sm">
+      <div className="mx-auto flex min-h-40 max-w-[1440px] flex-col justify-center gap-6 px-4 py-8 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div>
-          <p className="mb-1 text-sm font-semibold text-dashboard-green">IRVE Technologie</p>
-          <h1 className="text-2xl font-bold sm:text-3xl">Tableau de bord</h1>
-          <p className="mt-1 text-sm text-dashboard-on-navy-muted">Votre activité en un coup d’œil</p>
+          <p className="mb-2 text-sm font-bold text-dashboard-green">IRVE Technologie</p>
+          <h1 className="text-3xl font-extrabold sm:text-4xl">Tableau de bord</h1>
+          <p className="mt-2 text-sm text-dashboard-on-navy-muted sm:text-base">Votre activité en un coup d’œil</p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button asChild className="min-h-11 bg-dashboard-green px-5 font-bold text-dashboard-on-green hover:bg-dashboard-green/90">
+        <div className="flex flex-wrap gap-3">
+          <Button asChild className="min-h-12 bg-dashboard-green px-6 font-bold text-dashboard-on-green shadow-sm hover:bg-dashboard-green/90">
             <Link to="/devis"><FilePlus2 /> Nouveau devis</Link>
           </Button>
-          <Button asChild variant="outline" className="min-h-11 border-dashboard-navy-line bg-dashboard-navy-raised text-dashboard-on-navy hover:bg-dashboard-navy-raised/80 hover:text-dashboard-on-navy">
+          <Button asChild variant="outline" className="min-h-12 border-dashboard-navy-line bg-dashboard-navy-raised px-6 text-dashboard-on-navy hover:bg-dashboard-navy-raised/80 hover:text-dashboard-on-navy">
             <Link to="/planning"><CalendarDays /> Nouveau rendez-vous</Link>
           </Button>
         </div>
@@ -225,17 +225,17 @@ function MetricCard({ tone, icon: Icon, label, value, detail, to }: {
 }) {
   return (
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    <Link to={to as any} className={`group block min-w-0 rounded-md border-l-4 bg-card p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${metricClasses[tone]}`}>
-      <div className="flex items-start justify-between gap-3">
+    <Link to={to as any} className={`group block min-w-0 rounded-md border-l-[5px] bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md ${metricClasses[tone]}`}>
+      <div className="flex items-start justify-between gap-2">
         <div className="min-w-0">
-          <p className="truncate text-xs font-semibold text-dashboard-copy-muted">{label}</p>
-          <p className="mt-2 truncate text-2xl font-bold text-dashboard-copy sm:text-[1.65rem]">{value}</p>
+          <p className="text-sm font-semibold text-dashboard-copy-muted">{label}</p>
+          <p className="mt-2 break-words text-[1.7rem] font-extrabold leading-none text-dashboard-copy 2xl:text-3xl">{value}</p>
         </div>
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-md bg-current/10">
-          <Icon className="h-5 w-5" />
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md bg-current/10">
+          <Icon className="h-5 w-5 stroke-[2.25]" />
         </span>
       </div>
-      <p className="mt-3 truncate text-xs text-dashboard-copy-muted">{detail}</p>
+      <p className="mt-4 text-xs leading-relaxed text-dashboard-copy-muted">{detail}</p>
     </Link>
   );
 }
@@ -247,7 +247,7 @@ function ActivityChart({ data }: { data: Array<{ mois: string; devis: number; fa
         <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-dashboard-blue" />Devis</span>
         <span className="flex items-center gap-2"><i className="h-2.5 w-2.5 rounded-full bg-dashboard-green" />Factures</span>
       </div>
-      <div className="h-64 w-full min-w-0 sm:h-72">
+      <div className="h-72 w-full min-w-0 sm:h-80">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
             <defs>
@@ -260,8 +260,8 @@ function ActivityChart({ data }: { data: Array<{ mois: string; devis: number; fa
             <XAxis dataKey="mois" axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fill: "var(--dashboard-copy-muted)", fontSize: 11 }} tickFormatter={(value) => `${Math.round(Number(value) / 1000)}k`} />
             <Tooltip formatter={(value) => euro(Number(value))} contentStyle={{ borderRadius: 6, border: "1px solid var(--dashboard-rule)" }} />
-            <Area type="monotone" dataKey="devis" stroke="var(--dashboard-blue)" strokeWidth={3} fill="url(#devisFill)" />
-            <Area type="monotone" dataKey="factures" stroke="var(--dashboard-green)" strokeWidth={3} fill="transparent" />
+            <Area isAnimationActive={false} type="monotone" dataKey="devis" stroke="var(--dashboard-blue)" strokeWidth={3} fill="url(#devisFill)" />
+            <Area isAnimationActive={false} type="monotone" dataKey="factures" stroke="var(--dashboard-green)" strokeWidth={3} fill="transparent" />
           </AreaChart>
         </ResponsiveContainer>
       </div>
@@ -280,8 +280,8 @@ function QuickOverview({ devis, factures, rendezvous, termines }: { devis: numbe
     <DashboardPanel title="Aperçu rapide" icon={Clock3}>
       <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-1">
         {items.map(({ icon: Icon, label, value, tone }) => (
-          <div key={label} className="flex items-center gap-3 rounded-md border border-dashboard-rule bg-dashboard-subtle p-3">
-            <span className={`flex h-9 w-9 items-center justify-center rounded-md ${tone}`}><Icon className="h-4 w-4" /></span>
+          <div key={label} className="flex min-h-14 items-center gap-3 rounded-md border border-dashboard-rule bg-dashboard-subtle p-3">
+            <span className={`flex h-10 w-10 items-center justify-center rounded-md ${tone}`}><Icon className="h-4 w-4" /></span>
             <span className="min-w-0 flex-1 text-sm font-medium text-dashboard-copy">{label}</span>
             <strong className="text-lg text-dashboard-copy">{value}</strong>
           </div>
@@ -375,9 +375,9 @@ function InvoiceTracking({ invoices, paid, onPaid, pendingId }: { invoices: Fact
 
 function DashboardPanel({ title, icon: Icon, action, children }: { title: string; icon: typeof Euro; action?: { to: string; label: string }; children: React.ReactNode }) {
   return (
-    <section className="min-w-0 rounded-md border border-dashboard-rule bg-card p-4 shadow-sm sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <h2 className="flex min-w-0 items-center gap-2 text-base font-bold text-dashboard-copy"><Icon className="h-4 w-4 shrink-0 text-dashboard-blue" />{title}</h2>
+    <section className="min-w-0 rounded-md border border-dashboard-rule bg-card p-5 shadow-sm sm:p-6">
+      <div className="mb-5 flex items-center justify-between gap-3">
+        <h2 className="flex min-w-0 items-center gap-2 text-lg font-bold text-dashboard-copy"><Icon className="h-5 w-5 shrink-0 text-dashboard-blue" />{title}</h2>
         {action && <Link to={action.to} className="flex shrink-0 items-center gap-1 text-xs font-semibold text-dashboard-blue hover:underline">{action.label}<ArrowRight className="h-3.5 w-3.5" /></Link>}
       </div>
       {children}
