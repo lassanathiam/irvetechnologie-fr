@@ -57,6 +57,7 @@ import {
   type DossierRendezVousInput,
   type RendezVousInput,
 } from "@/lib/planning.functions";
+import { RETOUR_CATEGORIES_LABELS } from "@/lib/planning.functions";
 
 import {
   deleteVoirie,
@@ -2012,8 +2013,11 @@ function PlanningPage() {
                                 </p>
                                 <div className="mt-2 flex gap-2 overflow-x-auto">
                                   {photosDossier.data!.map((p) => {
-                                    const cat = (p.categorie ?? "autre") as keyof typeof PHOTO_CATEGORIES_LABELS;
-                                    const libelle = PHOTO_CATEGORIES_LABELS[cat] ?? "Autre";
+                                    const cat = p.categorie ?? "autre";
+                                    const libelle =
+                                      RETOUR_CATEGORIES_LABELS[cat] ??
+                                      PHOTO_CATEGORIES_LABELS[cat as keyof typeof PHOTO_CATEGORIES_LABELS] ??
+                                      "Autre";
                                     return p.url ? (
                                       <a
                                         key={p.id}
