@@ -73,7 +73,6 @@ export default function RetourTravauxSheet({
     return p;
   });
   const parCategorie = (cat: string) => liste.filter((p) => p.categorie === cat);
-  const faites = nbRetourFait(liste.map((p) => p.categorie), obligatoires);
 
   const supplement = Math.max(
     0,
