@@ -1029,10 +1029,10 @@ function PlanningPage() {
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucune intervention prévue aujourd’hui</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
         )}
 
-        {modeIntervention && moi && chantiersAVenir.length > 0 && (
+        {modeIntervention && chantiersAVenir.length > 0 && (
           <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground">
-              Chantiers affectés à {moi.nom.split(" ")[0]} ({chantiersAVenir.length})
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({chantiersAVenir.length})
             </p>
             <ul className="mt-2 grid gap-2">
               {chantiersAVenir.map((r) => {
