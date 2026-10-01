@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -46,7 +47,7 @@ function RapportChantierPageInner() {
   const qc = useQueryClient();
   const getFn = useServerFn(getRapportChantier);
   const saveFn = useServerFn(enregistrerRapportRempli);
-  const sendFn = useServerFn(envoyerRapportRempli);
+  const sendFn = useEnvoiConfirme(envoyerRapportRempli, "Confirmer l'envoi du rapport de travaux ?");
   const { data, isLoading, error } = useQuery({
     queryKey: ["rapport-chantier", rdvId],
     queryFn: () => getFn({ data: { rendezvous_id: rdvId } }),

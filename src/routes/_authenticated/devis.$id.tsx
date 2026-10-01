@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -92,7 +93,7 @@ function DevisDetail() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const fetchDevis = useServerFn(getDevis);
-  const sendFn = useServerFn(envoyerDevis);
+  const sendFn = useEnvoiConfirme(envoyerDevis, "Confirmer l'envoi du devis ?");
   const statutFn = useServerFn(updateStatutDevis);
   const updateFn = useServerFn(updateDevis);
   const convertFn = useServerFn(convertirEnFacture);

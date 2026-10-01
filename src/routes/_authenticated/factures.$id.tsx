@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -40,7 +41,7 @@ function FactureDetail() {
   const { id } = Route.useParams();
   const qc = useQueryClient();
   const fetchFacture = useServerFn(getFacture);
-  const sendFn = useServerFn(envoyerFacture);
+  const sendFn = useEnvoiConfirme(envoyerFacture, "Confirmer l'envoi de la facture ?");
   const statutFn = useServerFn(updateFactureStatut);
   const datesFn = useServerFn(updateFactureDates);
   const refsFn = useServerFn(updateFactureReferences);

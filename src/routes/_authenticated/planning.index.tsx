@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -437,7 +438,7 @@ function PlanningPage() {
     mutationFn: (id: string) => deleteVoirieFn({ data: { id } }),
     onSuccess: refresh,
   });
-  const propositionFn = useServerFn(envoyerPropositionRdv);
+  const propositionFn = useEnvoiConfirme(envoyerPropositionRdv, "Confirmer l'envoi de la proposition de rendez-vous ?");
   const proposerRdv = useMutation({
     mutationFn: (p: { id: string; relance: boolean }) => propositionFn({ data: p }),
     onSuccess: (r) => {
@@ -474,7 +475,7 @@ function PlanningPage() {
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Affectation impossible."),
   });
   const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
-  const terminerFn = useServerFn(terminerChantier);
+  const terminerFn = useEnvoiConfirme(terminerChantier, "Confirmez-vous que les travaux sont terminés ? Le retour de travaux sera envoyé par email.");
   const terminer = useMutation({
     mutationFn: (p: { id: string; notifier: boolean }) => terminerFn({ data: p }),
     onSuccess: refresh,

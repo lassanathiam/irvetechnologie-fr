@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -38,7 +39,7 @@ export function EspaceSousTraitant({
   const qc = useQueryClient();
   const saveBase = useServerFn(definirBaseSousTraitant);
   const demarrer = useServerFn(demarrerMissionSousTraitant);
-  const terminer = useServerFn(terminerMissionSousTraitant);
+  const terminer = useEnvoiConfirme(terminerMissionSousTraitant, "Confirmez-vous que les travaux sont terminés ? Le retour sera envoyé.");
   const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
   const chargerComptes = useServerFn(comptePhotosPartenaire);
   const photos = useQuery({

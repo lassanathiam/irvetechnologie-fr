@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -325,7 +326,7 @@ function EspacePartenaire({
   const envoyerPhoto = useServerFn(uploadPhotoPartenaire);
   const chargerComptes = useServerFn(comptePhotosPartenaire);
   const majMateriel = useServerFn(majMaterielPartenaire);
-  const proposerMontant = useServerFn(proposerMontantPartenaire);
+  const proposerMontant = useEnvoiConfirme(proposerMontantPartenaire, "Confirmer l'envoi de la proposition de montant ?");
   const deconnecter = useServerFn(deconnexionPartenaire);
 
   const espace = useQuery({
