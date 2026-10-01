@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -23,7 +24,7 @@ const diffDays = (from: string, to: string) => { const a = new Date(`${from}T00:
 
 function AttachementDetail() {
   const { id } = Route.useParams(); const qc = useQueryClient(); const navigate = useNavigate();
-  const getFn = useServerFn(getAttachement); const sendFn = useServerFn(envoyerAttachement); const convertFn = useServerFn(convertirAttachementEnFacture);
+  const getFn = useServerFn(getAttachement); const sendFn = useEnvoiConfirme(envoyerAttachement, "Confirmer l'envoi de l'attachement ?"); const convertFn = useServerFn(convertirAttachementEnFacture);
   const updateFn = useServerFn(updateAttachement); const deleteFn = useServerFn(supprimerAttachement); const traiterFn = useServerFn(traiterPropositionAttachement);
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);

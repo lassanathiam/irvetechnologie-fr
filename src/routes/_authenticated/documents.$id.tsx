@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -64,7 +65,7 @@ function DocumentPage() {
   const lire = useServerFn(getDocument);
   const sauver = useServerFn(enregistrerPreparation);
   const signer = useServerFn(signerIrve);
-  const envoyer = useServerFn(envoyerPourSignature);
+  const envoyer = useEnvoiConfirme(envoyerPourSignature, "Confirmer l'envoi du document pour signature ?");
   const remplacer = useServerFn(remplacerFichierDocument);
   const annuler = useServerFn(annulerSignature);
   const [preparationPdf, setPreparationPdf] = useState(false);

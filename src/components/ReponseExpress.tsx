@@ -1,3 +1,4 @@
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -82,7 +83,7 @@ function ReponseExpressPanel({
   const qc = useQueryClient();
   const chargerConfig = useServerFn(getReponseExpressConfig);
   const enregistrerConfig = useServerFn(updateReponseExpressConfig);
-  const envoyer = useServerFn(envoyerReponseExpress);
+  const envoyer = useEnvoiConfirme(envoyerReponseExpress, "Confirmer l'envoi de la réponse au client ?");
 
   const configQuery = useQuery({
     queryKey: ["reponse-express-config"],
