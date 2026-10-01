@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { ArrowRight, ChevronLeft, ChevronRight, MoveHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { borneImage, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
+import { borneImage, surErreurImageBorne, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
 
 /**
  * Carrousel des bornes : défilement automatique (diaporama) + glisser-déplacer
@@ -140,7 +140,7 @@ export function BornesCarrousel() {
             >
               <div className="flex h-24 w-24 items-center justify-center rounded-lg border border-border bg-slate-100 p-2">
                 {borneImage(p) && (
-                  <img src={borneImage(p)!} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} draggable={false} className="h-full w-full object-contain" />
+                  <img src={borneImage(p)!} onError={surErreurImageBorne(p)} alt={`Borne ${p.nom}`} loading="lazy" width={96} height={96} draggable={false} className="h-full w-full object-contain" />
                 )}
               </div>
               <span className="text-center text-sm font-semibold text-foreground">{p.nom}</span>

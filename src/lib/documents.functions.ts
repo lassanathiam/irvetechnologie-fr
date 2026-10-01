@@ -373,9 +373,8 @@ export const signerDocumentPublic = createServerFn({ method: "POST" })
 export const refuserDocumentPublic = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => tokenSchema.extend({ motif: z.string().trim().max(500) }).parse(d))
   .handler(async ({ data }) => {
-    const sb = await admin();
-    const { data: doc } = await sb.from("documents").select("id, nom, statut").eq("public_token", data.token).maybeSingle();
-    if (!doc || doc.statut === "signe") throw new Error("Action impossible.");
+    const { sb, doc } = await trouverParLien(data.token);
+    if (!doc || doc.statut === "signe" || doc.statut === "brouillon") throw new Error("Action impossible.");
     await sb.from("documents").update({ statut: "refuse", refused_at: new Date().toISOString(), refus_motif: data.motif || null }).eq("id", doc.id);
     const { creerNotification } = await import("./notifications.server");
     await creerNotification(sb, {

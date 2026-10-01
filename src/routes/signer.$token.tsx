@@ -118,8 +118,14 @@ function SignerPage() {
               <Button variant="ghost" className="w-full" onClick={telecharger}><Download className="h-4 w-4" /> Télécharger</Button>
               <Button type="button" variant="ghost" size="sm" className="w-full text-xs text-slate-500 underline" onClick={async () => {
                 const motif = prompt("Pourquoi refusez-vous ? (facultatif)") ?? "";
-                await refuser({ data: { token, motif } });
-                refetch();
+                if (!confirm("Confirmer le refus de signature ?")) return;
+                setMsg(null);
+                try {
+                  await refuser({ data: { token, motif } });
+                  await refetch();
+                } catch (e) {
+                  setMsg(e instanceof Error ? e.message : "Le refus n'a pas pu être enregistré.");
+                }
               }}>Refuser de signer</Button>
               <p className="flex items-start gap-2 border-t border-slate-200 pt-3 text-[11px] text-slate-500"><ShieldCheck className="h-4 w-4 shrink-0" /> La date et les informations de validation sont conservées avec le document signé.</p>
             </div>

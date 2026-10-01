@@ -4,7 +4,7 @@ import { SiteNav } from "@/components/SiteNav";
 import { SiteFooter } from "@/components/SiteFooter";
 import { useQuery } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { borneImage, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
+import { borneImage, surErreurImageBorne, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
 
 export const Route = createFileRoute("/bornes")({
   head: () => ({
@@ -61,6 +61,7 @@ function Bornes() {
                 {borneImage(b) && (
                   <img
                     src={borneImage(b)!}
+                    onError={surErreurImageBorne(b)}
                     alt={`Borne ${b.nom}`}
                     loading="lazy"
                     width={128}

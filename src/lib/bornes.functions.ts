@@ -126,3 +126,22 @@ export function borneImage(borne: Borne): string | null {
   if (url) return url;
   return BORNES_CATALOGUE.find((b) => b.id === borne.slug)?.img ?? null;
 }
+
+/** Image statique d'origine, utilisée si la photo en ligne est introuvable. */
+export function borneImageSecours(borne: Borne): string | null {
+  return BORNES_CATALOGUE.find((b) => b.id === borne.slug)?.img ?? null;
+}
+
+/** onError d'une <img> de borne : bascule une seule fois sur l'image statique. */
+export function surErreurImageBorne(borne: Borne) {
+  return (e: { currentTarget: HTMLImageElement }) => {
+    const img = e.currentTarget;
+    const secours = borneImageSecours(borne);
+    if (secours && img.dataset.secours !== "1") {
+      img.dataset.secours = "1";
+      img.src = secours;
+    } else {
+      img.style.visibility = "hidden";
+    }
+  };
+}
