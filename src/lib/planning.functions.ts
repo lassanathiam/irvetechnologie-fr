@@ -1210,6 +1210,76 @@ export const terminerChantier = createServerFn({ method: "POST" })
     return { ok: true, notifie, duree_min: dureeMin };
   });
 
+/**
+ * Renvoie le retour de travaux d'un chantier terminé au donneur d'ordre
+ * (email principal + copie de la fiche partenaire) et au client, sans modifier le chantier.
+ */
+export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error: readErr } = await context.supabase
+      .from("rendezvous")
+      .select(
+        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, termine_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage",
+      )
+      .eq("id", data.id)
+      .single();
+    if (readErr) throw new Error(readErr.message);
+    if (!rdv.termine_at) throw new Error("Ce chantier n'est pas encore terminé.");
+
+    const { data: photosRows } = await context.supabase
+      .from("rendezvous_photos")
+      .select("categorie, path")
+      .eq("rendezvous_id", data.id);
+
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { COMPANY } = await import("@/lib/company");
+    let part: { email: string | null; email_copie: string | null } | null = null;
+    if (rdv.partenaire_id) {
+      const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").eq("id", rdv.partenaire_id).maybeSingle();
+      part = p;
+    } else if (rdv.partenaire?.trim()) {
+      const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").ilike("nom", rdv.partenaire.trim()).limit(1).maybeSingle();
+      part = p;
+    }
+    const vus = new Set<string>();
+    const destinataires = [part?.email, part?.email_copie, rdv.client_email]
+      .map((e) => e?.trim())
+      .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
+    if (!destinataires.length) destinataires.push(COMPANY.email);
+
+    const fin = rdv.termine_at ? new Date(rdv.termine_at) : new Date();
+    const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
+    const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
+    const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
+    const inclus = Number(rdv.metrage_inclus_m ?? 5);
+    const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
+
+    const envoyes: string[] = [];
+    for (const destinataire of destinataires) {
+      const res = await sendTemplateEmail("chantier-termine", destinataire, {
+        templateData: {
+          client_nom: rdv.client_nom,
+          adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
+          objet: rdv.designation || rdv.titre,
+          partenaire: rdv.partenaire,
+          termine_at: fin.toISOString(),
+          duree_min: dureeMin,
+          metrage_inclus_m: inclus,
+          metrage_reel_m: reel,
+          supplement_m: reel == null ? null : Math.max(0, reel - inclus),
+          observations: rdv.retour_observations,
+          delestage: rdv.retour_delestage,
+          zip_url: zipUrl,
+        },
+        idempotencyKey: `chantier-termine-${data.id}-${destinataire.toLowerCase()}`,
+      });
+      if (res.sent) envoyes.push(destinataire);
+    }
+    return { ok: true, envoyes };
+  });
+
 /** Applique un programme de tournées : enregistre les nouvelles dates de passage. */
 export const appliquerProgramme = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
