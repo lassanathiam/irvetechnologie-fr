@@ -50,7 +50,6 @@ export default function RetourTravauxSheet({
   const [enCours, setEnCours] = useState<string | null>(null);
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
-  const obligatoires = categoriesRetourObligatoires(rdv.type, rdv.partenaire);
   const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
 
   const photos = useQuery({
