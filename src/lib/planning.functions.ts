@@ -1216,7 +1216,9 @@ export const terminerChantier = createServerFn({ method: "POST" })
  */
 export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .inputValidator((raw: { id: string; destinataire?: string }) =>
+    z.object({ id: z.string().uuid(), destinataire: z.string().email().optional() }).parse(raw),
+  )
   .handler(async ({ data, context }) => {
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
@@ -1244,9 +1246,11 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
       part = p;
     }
     const vus = new Set<string>();
-    const destinataires = [part?.email, part?.email_copie, rdv.client_email]
-      .map((e) => e?.trim())
-      .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
+    const destinataires = data.destinataire
+      ? [data.destinataire.trim()]
+      : [part?.email, part?.email_copie, rdv.client_email]
+          .map((e) => e?.trim())
+          .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
     if (!destinataires.length) destinataires.push(COMPANY.email);
 
     const fin = rdv.termine_at ? new Date(rdv.termine_at) : new Date();
