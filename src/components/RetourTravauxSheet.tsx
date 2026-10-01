@@ -140,7 +140,7 @@ export default function RetourTravauxSheet({
     onError: (e) => toast.error(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
 
-  function ligne(cat: string, obligatoire: boolean) {
+  function ligne(cat: string) {
     const items = parCategorie(cat);
     return (
       <div key={cat} className="rounded-lg border border-border p-3">
@@ -217,7 +217,7 @@ export default function RetourTravauxSheet({
               {rdv.adresse ? ` · ${rdv.adresse}` : ""}
             </p>
             <p className="mt-1 text-xs font-bold text-primary">
-              Photos essentielles : {faites}/{obligatoires.length}
+              Photos enregistrées : {liste.length}
             </p>
           </div>
           <button
@@ -246,14 +246,14 @@ export default function RetourTravauxSheet({
         </div>
 
         <div className="grid gap-2">
-          {obligatoires.map((c) => ligne(c, true))}
+          {obligatoires.map((c) => ligne(c))}
         </div>
 
         <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Photos complémentaires
         </p>
         <div className="mt-2 grid gap-2">
-          {optionnelles.map((c) => ligne(c, false))}
+          {optionnelles.map((c) => ligne(c))}
         </div>
 
         <div className="mt-4 rounded-lg border border-border p-3">
