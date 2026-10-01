@@ -587,6 +587,21 @@ function PlanningPage() {
   }, [toutes, moiId]);
   const missionTerrain =
     chantiersDuJour.find((r) => r.id === active) ?? enCours.filter(estPourMoi)[0] ?? chantiersDuJour[0] ?? null;
+  /** Tous les chantiers affectés à l'intervenant choisi, aujourd'hui inclus, triés par date. */
+  const chantiersAVenir = useMemo(() => {
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes
+      .filter(
+        (r) =>
+          !estArchiveLogique(r) &&
+          r.statut !== "annule" &&
+          estPourMoi(r) &&
+          new Date(r.date_debut).getTime() >= debutJour.getTime(),
+      )
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toutes, moiId]);
 
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
