@@ -9,82 +9,61 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as InstallerRouteImport } from './routes/installer'
-import { Route as DemandeRouteImport } from './routes/demande'
-import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
-import { Route as BornesRouteImport } from './routes/bornes'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AProposRouteImport } from './routes/a-propos'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as SignerTokenRouteImport } from './routes/signer.$token'
-import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
-import { Route as RapportDonneurTokenRouteImport } from './routes/rapport-donneur.$token'
-import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
-import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
-import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
-import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
-import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AProposRouteImport } from './routes/a-propos'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BornesRouteImport } from './routes/bornes'
+import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
+import { Route as DemandeRouteImport } from './routes/demande'
+import { Route as InstallerRouteImport } from './routes/installer'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
-import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock.index'
-import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
-import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
-import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
-import { Route as AuthenticatedPartenairesIndexRouteImport } from './routes/_authenticated/partenaires.index'
-import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications.index'
-import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
-import { Route as AuthenticatedFacturationIndexRouteImport } from './routes/_authenticated/facturation.index'
-import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
-import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents.index'
-import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
-import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
+import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
+import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
+import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
+import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
+import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
+import { Route as RapportDonneurTokenRouteImport } from './routes/rapport-donneur.$token'
+import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
+import { Route as SignerTokenRouteImport } from './routes/signer.$token'
 import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
-import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_authenticated/rapports.modeles'
-import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
-import { Route as AuthenticatedFacturesNouvelleRouteImport } from './routes/_authenticated/factures.nouvelle'
-import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
-import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
-import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents.$id'
-import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
-import { Route as AuthenticatedChantierRapportRdvIdRouteImport } from './routes/_authenticated/chantier-rapport.$rdvId'
-import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
-import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
+import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
+import { Route as AuthenticatedChantierRapportRdvIdRouteImport } from './routes/_authenticated/chantier-rapport.$rdvId'
+import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
+import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
+import { Route as AuthenticatedDevisIdRouteImport } from './routes/_authenticated/devis.$id'
+import { Route as AuthenticatedDocumentsIndexRouteImport } from './routes/_authenticated/documents.index'
+import { Route as AuthenticatedDocumentsIdRouteImport } from './routes/_authenticated/documents.$id'
+import { Route as AuthenticatedEspaceIndexRouteImport } from './routes/_authenticated/espace.index'
+import { Route as AuthenticatedEspaceDashboardRouteImport } from './routes/_authenticated/espace.dashboard'
+import { Route as AuthenticatedFacturationIndexRouteImport } from './routes/_authenticated/facturation.index'
+import { Route as AuthenticatedFacturesIndexRouteImport } from './routes/_authenticated/factures.index'
+import { Route as AuthenticatedFacturesIdRouteImport } from './routes/_authenticated/factures.$id'
+import { Route as AuthenticatedFacturesNouvelleRouteImport } from './routes/_authenticated/factures.nouvelle'
+import { Route as AuthenticatedNotificationsIndexRouteImport } from './routes/_authenticated/notifications.index'
+import { Route as AuthenticatedPartenairesIndexRouteImport } from './routes/_authenticated/partenaires.index'
+import { Route as AuthenticatedPlanningIndexRouteImport } from './routes/_authenticated/planning.index'
+import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authenticated/rapports.index'
+import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
+import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_authenticated/rapports.modeles'
+import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
+import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock.index'
 import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
+import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
+import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const InstallerRoute = InstallerRouteImport.update({
-  id: '/installer',
-  path: '/installer',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DemandeRoute = DemandeRouteImport.update({
-  id: '/demande',
-  path: '/demande',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CalculateurIrveRoute = CalculateurIrveRouteImport.update({
-  id: '/calculateur-irve',
-  path: '/calculateur-irve',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const BornesRoute = BornesRouteImport.update({
-  id: '/bornes',
-  path: '/bornes',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthRoute = AuthRouteImport.update({
-  id: '/auth',
-  path: '/auth',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AProposRoute = AProposRouteImport.update({
@@ -92,54 +71,35 @@ const AProposRoute = AProposRouteImport.update({
   path: '/a-propos',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const BornesRoute = BornesRouteImport.update({
+  id: '/bornes',
+  path: '/bornes',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SignerTokenRoute = SignerTokenRouteImport.update({
-  id: '/signer/$token',
-  path: '/signer/$token',
+const CalculateurIrveRoute = CalculateurIrveRouteImport.update({
+  id: '/calculateur-irve',
+  path: '/calculateur-irve',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RdvTokenRoute = RdvTokenRouteImport.update({
-  id: '/rdv/$token',
-  path: '/rdv/$token',
+const DemandeRoute = DemandeRouteImport.update({
+  id: '/demande',
+  path: '/demande',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RapportDonneurTokenRoute = RapportDonneurTokenRouteImport.update({
-  id: '/rapport-donneur/$token',
-  path: '/rapport-donneur/$token',
+const InstallerRoute = InstallerRouteImport.update({
+  id: '/installer',
+  path: '/installer',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
-  id: '/partenaire/$token',
-  path: '/partenaire/$token',
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
   getParentRoute: () => rootRouteImport,
-} as any)
-const FactureClientTokenRoute = FactureClientTokenRouteImport.update({
-  id: '/facture-client/$token',
-  path: '/facture-client/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const DevisClientTokenRoute = DevisClientTokenRouteImport.update({
-  id: '/devis-client/$token',
-  path: '/devis-client/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AttachementTokenRoute = AttachementTokenRouteImport.update({
-  id: '/attachement/$token',
-  path: '/attachement/$token',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
-  id: '/tarifs-site',
-  path: '/tarifs-site',
-  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedBornesCatalogueRoute =
   AuthenticatedBornesCatalogueRouteImport.update({
@@ -147,131 +107,50 @@ const AuthenticatedBornesCatalogueRoute =
     path: '/bornes-catalogue',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const AuthenticatedStockIndexRoute = AuthenticatedStockIndexRouteImport.update({
-  id: '/stock/',
-  path: '/stock/',
+const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
+  id: '/tarifs-site',
+  path: '/tarifs-site',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedRealisationsIndexRoute =
-  AuthenticatedRealisationsIndexRouteImport.update({
-    id: '/realisations/',
-    path: '/realisations/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedRapportsIndexRoute =
-  AuthenticatedRapportsIndexRouteImport.update({
-    id: '/rapports/',
-    path: '/rapports/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPlanningIndexRoute =
-  AuthenticatedPlanningIndexRouteImport.update({
-    id: '/planning/',
-    path: '/planning/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedPartenairesIndexRoute =
-  AuthenticatedPartenairesIndexRouteImport.update({
-    id: '/partenaires/',
-    path: '/partenaires/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedNotificationsIndexRoute =
-  AuthenticatedNotificationsIndexRouteImport.update({
-    id: '/notifications/',
-    path: '/notifications/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFacturesIndexRoute =
-  AuthenticatedFacturesIndexRouteImport.update({
-    id: '/factures/',
-    path: '/factures/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFacturationIndexRoute =
-  AuthenticatedFacturationIndexRouteImport.update({
-    id: '/facturation/',
-    path: '/facturation/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedEspaceIndexRoute =
-  AuthenticatedEspaceIndexRouteImport.update({
-    id: '/espace/',
-    path: '/espace/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDocumentsIndexRoute =
-  AuthenticatedDocumentsIndexRouteImport.update({
-    id: '/documents/',
-    path: '/documents/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDevisIndexRoute = AuthenticatedDevisIndexRouteImport.update({
-  id: '/devis/',
-  path: '/devis/',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const AttachementTokenRoute = AttachementTokenRouteImport.update({
+  id: '/attachement/$token',
+  path: '/attachement/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedDemandesIndexRoute =
-  AuthenticatedDemandesIndexRouteImport.update({
-    id: '/demandes/',
-    path: '/demandes/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
+const DevisClientTokenRoute = DevisClientTokenRouteImport.update({
+  id: '/devis-client/$token',
+  path: '/devis-client/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FactureClientTokenRoute = FactureClientTokenRouteImport.update({
+  id: '/facture-client/$token',
+  path: '/facture-client/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
+  id: '/partenaire/$token',
+  path: '/partenaire/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RapportDonneurTokenRoute = RapportDonneurTokenRouteImport.update({
+  id: '/rapport-donneur/$token',
+  path: '/rapport-donneur/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RdvTokenRoute = RdvTokenRouteImport.update({
+  id: '/rdv/$token',
+  path: '/rdv/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignerTokenRoute = SignerTokenRouteImport.update({
+  id: '/signer/$token',
+  path: '/signer/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedAttachementsIndexRoute =
   AuthenticatedAttachementsIndexRouteImport.update({
     id: '/attachements/',
     path: '/attachements/',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedRapportsModelesRoute =
-  AuthenticatedRapportsModelesRouteImport.update({
-    id: '/rapports/modeles',
-    path: '/rapports/modeles',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
-  id: '/rapports/$id',
-  path: '/rapports/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFacturesNouvelleRoute =
-  AuthenticatedFacturesNouvelleRouteImport.update({
-    id: '/factures/nouvelle',
-    path: '/factures/nouvelle',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedFacturesIdRoute = AuthenticatedFacturesIdRouteImport.update({
-  id: '/factures/$id',
-  path: '/factures/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedEspaceDashboardRoute =
-  AuthenticatedEspaceDashboardRouteImport.update({
-    id: '/espace/dashboard',
-    path: '/espace/dashboard',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDocumentsIdRoute =
-  AuthenticatedDocumentsIdRouteImport.update({
-    id: '/documents/$id',
-    path: '/documents/$id',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
-  id: '/devis/$id',
-  path: '/devis/$id',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedChantierRapportRdvIdRoute =
-  AuthenticatedChantierRapportRdvIdRouteImport.update({
-    id: '/chantier-rapport/$rdvId',
-    path: '/chantier-rapport/$rdvId',
-    getParentRoute: () => AuthenticatedRouteRoute,
-  } as any)
-const AuthenticatedAttachementsBordereauRoute =
-  AuthenticatedAttachementsBordereauRouteImport.update({
-    id: '/attachements/bordereau',
-    path: '/attachements/bordereau',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAttachementsIdRoute =
@@ -280,20 +159,136 @@ const AuthenticatedAttachementsIdRoute =
     path: '/attachements/$id',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
+const AuthenticatedAttachementsBordereauRoute =
+  AuthenticatedAttachementsBordereauRouteImport.update({
+    id: '/attachements/bordereau',
+    path: '/attachements/bordereau',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedChantierRapportRdvIdRoute =
+  AuthenticatedChantierRapportRdvIdRouteImport.update({
+    id: '/chantier-rapport/$rdvId',
+    path: '/chantier-rapport/$rdvId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDemandesIndexRoute =
+  AuthenticatedDemandesIndexRouteImport.update({
+    id: '/demandes/',
+    path: '/demandes/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDevisIndexRoute = AuthenticatedDevisIndexRouteImport.update({
+  id: '/devis/',
+  path: '/devis/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDevisIdRoute = AuthenticatedDevisIdRouteImport.update({
+  id: '/devis/$id',
+  path: '/devis/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDocumentsIndexRoute =
+  AuthenticatedDocumentsIndexRouteImport.update({
+    id: '/documents/',
+    path: '/documents/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDocumentsIdRoute =
+  AuthenticatedDocumentsIdRouteImport.update({
+    id: '/documents/$id',
+    path: '/documents/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEspaceIndexRoute =
+  AuthenticatedEspaceIndexRouteImport.update({
+    id: '/espace/',
+    path: '/espace/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedEspaceDashboardRoute =
+  AuthenticatedEspaceDashboardRouteImport.update({
+    id: '/espace/dashboard',
+    path: '/espace/dashboard',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFacturationIndexRoute =
+  AuthenticatedFacturationIndexRouteImport.update({
+    id: '/facturation/',
+    path: '/facturation/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFacturesIndexRoute =
+  AuthenticatedFacturesIndexRouteImport.update({
+    id: '/factures/',
+    path: '/factures/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedFacturesIdRoute = AuthenticatedFacturesIdRouteImport.update({
+  id: '/factures/$id',
+  path: '/factures/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedFacturesNouvelleRoute =
+  AuthenticatedFacturesNouvelleRouteImport.update({
+    id: '/factures/nouvelle',
+    path: '/factures/nouvelle',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedNotificationsIndexRoute =
+  AuthenticatedNotificationsIndexRouteImport.update({
+    id: '/notifications/',
+    path: '/notifications/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPartenairesIndexRoute =
+  AuthenticatedPartenairesIndexRouteImport.update({
+    id: '/partenaires/',
+    path: '/partenaires/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlanningIndexRoute =
+  AuthenticatedPlanningIndexRouteImport.update({
+    id: '/planning/',
+    path: '/planning/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRapportsIndexRoute =
+  AuthenticatedRapportsIndexRouteImport.update({
+    id: '/rapports/',
+    path: '/rapports/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRapportsIdRoute = AuthenticatedRapportsIdRouteImport.update({
+  id: '/rapports/$id',
+  path: '/rapports/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedRapportsModelesRoute =
+  AuthenticatedRapportsModelesRouteImport.update({
+    id: '/rapports/modeles',
+    path: '/rapports/modeles',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedRealisationsIndexRoute =
+  AuthenticatedRealisationsIndexRouteImport.update({
+    id: '/realisations/',
+    path: '/realisations/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStockIndexRoute = AuthenticatedStockIndexRouteImport.update({
+  id: '/stock/',
+  path: '/stock/',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiPublicBornePhotoSplatRoute =
+  ApiPublicBornePhotoSplatRouteImport.update({
+    id: '/api/public/borne-photo/$',
+    path: '/api/public/borne-photo/$',
     getParentRoute: () => rootRouteImport,
   } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
+const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
+  id: '/api/public/photo/$',
+  path: '/api/public/photo/$',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ApiPublicRetourSplatRoute = ApiPublicRetourSplatRouteImport.update({
@@ -301,15 +296,20 @@ const ApiPublicRetourSplatRoute = ApiPublicRetourSplatRouteImport.update({
   path: '/api/public/retour/$',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
-  id: '/api/public/photo/$',
-  path: '/api/public/photo/$',
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
   getParentRoute: () => rootRouteImport,
 } as any)
-const ApiPublicBornePhotoSplatRoute =
-  ApiPublicBornePhotoSplatRouteImport.update({
-    id: '/api/public/borne-photo/$',
-    path: '/api/public/borne-photo/$',
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
     getParentRoute: () => rootRouteImport,
   } as any)
 
@@ -634,53 +634,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/installer': {
-      id: '/installer'
-      path: '/installer'
-      fullPath: '/installer'
-      preLoaderRoute: typeof InstallerRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/demande': {
-      id: '/demande'
-      path: '/demande'
-      fullPath: '/demande'
-      preLoaderRoute: typeof DemandeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/calculateur-irve': {
-      id: '/calculateur-irve'
-      path: '/calculateur-irve'
-      fullPath: '/calculateur-irve'
-      preLoaderRoute: typeof CalculateurIrveRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/bornes': {
-      id: '/bornes'
-      path: '/bornes'
-      fullPath: '/bornes'
-      preLoaderRoute: typeof BornesRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/a-propos': {
-      id: '/a-propos'
-      path: '/a-propos'
-      fullPath: '/a-propos'
-      preLoaderRoute: typeof AProposRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -690,46 +648,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/a-propos': {
+      id: '/a-propos'
+      path: '/a-propos'
+      fullPath: '/a-propos'
+      preLoaderRoute: typeof AProposRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/signer/$token': {
-      id: '/signer/$token'
-      path: '/signer/$token'
-      fullPath: '/signer/$token'
-      preLoaderRoute: typeof SignerTokenRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rdv/$token': {
-      id: '/rdv/$token'
-      path: '/rdv/$token'
-      fullPath: '/rdv/$token'
-      preLoaderRoute: typeof RdvTokenRouteImport
+    '/bornes': {
+      id: '/bornes'
+      path: '/bornes'
+      fullPath: '/bornes'
+      preLoaderRoute: typeof BornesRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/rapport-donneur/$token': {
-      id: '/rapport-donneur/$token'
-      path: '/rapport-donneur/$token'
-      fullPath: '/rapport-donneur/$token'
-      preLoaderRoute: typeof RapportDonneurTokenRouteImport
+    '/calculateur-irve': {
+      id: '/calculateur-irve'
+      path: '/calculateur-irve'
+      fullPath: '/calculateur-irve'
+      preLoaderRoute: typeof CalculateurIrveRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/partenaire/$token': {
-      id: '/partenaire/$token'
-      path: '/partenaire/$token'
-      fullPath: '/partenaire/$token'
-      preLoaderRoute: typeof PartenaireTokenRouteImport
+    '/demande': {
+      id: '/demande'
+      path: '/demande'
+      fullPath: '/demande'
+      preLoaderRoute: typeof DemandeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/facture-client/$token': {
-      id: '/facture-client/$token'
-      path: '/facture-client/$token'
-      fullPath: '/facture-client/$token'
-      preLoaderRoute: typeof FactureClientTokenRouteImport
+    '/installer': {
+      id: '/installer'
+      path: '/installer'
+      fullPath: '/installer'
+      preLoaderRoute: typeof InstallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/bornes-catalogue': {
+      id: '/_authenticated/bornes-catalogue'
+      path: '/bornes-catalogue'
+      fullPath: '/bornes-catalogue'
+      preLoaderRoute: typeof AuthenticatedBornesCatalogueRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/tarifs-site': {
+      id: '/_authenticated/tarifs-site'
+      path: '/tarifs-site'
+      fullPath: '/tarifs-site'
+      preLoaderRoute: typeof AuthenticatedTarifsSiteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/attachement/$token': {
+      id: '/attachement/$token'
+      path: '/attachement/$token'
+      fullPath: '/attachement/$token'
+      preLoaderRoute: typeof AttachementTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devis-client/$token': {
@@ -739,179 +725,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevisClientTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/attachement/$token': {
-      id: '/attachement/$token'
-      path: '/attachement/$token'
-      fullPath: '/attachement/$token'
-      preLoaderRoute: typeof AttachementTokenRouteImport
+    '/facture-client/$token': {
+      id: '/facture-client/$token'
+      path: '/facture-client/$token'
+      fullPath: '/facture-client/$token'
+      preLoaderRoute: typeof FactureClientTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/tarifs-site': {
-      id: '/_authenticated/tarifs-site'
-      path: '/tarifs-site'
-      fullPath: '/tarifs-site'
-      preLoaderRoute: typeof AuthenticatedTarifsSiteRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/partenaire/$token': {
+      id: '/partenaire/$token'
+      path: '/partenaire/$token'
+      fullPath: '/partenaire/$token'
+      preLoaderRoute: typeof PartenaireTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/bornes-catalogue': {
-      id: '/_authenticated/bornes-catalogue'
-      path: '/bornes-catalogue'
-      fullPath: '/bornes-catalogue'
-      preLoaderRoute: typeof AuthenticatedBornesCatalogueRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/rapport-donneur/$token': {
+      id: '/rapport-donneur/$token'
+      path: '/rapport-donneur/$token'
+      fullPath: '/rapport-donneur/$token'
+      preLoaderRoute: typeof RapportDonneurTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/stock/': {
-      id: '/_authenticated/stock/'
-      path: '/stock'
-      fullPath: '/stock/'
-      preLoaderRoute: typeof AuthenticatedStockIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/rdv/$token': {
+      id: '/rdv/$token'
+      path: '/rdv/$token'
+      fullPath: '/rdv/$token'
+      preLoaderRoute: typeof RdvTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/realisations/': {
-      id: '/_authenticated/realisations/'
-      path: '/realisations'
-      fullPath: '/realisations/'
-      preLoaderRoute: typeof AuthenticatedRealisationsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rapports/': {
-      id: '/_authenticated/rapports/'
-      path: '/rapports'
-      fullPath: '/rapports/'
-      preLoaderRoute: typeof AuthenticatedRapportsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/planning/': {
-      id: '/_authenticated/planning/'
-      path: '/planning'
-      fullPath: '/planning/'
-      preLoaderRoute: typeof AuthenticatedPlanningIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/partenaires/': {
-      id: '/_authenticated/partenaires/'
-      path: '/partenaires'
-      fullPath: '/partenaires/'
-      preLoaderRoute: typeof AuthenticatedPartenairesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/notifications/': {
-      id: '/_authenticated/notifications/'
-      path: '/notifications'
-      fullPath: '/notifications/'
-      preLoaderRoute: typeof AuthenticatedNotificationsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/factures/': {
-      id: '/_authenticated/factures/'
-      path: '/factures'
-      fullPath: '/factures/'
-      preLoaderRoute: typeof AuthenticatedFacturesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/facturation/': {
-      id: '/_authenticated/facturation/'
-      path: '/facturation'
-      fullPath: '/facturation/'
-      preLoaderRoute: typeof AuthenticatedFacturationIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/espace/': {
-      id: '/_authenticated/espace/'
-      path: '/espace'
-      fullPath: '/espace/'
-      preLoaderRoute: typeof AuthenticatedEspaceIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/documents/': {
-      id: '/_authenticated/documents/'
-      path: '/documents'
-      fullPath: '/documents/'
-      preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/devis/': {
-      id: '/_authenticated/devis/'
-      path: '/devis'
-      fullPath: '/devis/'
-      preLoaderRoute: typeof AuthenticatedDevisIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/demandes/': {
-      id: '/_authenticated/demandes/'
-      path: '/demandes'
-      fullPath: '/demandes/'
-      preLoaderRoute: typeof AuthenticatedDemandesIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/signer/$token': {
+      id: '/signer/$token'
+      path: '/signer/$token'
+      fullPath: '/signer/$token'
+      preLoaderRoute: typeof SignerTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/_authenticated/attachements/': {
       id: '/_authenticated/attachements/'
       path: '/attachements'
       fullPath: '/attachements/'
       preLoaderRoute: typeof AuthenticatedAttachementsIndexRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rapports/modeles': {
-      id: '/_authenticated/rapports/modeles'
-      path: '/rapports/modeles'
-      fullPath: '/rapports/modeles'
-      preLoaderRoute: typeof AuthenticatedRapportsModelesRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/rapports/$id': {
-      id: '/_authenticated/rapports/$id'
-      path: '/rapports/$id'
-      fullPath: '/rapports/$id'
-      preLoaderRoute: typeof AuthenticatedRapportsIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/factures/nouvelle': {
-      id: '/_authenticated/factures/nouvelle'
-      path: '/factures/nouvelle'
-      fullPath: '/factures/nouvelle'
-      preLoaderRoute: typeof AuthenticatedFacturesNouvelleRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/factures/$id': {
-      id: '/_authenticated/factures/$id'
-      path: '/factures/$id'
-      fullPath: '/factures/$id'
-      preLoaderRoute: typeof AuthenticatedFacturesIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/espace/dashboard': {
-      id: '/_authenticated/espace/dashboard'
-      path: '/espace/dashboard'
-      fullPath: '/espace/dashboard'
-      preLoaderRoute: typeof AuthenticatedEspaceDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/documents/$id': {
-      id: '/_authenticated/documents/$id'
-      path: '/documents/$id'
-      fullPath: '/documents/$id'
-      preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/devis/$id': {
-      id: '/_authenticated/devis/$id'
-      path: '/devis/$id'
-      fullPath: '/devis/$id'
-      preLoaderRoute: typeof AuthenticatedDevisIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/chantier-rapport/$rdvId': {
-      id: '/_authenticated/chantier-rapport/$rdvId'
-      path: '/chantier-rapport/$rdvId'
-      fullPath: '/chantier-rapport/$rdvId'
-      preLoaderRoute: typeof AuthenticatedChantierRapportRdvIdRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/attachements/bordereau': {
-      id: '/_authenticated/attachements/bordereau'
-      path: '/attachements/bordereau'
-      fullPath: '/attachements/bordereau'
-      preLoaderRoute: typeof AuthenticatedAttachementsBordereauRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/attachements/$id': {
@@ -921,32 +774,158 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttachementsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/attachements/bordereau': {
+      id: '/_authenticated/attachements/bordereau'
+      path: '/attachements/bordereau'
+      fullPath: '/attachements/bordereau'
+      preLoaderRoute: typeof AuthenticatedAttachementsBordereauRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/auth/webhook': {
-      id: '/lovable/email/auth/webhook'
-      path: '/lovable/email/auth/webhook'
-      fullPath: '/lovable/email/auth/webhook'
-      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/chantier-rapport/$rdvId': {
+      id: '/_authenticated/chantier-rapport/$rdvId'
+      path: '/chantier-rapport/$rdvId'
+      fullPath: '/chantier-rapport/$rdvId'
+      preLoaderRoute: typeof AuthenticatedChantierRapportRdvIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
-      parentRoute: typeof rootRouteImport
+    '/_authenticated/demandes/': {
+      id: '/_authenticated/demandes/'
+      path: '/demandes'
+      fullPath: '/demandes/'
+      preLoaderRoute: typeof AuthenticatedDemandesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/api/public/retour/$': {
-      id: '/api/public/retour/$'
-      path: '/api/public/retour/$'
-      fullPath: '/api/public/retour/$'
-      preLoaderRoute: typeof ApiPublicRetourSplatRouteImport
+    '/_authenticated/devis/': {
+      id: '/_authenticated/devis/'
+      path: '/devis'
+      fullPath: '/devis/'
+      preLoaderRoute: typeof AuthenticatedDevisIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/devis/$id': {
+      id: '/_authenticated/devis/$id'
+      path: '/devis/$id'
+      fullPath: '/devis/$id'
+      preLoaderRoute: typeof AuthenticatedDevisIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/': {
+      id: '/_authenticated/documents/'
+      path: '/documents'
+      fullPath: '/documents/'
+      preLoaderRoute: typeof AuthenticatedDocumentsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/documents/$id': {
+      id: '/_authenticated/documents/$id'
+      path: '/documents/$id'
+      fullPath: '/documents/$id'
+      preLoaderRoute: typeof AuthenticatedDocumentsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/espace/': {
+      id: '/_authenticated/espace/'
+      path: '/espace'
+      fullPath: '/espace/'
+      preLoaderRoute: typeof AuthenticatedEspaceIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/espace/dashboard': {
+      id: '/_authenticated/espace/dashboard'
+      path: '/espace/dashboard'
+      fullPath: '/espace/dashboard'
+      preLoaderRoute: typeof AuthenticatedEspaceDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/facturation/': {
+      id: '/_authenticated/facturation/'
+      path: '/facturation'
+      fullPath: '/facturation/'
+      preLoaderRoute: typeof AuthenticatedFacturationIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/factures/': {
+      id: '/_authenticated/factures/'
+      path: '/factures'
+      fullPath: '/factures/'
+      preLoaderRoute: typeof AuthenticatedFacturesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/factures/$id': {
+      id: '/_authenticated/factures/$id'
+      path: '/factures/$id'
+      fullPath: '/factures/$id'
+      preLoaderRoute: typeof AuthenticatedFacturesIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/factures/nouvelle': {
+      id: '/_authenticated/factures/nouvelle'
+      path: '/factures/nouvelle'
+      fullPath: '/factures/nouvelle'
+      preLoaderRoute: typeof AuthenticatedFacturesNouvelleRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/notifications/': {
+      id: '/_authenticated/notifications/'
+      path: '/notifications'
+      fullPath: '/notifications/'
+      preLoaderRoute: typeof AuthenticatedNotificationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/partenaires/': {
+      id: '/_authenticated/partenaires/'
+      path: '/partenaires'
+      fullPath: '/partenaires/'
+      preLoaderRoute: typeof AuthenticatedPartenairesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/planning/': {
+      id: '/_authenticated/planning/'
+      path: '/planning'
+      fullPath: '/planning/'
+      preLoaderRoute: typeof AuthenticatedPlanningIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapports/': {
+      id: '/_authenticated/rapports/'
+      path: '/rapports'
+      fullPath: '/rapports/'
+      preLoaderRoute: typeof AuthenticatedRapportsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapports/$id': {
+      id: '/_authenticated/rapports/$id'
+      path: '/rapports/$id'
+      fullPath: '/rapports/$id'
+      preLoaderRoute: typeof AuthenticatedRapportsIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/rapports/modeles': {
+      id: '/_authenticated/rapports/modeles'
+      path: '/rapports/modeles'
+      fullPath: '/rapports/modeles'
+      preLoaderRoute: typeof AuthenticatedRapportsModelesRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/realisations/': {
+      id: '/_authenticated/realisations/'
+      path: '/realisations'
+      fullPath: '/realisations/'
+      preLoaderRoute: typeof AuthenticatedRealisationsIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stock/': {
+      id: '/_authenticated/stock/'
+      path: '/stock'
+      fullPath: '/stock/'
+      preLoaderRoute: typeof AuthenticatedStockIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/public/borne-photo/$': {
+      id: '/api/public/borne-photo/$'
+      path: '/api/public/borne-photo/$'
+      fullPath: '/api/public/borne-photo/$'
+      preLoaderRoute: typeof ApiPublicBornePhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/api/public/photo/$': {
@@ -956,11 +935,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicPhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/api/public/borne-photo/$': {
-      id: '/api/public/borne-photo/$'
-      path: '/api/public/borne-photo/$'
-      fullPath: '/api/public/borne-photo/$'
-      preLoaderRoute: typeof ApiPublicBornePhotoSplatRouteImport
+    '/api/public/retour/$': {
+      id: '/api/public/retour/$'
+      path: '/api/public/retour/$'
+      fullPath: '/api/public/retour/$'
+      preLoaderRoute: typeof ApiPublicRetourSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/auth/webhook': {
+      id: '/lovable/email/auth/webhook'
+      path: '/lovable/email/auth/webhook'
+      fullPath: '/lovable/email/auth/webhook'
+      preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
