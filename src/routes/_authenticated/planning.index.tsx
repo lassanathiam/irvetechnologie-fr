@@ -1029,10 +1029,10 @@ function PlanningPage() {
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucune intervention prévue aujourd’hui</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
         )}
 
-        {modeIntervention && moi && chantiersAVenir.length > 0 && (
+        {modeIntervention && chantiersAVenir.length > 0 && (
           <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground">
-              Chantiers affectés à {moi.nom.split(" ")[0]} ({chantiersAVenir.length})
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({chantiersAVenir.length})
             </p>
             <ul className="mt-2 grid gap-2">
               {chantiersAVenir.map((r) => {
@@ -1056,7 +1056,7 @@ function PlanningPage() {
                         {d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                        <span className="block truncate text-sm font-bold">{r.client_nom}{!moi && r.technicien ? ` · ${r.technicien.split(" ")[0]}` : ""}</span>
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
