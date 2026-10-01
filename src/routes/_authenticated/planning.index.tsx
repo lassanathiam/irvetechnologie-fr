@@ -587,6 +587,21 @@ function PlanningPage() {
   }, [toutes, moiId]);
   const missionTerrain =
     chantiersDuJour.find((r) => r.id === active) ?? enCours.filter(estPourMoi)[0] ?? chantiersDuJour[0] ?? null;
+  /** Tous les chantiers affectés à l'intervenant choisi, aujourd'hui inclus, triés par date. */
+  const chantiersAVenir = useMemo(() => {
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes
+      .filter(
+        (r) =>
+          !estArchiveLogique(r) &&
+          r.statut !== "annule" &&
+          estPourMoi(r) &&
+          new Date(r.date_debut).getTime() >= debutJour.getTime(),
+      )
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toutes, moiId]);
 
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
@@ -1012,6 +1027,45 @@ function PlanningPage() {
               {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => setActive(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
             </div>
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucune intervention prévue aujourd’hui</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
+        )}
+
+        {modeIntervention && moi && chantiersAVenir.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-muted-foreground">
+              Chantiers affectés à {moi.nom.split(" ")[0]} ({chantiersAVenir.length})
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {chantiersAVenir.map((r) => {
+                const d = new Date(r.date_debut);
+                const aujourdhui = new Date();
+                const estAujourdhui =
+                  d.getFullYear() === aujourdhui.getFullYear() &&
+                  d.getMonth() === aujourdhui.getMonth() &&
+                  d.getDate() === aujourdhui.getDate();
+                return (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (estAujourdhui) setActive(r.id);
+                        setDossier(r.id);
+                      }}
+                      className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left transition hover:border-primary/50"
+                    >
+                      <span className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-bold ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-muted text-foreground"}`}>
+                        {d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                        <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
+                      </span>
+                      <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         )}
       </section>
 
