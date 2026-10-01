@@ -1107,20 +1107,11 @@ export const terminerChantier = createServerFn({ method: "POST" })
       .single();
     if (readErr) throw new Error(readErr.message);
 
-    // Retour de travaux : les photos essentielles doivent être présentes.
+    // Retour de travaux : les photos ne sont plus bloquantes (aucune photo obligatoire).
     const { data: photosRows } = await context.supabase
       .from("rendezvous_photos")
       .select("categorie, path")
       .eq("rendezvous_id", data.id);
-    const presentes = new Set((photosRows ?? []).map((p) => p.categorie));
-    const manquantes = categoriesRetourObligatoires(rdv.type, rdv.partenaire).filter((c) => !presentes.has(c));
-    if (manquantes.length) {
-      throw new Error(
-        `Retour de travaux incomplet — photos manquantes : ${manquantes
-          .map((c) => RETOUR_CATEGORIES_LABELS[c] ?? c)
-          .join(", ")}.`,
-      );
-    }
 
     const fin = new Date();
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;

@@ -28,10 +28,6 @@ export type RetourTravauxRdv = {
   partenaire?: string | null;
 };
 
-/** Compte les photos obligatoires déjà présentes. */
-export function nbRetourFait(categories: string[], obligatoires: readonly string[]): number {
-  return obligatoires.filter((c) => categories.includes(c)).length;
-}
 
 export default function RetourTravauxSheet({
   rdv,
@@ -55,7 +51,6 @@ export default function RetourTravauxSheet({
   const [enCours, setEnCours] = useState<string | null>(null);
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
-  const obligatoires = categoriesRetourObligatoires(rdv.type, rdv.partenaire);
   const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
 
   const photos = useQuery({
@@ -79,7 +74,6 @@ export default function RetourTravauxSheet({
     return p;
   });
   const parCategorie = (cat: string) => liste.filter((p) => p.categorie === cat);
-  const faites = nbRetourFait(liste.map((p) => p.categorie), obligatoires);
 
   const supplement = Math.max(
     0,
@@ -140,18 +134,13 @@ export default function RetourTravauxSheet({
     onError: (e) => toast.error(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
 
-  function ligne(cat: string, obligatoire: boolean) {
+  function ligne(cat: string) {
     const items = parCategorie(cat);
     return (
       <div key={cat} className="rounded-lg border border-border p-3">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold">
             {RETOUR_CATEGORIES_LABELS[cat] ?? cat}
-            {obligatoire && (
-              <span className="ml-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-                obligatoire
-              </span>
-            )}
           </p>
           {items.length > 0 && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -222,7 +211,7 @@ export default function RetourTravauxSheet({
               {rdv.adresse ? ` · ${rdv.adresse}` : ""}
             </p>
             <p className="mt-1 text-xs font-bold text-primary">
-              Photos essentielles : {faites}/{obligatoires.length}
+              Photos enregistrées : {liste.length}
             </p>
           </div>
           <button
@@ -251,14 +240,14 @@ export default function RetourTravauxSheet({
         </div>
 
         <div className="grid gap-2">
-          {obligatoires.map((c) => ligne(c, true))}
+          {categoriesRetourObligatoires(rdv.type, rdv.partenaire).map((c) => ligne(c))}
         </div>
 
         <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
           Photos complémentaires
         </p>
         <div className="mt-2 grid gap-2">
-          {optionnelles.map((c) => ligne(c, false))}
+          {optionnelles.map((c) => ligne(c))}
         </div>
 
         <div className="mt-4 rounded-lg border border-border p-3">
@@ -343,14 +332,8 @@ export default function RetourTravauxSheet({
             disabled={enregistrer.isPending}
             className="min-h-12 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
-            {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
+          {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
           </button>
-          {faites < obligatoires.length && (
-            <p className="text-center text-xs text-amber-600 dark:text-amber-400">
-              Il manque {obligatoires.length - faites} photo(s) obligatoire(s)
-              avant de pouvoir terminer le chantier.
-            </p>
-          )}
         </div>
       </div>
     </div>
