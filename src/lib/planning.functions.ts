@@ -1150,29 +1150,44 @@ export const terminerChantier = createServerFn({ method: "POST" })
       try {
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         const { COMPANY } = await import("@/lib/company");
-        const destinataire = rdv.client_email?.trim() || COMPANY.email;
+        // Donneur d'ordre : email principal + copie de la fiche partenaire, envoi individuel dédupliqué.
+        let part: { email: string | null; email_copie: string | null } | null = null;
+        if (rdv.partenaire_id) {
+          const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").eq("id", rdv.partenaire_id).maybeSingle();
+          part = p;
+        } else if (rdv.partenaire?.trim()) {
+          const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").ilike("nom", rdv.partenaire.trim()).limit(1).maybeSingle();
+          part = p;
+        }
+        const vus = new Set<string>();
+        const destinataires = [part?.email, part?.email_copie, rdv.client_email]
+          .map((e) => e?.trim())
+          .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
+        if (!destinataires.length) destinataires.push(COMPANY.email);
         // Toutes les photos du retour de travaux en un seul lien de téléchargement.
         const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
         const inclus = Number(rdv.metrage_inclus_m ?? 5);
         const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
-        const res = await sendTemplateEmail("chantier-termine", destinataire, {
-          templateData: {
-            client_nom: rdv.client_nom,
-            adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
-            objet: rdv.designation || rdv.titre,
-            partenaire: rdv.partenaire,
-            termine_at: fin.toISOString(),
-            duree_min: dureeMin,
-            metrage_inclus_m: inclus,
-            metrage_reel_m: reel,
-            supplement_m: reel == null ? null : Math.max(0, reel - inclus),
-            observations: rdv.retour_observations,
-            delestage: rdv.retour_delestage,
-            zip_url: zipUrl,
-          },
-          idempotencyKey: `chantier-termine-${data.id}`,
-        });
-        notifie = res.sent;
+        for (const destinataire of destinataires) {
+          const res = await sendTemplateEmail("chantier-termine", destinataire, {
+            templateData: {
+              client_nom: rdv.client_nom,
+              adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
+              objet: rdv.designation || rdv.titre,
+              partenaire: rdv.partenaire,
+              termine_at: fin.toISOString(),
+              duree_min: dureeMin,
+              metrage_inclus_m: inclus,
+              metrage_reel_m: reel,
+              supplement_m: reel == null ? null : Math.max(0, reel - inclus),
+              observations: rdv.retour_observations,
+              delestage: rdv.retour_delestage,
+              zip_url: zipUrl,
+            },
+            idempotencyKey: `chantier-termine-${data.id}-${destinataire.toLowerCase()}`,
+          });
+          if (res.sent) notifie = true;
+        }
       } catch {
         notifie = false;
       }
