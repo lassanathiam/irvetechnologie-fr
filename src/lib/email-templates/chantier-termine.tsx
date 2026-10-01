@@ -39,7 +39,11 @@ const dureeFr = (min?: number | null) => {
 };
 
 function ChantierTermineEmail(data: ChantierTermineData) {
-  const date = new Date(data.termine_at).toLocaleString("fr-FR");
+  const date = new Date(data.termine_at).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
+    dateStyle: "short",
+    timeStyle: "short",
+  });
   const duree = dureeFr(data.duree_min);
   return (
     <Html lang="fr">

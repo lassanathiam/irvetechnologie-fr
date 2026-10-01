@@ -37,7 +37,7 @@ export type ChantierArchiveData = {
   destinataire?: "client" | "partenaire";
 };
 
-const dateFr = (v?: string | null) => (v ? new Date(v).toLocaleString("fr-FR") : null);
+const dateFr = (v?: string | null) => (v ? new Date(v).toLocaleString("fr-FR", { timeZone: "Europe/Paris" }) : null);
 
 const dureeFr = (min?: number | null) => {
   if (!min) return null;

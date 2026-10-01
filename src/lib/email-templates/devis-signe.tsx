@@ -23,7 +23,7 @@ export type DevisSigneData = {
 };
 
 function DevisSigneEmail(data: DevisSigneData) {
-  const date = new Date(data.signed_at).toLocaleString("fr-FR");
+  const date = new Date(data.signed_at).toLocaleString("fr-FR", { timeZone: "Europe/Paris" });
   return (
     <Html lang="fr">
       <Head />

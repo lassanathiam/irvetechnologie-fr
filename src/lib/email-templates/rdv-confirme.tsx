@@ -13,6 +13,7 @@ export type RendezVousConfirmeData = {
 
 function RendezVousConfirmeEmail(data: RendezVousConfirmeData) {
   const date = new Date(data.date_debut).toLocaleString("fr-FR", {
+    timeZone: "Europe/Paris",
     weekday: "long",
     day: "2-digit",
     month: "long",
