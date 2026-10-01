@@ -27,10 +27,6 @@ export type RetourTravauxRdv = {
   partenaire?: string | null;
 };
 
-/** Compte les photos obligatoires déjà présentes. */
-export function nbRetourFait(categories: string[], obligatoires: readonly string[]): number {
-  return obligatoires.filter((c) => categories.includes(c)).length;
-}
 
 export default function RetourTravauxSheet({
   rdv,
