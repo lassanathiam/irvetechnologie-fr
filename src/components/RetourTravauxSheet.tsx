@@ -147,11 +147,6 @@ export default function RetourTravauxSheet({
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold">
             {RETOUR_CATEGORIES_LABELS[cat] ?? cat}
-            {obligatoire && (
-              <span className="ml-2 text-xs font-bold text-amber-600 dark:text-amber-400">
-                obligatoire
-              </span>
-            )}
           </p>
           {items.length > 0 && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -343,14 +338,8 @@ export default function RetourTravauxSheet({
             disabled={enregistrer.isPending}
             className="min-h-12 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
-            {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
+          {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
           </button>
-          {faites < obligatoires.length && (
-            <p className="text-center text-xs text-amber-600 dark:text-amber-400">
-              Il manque {obligatoires.length - faites} photo(s) obligatoire(s)
-              avant de pouvoir terminer le chantier.
-            </p>
-          )}
         </div>
       </div>
     </div>
