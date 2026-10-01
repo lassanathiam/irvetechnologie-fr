@@ -1056,7 +1056,7 @@ function PlanningPage() {
                         {d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                        <span className="block truncate text-sm font-bold">{r.client_nom}{!moi && r.technicien ? ` · ${r.technicien.split(" ")[0]}` : ""}</span>
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
