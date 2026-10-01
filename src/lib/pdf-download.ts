@@ -71,8 +71,10 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   // les textes lisibles ; les documents réellement longs conservent la pagination.
   const naturalHeightMm = canvas.height * mmPerPx;
   if (naturalHeightMm <= contentH * 1.25) {
-    const fittedScale = contentH / canvas.height;
+    // Jamais plus large que la page : on garde la plus petite des deux échelles.
+    const fittedScale = Math.min(contentW / canvas.width, contentH / canvas.height);
     const fittedWidth = canvas.width * fittedScale;
+    const fittedHeight = canvas.height * fittedScale;
     const x = (pageW - fittedWidth) / 2;
     pdf.addImage(
       canvas.toDataURL("image/jpeg", 0.92),
@@ -80,7 +82,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
       x,
       margin,
       fittedWidth,
-      contentH,
+      fittedHeight,
       undefined,
       "FAST",
     );
