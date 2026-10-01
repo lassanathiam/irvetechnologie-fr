@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import {
   RETOUR_CATEGORIES_LABELS,
+  categoriesRetourObligatoires,
   categoriesRetourOptionnelles,
   enregistrerRetourTravaux,
   listPhotosChantier,
@@ -239,7 +240,7 @@ export default function RetourTravauxSheet({
         </div>
 
         <div className="grid gap-2">
-          {obligatoires.map((c) => ligne(c))}
+          {categoriesRetourObligatoires(rdv.type, rdv.partenaire).map((c) => ligne(c))}
         </div>
 
         <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
