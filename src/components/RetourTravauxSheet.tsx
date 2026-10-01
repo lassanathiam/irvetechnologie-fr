@@ -6,7 +6,6 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import {
   RETOUR_CATEGORIES_LABELS,
-  categoriesRetourObligatoires,
   categoriesRetourOptionnelles,
   enregistrerRetourTravaux,
   listPhotosChantier,
