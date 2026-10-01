@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
@@ -61,9 +61,23 @@ export default function RetourTravauxSheet({
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
     queryFn: () => listFn({ data: { rendezvous_id: rdv.id } }),
+    // Évite le clignotement au retour de l'appareil photo : pas de rechargement
+    // automatique, et l'ancienne liste reste affichée pendant la mise à jour.
+    staleTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+    refetchOnMount: false,
+    placeholderData: (prev) => prev,
   });
 
-  const liste = photos.data ?? [];
+  // Garde la même adresse d'image par photo pour ne pas la recharger à chaque mise à jour.
+  const urlsStables = useRef(new Map<string, string>());
+  const liste = (photos.data ?? []).map((p) => {
+    const connue = urlsStables.current.get(p.id);
+    if (connue) return { ...p, url: connue };
+    if (p.url) urlsStables.current.set(p.id, p.url);
+    return p;
+  });
   const parCategorie = (cat: string) => liste.filter((p) => p.categorie === cat);
   const faites = nbRetourFait(liste.map((p) => p.categorie), obligatoires);
 
@@ -155,7 +169,7 @@ export default function RetourTravauxSheet({
                     src={p.url}
                     alt={RETOUR_CATEGORIES_LABELS[cat] ?? "Photo de chantier"}
                     className="h-20 w-20 rounded-md object-cover"
-                    loading="lazy"
+                    decoding="async"
                   />
                 ) : (
                   <div className="h-20 w-20 rounded-md bg-secondary" />
