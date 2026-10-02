@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
+import PhotoLightbox from "@/components/PhotoLightbox";
 import {
   RETOUR_CATEGORIES_LABELS,
   categoriesRetourObligatoires,
@@ -74,6 +75,14 @@ export default function RetourTravauxSheet({
     return p;
   });
   const parCategorie = (cat: string) => liste.filter((p) => p.categorie === cat);
+  const [visionneuse, setVisionneuse] = useState<number | null>(null);
+  const photosVisionneuse = liste
+    .filter((p) => p.url)
+    .map((p) => ({
+      id: p.id,
+      url: p.url!,
+      libelle: RETOUR_CATEGORIES_LABELS[p.categorie] ?? p.categorie,
+    }));
 
   const supplement = Math.max(
     0,
@@ -154,12 +163,18 @@ export default function RetourTravauxSheet({
             {items.map((p) => (
               <div key={p.id} className="relative">
                 {p.url ? (
-                  <img
-                    src={p.url}
-                    alt={RETOUR_CATEGORIES_LABELS[cat] ?? "Photo de chantier"}
-                    className="h-20 w-20 rounded-md object-cover"
-                    decoding="async"
-                  />
+                  <button
+                    type="button"
+                    onClick={() => setVisionneuse(photosVisionneuse.findIndex((x) => x.id === p.id))}
+                    aria-label="Voir la photo en grand"
+                  >
+                    <img
+                      src={p.url}
+                      alt={RETOUR_CATEGORIES_LABELS[cat] ?? "Photo de chantier"}
+                      className="h-20 w-20 cursor-pointer rounded-md object-cover"
+                      decoding="async"
+                    />
+                  </button>
                 ) : (
                   <div className="h-20 w-20 rounded-md bg-secondary" />
                 )}
@@ -335,6 +350,15 @@ export default function RetourTravauxSheet({
           </button>
         </div>
       </div>
+
+      {visionneuse != null && photosVisionneuse.length > 0 && (
+        <PhotoLightbox
+          photos={photosVisionneuse}
+          index={Math.max(0, Math.min(visionneuse, photosVisionneuse.length - 1))}
+          onIndexChange={setVisionneuse}
+          onClose={() => setVisionneuse(null)}
+        />
+      )}
     </div>
   );
 }

@@ -60,6 +60,7 @@ import {
   type RendezVousInput,
 } from "@/lib/planning.functions";
 import { RETOUR_CATEGORIES_LABELS } from "@/lib/planning.functions";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 import {
   deleteVoirie,
@@ -71,7 +72,6 @@ import {
 import {
   listPartenaires,
   MATERIEL_LABELS,
-  PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
@@ -638,6 +638,7 @@ function PlanningPage() {
     queryFn: () => fetchPhotos({ data: { rendezvous_id: dossier! } }),
     enabled: Boolean(dossier),
   });
+  const [photoOuverte, setPhotoOuverte] = useState<number | null>(null);
 
   /** Programmation groupée de plusieurs chantiers sélectionnés. */
   const groupeFn = useServerFn(programmerEnsemble);
@@ -2034,34 +2035,58 @@ function PlanningPage() {
                                   <Camera className="h-3 w-3" /> Photos déposées (
                                   {photosDossier.data!.length})
                                 </p>
-                                <div className="mt-2 flex gap-2 overflow-x-auto">
-                                  {photosDossier.data!.map((p) => {
-                                    const cat = p.categorie ?? "autre";
-                                    const libelle =
-                                      RETOUR_CATEGORIES_LABELS[cat] ??
-                                      PHOTO_CATEGORIES_LABELS[cat as keyof typeof PHOTO_CATEGORIES_LABELS] ??
-                                      "Autre";
-                                    return p.url ? (
-                                      <a
-                                        key={p.id}
-                                        href={p.url}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="shrink-0 w-24"
-                                        title={libelle}
-                                      >
-                                        <img
-                                          src={p.url}
-                                          alt={p.legende ?? libelle}
-                                          className="h-20 w-24 rounded-sm border border-border object-cover"
+                                {(() => {
+                                  const photosVisionneuse = photosDossier.data!
+                                    .filter((p) => p.url)
+                                    .map((p) => ({
+                                      id: p.id,
+                                      url: p.url!,
+                                      libelle:
+                                        RETOUR_CATEGORIES_LABELS[p.categorie ?? "autre"] ??
+                                        p.legende ??
+                                        p.categorie ??
+                                        "Autre",
+                                    }));
+                                  return (
+                                    <>
+                                      <div className="mt-2 flex gap-2 overflow-x-auto">
+                                        {photosVisionneuse.map((p) => (
+                                          <button
+                                            key={p.id}
+                                            type="button"
+                                            className="shrink-0 w-24"
+                                            title={p.libelle}
+                                            onClick={() =>
+                                              setPhotoOuverte(
+                                                photosVisionneuse.findIndex((x) => x.id === p.id),
+                                              )
+                                            }
+                                          >
+                                            <img
+                                              src={p.url}
+                                              alt={p.libelle}
+                                              className="h-20 w-24 cursor-pointer rounded-sm border border-border object-cover"
+                                            />
+                                            <span className="block text-mono text-[10px] text-muted-foreground mt-1 leading-tight">
+                                              {p.libelle}
+                                            </span>
+                                          </button>
+                                        ))}
+                                      </div>
+                                      {photoOuverte != null && photosVisionneuse.length > 0 && (
+                                        <PhotoLightbox
+                                          photos={photosVisionneuse}
+                                          index={Math.max(
+                                            0,
+                                            Math.min(photoOuverte, photosVisionneuse.length - 1),
+                                          )}
+                                          onIndexChange={setPhotoOuverte}
+                                          onClose={() => setPhotoOuverte(null)}
                                         />
-                                        <span className="block text-mono text-[10px] text-muted-foreground mt-1 leading-tight">
-                                          {libelle}
-                                        </span>
-                                      </a>
-                                    ) : null;
-                                  })}
-                                </div>
+                                      )}
+                                    </>
+                                  );
+                                })()}
                               </div>
                             )}
 
