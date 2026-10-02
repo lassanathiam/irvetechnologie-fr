@@ -50,10 +50,10 @@ export function SiteNav() {
               <BrandLogo className="h-full w-full" />
             </span>
             <span className="min-w-0 leading-tight">
-              <span className="block truncate font-display text-sm font-bold text-slate-900 sm:text-lg">
+              <span className="block truncate font-display text-[13px] font-bold text-slate-900 sm:text-lg">
                 Borne de l&apos;Ouest
               </span>
-              <span className="block truncate text-[10px] font-semibold text-slate-500 sm:text-[11px]">
+              <span className="block truncate text-[9px] font-semibold text-slate-500 sm:text-[11px]">
                 IRVE Technologie · P1 · P2 · P3
               </span>
             </span>
@@ -89,7 +89,7 @@ export function SiteNav() {
         </div>
 
         <nav
-          className="flex gap-2 overflow-x-auto px-3 pb-2.5 [scrollbar-width:none] lg:hidden [&::-webkit-scrollbar]:hidden"
+          className="flex gap-2 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] relative after:absolute after:right-0 after:top-0 after:h-full after:w-8 after:bg-gradient-to-l after:from-white after:to-transparent after:pointer-events-none lg:hidden [&::-webkit-scrollbar]:hidden"
           aria-label="Menu principal mobile"
         >
           <NavLinks mobile />
