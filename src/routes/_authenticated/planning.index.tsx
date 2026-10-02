@@ -17,6 +17,7 @@ import {
   Flag,
   Fuel,
   Play,
+  Pause,
   Loader2,
   MapPin,
   MessageCircle,
