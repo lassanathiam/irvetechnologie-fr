@@ -17,6 +17,7 @@ import {
   Flag,
   Fuel,
   Play,
+  Pause,
   Loader2,
   MapPin,
   MessageCircle,
@@ -41,6 +42,7 @@ import {
   archiverRendezVous,
   createRendezVous,
   demarrerChantier,
+  pauserChantier,
   affecterTechnicien,
   envoyerPropositionRdv,
   terminerChantier,
@@ -125,6 +127,7 @@ const STATUTS = [
   { v: "planifie", l: "Planifié" },
   { v: "confirme", l: "Confirmé" },
   { v: "en_cours", l: "Travaux en cours" },
+  { v: "en_pause", l: "En pause" },
   { v: "termine", l: "Terminé" },
   { v: "realise", l: "Réalisé" },
   { v: "annule", l: "Annulé" },
@@ -155,6 +158,13 @@ const STATUT_STYLE: Record<
     barre: "before:bg-violet-500",
     point: "bg-violet-500",
     fond: "bg-violet-50 dark:bg-violet-500/10 border-violet-300/70 dark:border-violet-500/30",
+  },
+  en_pause: {
+    label: "En pause",
+    badge: "bg-amber-500/20 text-amber-700 dark:text-amber-300 border-amber-500/50",
+    barre: "before:bg-amber-500",
+    point: "bg-amber-500",
+    fond: "bg-amber-50 dark:bg-amber-500/10 border-amber-300/70 dark:border-amber-500/30",
   },
   termine: {
     label: "Terminé",
@@ -212,7 +222,7 @@ const FACTU_LABEL: Record<string, string> = {
 };
 
 const TYPES_INTERVENTION = ["visite", "installation", "maintenance", "sav", "controle"] as const;
-const STATUTS_DOSSIER = ["planifie", "confirme", "en_cours", "termine", "realise", "annule"] as const;
+const STATUTS_DOSSIER = ["planifie", "confirme", "en_cours", "en_pause", "termine", "realise", "annule"] as const;
 const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
 const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
 
@@ -475,6 +485,15 @@ function PlanningPage() {
     },
     onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Affectation impossible."),
   });
+  const pauserFn = useServerFn(pauserChantier);
+  const pauser = useMutation({
+    mutationFn: (p: { id: string; pause: boolean }) => pauserFn({ data: p }),
+    onSuccess: (_r, p) => {
+      refresh();
+      toast.success(p.pause ? "Chantier mis en pause. Aucun email envoyé." : "Travaux repris.");
+    },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Action impossible."),
+  });
   const [retourRdv, setRetourRdv] = useState<RetourTravauxRdv | null>(null);
   const terminerFn = useEnvoiConfirme(terminerChantier, "Confirmez-vous que les travaux sont terminés ? Le retour de travaux sera envoyé par email.");
   const terminer = useMutation({
@@ -670,7 +689,7 @@ function PlanningPage() {
             r.lat != null &&
             r.lng != null &&
             r.statut !== "annule" &&
-            ["planifie", "confirme", "en_cours"].includes(r.statut),
+            ["planifie", "confirme", "en_cours", "en_pause"].includes(r.statut),
         )
         .map((r) => ({
           id: r.id,
@@ -1022,6 +1041,10 @@ function PlanningPage() {
                 </EtapeMission>
                 <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 min-h-14 h-auto w-full min-w-0 whitespace-normal bg-teal-600 px-3 py-3 text-center text-sm font-bold leading-tight text-slate-50 hover:bg-teal-700 sm:text-base" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag className="shrink-0" /> <span className="min-w-0">Terminer et prévenir le client</span></Button>}
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && (missionTerrain.statut === "en_pause"
+                    ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
+                    : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
+                  {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
                 </EtapeMission>
               </div>
 

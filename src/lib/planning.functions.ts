@@ -66,6 +66,7 @@ export const STATUTS_CHANTIER = [
   "planifie",
   "confirme",
   "en_cours",
+  "en_pause",
   "termine",
   "realise",
   "annule",
@@ -1084,6 +1085,23 @@ export const demarrerChantier = createServerFn({ method: "POST" })
           : { demarre_at: null, statut: "confirme" },
       )
       .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+/** Mise en pause d'un chantier sur plusieurs jours : aucun email n'est envoyé. */
+export const pauserChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; pause: boolean }) =>
+    z.object({ id: z.string().uuid(), pause: z.boolean() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({ statut: data.pause ? "en_pause" : "en_cours" })
+      .eq("id", data.id)
+      .not("demarre_at", "is", null)
+      .is("termine_at", null);
     if (error) throw new Error(error.message);
     return { ok: true };
   });
