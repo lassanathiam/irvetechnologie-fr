@@ -289,15 +289,46 @@ export const getRapportDonneurPublic = createServerFn({ method: "GET" })
     const [{ data: modele }, { data: rdv }] = await Promise.all([
       supabaseAdmin.from("rapport_modeles").select("nom, donneur_ordre, logo_data, structure").eq("id", r.modele_id).maybeSingle(),
       r.rendezvous_id
-        ? supabaseAdmin.from("rendezvous").select("client_nom, adresse, cp_ville, public_token").eq("id", r.rendezvous_id).maybeSingle()
+        ? supabaseAdmin.from("rendezvous").select("id, client_nom, adresse, cp_ville, public_token, termine_at, archive_at").eq("id", r.rendezvous_id).maybeSingle()
         : Promise.resolve({ data: null }),
     ]);
     if (!modele) throw new Error("Rapport introuvable.");
+
+    // Photos du chantier, servies par la route publique du retour de travaux,
+    // dans la même fenêtre de 30 jours que le ZIP.
+    const photos: { id: string; url: string; libelle: string }[] = [];
+    const reference = rdv?.termine_at ?? rdv?.archive_at;
+    if (rdv?.public_token && reference) {
+      const dernierEnvoi = Math.max(
+        new Date(rdv.termine_at ?? reference).getTime(),
+        new Date(rdv.archive_at ?? reference).getTime(),
+      );
+      if (Date.now() <= dernierEnvoi + 30 * 24 * 60 * 60 * 1000) {
+        const [{ data: liste }, { RETOUR_CATEGORIES_LABELS }] = await Promise.all([
+          supabaseAdmin
+            .from("rendezvous_photos")
+            .select("id, categorie")
+            .eq("rendezvous_id", rdv.id)
+            .order("created_at", { ascending: true })
+            .limit(60),
+          import("@/lib/planning.functions"),
+        ]);
+        (liste ?? []).forEach((p, i) => {
+          photos.push({
+            id: p.id,
+            url: `/api/public/retour/${rdv.public_token}/photo/${i + 1}`,
+            libelle: RETOUR_CATEGORIES_LABELS[p.categorie] ?? p.categorie ?? "Photo",
+          });
+        });
+      }
+    }
+
     return {
       rapport: r,
       modele,
       client_nom: rdv?.client_nom ?? "",
       adresse: [rdv?.adresse, rdv?.cp_ville].filter(Boolean).join(", "),
       zip_url: rdv ? `/api/public/retour/${rdv.public_token}.zip` : null,
+      photos,
     };
   });

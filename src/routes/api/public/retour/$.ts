@@ -24,6 +24,8 @@ export const Route = createFileRoute("/api/public/retour/$")({
         const splat = String((params as { _splat?: string })._splat ?? "");
         const token = splat.split("/")[0]?.replace(/\.zip$/i, "") ?? "";
         if (!/^[0-9a-f-]{36}$/i.test(token)) return new Response("Not found", { status: 404 });
+        // Une seule photo : <token>/photo/<numero a partir de 1>
+        const photoMatch = splat.match(/^([0-9a-f-]{36})\/photo\/(\d+)$/i);
 
         const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
@@ -54,6 +56,26 @@ export const Route = createFileRoute("/api/public/retour/$")({
           .order("created_at", { ascending: true })
           .limit(60);
         if (!photos?.length) return new Response("Aucune photo disponible", { status: 404 });
+
+        if (photoMatch) {
+          const numero = Number(photoMatch[2]);
+          const photo = photos[numero - 1];
+          if (!photo) return new Response("Not found", { status: 404 });
+          const { data: file } = await supabaseAdmin.storage
+            .from("chantier-photos")
+            .download(photo.path);
+          if (!file) return new Response("Not found", { status: 404 });
+          const ext = photo.path.split(".").pop()?.toLowerCase() || "jpg";
+          const contentType =
+            ext === "png" ? "image/png" : ext === "webp" ? "image/webp" : "image/jpeg";
+          return new Response(await file.arrayBuffer(), {
+            headers: {
+              "Content-Type": contentType,
+              "Cache-Control": "private, max-age=3600",
+            },
+          });
+        }
+
 
         const entries: ZipEntry[] = [];
         let index = 0;
