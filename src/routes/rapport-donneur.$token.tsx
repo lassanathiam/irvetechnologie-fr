@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Download, Loader2, Printer } from "lucide-react";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
-import { PhotoLightbox } from "@/components/PhotoLightbox";
+import PhotoLightbox from "@/components/PhotoLightbox";
 import { getRapportDonneurPublic } from "@/lib/rapport-modeles.functions";
 import { normaliserStructure } from "@/lib/rapport-modeles";
 
