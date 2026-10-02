@@ -44,7 +44,7 @@ export function SiteNav() {
   return (
     <header className="fixed inset-x-0 top-0 z-40 text-slate-800">
       <div className="border-b border-slate-200/80 bg-white/90 backdrop-blur-xl">
-        <div className="mx-auto flex h-16 max-w-[90rem] items-center justify-between gap-1.5 px-2.5 sm:gap-3 sm:px-5">
+        <div className="mx-auto grid h-16 w-full max-w-[90rem] grid-cols-[minmax(0,1fr)_auto] items-center gap-2 px-3 sm:flex sm:justify-between sm:gap-3 sm:px-5">
           <Link to="/" aria-label="Borne de l'Ouest, marque de la société IRVE Technologie" className="group flex min-w-0 shrink-0 items-center gap-2 sm:gap-2.5">
             <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm transition duration-300 group-hover:scale-105">
               <BrandLogo className="h-full w-full" />
@@ -81,15 +81,16 @@ export function SiteNav() {
             </a>
             <Link
               to="/demande"
-              className="inline-flex shrink-0 items-center rounded-full bg-emerald-600 px-3 py-2.5 text-[11px] font-bold text-white shadow-sm transition duration-200 hover:bg-emerald-700 sm:px-4 sm:text-xs"
+              className="inline-flex min-h-10 shrink-0 items-center justify-center rounded-full bg-emerald-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition duration-200 hover:bg-emerald-700 sm:px-4 sm:py-2.5 sm:text-xs"
             >
-              Demande de devis
+              <span className="sm:hidden">Devis</span>
+              <span className="hidden sm:inline">Demande de devis</span>
             </Link>
           </div>
         </div>
 
         <nav
-          className="flex gap-2 overflow-x-auto px-4 pb-2.5 [scrollbar-width:none] relative after:absolute after:right-0 after:top-0 after:h-full after:w-8 after:bg-gradient-to-l after:from-white after:to-transparent after:pointer-events-none lg:hidden [&::-webkit-scrollbar]:hidden"
+          className="relative mx-auto flex w-full max-w-[90rem] gap-2 overflow-x-auto px-4 pb-2.5 [scroll-padding-inline:1rem] [scrollbar-width:none] after:pointer-events-none after:absolute after:right-0 after:top-0 after:h-full after:w-8 after:bg-gradient-to-l after:from-white after:to-transparent lg:hidden [&::-webkit-scrollbar]:hidden"
           aria-label="Menu principal mobile"
         >
           <NavLinks mobile />

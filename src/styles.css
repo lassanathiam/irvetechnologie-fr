@@ -839,17 +839,36 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 
 /* Garde-fou téléphone : rien ne doit dépasser la largeur de l'écran dans l'espace pro. */
 @media (max-width: 640px) {
-  html, body { max-width: 100%; overflow-x: hidden; }
-  .pro-main { min-width: 0; }
-  .pro-main :where(div, section, article, header, footer, form, li, label, p, span, a, button, h1, h2, h3, h4) {
+  html, body { width: 100%; max-width: 100%; overflow-x: hidden; }
+  body { min-width: 0; }
+
+  /* Axe mobile commun : mêmes marges et aucune section publique décalée. */
+  .public-premium { width: 100%; max-width: 100%; overflow-x: clip; }
+  .public-premium :where(main, section, footer, form) { min-width: 0; max-width: 100%; }
+  .public-premium :where(main, section, footer, form) > .mx-auto {
+    width: 100%;
     min-width: 0;
-    max-width: 100%;
+    margin-inline: auto;
+    padding-inline: 1rem;
   }
-  .pro-main :where(p, span, a, h1, h2, h3, h4, td, th, label, dd, dt) { overflow-wrap: anywhere; }
+  .public-premium :where(h1, h2, h3, h4, p, a, button, label, span) {
+    min-width: 0;
+    overflow-wrap: break-word;
+  }
+  .public-premium :where(img, video, canvas, iframe) { max-width: 100%; }
+  .public-premium :where(input, select, textarea) { width: 100%; min-width: 0; max-width: 100%; }
+
+  /* L'espace professionnel garde les largeurs propres à chaque page. */
+  .pro-shell { width: 100%; max-width: 100%; overflow-x: hidden; }
+  .pro-main { min-width: 0; overflow-x: clip; }
+  .pro-main > * { width: 100%; min-width: 0; margin-inline: auto; }
+  .pro-main :where(div, section, article, header, footer, form, li, label) { min-width: 0; }
+  .pro-main :where(p, a, h1, h2, h3, h4, td, th, label, dd, dt) { overflow-wrap: break-word; }
   .pro-main :where(img, video, canvas, svg, iframe) { max-width: 100%; }
   .pro-main :where(input, select, textarea) { max-width: 100%; min-width: 0; }
   .pro-main :where(button, a) { white-space: normal; }
-  .pro-main :where(table) { display: block; max-width: 100%; overflow-x: auto; }
+  .pro-main :where(table) { max-width: 100%; }
+  .pro-main :where(.overflow-x-auto) { max-width: 100%; }
   .pro-main .print-doc :where(table) { display: table; }
   .pro-main :where(.leaflet-container) { max-width: 100%; }
   /* Les repères de la carte gardent leur taille (sinon écrasés en traits blancs). */

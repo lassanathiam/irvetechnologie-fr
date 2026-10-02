@@ -334,7 +334,7 @@ function Index() {
             <div className="inline-flex items-center gap-3 text-mono text-primary mb-6">
               <span className="h-px w-10 bg-primary" /> Aides & entretien <span className="h-px w-10 bg-primary" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               Prime Advenir & crédit d&apos;impôt,{" "}
               <span className="text-muted-foreground/60">puis formule Sérénité.</span>
             </h2>
@@ -554,7 +554,7 @@ function Index() {
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Nos services
           </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
             Une offre complète,{" "}
             <span className="text-muted-foreground/60">pas juste une pose de borne.</span>
           </h2>
@@ -595,7 +595,7 @@ function Index() {
             <div className="flex items-center gap-3 text-mono text-primary mb-6">
               <span className="h-px w-10 bg-primary" /> Avis clients & partenaires
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               Vos retours terrain,{" "}
               <span className="text-muted-foreground/60">directement depuis l&apos;écran.</span>
             </h2>
@@ -713,7 +713,7 @@ function Index() {
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Parcours client
           </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
             Devis clair,{" "}
             <span className="text-muted-foreground/60">chantier maîtrisé.</span>
           </h2>
@@ -745,7 +745,7 @@ function Index() {
               <div className="flex items-center gap-3 text-mono text-primary mb-6">
                 <span className="h-px w-10 bg-primary" /> Zones d'intervention
               </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
                 Nantes au centre,{" "}
                 <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
               </h2>
@@ -866,7 +866,7 @@ function Index() {
               <div className="flex items-center gap-3 text-mono text-primary mb-6">
                 <span className="h-px w-10 bg-primary" /> Réalisations récentes
               </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
                 Nos installations{" "}
                 <span className="text-muted-foreground/60">réalisées.</span>
               </h2>
