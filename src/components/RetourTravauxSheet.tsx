@@ -350,6 +350,15 @@ export default function RetourTravauxSheet({
           </button>
         </div>
       </div>
+
+      {visionneuse != null && photosVisionneuse.length > 0 && (
+        <PhotoLightbox
+          photos={photosVisionneuse}
+          index={Math.max(0, Math.min(visionneuse, photosVisionneuse.length - 1))}
+          onIndexChange={setVisionneuse}
+          onClose={() => setVisionneuse(null)}
+        />
+      )}
     </div>
   );
 }
