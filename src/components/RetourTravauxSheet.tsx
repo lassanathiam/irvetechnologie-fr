@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
+import PhotoLightbox from "@/components/PhotoLightbox";
 import {
   RETOUR_CATEGORIES_LABELS,
   categoriesRetourObligatoires,
