@@ -234,7 +234,7 @@ function Index() {
               <span className="text-xs font-semibold text-emerald-700">Expertise IRVE certifiée P1 · P2 · P3</span>
             </div>
 
-            <h1 className="mb-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-6 sm:text-5xl lg:text-6xl">
+            <h1 className="mb-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-6 sm:text-5xl lg:text-6xl">
               Installation de <br />
               <span className="text-primary">bornes de recharge</span>
             </h1>
@@ -311,7 +311,7 @@ function Index() {
             <Link
               key={label}
               to="/demande"
-              className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
+              className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
               style={{ animationDelay: `${index * 90}ms` }}
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span>
@@ -346,7 +346,7 @@ function Index() {
 
           <div className={`rounded-2xl border border-border bg-card/70 p-4 sm:p-6 ${homeCompact ? "mb-8" : "mb-12"}`}>
             <p className="text-mono text-primary">Simulateur rapide d&apos;aides (indicatif)</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <button
                 type="button"
                 onClick={() => setAideProfil("maison")}

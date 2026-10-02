@@ -273,7 +273,7 @@ function Demande() {
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> {formuleInfo ? "Souscription · Maintenance" : "Formulaire · 5 min"}
           </div>
-          <h1 className="text-4xl md:text-6xl font-medium tracking-tight">
+          <h1 className="text-3xl md:text-6xl font-medium tracking-tight">
             {formuleInfo ? "Souscrire la formule" : "Demande de"}{" "}
             <span className="text-muted-foreground/60">{formuleInfo ? formuleInfo.label : "raccordement"}</span>
           </h1>
