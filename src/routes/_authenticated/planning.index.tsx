@@ -60,6 +60,7 @@ import {
   type RendezVousInput,
 } from "@/lib/planning.functions";
 import { RETOUR_CATEGORIES_LABELS } from "@/lib/planning.functions";
+import PhotoLightbox from "@/components/PhotoLightbox";
 
 import {
   deleteVoirie,
@@ -638,6 +639,7 @@ function PlanningPage() {
     queryFn: () => fetchPhotos({ data: { rendezvous_id: dossier! } }),
     enabled: Boolean(dossier),
   });
+  const [photoOuverte, setPhotoOuverte] = useState<number | null>(null);
 
   /** Programmation groupée de plusieurs chantiers sélectionnés. */
   const groupeFn = useServerFn(programmerEnsemble);
