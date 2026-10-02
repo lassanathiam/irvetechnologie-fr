@@ -54,3 +54,4 @@
 
 - [x] Compacter les fiches de planning dépliées et les devis/PDF sans retirer d’informations
 - [x] Recentrer la carte, moderniser les commandes de géolocalisation et fiabiliser l’affectation depuis un repère
+- [x] Harmoniser l’axe, les marges et les largeurs de tout le site sur téléphone sans modifier les parcours
