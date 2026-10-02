@@ -311,12 +311,12 @@ function Index() {
             <Link
               key={label}
               to="/demande"
-              className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
+              className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-card/80 px-3 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
               style={{ animationDelay: `${index * 90}ms` }}
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span>
               <span className="min-w-0"><span className="block truncate text-xs text-muted-foreground">{label}</span><span className="block text-xs font-semibold">À partir de</span></span>
-              <span className="shrink-0 text-right"><strong className="text-xl text-primary">{new Intl.NumberFormat("fr-FR").format(valeur)} €</strong><span className="block text-[10px] text-muted-foreground">{suite}</span></span>
+              <span className="shrink-0 text-right"><strong className="text-lg text-primary sm:text-xl">{new Intl.NumberFormat("fr-FR").format(valeur)} €</strong><span className="block text-[10px] text-muted-foreground">{suite}</span></span>
             </Link>
           ))}
         </div>

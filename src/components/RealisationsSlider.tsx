@@ -57,7 +57,7 @@ export function RealisationsSlider({ items }: { items: Item[] }) {
         ))}
         <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-4 bg-gradient-to-t from-premium-night via-premium-night/70 to-transparent p-5 pt-20 text-premium-foreground sm:p-7">
           <div className="min-w-0">
-            <p className="truncate font-display text-xl font-bold sm:text-2xl">{current.title}</p>
+            <p className="truncate font-display text-lg font-bold sm:text-2xl">{current.title}</p>
             <p className="mt-1 truncate text-sm text-premium-foreground/70">{[current.place, current.spec].filter(Boolean).join(" · ")}</p>
           </div>
           <span className="shrink-0 text-xs font-semibold text-emerald-300">{i + 1} / {safeItems.length}</span>
