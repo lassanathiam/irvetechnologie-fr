@@ -72,7 +72,6 @@ import {
 import {
   listPartenaires,
   MATERIEL_LABELS,
-  PHOTO_CATEGORIES_LABELS,
 } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
 import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
