@@ -234,7 +234,7 @@ function Index() {
               <span className="text-xs font-semibold text-emerald-700">Expertise IRVE certifiée P1 · P2 · P3</span>
             </div>
 
-            <h1 className="mb-4 font-display text-4xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-6 sm:text-5xl lg:text-6xl">
+            <h1 className="mb-4 font-display text-3xl font-extrabold leading-tight tracking-tight text-foreground sm:mb-6 sm:text-5xl lg:text-6xl">
               Installation de <br />
               <span className="text-primary">bornes de recharge</span>
             </h1>
@@ -311,12 +311,12 @@ function Index() {
             <Link
               key={label}
               to="/demande"
-              className="group grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-3 rounded-lg border border-border bg-card/80 px-4 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
+              className="group flex items-center justify-between gap-3 rounded-lg border border-border bg-card/80 px-3 py-3 transition duration-300 hover:-translate-y-0.5 hover:border-primary/60"
               style={{ animationDelay: `${index * 90}ms` }}
             >
               <span className="grid h-9 w-9 shrink-0 place-items-center rounded-lg bg-primary/10 text-primary"><Icon className="h-4 w-4" /></span>
               <span className="min-w-0"><span className="block truncate text-xs text-muted-foreground">{label}</span><span className="block text-xs font-semibold">À partir de</span></span>
-              <span className="shrink-0 text-right"><strong className="text-xl text-primary">{new Intl.NumberFormat("fr-FR").format(valeur)} €</strong><span className="block text-[10px] text-muted-foreground">{suite}</span></span>
+              <span className="shrink-0 text-right"><strong className="text-lg text-primary sm:text-xl">{new Intl.NumberFormat("fr-FR").format(valeur)} €</strong><span className="block text-[10px] text-muted-foreground">{suite}</span></span>
             </Link>
           ))}
         </div>
@@ -334,7 +334,7 @@ function Index() {
             <div className="inline-flex items-center gap-3 text-mono text-primary mb-6">
               <span className="h-px w-10 bg-primary" /> Aides & entretien <span className="h-px w-10 bg-primary" />
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               Prime Advenir & crédit d&apos;impôt,{" "}
               <span className="text-muted-foreground/60">puis formule Sérénité.</span>
             </h2>
@@ -346,7 +346,7 @@ function Index() {
 
           <div className={`rounded-2xl border border-border bg-card/70 p-4 sm:p-6 ${homeCompact ? "mb-8" : "mb-12"}`}>
             <p className="text-mono text-primary">Simulateur rapide d&apos;aides (indicatif)</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-4">
+            <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
               <button
                 type="button"
                 onClick={() => setAideProfil("maison")}
@@ -554,7 +554,7 @@ function Index() {
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Nos services
           </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
             Une offre complète,{" "}
             <span className="text-muted-foreground/60">pas juste une pose de borne.</span>
           </h2>
@@ -595,7 +595,7 @@ function Index() {
             <div className="flex items-center gap-3 text-mono text-primary mb-6">
               <span className="h-px w-10 bg-primary" /> Avis clients & partenaires
             </div>
-            <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+            <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
               Vos retours terrain,{" "}
               <span className="text-muted-foreground/60">directement depuis l&apos;écran.</span>
             </h2>
@@ -713,7 +713,7 @@ function Index() {
           <div className="flex items-center gap-3 text-mono text-primary mb-6">
             <span className="h-px w-10 bg-primary" /> Parcours client
           </div>
-          <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
+          <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-3xl">
             Devis clair,{" "}
             <span className="text-muted-foreground/60">chantier maîtrisé.</span>
           </h2>
@@ -745,7 +745,7 @@ function Index() {
               <div className="flex items-center gap-3 text-mono text-primary mb-6">
                 <span className="h-px w-10 bg-primary" /> Zones d'intervention
               </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight">
                 Nantes au centre,{" "}
                 <span className="text-muted-foreground/60">Grand Ouest élargi.</span>
               </h2>
@@ -866,7 +866,7 @@ function Index() {
               <div className="flex items-center gap-3 text-mono text-primary mb-6">
                 <span className="h-px w-10 bg-primary" /> Réalisations récentes
               </div>
-              <h2 className="text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
+              <h2 className="text-2xl sm:text-4xl md:text-5xl font-medium tracking-tight max-w-2xl">
                 Nos installations{" "}
                 <span className="text-muted-foreground/60">réalisées.</span>
               </h2>

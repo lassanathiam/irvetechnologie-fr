@@ -37,7 +37,7 @@ const STEPS = ["Projet", "Borne", "Alimentation", "Distance", "Pose", "Gestion",
 function Choice({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
   return (
     <button type="button" onClick={onClick}
-      className={`w-full min-h-16 rounded-lg border px-4 py-3 text-left text-sm font-semibold transition flex items-center gap-3 ${active ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card hover:border-primary/60"}`}>
+      className={`w-full min-h-16 rounded-lg border px-4 py-3 text-left text-sm font-semibold leading-tight transition flex items-center gap-3 ${active ? "border-primary bg-primary/15 text-foreground" : "border-border bg-card hover:border-primary/60"}`}>
       {children}
     </button>
   );

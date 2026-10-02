@@ -158,7 +158,7 @@ export function BornesCarrousel() {
                   {p.badge}
                 </span>
               )}
-              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary opacity-0 transition group-hover:opacity-100">
+              <span className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition-opacity duration-200 group-hover:opacity-100 lg:opacity-0">
                 Demander un devis <ArrowRight className="h-3 w-3" />
               </span>
             </Link>

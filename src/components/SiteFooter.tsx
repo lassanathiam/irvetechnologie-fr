@@ -2,7 +2,7 @@ import { Link } from "@tanstack/react-router";
 
 export function SiteFooter() {
   return (
-    <footer className="mt-32 border-t border-slate-200 bg-white text-slate-500">
+    <footer className="mt-20 sm:mt-32 border-t border-slate-200 bg-white text-slate-500">
       <div className="mx-auto max-w-7xl space-y-6 px-6 py-12 text-sm leading-relaxed">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-start">
           <div className="max-w-sm">
@@ -13,11 +13,11 @@ export function SiteFooter() {
             </p>
           </div>
           <div className="flex flex-col gap-2 md:items-end">
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               <a href="mailto:contacts@irvetechnologie.fr" className="font-medium text-slate-700 transition hover:text-emerald-600">contacts@irvetechnologie.fr</a>
               <a href="tel:+33633657840" className="font-medium text-slate-700 transition hover:text-emerald-600">06 33 65 78 40</a>
             </div>
-            <div className="flex flex-wrap gap-x-6 gap-y-2">
+            <div className="flex flex-wrap gap-x-4 gap-y-2">
               <Link to="/a-propos" className="transition hover:text-emerald-600">À propos</Link>
               <Link to="/calculateur-irve" className="transition hover:text-emerald-600">Calculateur IRVE</Link>
               <Link to="/demande" className="transition hover:text-emerald-600">Demande de devis</Link>

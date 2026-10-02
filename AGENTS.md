@@ -6,3 +6,4 @@
 - Le retour terrain utilise le type du rendez-vous : installation = preuves complètes, maintenance = deux preuves essentielles et câble/métrage seulement si des travaux de câble ont réellement lieu (pourquoi : éviter des photos et champs inutiles en maintenance).
 - Les retours donneur d’ordre utilisent l’email principal et l’email de copie de la fiche partenaire, avec un envoi individuel et dédupliqué à chacun (pourquoi : le service d’email ne propose pas de champ CC natif).
 - Le tableau de bord `/espace` utilise seul la composition de référence ; son graphique compte les interventions réellement terminées et son indicateur bleu compte les chantiers terminés à facturer (pourquoi : ne pas présenter les montants cumulés de documents comme de l’activité réelle).
+- Toutes les pages partagent un axe mobile de pleine largeur avec des marges intérieures régulières et sans débordement horizontal (pourquoi : conserver une présentation centrée et stable sur téléphone).
