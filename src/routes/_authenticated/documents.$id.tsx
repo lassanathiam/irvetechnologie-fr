@@ -77,6 +77,7 @@ function DocumentPage() {
   const [irveNom, setIrveNom] = useState("Lassana Thiam");
   const [paraphes, setParaphes] = useState(true);
   const [page, setPage] = useState(0);
+  const [vue, setVue] = useState<"doc" | "outils">("doc");
   const [cible, setCible] = useState<string>("c1"); // "irve" ou cle d'un client
   const [busy, setBusy] = useState<string | null>(null);
   const [signe, setSigne] = useState(false);
