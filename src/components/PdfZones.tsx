@@ -63,7 +63,7 @@ export async function detecterZones(pdf: PdfDoc, paraphes: boolean): Promise<Zon
   return zones;
 }
 
-function PageCanvas({ pdf, n, children }: { pdf: PdfDoc; n: number; children?: React.ReactNode }) {
+function PageCanvas({ pdf, n, children, onVisible }: { pdf: PdfDoc; n: number; children?: React.ReactNode; onVisible?: (n: number) => void }) {
   const ref = useRef<HTMLCanvasElement | null>(null);
   const [ratio, setRatio] = useState(1.414);
   useEffect(() => {
@@ -84,8 +84,15 @@ function PageCanvas({ pdf, n, children }: { pdf: PdfDoc; n: number; children?: R
       annule = true;
     };
   }, [pdf, n]);
+  useEffect(() => {
+    const el = ref.current?.parentElement;
+    if (!el || !onVisible) return;
+    const io = new IntersectionObserver((e) => e.some((x) => x.isIntersecting) && onVisible(n), { threshold: 0.5 });
+    io.observe(el);
+    return () => io.disconnect();
+  }, [n, onVisible]);
   return (
-    <div className="relative w-full overflow-hidden rounded border border-border bg-white shadow" style={{ aspectRatio: `1 / ${ratio}` }}>
+    <div data-pdf-page={n} className="relative w-full overflow-hidden rounded border border-border bg-white shadow" style={{ aspectRatio: `1 / ${ratio}` }}>
       <canvas ref={ref} className="absolute inset-0 h-full w-full" />
       {children}
     </div>
@@ -99,6 +106,7 @@ export function PdfZones({
   roleVisible,
   remplissage,
   clients,
+  onPageVisible,
 }: {
   pdf: PdfDoc | null;
   zones: Zone[];
@@ -106,8 +114,31 @@ export function PdfZones({
   roleVisible?: Role;
   remplissage?: Partial<Record<ZoneType, string>>;
   clients?: Signataire[];
+  onPageVisible?: (n: number) => void;
 }) {
-  const drag = useRef<{ id: string; sx: number; sy: number; zx: number; zy: number; w: number; h: number } | null>(null);
+  const drag = useRef<{ id: string; ox: number; oy: number; cx: number; cy: number; timer: number } | null>(null);
+  const zonesRef = useRef(zones);
+  zonesRef.current = zones;
+  // Déplace la zone sous le doigt, y compris vers une autre page.
+  const placer = (cx: number, cy: number) => {
+    const d = drag.current;
+    if (!d || !onChange) return;
+    const pageEl = document.elementsFromPoint(cx, cy).find((e) => (e as HTMLElement).dataset?.pdfPage != null) as HTMLElement | undefined;
+    if (!pageEl) return;
+    const r = pageEl.getBoundingClientRect();
+    const pg = Number(pageEl.dataset.pdfPage);
+    onChange(
+      zonesRef.current.map((o) =>
+        o.id === d.id
+          ? { ...o, page: pg, x: Math.max(0, Math.min(1 - o.w, (cx - d.ox - r.left) / r.width)), y: Math.max(0, Math.min(1 - o.h, (cy - d.oy - r.top) / r.height)) }
+          : o,
+      ),
+    );
+  };
+  const finDrag = () => {
+    if (drag.current) window.clearInterval(drag.current.timer);
+    drag.current = null;
+  };
   if (!pdf)
     return (
       <div className="flex items-center justify-center p-10 text-muted-foreground">
@@ -120,7 +151,7 @@ export function PdfZones({
       {pages.map((p) => (
         <div key={p}>
           <p className="mb-1 text-xs text-muted-foreground">Page {p + 1} / {pdf.numPages}</p>
-          <PageCanvas pdf={pdf} n={p}>
+          <PageCanvas pdf={pdf} n={p} onVisible={onPageVisible}>
             {zones
               .filter((z) => z.page === p && (!roleVisible || z.role === roleVisible))
               .map((z) => {
@@ -138,18 +169,31 @@ export function PdfZones({
                     style={{ left: `${z.x * 100}%`, top: `${z.y * 100}%`, width: `${z.w * 100}%`, height: `${z.h * 100}%` }}
                     onPointerDown={(e) => {
                       if (!onChange) return;
-                      const box = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+                      const zr = e.currentTarget.getBoundingClientRect();
                       e.currentTarget.setPointerCapture(e.pointerId);
-                      drag.current = { id: z.id, sx: e.clientX, sy: e.clientY, zx: z.x, zy: z.y, w: box.width, h: box.height };
+                      const scroller = (e.currentTarget.closest("[data-pdf-scroll]") as HTMLElement | null);
+                      const timer = window.setInterval(() => {
+                        const d = drag.current;
+                        if (!d) return;
+                        const top = scroller ? scroller.getBoundingClientRect().top : 0;
+                        const bas = scroller ? scroller.getBoundingClientRect().bottom : window.innerHeight;
+                        const pas = d.cy < top + 70 ? -18 : d.cy > bas - 70 ? 18 : 0;
+                        if (!pas) return;
+                        if (scroller && scroller.scrollHeight > scroller.clientHeight) scroller.scrollBy(0, pas);
+                        else window.scrollBy(0, pas);
+                        placer(d.cx, d.cy);
+                      }, 30);
+                      drag.current = { id: z.id, ox: e.clientX - zr.left, oy: e.clientY - zr.top, cx: e.clientX, cy: e.clientY, timer };
                     }}
                     onPointerMove={(e) => {
                       const d = drag.current;
                       if (!d || d.id !== z.id || !onChange) return;
-                      const nx = Math.max(0, Math.min(1 - z.w, d.zx + (e.clientX - d.sx) / d.w));
-                      const ny = Math.max(0, Math.min(1 - z.h, d.zy + (e.clientY - d.sy) / d.h));
-                      onChange(zones.map((o) => (o.id === z.id ? { ...o, x: nx, y: ny } : o)));
+                      d.cx = e.clientX;
+                      d.cy = e.clientY;
+                      placer(e.clientX, e.clientY);
                     }}
-                    onPointerUp={() => (drag.current = null)}
+                    onPointerUp={finDrag}
+                    onPointerCancel={finDrag}
                   >
                     {val && val.startsWith("data:") ? (
                       <img src={val} alt="" className="max-h-full max-w-full object-contain" />

@@ -77,6 +77,7 @@ function DocumentPage() {
   const [irveNom, setIrveNom] = useState("Lassana Thiam");
   const [paraphes, setParaphes] = useState(true);
   const [page, setPage] = useState(0);
+  const [vue, setVue] = useState<"doc" | "outils">("doc");
   const [cible, setCible] = useState<string>("c1"); // "irve" ou cle d'un client
   const [busy, setBusy] = useState<string | null>(null);
   const [signe, setSigne] = useState(false);
@@ -322,8 +323,12 @@ function DocumentPage() {
           <Button variant="outline" onClick={() => data.url && telechargerFichier(data.url, doc.nom)}><Download className="h-4 w-4" /> Télécharger</Button>
         </div>
 
+        <div className="sticky top-14 z-20 grid grid-cols-2 gap-1 rounded-lg border border-border bg-card p-1 lg:hidden">
+          <Button type="button" size="sm" variant={vue === "doc" ? "default" : "ghost"} onClick={() => setVue("doc")}>Document à signer</Button>
+          <Button type="button" size="sm" variant={vue === "outils" ? "default" : "ghost"} onClick={() => setVue("outils")}>Signataires et actions</Button>
+        </div>
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_360px]">
-          <div className="rounded-lg border border-border bg-muted/30 p-2 sm:p-3">
+          <div data-pdf-scroll className={`${vue === "doc" ? "block" : "hidden"} rounded-lg border border-border bg-muted/30 p-2 sm:p-3 lg:block lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto`}>
             <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-md border border-border bg-card p-3 text-xs">
               <p className="font-semibold">Aperçu du document</p>
               <div className="flex flex-wrap gap-3 text-muted-foreground">
@@ -336,11 +341,11 @@ function DocumentPage() {
             {preparationPdf && (
               <p className="mb-3 flex items-center gap-2 rounded-md border border-primary/30 bg-primary/5 p-3 text-xs"><Loader2 className="h-4 w-4 animate-spin" /> Document protégé détecté : préparation d'une copie signable…</p>
             )}
-            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} clients={clients} />
+            <PdfZones pdf={pdf} zones={verrouille ? [] : irveSigne ? zones.filter((z) => z.role === "client") : zones} onChange={verrouille ? undefined : setZones} clients={clients} onPageVisible={setPage} />
           </div>
 
           {verrouille && (
-            <aside className="space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 lg:sticky lg:top-20 lg:self-start">
+            <aside className={`${vue === "outils" ? "block" : "hidden"} space-y-3 rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-4 lg:block lg:sticky lg:top-20 lg:self-start`}>
               <p className="flex items-center gap-2 text-sm font-bold text-emerald-600"><Check className="h-5 w-5" /> Document signé et terminé</p>
               <ul className="space-y-1 text-xs text-muted-foreground">
                 {signataires.filter((s) => s.signed_at).map((s, i) => (
@@ -355,7 +360,7 @@ function DocumentPage() {
             </aside>
           )}
           {!verrouille && (
-            <aside className="space-y-4 lg:sticky lg:top-20 lg:self-start">
+            <aside className={`${vue === "outils" ? "block" : "hidden"} space-y-4 lg:block lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto lg:pr-1 lg:sticky lg:top-20 lg:self-start`}>
               <div className={`flex items-start gap-3 rounded-lg border p-3 ${preparationPrete ? "border-primary/30 bg-primary/5" : "border-border bg-card"}`}>
                 {preparationPrete ? <Check className="mt-0.5 h-5 w-5 shrink-0 text-primary" /> : <CircleAlert className="mt-0.5 h-5 w-5 shrink-0 text-muted-foreground" />}
                 <div>
@@ -375,7 +380,7 @@ function DocumentPage() {
                 <Button className="w-full" variant="secondary" onClick={detecter} disabled={!pdf || busy === "detect"}>
                   {busy === "detect" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />} Proposer les zones automatiquement
                 </Button>
-                <p className="border-t border-border pt-2 text-xs font-semibold">Placer rapidement une signature (page choisie ci-dessous)</p>
+                <p className="border-t border-border pt-2 text-xs font-semibold">Placer rapidement une signature sur la page {page + 1} (la page affichée)</p>
                 <div className="grid grid-cols-2 gap-2">
                   <Button type="button" size="sm" disabled={!pdf || irveSigne} className="bg-sky-500 text-white hover:bg-sky-600" onClick={() => setZones([...zones, nouvelleZone("signature", "irve", page, 0.08, 0.78)])}>
                     <Stamp className="h-3.5 w-3.5" /> Signature IRVE
@@ -401,7 +406,7 @@ function DocumentPage() {
                     <Button key={t} type="button" size="sm" variant="outline" onClick={() => ajouter(t)}>+ {ZONE_LABEL[t]}</Button>
                   ))}
                 </div>
-                <p className="text-xs text-muted-foreground">Touchez et faites glisser une zone pour la déplacer. Utilisez la croix pour la supprimer.</p>
+                <p className="text-xs text-muted-foreground">Faites glisser une zone pour la déplacer, jusqu’en bas de page ou sur une autre page : le document défile tout seul. La croix la supprime.</p>
               </section>
 
               <section className="space-y-3 rounded-lg border border-border bg-card p-4">
