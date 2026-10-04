@@ -1178,10 +1178,9 @@ export const terminerChantier = createServerFn({ method: "POST" })
           part = p;
         }
         const vus = new Set<string>();
-        const destinataires = [part?.email, part?.email_copie, rdv.client_email]
+        const destinataires = [part?.email, part?.email_copie, rdv.client_email, COMPANY.email]
           .map((e) => e?.trim())
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
-        if (!destinataires.length) destinataires.push(COMPANY.email);
         // Toutes les photos du retour de travaux en un seul lien de téléchargement.
         const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
         const inclus = Number(rdv.metrage_inclus_m ?? 5);
@@ -1266,10 +1265,9 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
     const vus = new Set<string>();
     const destinataires = data.destinataire
       ? [data.destinataire.trim()]
-      : [part?.email, part?.email_copie, rdv.client_email]
+      : [part?.email, part?.email_copie, rdv.client_email, COMPANY.email]
           .map((e) => e?.trim())
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
-    if (!destinataires.length) destinataires.push(COMPANY.email);
 
     const fin = rdv.termine_at ? new Date(rdv.termine_at) : new Date();
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
