@@ -8,6 +8,7 @@ const lineSchema = z.object({
   description: z.string().trim().max(1000).optional().nullable(),
   quantite: z.number().positive().max(100000),
   prix_unitaire: z.number().min(0).max(1_000_000),
+  rendezvous_id: z.string().uuid().optional().nullable(),
 });
 
 const attachmentSchema = z.object({
@@ -149,6 +150,7 @@ export const createAttachement = createServerFn({ method: "POST" })
       description: item.description ?? null,
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
+      rendezvous_id: item.rendezvous_id ?? null,
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);
@@ -173,6 +175,8 @@ export const updateAttachement = createServerFn({ method: "POST" })
       total_ttc: totals.total_ttc,
     }).eq("id", id);
     if (error) throw new Error(error.message);
+    const anciens = await context.supabase.from("attachement_items").select("libelle, description, rendezvous_id").eq("attachement_id", id);
+    const liens = new Map((anciens.data ?? []).filter((l: any) => l.rendezvous_id).map((l: any) => [`${l.libelle}|${l.description ?? ""}`, l.rendezvous_id as string]));
     const del = await context.supabase.from("attachement_items").delete().eq("attachement_id", id);
     if (del.error) throw new Error(del.error.message);
     const { error: lineError } = await context.supabase.from("attachement_items").insert(items.map((item, index) => ({
@@ -181,6 +185,7 @@ export const updateAttachement = createServerFn({ method: "POST" })
       description: item.description ?? null,
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
+      rendezvous_id: item.rendezvous_id ?? liens.get(`${item.libelle}|${item.description ?? ""}`) ?? null,
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);

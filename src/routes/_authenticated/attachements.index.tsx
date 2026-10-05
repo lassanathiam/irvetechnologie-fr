@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { createAttachement, listAttachements } from "@/lib/attachements.functions";
-import { listBordereau, listChantiersPeriode, listDonneurs } from "@/lib/bordereau.functions";
+import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
@@ -32,7 +32,7 @@ const newLine = (init?: Partial<Line>): Line => ({ key: crypto.randomUUID(), lib
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
   const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement);
-  const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersPeriode);
+  const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersAAttacher);
   const [cle, setCle] = useState<"axians" | "ensio">("axians"); const [finMois, setFinMois] = useState(false); const [semaineDu, setSemaineDu] = useState(today()); const [importEnCours, setImportEnCours] = useState(false);
   const list = useQuery({ queryKey: ["attachements"], queryFn: () => listFn() });
   const donneurs = useQuery({ queryKey: ["donneurs-ordre"], queryFn: () => donneursFn() });
@@ -80,8 +80,9 @@ function AttachementsPage() {
     const { lundi, dimanche } = semaine(semaineDu);
     setImportEnCours(true); setError(null);
     try {
-      const rows = await chantiersFn({ data: { du: lundi, au: dimanche, motcle: cle } });
-      if (!rows.length) { setError("Aucun chantier ENSIO planifié cette semaine."); return; }
+      void lundi;
+      const rows = await chantiersFn({ data: { au: dimanche, motcle: cle } });
+      if (!rows.length) { setError("Aucun chantier ENSIO à attacher (tous déjà attachés)."); return; }
       const base = catalogueOptions;
       const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
       const cable = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "2.10" : "2.6"));
@@ -90,7 +91,7 @@ function AttachementsPage() {
         const f = forfait(r.puissance_borne);
         const lieu = [r.client_nom, r.cp_ville].filter(Boolean).join(" — ");
         const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
-        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", description: `${jour} · ${lieu}${r.termine_at ? "" : " (non terminé)"}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
+        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu}${r.chantier_valide ? " (validé ENSIO)" : r.termine_at ? " (terminé)" : " (programmé — pour validation)"}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
         const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
         const c = cable(r.puissance_borne);
         if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
@@ -108,7 +109,7 @@ function AttachementsPage() {
     setCatalogue("");
   };
 
-  const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
+  const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search]);
 
   const totaux = useMemo(() => {
@@ -138,9 +139,9 @@ function AttachementsPage() {
       <p className="text-sm font-semibold">Attachement de la semaine ENSIO</p>
       <div className="flex flex-wrap items-end gap-2">
         <label className="text-xs text-muted-foreground">Un jour de la semaine<Input className="mt-1.5" type="date" value={semaineDu} onChange={(e) => choisirSemaine(e.target.value)} /></label>
-        <Button type="button" variant="outline" disabled={importEnCours} onClick={() => void importerSemaine()}>{importEnCours ? <Loader2 className="animate-spin" /> : <ClipboardList />} Ajouter les chantiers de la semaine</Button>
+        <Button type="button" variant="outline" disabled={importEnCours} onClick={() => void importerSemaine()}>{importEnCours ? <Loader2 className="animate-spin" /> : <ClipboardList />} Regrouper les chantiers ENSIO à attacher</Button>
       </div>
-      <p className="text-xs text-muted-foreground">Chaque chantier ENSIO de la semaine devient une ligne au prix du bordereau (+ câble au-delà de 15 m). Échéance : {delai} jours fin de mois.</p>
+      <p className="text-xs text-muted-foreground">Tous les chantiers ENSIO validés ou programmés jusqu’à cette semaine, pas encore attachés, sont regroupés. Chacun devient une ligne au prix du bordereau (+ câble au-delà de 15 m). Échéance : {delai} jours fin de mois.</p>
     </div>}
     <div className="flex flex-wrap gap-5"><Check label="Autoliquidation de TVA" checked={form.autoliquidation} onChange={(v) => setForm({ ...form, autoliquidation: v })} /><Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} /><Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} /></div>
     <label className="block text-xs text-muted-foreground">Ajouter une prestation du bordereau {bordereau.isLoading ? "(chargement…)" : `(${catalogueOptions.length} prix)`}
