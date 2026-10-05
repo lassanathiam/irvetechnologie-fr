@@ -9,14 +9,15 @@ function siteBase() {
 }
 
 const PROMPT = `Tu reçois la photo d'une feuille de rapport d'intervention papier (borne de recharge / électricité / télécom).
-Reproduis-la en formulaire numérique. Réponds UNIQUEMENT avec un objet JSON, sans texte autour :
-{"titre": "...", "sections": [{"titre": "...", "champs": [{"id": "snake_case_unique", "label": "...", "type": "texte|zone|nombre|date|case|ouinon", "auto": null}]}]}
+Analyse-la pour permettre de remplir le document ORIGINAL sans refaire sa mise en page. Réponds UNIQUEMENT avec un objet JSON, sans texte autour :
+{"titre":"...","sections":[{"titre":"...","champs":[{"id":"snake_case_unique","label":"...","type":"texte|zone|nombre|date|case|ouinon","auto":null,"placement":{"page":0,"x":0.1,"y":0.2,"w":0.25,"h":0.04}}]}],"signatures":{"technicien":{"page":0,"x":0.08,"y":0.82,"w":0.28,"h":0.1},"client":{"page":0,"x":0.62,"y":0.82,"w":0.28,"h":0.1}}}
 Règles :
 - Garde l'ordre, les intitulés exacts et les rubriques de la feuille.
 - Une case à cocher simple = "case" ; une question Conforme/Non conforme ou Oui/Non = "ouinon" ; zone de commentaire = "zone" ; valeur mesurée = "nombre".
 - "auto" vaut "client_nom", "adresse", "date", "technicien", "telephone", "entreprise" (société installatrice), "projet" (numéro/description du projet), "phase" (mono/triphasé) ou "ville" (lieu "Fait à") si le champ correspond, sinon null.
 - Si c est un PDF de plusieurs pages, reprends toutes les pages.
-- N'inclus PAS les zones de signature ni le logo.`;
+- placement décrit la zone vide exacte à remplir, en coordonnées proportionnelles de 0 à 1 : page commence à 0, x depuis la gauche, y depuis le haut, w largeur et h hauteur.
+- Repère aussi les deux zones de signature existantes. N'inclus jamais le logo comme champ.`;
 
 /** Lecture unique de la feuille papier par l'IA pour créer le modèle. */
 export const analyserFeuilleRapport = createServerFn({ method: "POST" })

@@ -5,6 +5,7 @@ import { useState } from "react";
 import { ArrowLeft, Camera, FileUp, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
+import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { compressImage } from "@/lib/image-compress";
@@ -98,8 +99,12 @@ function ModelesPageInner() {
             })
           : await compressImage(file, 2000, 0.8);
       const structure = await analyseFn({ data: { data_url: dataUrl } });
-      setEdit((e) => (e ? { ...e, structure, nom: e.nom || structure.titre } : e));
-      toast.success("Feuille lue : vérifiez les champs puis enregistrez");
+      const avecOriginal: ModeleStructure = {
+        ...structure,
+        original: { data_url: dataUrl, type: file.type === "application/pdf" ? "pdf" : "image" },
+      };
+      setEdit((e) => (e ? { ...e, structure: avecOriginal, nom: e.nom || structure.titre } : e));
+      toast.success("Document original conservé : vérifiez les zones puis enregistrez");
     } catch (err) {
       toast.error((err as Error).message);
     } finally {
@@ -172,6 +177,21 @@ function ModelesPageInner() {
           <label className="block text-sm">Titre du rapport
             <Input value={edit.structure.titre} onChange={(e) => setStruct((s) => ({ ...s, titre: e.target.value }))} />
           </label>
+
+          {edit.structure.original && (
+            <div className="space-y-2">
+              <div>
+                <h2 className="text-sm font-bold">Document original conservé</h2>
+                <p className="text-xs text-muted-foreground">Les cadres bleus indiquent où les informations seront ajoutées. Faites-les glisser si nécessaire.</p>
+              </div>
+              <RapportOriginalDoc
+                structure={edit.structure}
+                valeurs={{}}
+                edit
+                onChange={(structure) => setEdit((current) => current ? { ...current, structure } : current)}
+              />
+            </div>
+          )}
 
           {edit.structure.sections.map((sec, si) => (
             <div key={si} className="space-y-2 rounded-lg border border-border p-3">

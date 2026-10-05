@@ -5,6 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
 import { Download, Loader2, Printer } from "lucide-react";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
+import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { getRapportDonneurPublic } from "@/lib/rapport-modeles.functions";
 import { normaliserStructure } from "@/lib/rapport-modeles";
@@ -33,6 +34,7 @@ function PublicRapport() {
   if (error || !data) return <div className="grid min-h-screen place-items-center bg-white text-slate-700">Rapport introuvable.</div>;
   const r = data.rapport;
   const photos = data.photos ?? [];
+  const structure = normaliserStructure(data.modele.structure);
   return (
     <div className="min-h-screen bg-slate-100 py-4 print:bg-white print:py-0">
       <div className="mx-auto mb-3 flex max-w-[210mm] flex-wrap gap-2 px-3 print:hidden">
@@ -40,17 +42,26 @@ function PublicRapport() {
         {data.zip_url && <a href={data.zip_url} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800"><Download className="h-4 w-4" /> Photos (ZIP)</a>}
       </div>
       <div className="shadow print:shadow-none">
-        <RapportDonneurDoc
-          structure={normaliserStructure(data.modele.structure)}
-          logo={data.modele.logo_data}
-          donneur={data.modele.donneur_ordre}
-          valeurs={(r.valeurs as Record<string, string | boolean | null>) ?? {}}
-          signatureClient={r.signature_client}
-          signatureTechnicien={r.signature_technicien}
-          signataireNom={r.signataire_nom}
-          technicien={r.technicien}
-          signedAt={r.signed_at}
-        />
+        {structure.original ? (
+          <RapportOriginalDoc
+            structure={structure}
+            valeurs={(r.valeurs as Record<string, string | boolean | null>) ?? {}}
+            signatureClient={r.signature_client}
+            signatureTechnicien={r.signature_technicien}
+          />
+        ) : (
+          <RapportDonneurDoc
+            structure={structure}
+            logo={data.modele.logo_data}
+            donneur={data.modele.donneur_ordre}
+            valeurs={(r.valeurs as Record<string, string | boolean | null>) ?? {}}
+            signatureClient={r.signature_client}
+            signatureTechnicien={r.signature_technicien}
+            signataireNom={r.signataire_nom}
+            technicien={r.technicien}
+            signedAt={r.signed_at}
+          />
+        )}
       </div>
       {photos.length > 0 && (
         <div className="mx-auto mt-6 max-w-[210mm] px-3 pb-10 print:hidden">
