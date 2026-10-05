@@ -1,7 +1,7 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { ClipboardList, Euro, Loader2, Plus, Search, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,7 @@ import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements travaux — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements travaux — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  validateSearch: (s: Record<string, unknown>) => ({ rdv: typeof s.rdv === "string" ? s.rdv : undefined }),
   component: AttachementsPage,
 });
 
@@ -68,6 +69,17 @@ function AttachementsPage() {
     }));
   };
 
+  const { rdv: rdvSel } = Route.useSearch();
+  const preRempli = useRef(false);
+  useEffect(() => {
+    if (!rdvSel || preRempli.current || !donneurs.data) return;
+    const d = (donneurs.data as any[]).find((x) => /ensio/i.test(x.nom));
+    setOpen(true);
+    if (d && cle !== "ensio") { appliquerDonneur(d.id); return; }
+    if (!bordereau.data) return;
+    preRempli.current = true;
+    void importerSemaine(rdvSel.split(",").filter(Boolean));
+  });
   const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
   function choisirSemaine(date: string) {
     setSemaineDu(date);
@@ -76,12 +88,11 @@ function AttachementsPage() {
     const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
     setForm((f) => ({ ...f, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, objet: `Attachement semaine ${n} — du ${fr(lundi)} au ${fr(dimanche)}` }));
   }
-  async function importerSemaine() {
-    const { lundi, dimanche } = semaine(semaineDu);
+  async function importerSemaine(ids?: string[]) {
+    const { dimanche } = semaine(semaineDu);
     setImportEnCours(true); setError(null);
     try {
-      void lundi;
-      const rows = await chantiersFn({ data: { au: dimanche, motcle: cle } });
+      const rows = await chantiersFn({ data: ids?.length ? { ids } : { au: dimanche, motcle: cle } });
       if (!rows.length) { setError("Aucun chantier ENSIO à attacher (tous déjà attachés)."); return; }
       const base = catalogueOptions;
       const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
