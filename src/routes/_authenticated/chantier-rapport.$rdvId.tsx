@@ -93,9 +93,13 @@ function RapportChantierPageInner() {
     const auto: Record<string, string> = {
       client_nom: rdv.client_nom,
       adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
-      date: new Date().toLocaleDateString("fr-FR"),
+      date: new Date(rdv.termine_at ?? Date.now()).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }),
       technicien: rdv.technicien ?? "",
       telephone: rdv.client_telephone ?? "",
+      entreprise: "IRVE Technologie",
+      projet: rdv.designation || rdv.titre || "",
+      phase: /tri/i.test(rdv.phase_installation ?? "") ? "Triphasée" : rdv.phase_installation ? "Monophasée" : "",
+      ville: (rdv.cp_ville ?? "").replace(/^\s*\d{5}\s*/, ""),
     };
     setValeurs((v) => {
       const n = { ...v };

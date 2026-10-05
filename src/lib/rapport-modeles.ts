@@ -1,12 +1,12 @@
 /** Types et utilitaires partagés (client + serveur) des modèles de rapport donneur d'ordre. */
 export type ChampType = "texte" | "zone" | "nombre" | "date" | "case" | "ouinon";
-export type ChampAuto = "client_nom" | "adresse" | "date" | "technicien" | "telephone" | null;
+export type ChampAuto = "client_nom" | "adresse" | "date" | "technicien" | "telephone" | "entreprise" | "projet" | "phase" | "ville" | null;
 export type ModeleChamp = { id: string; label: string; type: ChampType; auto?: ChampAuto };
 export type ModeleSection = { titre: string; champs: ModeleChamp[] };
 export type ModeleStructure = { titre: string; sections: ModeleSection[] };
 
 const TYPES: ChampType[] = ["texte", "zone", "nombre", "date", "case", "ouinon"];
-const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone"];
+const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone", "entreprise", "projet", "phase", "ville"];
 
 /** Nettoie une structure (IA ou saisie) pour garantir un format valide. */
 export function normaliserStructure(raw: unknown): ModeleStructure {

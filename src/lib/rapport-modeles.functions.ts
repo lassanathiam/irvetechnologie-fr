@@ -14,17 +14,19 @@ Reproduis-la en formulaire numérique. Réponds UNIQUEMENT avec un objet JSON, s
 Règles :
 - Garde l'ordre, les intitulés exacts et les rubriques de la feuille.
 - Une case à cocher simple = "case" ; une question Conforme/Non conforme ou Oui/Non = "ouinon" ; zone de commentaire = "zone" ; valeur mesurée = "nombre".
-- "auto" vaut "client_nom", "adresse", "date", "technicien" ou "telephone" si le champ correspond à ces infos, sinon null.
+- "auto" vaut "client_nom", "adresse", "date", "technicien", "telephone", "entreprise" (société installatrice), "projet" (numéro/description du projet), "phase" (mono/triphasé) ou "ville" (lieu "Fait à") si le champ correspond, sinon null.
+- Si c est un PDF de plusieurs pages, reprends toutes les pages.
 - N'inclus PAS les zones de signature ni le logo.`;
 
 /** Lecture unique de la feuille papier par l'IA pour créer le modèle. */
 export const analyserFeuilleRapport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ data_url: z.string().max(6_000_000) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ data_url: z.string().max(12_000_000) }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: staff } = await context.supabase.rpc("is_staff");
     if (!staff) throw new Error("Accès réservé à l'équipe.");
-    if (!/^data:image\/(jpeg|png|webp);base64,/.test(data.data_url)) throw new Error("Format d'image non supporté.");
+    const estPdf = data.data_url.startsWith("data:application/pdf;base64,");
+    if (!estPdf && !/^data:image\/(jpeg|png|webp);base64,/.test(data.data_url)) throw new Error("Format non supporté : photo ou PDF.");
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("Service d'analyse non configuré.");
 
@@ -42,7 +44,9 @@ export const analyserFeuilleRapport = createServerFn({ method: "POST" })
             role: "user",
             content: [
               { type: "input_text", text: PROMPT },
-              { type: "input_image", image_url: data.data_url },
+              estPdf
+                ? { type: "input_file", filename: "feuille.pdf", file_data: data.data_url }
+                : { type: "input_image", image_url: data.data_url },
             ],
           },
         ],
@@ -152,7 +156,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     const [rdvQ, modQ, rempQ] = await Promise.all([
       context.supabase
         .from("rendezvous")
-        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre")
+        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at")
         .eq("id", data.rendezvous_id)
         .maybeSingle(),
       context.supabase.from("rapport_modeles").select("*").eq("actif", true),
