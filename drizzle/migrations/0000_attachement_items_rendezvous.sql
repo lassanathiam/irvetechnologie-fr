@@ -1,0 +1,2 @@
+ALTER TABLE public.attachement_items ADD COLUMN IF NOT EXISTS rendezvous_id uuid REFERENCES public.rendezvous(id) ON DELETE SET NULL;
+CREATE INDEX IF NOT EXISTS attachement_items_rendezvous_idx ON public.attachement_items(rendezvous_id);

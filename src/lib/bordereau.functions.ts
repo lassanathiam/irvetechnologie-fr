@@ -176,3 +176,29 @@ export const listChantiersPeriode = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return rows ?? [];
   });
+
+/** Chantiers d'un donneur d'ordre à regrouper : validés (toutes dates jusqu'à `au`) + programmés jusqu'à `au`, pas encore attachés. */
+export const listChantiersAAttacher = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z.object({ au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), motcle: z.string().trim().min(2).max(80) }).parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, client_nom, adresse, cp_ville, date_debut, termine_at, chantier_valide, statut, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, partenaire")
+      .lte("date_debut", `${data.au}T23:59:59`)
+      .ilike("partenaire", `%${data.motcle}%`)
+      .order("date_debut");
+    if (error) throw new Error(error.message);
+    const ids = (rows ?? []).map((r) => r.id);
+    const deja = new Set<string>();
+    if (ids.length) {
+      const { data: items } = await context.supabase
+        .from("attachement_items")
+        .select("rendezvous_id, attachements_travaux!inner(statut)")
+        .in("rendezvous_id", ids);
+      for (const it of (items ?? []) as any[]) if (it.attachements_travaux?.statut !== "annule" && it.rendezvous_id) deja.add(it.rendezvous_id);
+    }
+    return (rows ?? []).filter((r) => !deja.has(r.id) && !/annul/i.test(r.statut ?? ""));
+  });
