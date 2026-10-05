@@ -48,6 +48,7 @@ export type Database = {
           ordre: number
           prix_unitaire: number
           quantite: number
+          rendezvous_id: string | null
         }
         Insert: {
           attachement_id: string
@@ -58,6 +59,7 @@ export type Database = {
           ordre?: number
           prix_unitaire?: number
           quantite?: number
+          rendezvous_id?: string | null
         }
         Update: {
           attachement_id?: string
@@ -68,6 +70,7 @@ export type Database = {
           ordre?: number
           prix_unitaire?: number
           quantite?: number
+          rendezvous_id?: string | null
         }
         Relationships: [
           {
@@ -75,6 +78,13 @@ export type Database = {
             columns: ["attachement_id"]
             isOneToOne: false
             referencedRelation: "attachements_travaux"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "attachement_items_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
             referencedColumns: ["id"]
           },
         ]

@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791186361164,
+      "tag": "0000_attachement_items_rendezvous",
+      "breakpoints": true
+    }
+  ]
+}
