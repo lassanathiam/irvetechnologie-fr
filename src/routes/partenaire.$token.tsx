@@ -1,4 +1,5 @@
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
+import { metrageInclusDefaut } from "@/lib/planning.functions";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
@@ -614,16 +615,16 @@ function EspacePartenaire({
               {(d.metrage_reel_m != null || d.metrage_inclus_m != null) && (
                 <p className="text-xs text-muted-foreground mt-2">
                   Métrage posé : {Number(d.metrage_reel_m ?? d.metrage_m ?? 0)} m
-                  {" · "}inclus : {Number(d.metrage_inclus_m ?? 5)} m
+                  {" · "}inclus : {Number(d.metrage_inclus_m ?? metrageInclusDefaut(espace.data?.nom))} m
                   {Math.max(
                     0,
-                    Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                    Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? metrageInclusDefaut(espace.data?.nom)),
                   ) > 0 && (
                     <span className="text-primary">
                       {" · "}
                       {Math.max(
                         0,
-                        Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                        Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? metrageInclusDefaut(espace.data?.nom)),
                       )}{" "}
                       m supplémentaires
                     </span>

@@ -11,6 +11,7 @@ import {
   categoriesRetourOptionnelles,
   enregistrerRetourTravaux,
   listPhotosChantier,
+  metrageInclusDefaut,
   supprimerPhotoChantier,
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
@@ -43,7 +44,7 @@ export default function RetourTravauxSheet({
   const deleteFn = useServerFn(supprimerPhotoChantier);
   const saveFn = useServerFn(enregistrerRetourTravaux);
 
-  const [inclus, setInclus] = useState(String(rdv.metrage_inclus_m ?? 5));
+  const [inclus, setInclus] = useState(String(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire)));
   const [reel, setReel] = useState(
     rdv.metrage_reel_m == null ? "" : String(rdv.metrage_reel_m),
   );
