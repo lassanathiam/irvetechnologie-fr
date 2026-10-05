@@ -1571,9 +1571,12 @@ export function categoriesRetourObligatoires(type?: string | null, partenaire?: 
 }
 
 export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null): readonly string[] {
-  if (type === "maintenance") return ["tableau_electrique", "compteur_linky", "plaque_serie", "autre"];
-  if (estEnsio(partenaire)) return RETOUR_CATEGORIES_ENSIO_OPTION;
-  return RETOUR_CATEGORIES_OPTIONNELLES;
+  // Toutes les autres catégories restent proposées en complément, pour ne jamais manquer un type de photo.
+  const principales = new Set<string>(categoriesRetourObligatoires(type, partenaire));
+  const ordre: string[] = estEnsio(partenaire) && type !== "maintenance"
+    ? [...RETOUR_CATEGORIES_ENSIO_OPTION, ...RETOUR_CATEGORIES_OBLIGATOIRES, ...RETOUR_CATEGORIES_OPTIONNELLES]
+    : [...RETOUR_CATEGORIES_OBLIGATOIRES, ...RETOUR_CATEGORIES_MAINTENANCE, ...RETOUR_CATEGORIES_OPTIONNELLES];
+  return [...new Set(ordre.filter((c) => !principales.has(c) && c !== "autre")), "autre"];
 }
 
 const MAX_PHOTOS_CHANTIER = 40;
