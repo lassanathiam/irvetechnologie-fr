@@ -614,16 +614,16 @@ function EspacePartenaire({
               {(d.metrage_reel_m != null || d.metrage_inclus_m != null) && (
                 <p className="text-xs text-muted-foreground mt-2">
                   Métrage posé : {Number(d.metrage_reel_m ?? d.metrage_m ?? 0)} m
-                  {" · "}inclus : {Number(d.metrage_inclus_m ?? 5)} m
+                  {" · "}inclus : {Number(d.metrage_inclus_m ?? metrageInclusDefaut(d.partenaire))} m
                   {Math.max(
                     0,
-                    Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                    Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? metrageInclusDefaut(d.partenaire)),
                   ) > 0 && (
                     <span className="text-primary">
                       {" · "}
                       {Math.max(
                         0,
-                        Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? 5),
+                        Number(d.metrage_reel_m ?? 0) - Number(d.metrage_inclus_m ?? metrageInclusDefaut(d.partenaire)),
                       )}{" "}
                       m supplémentaires
                     </span>

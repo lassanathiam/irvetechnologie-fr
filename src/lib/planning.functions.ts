@@ -1278,7 +1278,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
     const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
     const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
-    const inclus = Number(rdv.metrage_inclus_m ?? 5);
+    const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
     const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
 
     const envoyes: string[] = [];
@@ -1779,7 +1779,7 @@ export const getSuiviFacturation = createServerFn({ method: "POST" })
               86_400_000,
           )
         : null;
-      const inclus = Number(r.metrage_inclus_m ?? 5);
+      const inclus = Number(r.metrage_inclus_m ?? metrageInclusDefaut(r.partenaire));
       const reel = r.metrage_reel_m == null ? null : Number(r.metrage_reel_m);
       const part = r.partenaire_id ? partenairesMap.get(r.partenaire_id) : undefined;
       const sousTraitance = r.origine === "sous_traitance" || Boolean(r.partenaire_id);
@@ -2114,7 +2114,7 @@ export const creerFactureChantier = createServerFn({ method: "POST" })
         }`
       : rdv.designation || rdv.titre || "Installation borne de recharge";
 
-    const inclus = Number(rdv.metrage_inclus_m ?? 5);
+    const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
     const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
     const supplement = reel == null ? 0 : Math.max(0, reel - inclus);
     const description = [
