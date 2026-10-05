@@ -13,7 +13,7 @@ import { euro } from "@/lib/company";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements travaux — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements travaux — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
-  validateSearch: (s: Record<string, unknown>) => ({ rdv: typeof s.rdv === "string" ? s.rdv : undefined }),
+  validateSearch: (s: Record<string, unknown>): { rdv?: string } => ({ rdv: typeof s.rdv === "string" ? s.rdv : undefined }),
   component: AttachementsPage,
 });
 
