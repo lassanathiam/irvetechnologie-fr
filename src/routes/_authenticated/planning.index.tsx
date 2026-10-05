@@ -1809,8 +1809,8 @@ function PlanningPage() {
                                   {dureeFr(Number(r.duree_trajet_min ?? 0))}
                                 </span>
                               ) : (
-                                <span className="text-mono text-destructive">
-                                  adresse non géolocalisée
+                                <span className={`text-mono ${r.lat != null ? "text-muted-foreground" : "text-destructive"}`}>
+                                  {r.lat != null ? "trajet à recalculer" : "adresse non géolocalisée"}
                                 </span>
                               )}
                             </p>
