@@ -1,9 +1,16 @@
 /** Types et utilitaires partagés (client + serveur) des modèles de rapport donneur d'ordre. */
 export type ChampType = "texte" | "zone" | "nombre" | "date" | "case" | "ouinon";
 export type ChampAuto = "client_nom" | "adresse" | "date" | "technicien" | "telephone" | "entreprise" | "projet" | "phase" | "ville" | null;
-export type ModeleChamp = { id: string; label: string; type: ChampType; auto?: ChampAuto };
+export type PlacementRapport = { page: number; x: number; y: number; w: number; h: number };
+export type ModeleChamp = { id: string; label: string; type: ChampType; auto?: ChampAuto; placement?: PlacementRapport | null };
 export type ModeleSection = { titre: string; champs: ModeleChamp[] };
-export type ModeleStructure = { titre: string; sections: ModeleSection[] };
+export type ModeleOriginal = { data_url: string; type: "pdf" | "image" };
+export type ModeleStructure = {
+  titre: string;
+  sections: ModeleSection[];
+  original?: ModeleOriginal | null;
+  signatures?: { technicien?: PlacementRapport | null; client?: PlacementRapport | null };
+};
 
 const TYPES: ChampType[] = ["texte", "zone", "nombre", "date", "case", "ouinon"];
 const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone", "entreprise", "projet", "phase", "ville"];
@@ -12,9 +19,28 @@ const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone", "entr
 export function normaliserStructure(raw: unknown): ModeleStructure {
   const o = (raw && typeof raw === "object" ? raw : {}) as Record<string, unknown>;
   const sections = Array.isArray(o["sections"]) ? (o["sections"] as unknown[]) : [];
+  const originalRaw = (o["original"] && typeof o["original"] === "object" ? o["original"] : null) as Record<string, unknown> | null;
+  const signaturesRaw = (o["signatures"] && typeof o["signatures"] === "object" ? o["signatures"] : null) as Record<string, unknown> | null;
+  const placement = (v: unknown): PlacementRapport | null => {
+    if (!v || typeof v !== "object") return null;
+    const p = v as Record<string, unknown>;
+    const page = Math.max(0, Math.floor(Number(p["page"]) || 0));
+    const x = Math.max(0, Math.min(0.98, Number(p["x"]) || 0));
+    const y = Math.max(0, Math.min(0.98, Number(p["y"]) || 0));
+    const w = Math.max(0.03, Math.min(1 - x, Number(p["w"]) || 0.2));
+    const h = Math.max(0.018, Math.min(1 - y, Number(p["h"]) || 0.035));
+    return { page, x, y, w, h };
+  };
   let n = 0;
   return {
     titre: String(o["titre"] ?? "Rapport d'intervention").slice(0, 160),
+    original:
+      originalRaw && typeof originalRaw["data_url"] === "string" && /^data:(application\/pdf|image\/(jpeg|png|webp));base64,/.test(originalRaw["data_url"])
+        ? { data_url: originalRaw["data_url"], type: originalRaw["type"] === "pdf" ? "pdf" : "image" }
+        : null,
+    signatures: signaturesRaw
+      ? { technicien: placement(signaturesRaw["technicien"]), client: placement(signaturesRaw["client"]) }
+      : undefined,
     sections: sections.slice(0, 30).map((s) => {
       const so = (s && typeof s === "object" ? s : {}) as Record<string, unknown>;
       const champs = Array.isArray(so["champs"]) ? (so["champs"] as unknown[]) : [];
@@ -30,6 +56,7 @@ export function normaliserStructure(raw: unknown): ModeleStructure {
             label: String(co["label"] ?? "Champ").slice(0, 200),
             type,
             auto,
+            placement: placement(co["placement"]),
           };
         }),
       };
