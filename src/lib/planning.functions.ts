@@ -62,6 +62,11 @@ const num = (min: number, max: number, def: number) =>
 
 
 /** États possibles d'un chantier, du programmé au terminé. */
+/** Métrage de câble inclus dans le forfait selon le donneur d'ordre (bordereau ENSIO : 15 m). */
+export function metrageInclusDefaut(partenaire?: string | null): number {
+  return partenaire && /ensio/i.test(partenaire) ? 15 : 5;
+}
+
 export const STATUTS_CHANTIER = [
   "planifie",
   "confirme",
