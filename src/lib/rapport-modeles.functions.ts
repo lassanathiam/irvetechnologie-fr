@@ -14,17 +14,19 @@ Reproduis-la en formulaire numérique. Réponds UNIQUEMENT avec un objet JSON, s
 Règles :
 - Garde l'ordre, les intitulés exacts et les rubriques de la feuille.
 - Une case à cocher simple = "case" ; une question Conforme/Non conforme ou Oui/Non = "ouinon" ; zone de commentaire = "zone" ; valeur mesurée = "nombre".
-- "auto" vaut "client_nom", "adresse", "date", "technicien" ou "telephone" si le champ correspond à ces infos, sinon null.
+- "auto" vaut "client_nom", "adresse", "date", "technicien", "telephone", "entreprise" (société installatrice), "projet" (numéro/description du projet), "phase" (mono/triphasé) ou "ville" (lieu "Fait à") si le champ correspond, sinon null.
+- Si c est un PDF de plusieurs pages, reprends toutes les pages.
 - N'inclus PAS les zones de signature ni le logo.`;
 
 /** Lecture unique de la feuille papier par l'IA pour créer le modèle. */
 export const analyserFeuilleRapport = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((i: unknown) => z.object({ data_url: z.string().max(6_000_000) }).parse(i))
+  .inputValidator((i: unknown) => z.object({ data_url: z.string().max(12_000_000) }).parse(i))
   .handler(async ({ data, context }) => {
     const { data: staff } = await context.supabase.rpc("is_staff");
     if (!staff) throw new Error("Accès réservé à l'équipe.");
-    if (!/^data:image\/(jpeg|png|webp);base64,/.test(data.data_url)) throw new Error("Format d'image non supporté.");
+    const estPdf = data.data_url.startsWith("data:application/pdf;base64,");
+    if (!estPdf && !/^data:image\/(jpeg|png|webp);base64,/.test(data.data_url)) throw new Error("Format non supporté : photo ou PDF.");
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("Service d'analyse non configuré.");
 
@@ -42,7 +44,9 @@ export const analyserFeuilleRapport = createServerFn({ method: "POST" })
             role: "user",
             content: [
               { type: "input_text", text: PROMPT },
-              { type: "input_image", image_url: data.data_url },
+              estPdf
+                ? { type: "input_file", filename: "feuille.pdf", file_data: data.data_url }
+                : { type: "input_image", image_url: data.data_url },
             ],
           },
         ],
@@ -152,7 +156,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     const [rdvQ, modQ, rempQ] = await Promise.all([
       context.supabase
         .from("rendezvous")
-        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre")
+        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at")
         .eq("id", data.rendezvous_id)
         .maybeSingle(),
       context.supabase.from("rapport_modeles").select("*").eq("actif", true),
@@ -331,4 +335,27 @@ export const getRapportDonneurPublic = createServerFn({ method: "GET" })
       zip_url: rdv ? `/api/public/retour/${rdv.public_token}.zip` : null,
       photos,
     };
+  });
+
+/** Chantiers terminés d'un donneur d'ordre, proposés pour remplir son rapport / PV. */
+export const listChantiersTerminesDonneur = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ donneur: z.string().trim().min(2).max(160) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const mot = data.donneur.replace(/[%_,()]/g, " ").trim();
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, client_nom, adresse, cp_ville, termine_at, date_debut, statut")
+      .ilike("partenaire", `%${mot}%`)
+      .not("termine_at", "is", null)
+      .order("termine_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    const ids = (rows ?? []).map((r) => r.id);
+    const faits = new Set<string>();
+    if (ids.length) {
+      const { data: r2 } = await context.supabase.from("rapport_remplis").select("rendezvous_id, signed_at").in("rendezvous_id", ids);
+      for (const r of r2 ?? []) if (r.rendezvous_id && r.signed_at) faits.add(r.rendezvous_id);
+    }
+    return (rows ?? []).map((r) => ({ ...r, pv_signe: faits.has(r.id) }));
   });

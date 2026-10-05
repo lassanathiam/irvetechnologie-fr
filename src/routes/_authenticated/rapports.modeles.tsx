@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
-import { ArrowLeft, Camera, Loader2, Plus, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, FileUp, Loader2, Plus, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -11,6 +11,7 @@ import { compressImage } from "@/lib/image-compress";
 import {
   analyserFeuilleRapport,
   enregistrerModeleRapport,
+  listChantiersTerminesDonneur,
   listModelesRapport,
   supprimerModeleRapport,
 } from "@/lib/rapport-modeles.functions";
@@ -86,7 +87,16 @@ function ModelesPageInner() {
     if (!edit) return;
     setAnalyse(true);
     try {
-      const dataUrl = await compressImage(file, 2000, 0.8);
+      const dataUrl =
+        file.type === "application/pdf"
+          ? await new Promise<string>((ok, ko) => {
+              if (file.size > 8_000_000) return ko(new Error("PDF trop lourd (8 Mo maximum)."));
+              const r = new FileReader();
+              r.onload = () => ok(String(r.result));
+              r.onerror = () => ko(new Error("Lecture du PDF impossible."));
+              r.readAsDataURL(file);
+            })
+          : await compressImage(file, 2000, 0.8);
       const structure = await analyseFn({ data: { data_url: dataUrl } });
       setEdit((e) => (e ? { ...e, structure, nom: e.nom || structure.titre } : e));
       toast.success("Feuille lue : vérifiez les champs puis enregistrez");
@@ -146,11 +156,18 @@ function ModelesPageInner() {
             </div>
           </div>
 
-          <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/60 px-3 text-sm font-semibold text-primary">
-            {analyse ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
-            {analyse ? "Lecture de la feuille…" : "Photographier la feuille de rapport papier"}
-            <input type="file" accept="image/*" capture="environment" className="hidden" disabled={analyse} onChange={(e) => e.target.files?.[0] && photoFeuille(e.target.files[0])} />
-          </label>
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/60 px-3 text-sm font-semibold text-primary">
+              {analyse ? <Loader2 className="h-5 w-5 animate-spin" /> : <Camera className="h-5 w-5" />}
+              {analyse ? "Lecture de la feuille…" : "Prendre une photo de la feuille"}
+              <input type="file" accept="image/*" capture="environment" className="hidden" disabled={analyse} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) photoFeuille(f); }} />
+            </label>
+            <label className="flex min-h-14 cursor-pointer items-center justify-center gap-2 rounded-lg border-2 border-dashed border-primary/60 px-3 text-sm font-semibold text-primary">
+              {analyse ? <Loader2 className="h-5 w-5 animate-spin" /> : <FileUp className="h-5 w-5" />}
+              {analyse ? "Lecture de la feuille…" : "Importer le PV (PDF ou image)"}
+              <input type="file" accept="application/pdf,image/*" className="hidden" disabled={analyse} onChange={(e) => { const f = e.target.files?.[0]; e.target.value = ""; if (f) photoFeuille(f); }} />
+            </label>
+          </div>
 
           <label className="block text-sm">Titre du rapport
             <Input value={edit.structure.titre} onChange={(e) => setStruct((s) => ({ ...s, titre: e.target.value }))} />
@@ -205,7 +222,8 @@ function ModelesPageInner() {
           {modeles.map((m) => {
             const s = normaliserStructure(m.structure);
             return (
-              <div key={m.id} className="neo-dashboard-panel flex items-center gap-3 rounded-lg border border-border p-3">
+              <div key={m.id} className="neo-dashboard-panel space-y-2 rounded-lg border border-border p-3 sm:col-span-2">
+              <div className="flex items-center gap-3">
                 {m.logo_data ? <img src={m.logo_data} alt="" className="h-10 w-16 rounded bg-white object-contain p-1" /> : <div className="h-10 w-16 rounded bg-muted" />}
                 <div className="min-w-0 flex-1">
                   <div className="truncate font-semibold">{m.nom}</div>
@@ -214,9 +232,59 @@ function ModelesPageInner() {
                 <Button size="sm" variant="outline" onClick={() => setEdit({ id: m.id, nom: m.nom, donneur_ordre: m.donneur_ordre, email_destinataire: m.email_destinataire ?? "", logo_data: m.logo_data, structure: s, actif: m.actif })}>Modifier</Button>
                 <Button size="icon" variant="ghost" onClick={() => window.confirm("Supprimer ce modèle ?") && del.mutate(m.id)}><Trash2 className="h-4 w-4" /></Button>
               </div>
+              <ChantiersSuggeres donneur={m.donneur_ordre} />
+              </div>
             );
           })}
         </div>
+      )}
+    </div>
+  );
+}
+
+function ChantiersSuggeres({ donneur }: { donneur: string }) {
+  const fn = useServerFn(listChantiersTerminesDonneur);
+  const [ouvert, setOuvert] = useState(false);
+  const { data = [], isLoading } = useQuery({
+    queryKey: ["chantiers-termines-donneur", donneur],
+    queryFn: () => fn({ data: { donneur } }),
+    enabled: ouvert && donneur.trim().length >= 2,
+  });
+  if (!ouvert)
+    return (
+      <Button size="sm" className="w-full" onClick={() => setOuvert(true)}>
+        Remplir pour un chantier terminé
+      </Button>
+    );
+  return (
+    <div className="space-y-1 rounded-md border border-border p-2">
+      <div className="flex items-center justify-between text-xs font-semibold">
+        <span>Chantiers {donneur} terminés — choisissez-en un, les informations se remplissent seules</span>
+        <button type="button" className="text-muted-foreground" onClick={() => setOuvert(false)}>Fermer</button>
+      </div>
+      {isLoading ? (
+        <Loader2 className="h-4 w-4 animate-spin" />
+      ) : data.length === 0 ? (
+        <p className="text-xs text-muted-foreground">Aucun chantier terminé pour ce donneur d'ordre.</p>
+      ) : (
+        data.map((r) => (
+          <Link
+            key={r.id}
+            to="/chantier-rapport/$rdvId"
+            params={{ rdvId: r.id }}
+            className="flex items-center justify-between gap-2 rounded-md px-2 py-2 text-sm hover:bg-muted"
+          >
+            <span className="min-w-0">
+              <span className="block truncate font-semibold">{r.client_nom}</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {[r.adresse, r.cp_ville].filter(Boolean).join(", ")} · terminé le {new Date(r.termine_at!).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" })}
+              </span>
+            </span>
+            <span className={`shrink-0 rounded-full px-2 py-0.5 text-[11px] font-bold ${r.pv_signe ? "bg-primary/15 text-primary" : "bg-muted text-muted-foreground"}`}>
+              {r.pv_signe ? "PV signé" : "À remplir"}
+            </span>
+          </Link>
+        ))
       )}
     </div>
   );
