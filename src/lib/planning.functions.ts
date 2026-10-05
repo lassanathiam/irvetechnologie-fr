@@ -9,18 +9,27 @@ async function trajetDepuisBase(
   lng: number,
   base: { lat: number; lng: number } = { lat: 47.235974, lng: -1.499838 },
 ): Promise<{ distance_km: number; duree_trajet_min: number } | null> {
-  try {
-    const res = await fetch(
-      `https://router.project-osrm.org/route/v1/driving/${base.lng},${base.lat};${lng},${lat}?overview=false`,
-      { signal: AbortSignal.timeout(9000) },
-    );
-    const j = (await res.json()) as { code?: string; routes?: { distance: number; duration: number }[] };
-    const r = j.code === "Ok" ? j.routes?.[0] : undefined;
-    if (!r) return null;
-    return { distance_km: Math.round(r.distance / 1000), duree_trajet_min: Math.round(r.duration / 60) };
-  } catch {
-    return null;
+  // Plusieurs serveurs routiers + nouvel essai : le serveur public est parfois saturé.
+  const serveurs = [
+    "https://router.project-osrm.org/route/v1/driving",
+    "https://routing.openstreetmap.de/routed-car/route/v1/driving",
+  ];
+  for (let essai = 0; essai < 2; essai++) {
+    for (const srv of serveurs) {
+      try {
+        const res = await fetch(`${srv}/${base.lng},${base.lat};${lng},${lat}?overview=false`, {
+          signal: AbortSignal.timeout(10000),
+        });
+        if (!res.ok) continue;
+        const j = (await res.json()) as { code?: string; routes?: { distance: number; duration: number }[] };
+        const r = j.code === "Ok" ? j.routes?.[0] : undefined;
+        if (r) return { distance_km: Math.round(r.distance / 1000), duree_trajet_min: Math.round(r.duration / 60) };
+      } catch {
+        /* serveur suivant */
+      }
+    }
   }
+  return null;
 }
 
 type SmsOutcome =
