@@ -1460,6 +1460,10 @@ export const RETOUR_CATEGORIES_OPTIONNELLES = [
   "armoire",
   "vue_ensemble",
   "plaque_serie",
+  "avant_emplacement",
+  "avant_tableau",
+  "avant_compteur",
+  "avant_travaux",
   "autre",
 ] as const;
 
@@ -1526,6 +1530,10 @@ export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   armoire: "Armoire",
   vue_ensemble: "Vue d'ensemble",
   plaque_serie: "Plaque / numéro de série",
+  avant_emplacement: "AVANT — Emplacement de la borne",
+  avant_tableau: "AVANT — Tableau électrique",
+  avant_compteur: "AVANT — Compteur",
+  avant_travaux: "AVANT — État des lieux avant travaux",
   autre: "Autre",
   emplacement_borne: "Emplacement de la borne",
   emplacement_tableau: "Emplacement du tableau",
