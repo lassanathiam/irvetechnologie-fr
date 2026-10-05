@@ -11,6 +11,7 @@ import {
   categoriesRetourOptionnelles,
   enregistrerRetourTravaux,
   listPhotosChantier,
+  metrageInclusDefaut,
   supprimerPhotoChantier,
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
