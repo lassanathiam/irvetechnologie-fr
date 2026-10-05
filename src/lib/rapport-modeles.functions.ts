@@ -336,3 +336,26 @@ export const getRapportDonneurPublic = createServerFn({ method: "GET" })
       photos,
     };
   });
+
+/** Chantiers terminés d'un donneur d'ordre, proposés pour remplir son rapport / PV. */
+export const listChantiersTerminesDonneur = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ donneur: z.string().trim().min(2).max(160) }).parse(i))
+  .handler(async ({ data, context }) => {
+    const mot = data.donneur.replace(/[%_,()]/g, " ").trim();
+    const { data: rows, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, client_nom, adresse, cp_ville, termine_at, date_debut, statut")
+      .ilike("partenaire", `%${mot}%`)
+      .not("termine_at", "is", null)
+      .order("termine_at", { ascending: false })
+      .limit(60);
+    if (error) throw new Error(error.message);
+    const ids = (rows ?? []).map((r) => r.id);
+    const faits = new Set<string>();
+    if (ids.length) {
+      const { data: r2 } = await context.supabase.from("rapport_remplis").select("rendezvous_id, signed_at").in("rendezvous_id", ids);
+      for (const r of r2 ?? []) if (r.rendezvous_id && r.signed_at) faits.add(r.rendezvous_id);
+    }
+    return (rows ?? []).map((r) => ({ ...r, pv_signe: faits.has(r.id) }));
+  });
