@@ -1460,6 +1460,10 @@ export const RETOUR_CATEGORIES_OPTIONNELLES = [
   "armoire",
   "vue_ensemble",
   "plaque_serie",
+  "avant_emplacement",
+  "avant_tableau",
+  "avant_compteur",
+  "avant_travaux",
   "autre",
 ] as const;
 
