@@ -1328,6 +1328,14 @@ function PlanningPage() {
             >
               Étaler sur plusieurs jours (nuitée)
             </button>
+            <Link
+              to="/attachements"
+              search={{ rdv: selection.join(",") }}
+              disabled={selection.length < 1}
+              className={`text-mono text-xs px-4 py-2.5 rounded-sm border border-primary text-primary hover:bg-primary/10 ${selection.length < 1 ? "pointer-events-none opacity-40" : ""}`}
+            >
+              Faire un attachement ({selection.length})
+            </Link>
           </div>
         </div>
       )}
