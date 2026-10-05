@@ -192,25 +192,42 @@ export default function RetourTravauxSheet({
           </div>
         )}
 
-        <label className="mt-2 flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold">
-          {enCours === cat ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Camera className="h-4 w-4" />
-          )}
-          {enCours === cat ? "Envoi…" : "Prendre / choisir des photos"}
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            className="hidden"
-            disabled={enCours !== null}
-            onChange={(e) => {
-              void envoyer(cat, e.target.files);
-              e.target.value = "";
-            }}
-          />
-        </label>
+        {enCours === cat ? (
+          <div className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold">
+            <Loader2 className="h-4 w-4 animate-spin" /> Envoi…
+          </div>
+        ) : (
+          <div className="mt-2 grid grid-cols-2 gap-2">
+            <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-primary bg-primary/10 text-sm font-semibold">
+              <Camera className="h-4 w-4" /> Prendre photo
+              <input
+                type="file"
+                accept="image/*"
+                capture="environment"
+                className="hidden"
+                disabled={enCours !== null}
+                onChange={(e) => {
+                  void envoyer(cat, e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            <label className="flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold">
+              Galerie
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                className="hidden"
+                disabled={enCours !== null}
+                onChange={(e) => {
+                  void envoyer(cat, e.target.files);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          </div>
+        )}
       </div>
     );
   }
