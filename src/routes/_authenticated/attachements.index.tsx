@@ -70,14 +70,18 @@ function AttachementsPage() {
   };
 
   const { rdv: rdvSel } = Route.useSearch();
-  const preRempli = useRef(false);
+  const aAttacher = useQuery({ queryKey: ["ensio-a-attacher"], queryFn: () => chantiersFn({ data: { motcle: "ensio" } }) });
+  const termines = (aAttacher.data ?? []).filter((r: any) => r.termine_at || r.chantier_valide || ["termine", "realise"].includes(r.statut));
+  const [coches, setCoches] = useState<string[]>([]);
+  const preRempli = useRef(false); const dejaFait = useRef<string | null>(null);
   useEffect(() => {
     if (!rdvSel || preRempli.current || !donneurs.data) return;
+    if (dejaFait.current === rdvSel) return;
     const d = (donneurs.data as any[]).find((x) => /ensio/i.test(x.nom));
     setOpen(true);
     if (d && cle !== "ensio") { appliquerDonneur(d.id); return; }
     if (!bordereau.data) return;
-    preRempli.current = true;
+    preRempli.current = true; dejaFait.current = rdvSel; setLines([newLine()]);
     void importerSemaine(rdvSel.split(",").filter(Boolean));
   });
   const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
@@ -120,7 +124,7 @@ function AttachementsPage() {
     setCatalogue("");
   };
 
-  const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
+  const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search]);
 
   const totaux = useMemo(() => {
@@ -138,6 +142,12 @@ function AttachementsPage() {
   }, [list.data]);
 
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => setOpen((v) => !v)}><Plus /> Nouvel attachement</Button></div></header>
+  {termines.length > 0 && <section className="rounded-md border border-primary/40 bg-card p-5 space-y-3">
+    <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">Chantiers ENSIO terminés à attacher ({termines.length})</h2><p className="text-xs text-muted-foreground">Cochez les chantiers à regrouper sur une seule feuille, puis ajustez les prix et ajoutez des lignes du bordereau.</p></div>
+      <div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => setCoches(coches.length === termines.length ? [] : termines.map((r: any) => r.id))}>{coches.length === termines.length ? "Tout décocher" : "Tout cocher"}</Button>
+      <Button size="sm" disabled={!coches.length} onClick={() => { preRempli.current = false; void navigate({ to: "/attachements", search: { rdv: coches.join(",") } }); }}><Plus /> Créer l’attachement ({coches.length})</Button></div></div>
+    <ul className="divide-y divide-border rounded-md border border-border">{termines.map((r: any) => <li key={r.id}><label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><span className="text-muted-foreground">{[r.cp_ville, new Date(r.date_debut).toLocaleDateString("fr-FR")].filter(Boolean).join(" · ")}</span></label></li>)}</ul>
+  </section>}
   {open && <section className="rounded-md border border-border bg-card p-5 space-y-5">
     <label className="block text-xs text-muted-foreground">Donneur d’ordre enregistré
       <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue="" onChange={(e) => appliquerDonneur(e.target.value)}>
