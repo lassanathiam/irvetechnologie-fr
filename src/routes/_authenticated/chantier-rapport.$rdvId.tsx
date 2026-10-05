@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SignaturePad } from "@/components/SignaturePad";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
+import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import {
   enregistrerRapportRempli,
   envoyerRapportRempli,
@@ -112,10 +113,10 @@ function RapportChantierPageInner() {
 
   const save = useMutation({
     mutationFn: () =>
-      saveFn({
+      modeleId ? saveFn({
         data: {
           id: rempliId,
-          modele_id: modeleId!,
+          modele_id: modeleId,
           rendezvous_id: rdvId,
           valeurs,
           signature_client: sigC,
@@ -123,7 +124,7 @@ function RapportChantierPageInner() {
           signataire_nom: nomClient,
           technicien,
         },
-      }),
+      }) : Promise.reject(new Error("Choisissez un modèle de rapport.")),
     onSuccess: (r) => {
       setRempliId(r.id);
       qc.invalidateQueries({ queryKey: ["rapport-chantier", rdvId] });
@@ -184,7 +185,11 @@ function RapportChantierPageInner() {
 
       {modele && structure && (apercu ? (
         <>
-          <RapportDonneurDoc structure={structure} logo={modele.logo_data} donneur={modele.donneur_ordre} valeurs={valeurs} signatureClient={sigC} signatureTechnicien={sigT} signataireNom={nomClient} technicien={technicien} signedAt={data.rempli?.signed_at} />
+          {structure.original ? (
+            <RapportOriginalDoc structure={structure} valeurs={valeurs} signatureClient={sigC} signatureTechnicien={sigT} />
+          ) : (
+            <RapportDonneurDoc structure={structure} logo={modele.logo_data} donneur={modele.donneur_ordre} valeurs={valeurs} signatureClient={sigC} signatureTechnicien={sigT} signataireNom={nomClient} technicien={technicien} signedAt={data.rempli?.signed_at} />
+          )}
           <div className="flex gap-2 print:hidden">
             <Button variant="outline" onClick={() => setApercu(false)}>Revenir au formulaire</Button>
             <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4" /> Imprimer / PDF</Button>
