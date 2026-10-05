@@ -181,16 +181,18 @@ export const listChantiersPeriode = createServerFn({ method: "POST" })
 export const listChantiersAAttacher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/), motcle: z.string().trim().min(2).max(80) }).parse(data),
+    z.object({ au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), motcle: z.string().trim().min(2).max(80).optional(), ids: z.array(z.string().uuid()).max(100).optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
-    const { data: rows, error } = await context.supabase
+    let q = context.supabase
       .from("rendezvous")
       .select("id, client_nom, adresse, cp_ville, date_debut, termine_at, chantier_valide, statut, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, partenaire")
-      .lte("date_debut", `${data.au}T23:59:59`)
-      .ilike("partenaire", `%${data.motcle}%`)
       .order("date_debut");
+    if (data.ids?.length) q = q.in("id", data.ids);
+    else { q = q.lte("date_debut", `${data.au ?? "2999-12-31"}T23:59:59`).ilike("partenaire", `%${data.motcle ?? "ensio"}%`); }
+    const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
+    if (data.ids?.length) return rows ?? [];
     const ids = (rows ?? []).map((r) => r.id);
     const deja = new Set<string>();
     if (ids.length) {
