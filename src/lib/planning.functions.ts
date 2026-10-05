@@ -1183,7 +1183,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
         // Toutes les photos du retour de travaux en un seul lien de téléchargement.
         const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
-        const inclus = Number(rdv.metrage_inclus_m ?? 5);
+        const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
         const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
         for (const destinataire of destinataires) {
           const res = await sendTemplateEmail("chantier-termine", destinataire, {
