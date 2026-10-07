@@ -51,6 +51,7 @@ import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_auth
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
 import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock.index'
 import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
+import { Route as ApiPublicHooksRappelsRdvRouteImport } from './routes/api/public/hooks/rappels-rdv'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
@@ -286,6 +287,12 @@ const ApiPublicBornePhotoSplatRoute =
     path: '/api/public/borne-photo/$',
     getParentRoute: () => rootRouteImport,
   } as any)
+const ApiPublicHooksRappelsRdvRoute =
+  ApiPublicHooksRappelsRdvRouteImport.update({
+    id: '/api/public/hooks/rappels-rdv',
+    path: '/api/public/hooks/rappels-rdv',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiPublicPhotoSplatRoute = ApiPublicPhotoSplatRouteImport.update({
   id: '/api/public/photo/$',
   path: '/api/public/photo/$',
@@ -355,6 +362,7 @@ export interface FileRoutesByFullPath {
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
+  '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -403,6 +411,7 @@ export interface FileRoutesByTo {
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
   '/stock': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
+  '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -453,6 +462,7 @@ export interface FileRoutesById {
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
   '/_authenticated/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
+  '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
@@ -503,6 +513,7 @@ export interface FileRouteTypes {
     | '/realisations/'
     | '/stock/'
     | '/api/public/borne-photo/$'
+    | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/auth/preview'
@@ -551,6 +562,7 @@ export interface FileRouteTypes {
     | '/realisations'
     | '/stock'
     | '/api/public/borne-photo/$'
+    | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/auth/preview'
@@ -600,6 +612,7 @@ export interface FileRouteTypes {
     | '/_authenticated/realisations/'
     | '/_authenticated/stock/'
     | '/api/public/borne-photo/$'
+    | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
     | '/lovable/email/auth/preview'
@@ -625,6 +638,7 @@ export interface RootRouteChildren {
   RdvTokenRoute: typeof RdvTokenRoute
   SignerTokenRoute: typeof SignerTokenRoute
   ApiPublicBornePhotoSplatRoute: typeof ApiPublicBornePhotoSplatRoute
+  ApiPublicHooksRappelsRdvRoute: typeof ApiPublicHooksRappelsRdvRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -928,6 +942,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicBornePhotoSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/hooks/rappels-rdv': {
+      id: '/api/public/hooks/rappels-rdv'
+      path: '/api/public/hooks/rappels-rdv'
+      fullPath: '/api/public/hooks/rappels-rdv'
+      preLoaderRoute: typeof ApiPublicHooksRappelsRdvRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/public/photo/$': {
       id: '/api/public/photo/$'
       path: '/api/public/photo/$'
@@ -1045,6 +1066,7 @@ const rootRouteChildren: RootRouteChildren = {
   RdvTokenRoute: RdvTokenRoute,
   SignerTokenRoute: SignerTokenRoute,
   ApiPublicBornePhotoSplatRoute: ApiPublicBornePhotoSplatRoute,
+  ApiPublicHooksRappelsRdvRoute: ApiPublicHooksRappelsRdvRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
