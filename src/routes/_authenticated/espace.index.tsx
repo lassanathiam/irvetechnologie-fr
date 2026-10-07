@@ -26,6 +26,7 @@ import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
 import { Button } from "@/components/ui/button";
+import { RappelsRdvBandeau } from "@/components/RappelsRdv";
 import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
@@ -113,6 +114,7 @@ function EspacePage() {
     <ProShell dashboardReference>
       <div className="dashboard-reference -m-3 min-h-[calc(100vh-4rem)] bg-dashboard-canvas p-3 sm:-m-5 sm:p-5 lg:-m-6 lg:p-6">
         <div className="mx-auto max-w-[1500px] space-y-4">
+          <RappelsRdvBandeau />
           {q.isLoading ? (
             <div className="flex min-h-72 items-center justify-center">
               <Loader2 className="h-7 w-7 animate-spin text-dashboard-blue" />

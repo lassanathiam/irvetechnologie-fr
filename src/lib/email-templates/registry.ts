@@ -8,6 +8,7 @@ import { template as rdvPropositionTemplate } from './rdv-proposition'
 import { template as attachementTravauxTemplate } from './attachement-travaux'
 import { template as rapportDonneurTemplate } from './rapport-donneur'
 import { template as documentASignerTemplate } from './document-a-signer'
+import { template as rappelRdvTemplate } from './rappel-rdv'
 
 
 

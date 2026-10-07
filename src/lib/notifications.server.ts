@@ -14,7 +14,8 @@ export type NotificationType =
   | "photos_telechargees"
   | "attachement_reponse"
   | "attachement_proposition"
-  | "document_signe";
+  | "document_signe"
+  | "rappel_rdv";
 
 export type NouvelleNotification = {
   type: NotificationType;
