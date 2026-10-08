@@ -1825,9 +1825,6 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
                             <ReseauClientBadge nom={r.reseau_client} />
-                            {false && (
-                              <p className="text-sm text-primary mt-0.5">{r.designation}</p>
-                            )}
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
