@@ -219,7 +219,9 @@ export const envoyerAttachement = createServerFn({ method: "POST" })
     const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
     const link = `${base}/attachement/${attachment.public_token}`;
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
     const result = await sendTemplateEmail("attachement-travaux", attachment.client_email, {
+      copieEnsio: await resoudreCopieEnsio(context.supabase, attachment.client_email, attachment.client_nom),
       idempotencyKey: `attachement-${attachment.id}-${new Date().toISOString()}`,
       templateData: {
         client_nom: attachment.client_nom,

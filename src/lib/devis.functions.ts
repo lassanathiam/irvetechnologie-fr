@@ -416,7 +416,9 @@ export const envoyerDevis = createServerFn({ method: "POST" })
     const lien = `${base}/devis-client/${devis.public_token}`;
 
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
     const result = await sendTemplateEmail("devis-client", devis.client_email, {
+      copieEnsio: await resoudreCopieEnsio(context.supabase, devis.client_email, devis.client_nom),
       idempotencyKey: `devis-${devis.id}-${new Date().toISOString()}`,
       replyTo: "contacts@irvetechnologie.fr",
       templateData: {

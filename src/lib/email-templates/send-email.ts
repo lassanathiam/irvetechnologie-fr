@@ -24,6 +24,8 @@ export interface SendTemplateEmailOptions {
   /** Dedupes retries of the same logical send; defaults to a random UUID (no dedupe). */
   idempotencyKey?: string
   replyTo?: string
+  /** Copie documentaire résolue par le serveur authentifié, jamais pour les rappels. */
+  copieEnsio?: string | null
 }
 
 /**
@@ -92,5 +94,16 @@ export async function sendTemplateEmail(
     throw error
   }
 
+  const copie = options.copieEnsio?.trim()
+  if (copie && copie.toLowerCase() !== recipient.trim().toLowerCase() && templateName !== 'rappel-rdv') {
+    const result = await sendTemplateEmail(templateName === 'document-a-signer' ? 'ensio-document-info' : templateName, copie, {
+      templateData: templateName === 'document-a-signer'
+        ? { document: templateData.document, nom: templateData.nom }
+        : templateData,
+      replyTo: options.replyTo,
+      idempotencyKey: `${options.idempotencyKey || crypto.randomUUID()}-copie-${copie.toLowerCase()}`,
+    })
+    if (!result.sent) throw new Error("Le destinataire principal a été prévenu, mais la copie ENSIO n’a pas été envoyée.")
+  }
   return { sent: true }
 }
