@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Lire le client/réseau du donneur d’ordre à l’import, l’afficher sur les chantiers et l’inclure dans les attachements
+
 - [x] Hero accueil refait en immersif plein écran (direction v2 choisie), vérifié
 - [x] Corriger la visibilité mobile de « Maintenance et suivi » et ajouter des tarifs publics modifiables
 - [x] Signature à plusieurs parties (2-3 signataires) : liens individuels, zones par signataire, finalisation quand tous ont signé — testé de bout en bout

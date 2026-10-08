@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { createAttachement, listAttachements } from "@/lib/attachements.functions";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
+import { precisionReseauClient } from "@/lib/reseau-client";
+import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements travaux — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements travaux — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -117,7 +119,7 @@ function AttachementsPage() {
       const nouvelles: Line[] = [];
       for (const r of rows) {
         const f = forfait(r.puissance_borne);
-        const lieu = [r.client_nom, r.adresse, r.cp_ville].filter(Boolean).join(" — ");
+        const lieu = [r.client_nom, precisionReseauClient(r.reseau_client), r.adresse, r.cp_ville].filter(Boolean).join(" — ");
         const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
         nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
         const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
@@ -164,7 +166,7 @@ function AttachementsPage() {
           <strong className="text-sm">Semaine {numSemaine(lundi)} — vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</strong>
           <Button size="sm" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Préparer l’attachement ({aPreparer.length})</Button>
         </div>
-        <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
+        <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><ReseauClientBadge nom={r.reseau_client} /><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
       </div>; })}
     <p className="text-xs text-muted-foreground">Astuce : cochez seulement certains chantiers pour ne préparer qu’eux ; sans coche, toute la semaine est prise.</p>
   </section>}

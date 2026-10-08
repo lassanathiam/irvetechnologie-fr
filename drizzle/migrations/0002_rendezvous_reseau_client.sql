@@ -1,0 +1,2 @@
+ALTER TABLE public.rendezvous ADD COLUMN reseau_client text;
+COMMENT ON COLUMN public.rendezvous.reseau_client IS 'Nom du client ou réseau du donneur d’ordre figurant sur la planification, distinct du particulier et du modèle matériel de borne.';

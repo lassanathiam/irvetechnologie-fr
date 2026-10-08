@@ -61,6 +61,7 @@ import {
 } from "@/lib/planning.functions";
 import { RETOUR_CATEGORIES_LABELS } from "@/lib/planning.functions";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 
 import {
   deleteVoirie,
@@ -900,6 +901,7 @@ function PlanningPage() {
       type: get("type") as RendezVousInput["type"],
       statut: "planifie",
       client_nom: get("client_nom"),
+      reseau_client: get("reseau_client") || null,
       client_telephone: get("client_telephone") || null,
       client_email: get("client_email") || null,
       adresse: get("adresse"),
@@ -1050,6 +1052,7 @@ function PlanningPage() {
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
+                    <ReseauClientBadge nom={missionTerrain.reseau_client} />
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
                   </div>
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-800"><MapPin className="h-6 w-6 text-slate-300" /></div>
@@ -1117,6 +1120,7 @@ function PlanningPage() {
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
                         <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
+                        <ReseauClientBadge nom={r.reseau_client} />
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
@@ -1147,6 +1151,7 @@ function PlanningPage() {
                       <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
                     </div>
                     <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <ReseauClientBadge nom={r.reseau_client} />
                     <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {TECHNICIENS.map((t) => (
@@ -1437,6 +1442,7 @@ function PlanningPage() {
           className="bg-card border border-border rounded-xl p-5 shadow-sm mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <Field label="Client" name="client_nom" required />
+          <Field label="Client du donneur d’ordre / réseau" name="reseau_client" />
           <Field label="Téléphone" name="client_telephone" />
           <Field label="Email" name="client_email" type="email" />
           <AdresseFields required />
@@ -1818,6 +1824,7 @@ function PlanningPage() {
                             {r.designation && (
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
+                            <ReseauClientBadge nom={r.reseau_client} />
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -2383,6 +2390,7 @@ function PlanningPage() {
                                 type: optionValue(g("type"), TYPES_INTERVENTION, "installation"),
                                 statut: optionValue(g("statut"), STATUTS_DOSSIER, "planifie"),
                                 client_nom: g("client_nom"),
+                                reseau_client: g("reseau_client") || null,
                                 client_telephone: g("client_telephone") || null,
                                 client_email: g("client_email") || null,
                                 adresse: g("adresse"),
@@ -2411,6 +2419,7 @@ function PlanningPage() {
                             className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
                           >
                             <Field label="Client" name="client_nom" defaultValue={r.client_nom ?? ""} required />
+                            <Field label="Client du donneur d’ordre / réseau" name="reseau_client" defaultValue={r.reseau_client ?? ""} />
                             <Field label="Téléphone" name="client_telephone" defaultValue={r.client_telephone ?? ""} />
                             <Field label="Email" name="client_email" type="email" defaultValue={r.client_email ?? ""} />
                             <Field label="Objet" name="titre" defaultValue={r.titre ?? ""} />
