@@ -1,3 +1,4 @@
+import { estLivraisonDirecte, NOTE_LIVRAISON_DKV } from "@/lib/reseau-client";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
@@ -46,6 +47,7 @@ function Liste({ titre, items }: { titre: string; items: Rdv[] }) {
             {r.cp_ville ? <span className="text-muted-foreground"> · {r.cp_ville}</span> : null}
             {r.technicien ? <span className="text-muted-foreground"> · {r.technicien}</span> : null}
             {r.date_a_confirmer ? <span className="text-destructive"> · date à confirmer</span> : null}
+            {estLivraisonDirecte(r.reseau_client) ? <span className="mt-1 block font-semibold text-primary">DKV : {NOTE_LIVRAISON_DKV}</span> : null}
           </li>
         ))}
       </ul>
