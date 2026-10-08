@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import {
+  ArrowLeft,
   Calculator,
   CalendarClock,
   Building2,
@@ -98,6 +99,11 @@ export function ProShell({
   referenceStyle?: boolean;
 }) {
   const [menuOuvert, setMenuOuvert] = useState(false);
+  // Bouton arrière mobile : revient à la page précédente.
+  const [peutRevenir, setPeutRevenir] = useState(false);
+  useEffect(() => {
+    setPeutRevenir(window.history.length > 1);
+  }, []);
   const [reduit, setReduit] = useState(false);
   const [showWelcome, setShowWelcome] = useState(false);
   const compter = useServerFn(compterNotificationsNonLues);
@@ -243,6 +249,18 @@ export function ProShell({
             >
               <Menu />
             </Button>
+            {peutRevenir && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="icon"
+                className="md:hidden"
+                aria-label="Retour à la page précédente"
+                onClick={() => window.history.back()}
+              >
+                <ArrowLeft />
+              </Button>
+            )}
             <Button
               type="button"
               variant="ghost"
