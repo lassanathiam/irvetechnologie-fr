@@ -323,6 +323,7 @@ function PlanningPage() {
   const [modeSelection, setModeSelection] = useState(false);
   const [dateGroupee, setDateGroupee] = useState("");
   const [planningComplet, setPlanningComplet] = useState(recherche.vue === "realises");
+  const [detailsOuverts, setDetailsOuverts] = useState(false);
   const modeIntervention = !planningComplet;
   const ouvrirPlanning = () => {
     setPlanningComplet(true);
