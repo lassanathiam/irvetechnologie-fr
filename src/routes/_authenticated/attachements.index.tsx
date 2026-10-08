@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Euro, Loader2, Plus, Search, Trash2 } from "lucide-react";
+import { ClipboardList, Euro, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { LignesAttachement, nouvelleLigne, type LigneAtt } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +28,8 @@ const finDeMois = (date: string) => { const d = new Date(`${date}T12:00:00`); re
 const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
 const plusJours = (n: number) => addDays(today(), n);
 const diffDays = (from: string, to: string) => { const n = Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
-type Line = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null };
-const newLine = (init?: Partial<Line>): Line => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "", ...init });
+type Line = LigneAtt;
+const newLine = nouvelleLigne;
 
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
@@ -73,17 +74,25 @@ function AttachementsPage() {
   const aAttacher = useQuery({ queryKey: ["ensio-a-attacher"], queryFn: () => chantiersFn({ data: { motcle: "ensio" } }) });
   const termines = (aAttacher.data ?? []).filter((r: any) => r.termine_at || r.chantier_valide || ["termine", "realise"].includes(r.statut));
   const [coches, setCoches] = useState<string[]>([]);
-  const preRempli = useRef(false); const dejaFait = useRef<string | null>(null);
+  const formRef = useRef<HTMLElement | null>(null); const dejaFait = useRef<string | null>(null);
+  /** Un clic : ENSIO prérempli, semaine choisie, une ligne par chantier avec l’adresse. */
+  async function preparer(ids: string[]) {
+    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
+    if (d) appliquerDonneur(d.id); else { setCle("ensio"); }
+    setOpen(true); setLines([]);
+    setTimeout(() => formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    await importerSemaine(ids, "ensio");
+  }
   useEffect(() => {
-    if (!rdvSel || preRempli.current || !donneurs.data) return;
-    if (dejaFait.current === rdvSel) return;
-    const d = (donneurs.data as any[]).find((x) => /ensio/i.test(x.nom));
-    setOpen(true);
-    if (d && cle !== "ensio") { appliquerDonneur(d.id); return; }
-    if (!bordereau.data) return;
-    preRempli.current = true; dejaFait.current = rdvSel; setLines([newLine()]);
-    void importerSemaine(rdvSel.split(",").filter(Boolean));
-  });
+    if (!rdvSel || dejaFait.current === rdvSel || !donneurs.data || !bordereau.data) return;
+    dejaFait.current = rdvSel; void preparer(rdvSel.split(",").filter(Boolean));
+  }, [rdvSel, donneurs.data, bordereau.data]);
+  /** Chantiers terminés regroupés par semaine (vendredi). */
+  const parSemaine = useMemo(() => {
+    const m = new Map<string, any[]>();
+    for (const r of termines) { const { lundi } = semaine(String(r.termine_at ?? r.date_debut).slice(0, 10)); m.set(lundi, [...(m.get(lundi) ?? []), r]); }
+    return [...m.entries()].sort((x, y) => y[0].localeCompare(x[0]));
+  }, [termines]);
   const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
   function choisirSemaine(date: string) {
     setSemaineDu(date);
@@ -92,21 +101,22 @@ function AttachementsPage() {
     const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
     setForm((f) => ({ ...f, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, objet: `Attachement semaine ${n} — du ${fr(lundi)} au ${fr(dimanche)}` }));
   }
-  async function importerSemaine(ids?: string[]) {
+  async function importerSemaine(ids?: string[], cleForce?: "ensio" | "axians") {
     const { dimanche } = semaine(semaineDu);
     setImportEnCours(true); setError(null);
     try {
-      const rows = await chantiersFn({ data: ids?.length ? { ids } : { au: dimanche, motcle: cle } });
+      const rows = await chantiersFn({ data: ids?.length ? { ids } : { au: dimanche, motcle: cleForce ?? cle } });
       if (!rows.length) { setError("Aucun chantier ENSIO à attacher (tous déjà attachés)."); return; }
-      const base = catalogueOptions;
+      const k = cleForce ?? cle;
+      const base = (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === k);
       const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
       const cable = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "2.10" : "2.6"));
       const nouvelles: Line[] = [];
       for (const r of rows) {
         const f = forfait(r.puissance_borne);
-        const lieu = [r.client_nom, r.cp_ville].filter(Boolean).join(" — ");
+        const lieu = [r.client_nom, r.adresse, r.cp_ville].filter(Boolean).join(" — ");
         const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
-        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu}${r.chantier_valide ? " (validé ENSIO)" : r.termine_at ? " (terminé)" : " (programmé — pour validation)"}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
+        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
         const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
         const c = cable(r.puissance_borne);
         if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
@@ -142,13 +152,20 @@ function AttachementsPage() {
   }, [list.data]);
 
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => setOpen((v) => !v)}><Plus /> Nouvel attachement</Button></div></header>
-  {termines.length > 0 && <section className="rounded-md border border-primary/40 bg-card p-5 space-y-3">
-    <div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">Chantiers ENSIO terminés à attacher ({termines.length})</h2><p className="text-xs text-muted-foreground">Cochez les chantiers à regrouper sur une seule feuille, puis ajustez les prix et ajoutez des lignes du bordereau.</p></div>
-      <div className="flex gap-2"><Button variant="outline" size="sm" onClick={() => setCoches(coches.length === termines.length ? [] : termines.map((r: any) => r.id))}>{coches.length === termines.length ? "Tout décocher" : "Tout cocher"}</Button>
-      <Button size="sm" disabled={!coches.length} onClick={() => { preRempli.current = false; void navigate({ to: "/attachements", search: { rdv: coches.join(",") } }); }}><Plus /> Créer l’attachement ({coches.length})</Button></div></div>
-    <ul className="divide-y divide-border rounded-md border border-border">{termines.map((r: any) => <li key={r.id}><label className="flex cursor-pointer items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><span className="text-muted-foreground">{[r.cp_ville, new Date(r.date_debut).toLocaleDateString("fr-FR")].filter(Boolean).join(" · ")}</span></label></li>)}</ul>
+  {termines.length > 0 && <section className="rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
+    <div><h2 className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-5 w-5 text-primary" /> Attachements ENSIO proposés ({termines.length} chantier{termines.length > 1 ? "s" : ""} terminé{termines.length > 1 ? "s" : ""})</h2>
+      <p className="text-sm text-muted-foreground">Chaque chantier terminé et envoyé arrive ici, rangé par semaine. Un clic prépare la feuille : une ligne par chantier avec l’adresse et le prix du bordereau. Vous ajoutez ensuite vos lignes en plus et les glissez où vous voulez.</p></div>
+    {parSemaine.map(([lundi, rs]) => { const ven = addDays(lundi, 4); const ids = rs.map((r: any) => r.id); const sel = ids.filter((i: string) => coches.includes(i)); const aPreparer = sel.length ? sel : ids;
+      return <div key={lundi} className="rounded-md border border-border">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
+          <strong className="text-sm">Semaine {numSemaine(lundi)} — vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</strong>
+          <Button size="sm" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Préparer l’attachement ({aPreparer.length})</Button>
+        </div>
+        <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className="ml-auto text-xs text-muted-foreground">terminé le {new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")}</span></label></li>)}</ul>
+      </div>; })}
+    <p className="text-xs text-muted-foreground">Astuce : cochez seulement certains chantiers pour ne préparer qu’eux ; sans coche, toute la semaine est prise.</p>
   </section>}
-  {open && <section className="rounded-md border border-border bg-card p-5 space-y-5">
+  {open && <section ref={formRef} className="scroll-mt-4 rounded-md border border-border bg-card p-5 space-y-5">
     <label className="block text-xs text-muted-foreground">Donneur d’ordre enregistré
       <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue="" onChange={(e) => appliquerDonneur(e.target.value)}>
         <option value="">Choisir pour préremplir (Axians, Infratel…)</option>
@@ -171,7 +188,7 @@ function AttachementsPage() {
         {catalogueOptions.map((l: any) => <option key={l.id} value={l.id}>{`${l.libelle} — ${euro(Number(l.prix_unitaire))} / ${l.unite}`}</option>)}
       </select>
     </label>
-    <div className="space-y-3">{lines.map((line) => <div key={line.key} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[1.4fr_1.5fr_.5fr_.7fr_auto]"><Input aria-label="Travaux" placeholder="Travaux réalisés" value={line.libelle} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, libelle: e.target.value } : l))} /><Input aria-label="Description" placeholder="Description" value={line.description} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, description: e.target.value } : l))} /><Input aria-label="Quantité" type="number" min="0.01" step="0.01" placeholder="Qté" value={line.quantite} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, quantite: e.target.value } : l))} /><Input aria-label="Prix HT" type="number" min="0" step="0.01" placeholder="Prix HT" value={line.prix} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, prix: e.target.value } : l))} /><Button variant="ghost" size="icon" aria-label="Supprimer la ligne" onClick={() => setLines(lines.length > 1 ? lines.filter((l) => l.key !== line.key) : [newLine()])}><Trash2 /></Button></div>)}<Button variant="outline" onClick={() => setLines([...lines, newLine()])}><Plus /> Ajouter une ligne</Button></div>
+    <LignesAttachement lines={lines} setLines={setLines} />
     <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /><div className="flex items-center justify-between"><strong>Total HT : {euro(total)}</strong><Button disabled={create.isPending || !form.numero_ticket.trim() || !form.client_nom.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => create.mutate()}>{create.isPending && <Loader2 className="animate-spin" />} Créer l’attachement</Button></div>{error && <p className="text-sm text-destructive">{error}</p>}</section>}
   {totaux.lignes.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Totaux des attachements</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Statut</th><th className="p-3 text-right">Nombre</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">TVA</th><th className="p-3 text-right">Total TTC</th></tr></thead><tbody className="divide-y divide-border">{totaux.lignes.map(([statut, t]) => <tr key={statut}><td className="p-3 capitalize">{({ envoye: "Envoyé", propose: "Valorisation proposée", accepte: "Accepté", refuse: "Refusé", facture: "Facturé", annule: "Annulé" } as Record<string, string>)[statut] ?? "Brouillon"}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.tva)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{totaux.global.nb}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ht)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.tva)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ttc)}</td></tr></tfoot></table></div></section>}
   <div className="relative max-w-xl"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Rechercher client, ticket, affaire ou commande" value={search} onChange={(e) => setSearch(e.target.value)} /></div>

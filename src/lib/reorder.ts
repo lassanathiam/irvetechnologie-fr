@@ -12,3 +12,12 @@ export function decouperDossier(dossier: string): { parent: string; sous: string
   const k = dossier.indexOf("/");
   return k < 0 ? { parent: dossier, sous: null } : { parent: dossier.slice(0, k), sous: dossier.slice(k + 1) || null };
 }
+
+/** Déplace l'élément d'index `from` à la position `to` (glisser-déposer). */
+export function deplacerVers<T>(arr: T[], from: number, to: number): T[] {
+  if (from === to || from < 0 || to < 0 || from >= arr.length || to >= arr.length) return arr;
+  const out = arr.slice();
+  const [x] = out.splice(from, 1);
+  out.splice(to, 0, x!);
+  return out;
+}
