@@ -169,8 +169,8 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
                 <button type="button" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))} aria-label="Retirer" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
               </div>
               <div className="grid sm:grid-cols-3 gap-2">
-                <label className="sm:col-span-3 text-sm font-semibold text-primary">Client du donneur d’ordre / réseau
-                  <input aria-label="Client du donneur d’ordre / réseau" className={`${champ} mt-1`} value={l.reseau_client ?? ""} onChange={(e) => maj(i, { reseau_client: e.target.value || null })} placeholder="Nom figurant sur la planification" />
+                <label className="sm:col-span-3 text-sm font-semibold text-primary">Donneur d’ordre principal (BUMP, 50FIVE, AMARA…)
+                  <input aria-label="Donneur d’ordre principal (BUMP, 50FIVE, AMARA…)" className={`${champ} mt-1`} value={l.reseau_client ?? ""} onChange={(e) => maj(i, { reseau_client: e.target.value || null })} placeholder="Nom figurant sur la planification" />
                 </label>
                 <input className={champ} value={l.client_nom} onChange={(e) => maj(i, { client_nom: e.target.value })} placeholder="Client" />
                 <input className={champ} value={l.client_telephone ?? ""} onChange={(e) => maj(i, { client_telephone: e.target.value || null })} placeholder="Téléphone" />
