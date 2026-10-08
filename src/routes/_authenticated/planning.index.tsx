@@ -109,6 +109,10 @@ export const Route = createFileRoute("/_authenticated/planning/")({
         content:
           "Planification des rendez-vous IRVE : adresse géolocalisée, tournées optimisées, validation de chantier et autorisations de voirie.",
       },
+      { property: "og:title", content: "Planning des interventions — Borne de l’Ouest" },
+      { property: "og:description", content: "Mission terrain et planification des interventions IRVE." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -318,7 +322,21 @@ function PlanningPage() {
   const [selection, setSelection] = useState<string[]>([]);
   const [modeSelection, setModeSelection] = useState(false);
   const [dateGroupee, setDateGroupee] = useState("");
-  const [modeIntervention, setModeIntervention] = useState(true);
+  const [planningComplet, setPlanningComplet] = useState(recherche.vue === "realises");
+  const modeIntervention = !planningComplet;
+  const ouvrirPlanning = () => {
+    setPlanningComplet(true);
+    window.requestAnimationFrame(() => document.getElementById("planning-complet")?.scrollIntoView({ block: "start" }));
+  };
+  const revenirMission = () => {
+    setPlanningComplet(false);
+    document.getElementById("mission-terrain")?.scrollIntoView({ block: "start" });
+  };
+  const choisirMission = (id: string) => {
+    setActive(id);
+    setDossier(id);
+    document.getElementById("mission-terrain")?.scrollIntoView({ block: "start" });
+  };
   const [mobileSections, setMobileSections] = useState({
     carte: false,
     rendezvous: false,
@@ -649,8 +667,7 @@ function PlanningPage() {
   }, [toutes]);
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
   const missionTerrain =
-    chantiersAVenir.find((r) => r.id === active) ??
-    chantiersDuJour.find((r) => r.id === active) ??
+    toutes.find((r) => r.id === active && estPourMoi(r)) ??
     enCours.filter(estPourMoi)[0] ??
     chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine") ??
     chantiersDuJour[0] ??
@@ -962,6 +979,180 @@ function PlanningPage() {
 
   return (
     <ProShell>
+      <section id="mission-terrain" className="mx-auto mb-6 w-full min-w-0 max-w-full scroll-mt-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="flex items-center gap-2 text-xl font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h1>
+          </div>
+          <Button variant="outline" size="sm" className="h-auto min-h-10 whitespace-normal" onClick={() => planningComplet ? revenirMission() : ouvrirPlanning()} aria-expanded={planningComplet} aria-controls="planning-complet">
+            {planningComplet ? <Smartphone /> : <CalendarClock />}
+            {planningComplet ? "Revenir à Mission terrain" : "Voir tout le planning"}
+          </Button>
+        </div>
+
+        {(
+          <div className="mx-auto mb-3 flex max-w-3xl flex-wrap items-center gap-2">
+            <span className="text-sm font-semibold text-muted-foreground">Je suis :</span>
+            {TECHNICIENS.map((t) => (
+              <Button key={t.id} size="sm" variant={moiId === t.id ? "default" : "outline"} onClick={() => choisirMoi(t.id)}>
+                {t.nom.split(" ")[0]}
+              </Button>
+            ))}
+            <Button size="sm" variant={!moi ? "default" : "outline"} onClick={() => choisirMoi(null)}>Tous</Button>
+          </div>
+        )}
+
+        {(
+          missionTerrain ? (
+            <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+              <div className="bg-slate-900 p-5 text-slate-50 dark:bg-slate-950 sm:p-6">
+                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
+                  <div className="min-w-0">
+                    <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
+                    <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
+                    <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
+                    <ReseauClientBadge nom={missionTerrain.reseau_client} />
+                    <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
+                  </div>
+                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-800"><MapPin className="h-6 w-6 text-slate-300" /></div>
+                </div>
+                <div className="mt-5 grid grid-cols-2 gap-3">
+                  {telLien(missionTerrain.client_telephone) ? <Button asChild className="h-12 bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700"><a href={telLien(missionTerrain.client_telephone) ?? undefined}><Phone /> Appeler</a></Button> : <Button variant="secondary" className="h-12" disabled><Phone /> Appeler</Button>}
+                  <Button asChild variant="secondary" className="h-12"><a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a></Button>
+                </div>
+              </div>
+
+              <div className="space-y-0 p-5 sm:p-6">
+
+                <div className="mb-5 border-b border-border pb-4" aria-label="Détails du client">
+                  <h2 className="mb-3 flex items-center gap-2 font-bold"><ClipboardCheck className="h-4 w-4 text-primary" /> Détails de l’intervention</h2>
+                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
+                    {[
+                      ["Intervention", TYPES.find((t) => t.v === missionTerrain.type)?.l ?? missionTerrain.type],
+                      ["Affecté à", missionTerrain.technicien ?? "Non affecté"],
+                      ["Adresse", [missionTerrain.adresse, missionTerrain.cp_ville].filter(Boolean).join(", ")],
+                      ["Téléphone", missionTerrain.client_telephone],
+                      ["E-mail", missionTerrain.client_email],
+                      ["Donneur d’ordre", missionTerrain.partenaire],
+                      ["Travaux prévus", missionTerrain.designation],
+                      ["Puissance", missionTerrain.puissance_borne],
+                      ["Raccordement", missionTerrain.phase_installation],
+                      ["Pose", missionTerrain.type_pose],
+                      ["Métrage", missionTerrain.metrage_m ? `${missionTerrain.metrage_m} m` : null],
+                    ].filter(([, valeur]) => valeur).map(([label, valeur]) => (
+                      <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words font-medium">{valeur}</dd></div>
+                    ))}
+                  </dl>
+                  {missionTerrain.etiquettes?.length > 0 && <p className="mt-3 break-words text-sm">{missionTerrain.etiquettes.join(" · ")}</p>}
+                  {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
+                </div>
+
+                <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
+                  {!missionTerrain.demarre_at && <Button className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-2 py-3 text-center text-sm font-bold leading-tight sm:px-4 sm:text-base" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play className="shrink-0" /><span className="min-w-0 break-words">Je suis arrivé — démarrer</span></Button>}
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 min-h-11 h-auto w-full min-w-0 whitespace-normal border-destructive/40 px-2 py-3 text-center text-sm leading-tight text-destructive sm:px-4" disabled={demarrer.isPending} onClick={() => { if (window.confirm(`Annuler le démarrage des travaux chez ${missionTerrain.client_nom} ?\n\nÀ utiliser seulement si vous avez démarré par erreur. Le chantier repasse en « confirmé ».`)) demarrer.mutate({ id: missionTerrain.id, demarre: false }); }}><span className="min-w-0 break-words">Annuler les travaux démarrés par erreur</span></Button>}
+                </EtapeMission>
+                <EtapeMission titre={missionTerrain.type === "maintenance" ? "Maintenance, photos et contrôle" : "Matériel, photos et métrage"} detail={missionTerrain.retour_complete_at ? "Enregistré" : undefined} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
+                </EtapeMission>
+                <EtapeMission titre="Rapport et signatures" detail="Rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
+                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link></Button>}
+                </EtapeMission>
+                <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 min-h-14 h-auto w-full min-w-0 whitespace-normal bg-teal-600 px-3 py-3 text-center text-sm font-bold leading-tight text-slate-50 hover:bg-teal-700 sm:text-base" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag className="shrink-0" /> <span className="min-w-0">Terminer et prévenir le client</span></Button>}
+                  {missionTerrain.demarre_at && !missionTerrain.termine_at && (missionTerrain.statut === "en_pause"
+                    ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
+                    : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
+                  {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
+                </EtapeMission>
+              </div>
+
+              {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => choisirMission(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
+            </div>
+          ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Consultez « Voir tout le planning » pour les autres rendez-vous.</p></div>
+        )}
+
+        {chantiersAVenir.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-muted-foreground">
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({chantiersAVenir.length})
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {chantiersAVenir.map((r) => {
+                const d = new Date(r.date_debut);
+                const aujourdhui = new Date();
+                const estAujourdhui =
+                  d.getFullYear() === aujourdhui.getFullYear() &&
+                  d.getMonth() === aujourdhui.getMonth() &&
+                  d.getDate() === aujourdhui.getDate();
+                return (
+                  <li key={r.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        choisirMission(r.id);
+                      }}
+                      className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left transition hover:border-primary/50"
+                    >
+                      <span className={`flex w-16 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 text-center leading-tight ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-slate-900 text-slate-50 dark:bg-slate-700"}`}>
+                        <span className="text-[11px] font-bold uppercase">{estAujourdhui ? "Auj." : d.toLocaleDateString("fr-FR", { weekday: "short" })}</span>
+                        <span className="text-2xl font-extrabold">{d.getDate()}</span>
+                        <span className="text-[11px] font-semibold">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
+                        <span className="text-sm font-extrabold">{d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                      </span>
+                      <span className="min-w-0 flex-1">
+                        <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
+                        <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
+                        <ReseauClientBadge nom={r.reseau_client} />
+                        <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
+                      </span>
+                      <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
+                    </button>
+                    {telLien(r.client_telephone) && (
+                      <a href={telLien(r.client_telephone) ?? undefined} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700">
+                        <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
+                      </a>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+        {planningComplet && chantiersNonAffectes.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border-2 border-amber-400 bg-card p-4">
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+              À affecter ({chantiersNonAffectes.length}) — personne n’est encore prévu sur ces chantiers
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {chantiersNonAffectes.map((r) => {
+                const d = new Date(r.date_debut);
+                return (
+                  <li key={r.id} className="rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
+                      <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <ReseauClientBadge nom={r.reseau_client} />
+                    <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {TECHNICIENS.map((t) => (
+                        <Button key={t.id} size="sm" className="h-10" disabled={affecter.isPending} onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}>
+                          Affecter à {t.nom.split(" ")[0]}
+                        </Button>
+                      ))}
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+      </section>
+
+      <div id="planning-complet" hidden={!planningComplet}>
+        <Button variant="outline" className="mb-4 h-auto min-h-10 whitespace-normal" onClick={revenirMission}><Smartphone /> Revenir à Mission terrain</Button>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
@@ -1018,155 +1209,6 @@ function PlanningPage() {
           </button>
         </div>
       </div>
-
-      <section className="mx-auto mb-6 w-full min-w-0 max-w-full">
-        <div className="mb-3 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
-          <div className="min-w-0">
-            <h2 className="flex items-center gap-2 font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h2>
-            <p className="truncate text-xs text-muted-foreground">L’intervention en cours, étape par étape</p>
-          </div>
-          <Button variant={modeIntervention ? "default" : "outline"} size="sm" onClick={() => setModeIntervention((value) => !value)} aria-pressed={modeIntervention}>
-            {modeIntervention ? "Masquer" : "Ouvrir"}
-          </Button>
-        </div>
-
-        {modeIntervention && (
-          <div className="mx-auto mb-3 flex max-w-3xl flex-wrap items-center gap-2">
-            <span className="text-sm font-semibold text-muted-foreground">Je suis :</span>
-            {TECHNICIENS.map((t) => (
-              <Button key={t.id} size="sm" variant={moiId === t.id ? "default" : "outline"} onClick={() => choisirMoi(t.id)}>
-                {t.nom.split(" ")[0]}
-              </Button>
-            ))}
-            <Button size="sm" variant={!moi ? "default" : "outline"} onClick={() => choisirMoi(null)}>Tous</Button>
-          </div>
-        )}
-
-        {modeIntervention && (
-          missionTerrain ? (
-            <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-lg">
-              <div className="bg-slate-900 p-5 text-slate-50 dark:bg-slate-950 sm:p-6">
-                <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
-                  <div className="min-w-0">
-                    <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
-                    <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
-                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
-                    <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
-                    <ReseauClientBadge nom={missionTerrain.reseau_client} />
-                    <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
-                  </div>
-                  <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-800"><MapPin className="h-6 w-6 text-slate-300" /></div>
-                </div>
-                <div className="mt-5 grid grid-cols-2 gap-3">
-                  {telLien(missionTerrain.client_telephone) ? <Button asChild className="h-12 bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700"><a href={telLien(missionTerrain.client_telephone) ?? undefined}><Phone /> Appeler</a></Button> : <Button variant="secondary" className="h-12" disabled><Phone /> Appeler</Button>}
-                  <Button asChild variant="secondary" className="h-12"><a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a></Button>
-                </div>
-              </div>
-
-              <div className="space-y-0 p-5 sm:p-6">
-                <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
-                  {!missionTerrain.demarre_at && <Button className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-2 py-3 text-center text-sm font-bold leading-tight sm:px-4 sm:text-base" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play className="shrink-0" /><span className="min-w-0 break-words">Je suis arrivé — démarrer</span></Button>}
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 min-h-11 h-auto w-full min-w-0 whitespace-normal border-destructive/40 px-2 py-3 text-center text-sm leading-tight text-destructive sm:px-4" disabled={demarrer.isPending} onClick={() => { if (window.confirm(`Annuler le démarrage des travaux chez ${missionTerrain.client_nom} ?\n\nÀ utiliser seulement si vous avez démarré par erreur. Le chantier repasse en « confirmé ».`)) demarrer.mutate({ id: missionTerrain.id, demarre: false }); }}><span className="min-w-0 break-words">Annuler les travaux démarrés par erreur</span></Button>}
-                </EtapeMission>
-                <EtapeMission titre={missionTerrain.type === "maintenance" ? "Maintenance, photos et contrôle" : "Matériel, photos et métrage"} detail={missionTerrain.retour_complete_at ? "Enregistré" : undefined} etat={missionTerrain.retour_complete_at ? "termine" : missionTerrain.demarre_at ? "active" : "attente"} icone={<Camera />}>
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
-                </EtapeMission>
-                <EtapeMission titre="Rapport et signatures" detail="Rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
-                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link></Button>}
-                </EtapeMission>
-                <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button className="mt-3 min-h-14 h-auto w-full min-w-0 whitespace-normal bg-teal-600 px-3 py-3 text-center text-sm font-bold leading-tight text-slate-50 hover:bg-teal-700 sm:text-base" onClick={() => terminer.mutate({ id: missionTerrain.id, notifier: true })} disabled={terminer.isPending || !missionTerrain.retour_complete_at}><Flag className="shrink-0" /> <span className="min-w-0">Terminer et prévenir le client</span></Button>}
-                  {missionTerrain.demarre_at && !missionTerrain.termine_at && (missionTerrain.statut === "en_pause"
-                    ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
-                    : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
-                  {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
-                </EtapeMission>
-              </div>
-
-              {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => setActive(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
-            </div>
-          ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
-        )}
-
-        {modeIntervention && chantiersAVenir.length > 0 && (
-          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold text-muted-foreground">
-              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({chantiersAVenir.length})
-            </p>
-            <ul className="mt-2 grid gap-2">
-              {chantiersAVenir.map((r) => {
-                const d = new Date(r.date_debut);
-                const aujourdhui = new Date();
-                const estAujourdhui =
-                  d.getFullYear() === aujourdhui.getFullYear() &&
-                  d.getMonth() === aujourdhui.getMonth() &&
-                  d.getDate() === aujourdhui.getDate();
-                return (
-                  <li key={r.id}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setActive(r.id);
-                        setDossier(r.id);
-                      }}
-                      className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left transition hover:border-primary/50"
-                    >
-                      <span className={`flex w-16 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 text-center leading-tight ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-slate-900 text-slate-50 dark:bg-slate-700"}`}>
-                        <span className="text-[11px] font-bold uppercase">{estAujourdhui ? "Auj." : d.toLocaleDateString("fr-FR", { weekday: "short" })}</span>
-                        <span className="text-2xl font-extrabold">{d.getDate()}</span>
-                        <span className="text-[11px] font-semibold">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
-                        <span className="text-sm font-extrabold">{d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
-                      </span>
-                      <span className="min-w-0 flex-1">
-                        <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
-                        <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
-                        <ReseauClientBadge nom={r.reseau_client} />
-                        <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
-                      </span>
-                      <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
-                    </button>
-                    {telLien(r.client_telephone) && (
-                      <a href={telLien(r.client_telephone) ?? undefined} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700">
-                        <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
-                      </a>
-                    )}
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-        {modeIntervention && chantiersNonAffectes.length > 0 && (
-          <div className="mx-auto mt-3 max-w-3xl rounded-xl border-2 border-amber-400 bg-card p-4">
-            <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
-              À affecter ({chantiersNonAffectes.length}) — personne n’est encore prévu sur ces chantiers
-            </p>
-            <ul className="mt-2 grid gap-2">
-              {chantiersNonAffectes.map((r) => {
-                const d = new Date(r.date_debut);
-                return (
-                  <li key={r.id} className="rounded-lg border border-border bg-muted/30 p-3">
-                    <div className="flex min-w-0 items-center gap-2">
-                      {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
-                      <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
-                    </div>
-                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
-                    <ReseauClientBadge nom={r.reseau_client} />
-                    <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      {TECHNICIENS.map((t) => (
-                        <Button key={t.id} size="sm" className="h-10" disabled={affecter.isPending} onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}>
-                          Affecter à {t.nom.split(" ")[0]}
-                        </Button>
-                      ))}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-      </section>
 
       {enCours.length > 0 && (
         <div className={`mb-6 rounded-xl border border-violet-400/60 bg-violet-50 p-4 dark:bg-violet-500/10 ${modeIntervention ? "hidden md:block" : ""}`}>
@@ -1596,7 +1638,7 @@ function PlanningPage() {
             <InterventionsMap
               markers={points}
               activeId={active}
-              onSelect={setActive}
+              onSelect={(id) => { setActive(id); setDossier(id); }}
               height={isMobile ? 300 : 620}
               scrollWheelZoom
               selectionMode={modeSelection}
@@ -1607,7 +1649,7 @@ function PlanningPage() {
               routeCoords={trajetChoisi?.coords ?? null}
               routeEstime={itineraire.data?.estime ?? false}
               tourneeCoords={tourneeReel.data?.coords ?? null}
-              visible={!modeIntervention || mobileSections.carte || !isMobile}
+              visible={planningComplet}
             />
 
             <div className="mt-3 min-w-0 rounded-lg border border-border bg-muted/30 px-3 py-2.5 text-[11px] font-semibold text-muted-foreground">
@@ -1785,7 +1827,7 @@ function PlanningPage() {
                     return (
                       <li
                         key={r.id}
-                        onMouseEnter={() => setActive(r.id)}
+                        
                         className={`relative overflow-hidden border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${st.fond} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
@@ -1796,7 +1838,7 @@ function PlanningPage() {
                           <div className="min-w-0">
                             <p className="font-medium flex flex-wrap items-center gap-2">
                               <span className="min-w-0 break-words">
-                                {r.client_nom}
+                                <Button variant="link" className="h-auto whitespace-normal p-0 text-left text-base" onClick={() => { choisirMission(r.id); revenirMission(); }}>{r.client_nom}</Button>
                                 <span className="text-muted-foreground font-normal">
                                   {" "}
                                   — {r.titre}
@@ -3276,6 +3318,8 @@ function PlanningPage() {
             </>
           )}
         </aside>
+      </div>
+
       </div>
 
       {retourRdv && (
