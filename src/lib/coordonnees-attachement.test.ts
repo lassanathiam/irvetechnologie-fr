@@ -14,8 +14,8 @@ describe("coordonnées ENSIO des attachements", () => {
   });
   it("utilise Antoni pour la facturation sans remplacer le siège par son agence", () => {
     const result = coordonneesAttachement({ nom: "ENSIO", adresse: "12 avenue Morane Saulnier, bâtiment Le Breguet", cp_ville: "78140 Vélizy-Villacoublay", charge_affaires_nom: "Antoni GALLELLI", charge_affaires_email: "antoni.gallelli@ensio.eu", charge_affaires_telephone: "06 31 00 19 30" }, { email: "jerome.noel@ensio.eu" });
-    expect(result.charge_affaires_email).toBe("antoni.gallelli@ensio.eu");
-    expect(result.charge_affaires_telephone).toBe("06 31 00 19 30");
-    expect(result.cp_ville).toBe("78140 Vélizy-Villacoublay");
+    expect(result.charge_affaires_email).toEqual("antoni.gallelli@ensio.eu");
+    expect(result.charge_affaires_telephone).toEqual("06 31 00 19 30");
+    expect(result.cp_ville).toEqual("78140 Vélizy-Villacoublay");
   });
 });
