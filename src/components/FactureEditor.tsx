@@ -150,10 +150,14 @@ export function FactureEditor({ facture, items, onDone, onCreated, rdvInitiaux =
             <label className="col-span-3 sm:col-span-2 text-xs text-muted-foreground">TVA %
               <input type="number" step="any" className={inp} value={l.tva} disabled={f.autoliquidation} onChange={(e) => setL(i, { tva: Number(e.target.value) })} />
             </label>
-            <button type="button" aria-label="Supprimer la ligne" onClick={() => setLignes(lignes.filter((_, k) => k !== i))}
-              className="col-span-1 p-2 text-destructive disabled:opacity-30" disabled={lignes.length <= 1}>
-              <Trash2 className="h-4 w-4" />
-            </button>
+            <div className="col-span-1 flex flex-col items-center">
+              <button type="button" aria-label="Monter la ligne" disabled={i === 0} onClick={() => setLignes((ls) => deplacer(ls, i, -1))} className="p-0.5 disabled:opacity-30"><ChevronUp className="h-4 w-4" /></button>
+              <button type="button" aria-label="Descendre la ligne" disabled={i === lignes.length - 1} onClick={() => setLignes((ls) => deplacer(ls, i, 1))} className="p-0.5 disabled:opacity-30"><ChevronDown className="h-4 w-4" /></button>
+              <button type="button" aria-label="Supprimer la ligne" onClick={() => setLignes(lignes.filter((_, k) => k !== i))}
+                className="p-0.5 text-destructive disabled:opacity-30" disabled={lignes.length <= 1}>
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
             <label className="col-span-12 text-xs text-muted-foreground">Description (facultatif)
               <input className={inp} value={l.description ?? ""} onChange={(e) => setL(i, { description: e.target.value })} />
             </label>
