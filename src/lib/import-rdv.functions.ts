@@ -1,8 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { nomReseauClient } from "@/lib/reseau-client";
 
 export type RdvExtrait = {
+  reseau_client: string | null;
   client_nom: string;
   client_telephone: string | null;
   client_email: string | null;
@@ -18,6 +20,7 @@ export type RdvExtrait = {
 const PROMPT = `Tu reçois une fiche d'intervention, une capture d'écran, un PDF ou un tableau envoyé par un partenaire donneur d'ordre (bornes de recharge / électricité / télécom).
 Extrais CHAQUE intervention à planifier. Réponds UNIQUEMENT avec un JSON, sans texte autour :
 {"rdv":[{"client_nom":"...","client_telephone":null,"client_email":null,"adresse":"numéro et rue","cp_ville":"code postal et ville","date_debut":"YYYY-MM-DDTHH:mm ou null","type":"installation|maintenance|sav|visite|controle","designation":"matériel / prestation courte","numero_dossier":"n° de ticket, commande ou dossier ou null","notes":"infos utiles (accès, contact sur place, remarques) ou null"}]}
+Ajoute pour CHAQUE intervention le champ "reseau_client" : nom du client commercial, réseau ou opérateur pour lequel le donneur d'ordre intervient (ex. Bump, Bun, 50five, Fifty Five, Amara, KV2, KDB), tel qu'il est écrit dans le document. Cherche dans les colonnes client/enseigne/réseau/opérateur, les en-têtes et logos si leur rôle est clair. Ce n'est ni le nom du particulier (client_nom), ni le donneur d'ordre ENSIO, ni le fabricant ou modèle matériel de borne (designation). Conserve exactement les sigles et l'orthographe lus ; ne corrige pas un nom par supposition. Si plusieurs clients commerciaux sont présents, associe chacun à la bonne intervention. Mets null si absent ou ambigu.
 Règles : n'invente rien, mets null si absent. Téléphone au format français. Une ligne de tableau = une intervention. Dépannage = "sav".`;
 
 const TYPES = ["visite", "installation", "maintenance", "sav", "controle"] as const;
@@ -105,6 +108,7 @@ export const analyserDocumentRdv = createServerFn({ method: "POST" })
       return [
         {
           client_nom: s(o["client_nom"], 160) ?? "Client à préciser",
+          reseau_client: nomReseauClient(o["reseau_client"]),
           client_telephone: s(o["client_telephone"], 40),
           client_email: s(o["client_email"], 255),
           adresse: s(o["adresse"]) ?? "",

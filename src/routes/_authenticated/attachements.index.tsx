@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { createAttachement, listAttachements } from "@/lib/attachements.functions";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
+import { precisionReseauClient } from "@/lib/reseau-client";
+import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements travaux — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements travaux — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -117,7 +119,7 @@ function AttachementsPage() {
       const nouvelles: Line[] = [];
       for (const r of rows) {
         const f = forfait(r.puissance_borne);
-        const lieu = [r.client_nom, r.adresse, r.cp_ville].filter(Boolean).join(" — ");
+        const lieu = [r.client_nom, precisionReseauClient(r.reseau_client), r.adresse, r.cp_ville].filter(Boolean).join(" — ");
         const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
         nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
         const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);

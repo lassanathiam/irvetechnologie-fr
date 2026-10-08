@@ -92,6 +92,7 @@ const rdvSchema = z.object({
   statut: z.enum(STATUTS_CHANTIER).default("planifie"),
 
   client_nom: z.string().trim().min(1).max(160),
+  reseau_client: z.string().trim().max(160).optional().nullable(),
   client_telephone: z.string().trim().max(40).optional().nullable(),
   client_email: z.string().trim().max(255).optional().nullable(),
   adresse: z.string().trim().min(3).max(300),
@@ -118,6 +119,7 @@ const rdvSchema = z.object({
 
 export type RendezVousInput = z.input<typeof rdvSchema>;
 export type DossierRendezVousInput = {
+  reseau_client?: string | null;
   id: string;
   titre: string;
   type: "visite" | "installation" | "maintenance" | "sav" | "controle";
@@ -547,6 +549,7 @@ const dossierSchema = z.object({
   phase_installation: z.string().trim().max(40).optional().nullable(),
   type_pose: z.string().trim().max(80).optional().nullable(),
   sous_traitant_id: z.string().uuid().optional().nullable(),
+  reseau_client: z.string().trim().max(160).optional().nullable(),
   montant_sous_traitant_ht: z.number().min(0).max(1_000_000).optional().nullable(),
 });
 
@@ -602,6 +605,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       statut_facturation: data.statut_facturation,
       designation: data.designation ?? null,
       etiquettes: data.etiquettes ?? [],
+      ...(data.reseau_client !== undefined ? { reseau_client: data.reseau_client || null } : {}),
       metrage_m: data.metrage_m,
       puissance_borne: data.puissance_borne ?? null,
       phase_installation: data.phase_installation ?? null,
