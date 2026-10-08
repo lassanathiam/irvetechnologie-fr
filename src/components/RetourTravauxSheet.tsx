@@ -5,6 +5,7 @@ import { Camera, Check, Circle, Cable, Loader2, Trash2, WifiOff, Wrench, X } fro
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import { photosParEtape } from "@/lib/photos-etapes";
 import {
   RETOUR_CATEGORIES_LABELS,
   categoriesRetourObligatoires,
@@ -16,16 +17,6 @@ import {
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
 import { ajouterFile, retirerFile, useFileAttente } from "@/lib/offline-photos";
-import { groupePhoto } from "@/lib/planning.functions";
-
-const COULEURS_GROUPE: Record<ReturnType<typeof groupePhoto>, { nom: string; carte: string; badge: string }> = {
-  avant: { nom: "Avant", carte: "border-amber-400/50 border-l-amber-400 bg-amber-400/10", badge: "bg-amber-400 text-slate-900" },
-  borne: { nom: "Borne", carte: "border-lime-400/50 border-l-lime-400 bg-lime-400/10", badge: "bg-lime-300 text-slate-900" },
-  tableau: { nom: "Tableau", carte: "border-sky-400/50 border-l-sky-400 bg-sky-400/10", badge: "bg-sky-300 text-slate-900" },
-  essai: { nom: "Essai", carte: "border-fuchsia-400/50 border-l-fuchsia-400 bg-fuchsia-400/10", badge: "bg-fuchsia-300 text-slate-900" },
-  cable: { nom: "Câble", carte: "border-orange-400/50 border-l-orange-400 bg-orange-400/10", badge: "bg-orange-300 text-slate-900" },
-  autre: { nom: "Autre", carte: "border-border border-l-muted-foreground", badge: "bg-secondary text-foreground" },
-};
 
 export type RetourTravauxRdv = {
   id: string;
@@ -104,7 +95,7 @@ export default function RetourTravauxSheet({
     .filter((p) => p.url)
     .map((p) => ({
       id: p.id,
-      url: p.url!,
+       url: p.url ?? "",
       libelle: RETOUR_CATEGORIES_LABELS[p.categorie] ?? p.categorie,
     }));
 
