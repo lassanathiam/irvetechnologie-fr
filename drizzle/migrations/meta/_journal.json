@@ -15,6 +15,13 @@
       "when": 1791491592352,
       "tag": "0001_unite_lignes",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791493999257,
+      "tag": "0002_rendezvous_reseau_client",
+      "breakpoints": true
     }
   ]
 }

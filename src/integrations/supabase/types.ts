@@ -1508,6 +1508,7 @@ export type Database = {
           rdv_confirme_at: string | null
           rdv_propose_at: string | null
           rdv_refuse_at: string | null
+          reseau_client: string | null
           retour_complete_at: string | null
           retour_delestage: boolean
           retour_observations: string | null
@@ -1580,6 +1581,7 @@ export type Database = {
           rdv_confirme_at?: string | null
           rdv_propose_at?: string | null
           rdv_refuse_at?: string | null
+          reseau_client?: string | null
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
@@ -1652,6 +1654,7 @@ export type Database = {
           rdv_confirme_at?: string | null
           rdv_propose_at?: string | null
           rdv_refuse_at?: string | null
+          reseau_client?: string | null
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
