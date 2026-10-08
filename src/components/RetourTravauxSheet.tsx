@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
+import { Camera, Check, Circle, Cable, Loader2, Trash2, WifiOff, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -15,6 +15,7 @@ import {
   supprimerPhotoChantier,
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
+import { ajouterFile, retirerFile, useFileAttente } from "@/lib/offline-photos";
 
 export type RetourTravauxRdv = {
   id: string;
@@ -54,6 +55,18 @@ export default function RetourTravauxSheet({
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
   const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
+
+  // Hors-ligne : photos et enregistrements gardés sur le téléphone,
+  // envoi automatique dès le retour du réseau.
+  const { items: fileAttente, enLigne } = useFileAttente(rdv.id);
+  const nbFileAvant = useRef(0);
+  useEffect(() => {
+    if (fileAttente.length < nbFileAvant.current) {
+      void qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      void qc.invalidateQueries({ queryKey: ["rendezvous"] });
+    }
+    nbFileAvant.current = fileAttente.length;
+  }, [fileAttente.length, qc, rdv.id]);
 
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
@@ -97,9 +110,19 @@ export default function RetourTravauxSheet({
     for (const file of Array.from(files).slice(0, 6)) {
       try {
         const data_url = await compressImage(file);
-        await uploadFn({
-          data: { rendezvous_id: rdv.id, categorie: cat, data_url },
-        });
+        if (!enLigne) {
+          // Pas de réseau : la photo attend sur le téléphone, envoi automatique plus tard.
+          await ajouterFile({
+            rdv_id: rdv.id,
+            type: "photo",
+            label: RETOUR_CATEGORIES_LABELS[cat] ?? cat,
+            payload: { rendezvous_id: rdv.id, categorie: cat, data_url },
+          });
+        } else {
+          await uploadFn({
+            data: { rendezvous_id: rdv.id, categorie: cat, data_url },
+          });
+        }
         ok++;
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Envoi de la photo impossible.");
@@ -107,8 +130,14 @@ export default function RetourTravauxSheet({
     }
     setEnCours(null);
     if (ok) {
-      toast.success(`${ok} photo${ok > 1 ? "s" : ""} enregistrée${ok > 1 ? "s" : ""}.`);
-      await qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      toast.success(
+        enLigne
+          ? `${ok} photo${ok > 1 ? "s" : ""} enregistrée${ok > 1 ? "s" : ""}.`
+          : `Pas de réseau : ${ok} photo${ok > 1 ? "s" : ""} gardée${ok > 1 ? "s" : ""} sur le téléphone, envoi dès le retour du réseau.`,
+      );
+      if (enLigne) {
+        await qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      }
     }
   }
 
@@ -119,25 +148,38 @@ export default function RetourTravauxSheet({
   });
 
   const enregistrer = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (maintenance && cablePose && !(Number(reel.replace(",", ".")) > 0)) {
         throw new Error("Indiquez le métrage de câble tiré ou remplacé.");
       }
       if (maintenance && cablePose && !observations.trim()) {
         throw new Error("Ajoutez un commentaire sur les travaux de câble réalisés.");
       }
-      return saveFn({
-        data: {
-          id: rdv.id,
-          metrage_inclus_m: maintenance ? 0 : inclus,
-          metrage_reel_m: maintenance && !cablePose ? 0 : reel,
-          retour_observations: observations,
-          retour_delestage: delestage,
-        },
-      });
+      const payload = {
+        id: rdv.id,
+        metrage_inclus_m: maintenance ? 0 : inclus,
+        metrage_reel_m: maintenance && !cablePose ? 0 : reel,
+        retour_observations: observations,
+        retour_delestage: delestage,
+      };
+      if (!enLigne) {
+        // Pas de réseau : l'enregistrement attend sur le téléphone, envoi automatique plus tard.
+        await ajouterFile({
+          rdv_id: rdv.id,
+          type: "retour",
+          label: "Retour de travaux",
+          payload,
+        });
+        return;
+      }
+      return saveFn({ data: payload });
     },
     onSuccess: async () => {
-      toast.success("Retour de travaux enregistré.");
+      if (enLigne) {
+        toast.success("Retour de travaux enregistré.");
+      } else {
+        toast.success("Enregistré sur le téléphone — il partira dès le retour du réseau.");
+      }
       await qc.invalidateQueries({ queryKey: ["rendezvous"] });
       onClose();
     },
@@ -146,6 +188,9 @@ export default function RetourTravauxSheet({
 
   function ligne(cat: string) {
     const items = parCategorie(cat);
+    const enAttente = fileAttente.filter(
+      (i) => i.type === "photo" && (i.payload as { categorie?: string }).categorie === cat,
+    );
     return (
       <div key={cat} className="rounded-lg border border-border p-3">
         <div className="flex items-start justify-between gap-2">
@@ -184,6 +229,32 @@ export default function RetourTravauxSheet({
                   onClick={() => supprimer.mutate(p.id)}
                   className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
                   aria-label="Supprimer la photo"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {enAttente.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {enAttente.map((i) => (
+              <div key={i.id} className="relative">
+                <img
+                  src={String((i.payload as { data_url?: string }).data_url ?? "")}
+                  alt="Photo en attente d'envoi"
+                  className="h-20 w-20 rounded-md object-cover opacity-75"
+                  decoding="async"
+                />
+                <span className="absolute inset-x-0 bottom-0 rounded-b-md bg-amber-400 px-1 text-center text-[9px] font-bold leading-4 text-slate-900">
+                  En attente
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void retirerFile(i.id)}
+                  className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
+                  aria-label="Annuler la photo en attente"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </button>
@@ -244,6 +315,9 @@ export default function RetourTravauxSheet({
             </p>
             <p className="mt-1 text-xs font-bold text-primary">
               Photos enregistrées : {liste.length}
+              {fileAttente.filter((i) => i.type === "photo").length > 0
+                ? ` · ${fileAttente.filter((i) => i.type === "photo").length} en attente d'envoi`
+                : ""}
             </p>
           </div>
           <button
@@ -255,6 +329,16 @@ export default function RetourTravauxSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {!enLigne && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+            <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+              Pas de réseau : les photos et l'enregistrement sont gardés sur le
+              téléphone et partiront tout seuls dès le retour du réseau.
+            </p>
+          </div>
+        )}
 
         <div className="mb-3 rounded-lg border border-primary/30 bg-primary/10 p-3">
           <p className="flex items-center gap-2 text-sm font-bold">
