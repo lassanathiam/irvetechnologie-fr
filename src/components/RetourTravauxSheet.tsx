@@ -192,9 +192,12 @@ export default function RetourTravauxSheet({
       (i) => i.type === "photo" && (i.payload as { categorie?: string }).categorie === cat,
     );
     return (
-      <div key={cat} className="rounded-lg border border-border p-3">
+      <div key={cat} className={`rounded-lg border border-l-4 p-3 ${COULEURS_GROUPE[groupePhoto(cat)].carte}`}>
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold">
+            <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${COULEURS_GROUPE[groupePhoto(cat)].badge}`}>
+              {COULEURS_GROUPE[groupePhoto(cat)].nom}
+            </span>
             {RETOUR_CATEGORIES_LABELS[cat] ?? cat}
           </p>
           {items.length > 0 && (

@@ -1582,12 +1582,24 @@ export function categoriesRetourObligatoires(type?: string | null, partenaire?: 
 }
 
 export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null): readonly string[] {
-  // Toutes les autres catégories restent proposées en complément, pour ne jamais manquer un type de photo.
+  // Liste courte : seulement les photos réellement prises en complément, sans doublon des obligatoires.
   const principales = new Set<string>(categoriesRetourObligatoires(type, partenaire));
-  const ordre: string[] = estEnsio(partenaire) && type !== "maintenance"
-    ? [...RETOUR_CATEGORIES_ENSIO_OPTION, ...RETOUR_CATEGORIES_OBLIGATOIRES, ...RETOUR_CATEGORIES_OPTIONNELLES]
-    : [...RETOUR_CATEGORIES_OBLIGATOIRES, ...RETOUR_CATEGORIES_MAINTENANCE, ...RETOUR_CATEGORIES_OPTIONNELLES];
-  return [...new Set(ordre.filter((c) => !principales.has(c) && c !== "autre")), "autre"];
+  const ordre: string[] = type === "maintenance"
+    ? ["raccordement_borne", "tableau_electrique", "cheminement_cable", "plaque_serie"]
+    : estEnsio(partenaire)
+      ? ["ensio_tore_emplacement", "ensio_tore_connexions", "ensio_gaine_traversee", "ensio_sms_supervision", "ensio_etiquette_autel"]
+      : ["avant_emplacement", "avant_tableau", "cheminement_cable", "vue_ensemble", "plaque_serie"];
+  return [...ordre.filter((c) => !principales.has(c)), "autre"];
+}
+
+/** Groupe visuel d'une catégorie de photo (couleur dans le retour de travaux). */
+export function groupePhoto(cat: string): "avant" | "borne" | "tableau" | "essai" | "cable" | "autre" {
+  if (cat.startsWith("avant_") || cat.startsWith("ensio_av_") || cat === "etat_avant_maintenance") return "avant";
+  if (/borne|plaque|numero_serie|carte_sim|badges|etiquette_autel|vue_ensemble/.test(cat)) return "borne";
+  if (/tableau|compteur|protections|liaison_pe|alim_protections|tore|derivation|armoire/.test(cat)) return "tableau";
+  if (/mise_en_service|simulateur|tension|resistance|parametrages|supervision/.test(cat)) return "essai";
+  if (/cheminement|gaine/.test(cat)) return "cable";
+  return "autre";
 }
 
 const MAX_PHOTOS_CHANTIER = 40;
