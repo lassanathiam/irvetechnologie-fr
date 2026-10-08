@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { chantiersVoisins } from "./voisins";
 
 // 1° de latitude ≈ 111 km
