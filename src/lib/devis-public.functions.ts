@@ -146,7 +146,7 @@ export const getDevisPublic = createServerFn({ method: "GET" })
 
     const { data: items } = await supabaseAdmin
       .from("devis_items")
-      .select("libelle, description, quantite, prix_unitaire, tva")
+      .select("libelle, description, quantite, unite, prix_unitaire, tva")
       .eq("devis_id", devis.id)
       .order("ordre", { ascending: true });
 

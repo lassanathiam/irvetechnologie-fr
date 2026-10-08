@@ -1,4 +1,5 @@
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
+import { UNITES, FRACTIONS_HEURE, formatQuantite } from "@/lib/unites";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -45,6 +46,7 @@ type EditLine = {
   libelle: string;
   description: string;
   quantite: number;
+  unite: string;
   prix_unitaire: number;
   tva: number;
 };
@@ -84,6 +86,7 @@ type EditPayload = {
     libelle: string;
     description: string | null;
     quantite: number;
+    unite: string;
     prix_unitaire: number;
     tva: number;
   }>;
@@ -152,6 +155,7 @@ function DevisDetail() {
         libelle: line.libelle ?? "",
         description: line.description ?? "",
         quantite: Number(line.quantite ?? 1),
+        unite: (line as any).unite ?? "u",
         prix_unitaire: Number(line.prix_unitaire ?? 0),
         tva: Number(line.tva ?? 20),
       })),
@@ -223,6 +227,7 @@ function DevisDetail() {
           libelle: line.libelle,
           description: line.description || null,
           quantite: line.quantite,
+          unite: line.unite || "u",
           prix_unitaire: line.prix_unitaire,
           tva: line.tva,
         })),
@@ -524,6 +529,7 @@ function DevisDetail() {
                           libelle: "Ligne libre",
                           description: "",
                           quantite: 1,
+                          unite: "u",
                           prix_unitaire: 0,
                           tva: 20,
                         },
@@ -587,19 +593,67 @@ function DevisDetail() {
                     placeholder="Description (optionnelle)"
                   />
                   <div className="grid grid-cols-3 gap-2 lg:col-start-2 lg:row-start-1 lg:self-start">
-                    <EditField
-                      label="Qté"
-                      type="number"
-                      value={String(line.quantite)}
-                      onChange={(v) =>
-                        setEditState({
-                          ...editState,
-                          lines: editState.lines.map((l) =>
-                            l.key === line.key ? { ...l, quantite: Math.max(1, Number(v) || 1) } : l,
-                          ),
-                        })
-                      }
-                    />
+                    <div className="col-span-3 grid grid-cols-2 gap-2">
+                      <label className="block text-xs">
+                        <span className="text-muted-foreground">Unité</span>
+                        <select
+                          value={line.unite}
+                          onChange={(e) =>
+                            setEditState({
+                              ...editState,
+                              lines: editState.lines.map((l) =>
+                                l.key === line.key ? { ...l, unite: e.target.value } : l,
+                              ),
+                            })
+                          }
+                          className="mt-1 w-full bg-input border border-border rounded-sm px-2 py-2 text-sm"
+                        >
+                          {UNITES.map((u) => (
+                            <option key={u.value} value={u.value}>{u.label}</option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="block text-xs">
+                        <span className="text-muted-foreground">{line.unite === "h" ? "Durée (heures)" : "Qté"}</span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          value={String(line.quantite)}
+                          onChange={(e) =>
+                            setEditState({
+                              ...editState,
+                              lines: editState.lines.map((l) =>
+                                l.key === line.key ? { ...l, quantite: Math.max(0, Number(e.target.value) || 0) } : l,
+                              ),
+                            })
+                          }
+                          className="mt-1 w-full bg-input border border-border rounded-sm px-2 py-2 text-sm"
+                        />
+                      </label>
+                      {line.unite === "h" && (
+                        <div className="col-span-2 flex flex-wrap items-center gap-1">
+                          {FRACTIONS_HEURE.map((f) => (
+                            <button
+                              key={f.label}
+                              type="button"
+                              onClick={() =>
+                                setEditState({
+                                  ...editState,
+                                  lines: editState.lines.map((l) =>
+                                    l.key === line.key ? { ...l, quantite: f.value } : l,
+                                  ),
+                                })
+                              }
+                              className={`rounded-sm border px-2 py-1 text-xs ${line.quantite === f.value ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}
+                            >
+                              {f.label}
+                            </button>
+                          ))}
+                          <span className="text-xs text-muted-foreground">= {formatQuantite(line.quantite, "h")}</span>
+                        </div>
+                      )}
+                    </div>
                     <EditField
                       label="PU HT"
                       type="number"

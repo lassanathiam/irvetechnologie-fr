@@ -1,3 +1,4 @@
+import { formatQuantite } from "@/lib/unites";
 import { COMPANY, dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, MENTIONS_DEVIS, MENTIONS_FACTURE } from "@/lib/billing";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -7,6 +8,7 @@ export type DocLine = {
   libelle: string;
   description?: string | null;
   quantite: number | string;
+  unite?: string | null;
   prix_unitaire: number | string;
   tva: number | string;
 };
@@ -162,7 +164,7 @@ export function DocumentPrint({
                   <div className="whitespace-pre-line break-words text-[10px] leading-snug text-muted-foreground">{line.description}</div>
                 )}
               </td>
-              <td data-label="Quantité" className="py-1.5 px-2 text-right text-mono font-semibold">{line.quantite}</td>
+              <td data-label="Quantité" className="py-1.5 px-2 text-right text-mono font-semibold">{formatQuantite(line.quantite, line.unite)}</td>
               <td data-label="Prix unitaire HT" className="py-1.5 px-2 text-right text-mono">{euro(line.prix_unitaire)}</td>
               <td data-label="TVA" className="py-1.5 px-2 text-right text-mono">{line.tva} %</td>
               <td data-label="Total HT" className="py-1.5 px-2 text-right text-mono font-bold">
