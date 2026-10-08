@@ -324,6 +324,10 @@ function PlanningPage() {
   const [dateGroupee, setDateGroupee] = useState("");
   const [planningComplet, setPlanningComplet] = useState(recherche.vue === "realises");
   const modeIntervention = !planningComplet;
+  const ouvrirPlanning = () => {
+    setPlanningComplet(true);
+    window.requestAnimationFrame(() => document.getElementById("planning-complet")?.scrollIntoView({ block: "start" }));
+  };
   const revenirMission = () => {
     setPlanningComplet(false);
     document.getElementById("mission-terrain")?.scrollIntoView({ block: "start" });
@@ -980,7 +984,7 @@ function PlanningPage() {
           <div className="min-w-0">
             <h1 className="flex items-center gap-2 text-xl font-bold"><Smartphone className="h-5 w-5 text-primary" /> Mission terrain</h1>
           </div>
-          <Button variant="outline" size="sm" className="h-auto min-h-10 whitespace-normal" onClick={() => planningComplet ? revenirMission() : setPlanningComplet(true)} aria-expanded={planningComplet} aria-controls="planning-complet">
+          <Button variant="outline" size="sm" className="h-auto min-h-10 whitespace-normal" onClick={() => planningComplet ? revenirMission() : ouvrirPlanning()} aria-expanded={planningComplet} aria-controls="planning-complet">
             {planningComplet ? <Smartphone /> : <CalendarClock />}
             {planningComplet ? "Revenir à Mission terrain" : "Voir tout le planning"}
           </Button>
@@ -1148,6 +1152,7 @@ function PlanningPage() {
       </section>
 
       <div id="planning-complet" hidden={!planningComplet}>
+        <Button variant="outline" className="mb-4 h-auto min-h-10 whitespace-normal" onClick={revenirMission}><Smartphone /> Revenir à Mission terrain</Button>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
         <div>
           <p className="text-mono text-primary">Planning</p>
