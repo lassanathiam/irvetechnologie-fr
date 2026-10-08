@@ -114,7 +114,9 @@ export const envoyerFacture = createServerFn({ method: "POST" })
     const lien = `${base}/facture-client/${facture.public_token}`;
 
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
     const result = await sendTemplateEmail("devis-client", facture.client_email, {
+      copieEnsio: await resoudreCopieEnsio(context.supabase, facture.client_email, facture.client_nom),
       idempotencyKey: `facture-${facture.id}-${new Date().toISOString()}`,
       replyTo: "contacts@irvetechnologie.fr",
       templateData: {

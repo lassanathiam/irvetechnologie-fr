@@ -260,13 +260,16 @@ export const envoyerRapportRempli = createServerFn({ method: "POST" })
       zip_url: rdv && (count ?? 0) > 0 ? `${siteBase()}/api/public/retour/${rdv.public_token}.zip` : null,
     };
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
+    const copieEnsio = await resoudreCopieEnsio(context.supabase, data.destinataire, templateData.donneur_ordre);
     const res = await sendTemplateEmail("rapport-donneur", data.destinataire, {
+      copieEnsio,
       idempotencyKey: `rapport-donneur-${r.id}-${data.destinataire}`,
       templateData,
     });
     if (!res.sent) throw new Error("Email non envoyé (adresse bloquée ou service indisponible).");
     const emailCopie = partenaire?.email_copie?.trim();
-    if (emailCopie && emailCopie.toLowerCase() !== data.destinataire.toLowerCase()) {
+    if (emailCopie && emailCopie.toLowerCase() !== data.destinataire.toLowerCase() && emailCopie.toLowerCase() !== copieEnsio?.toLowerCase()) {
       const copie = await sendTemplateEmail("rapport-donneur", emailCopie, {
         idempotencyKey: `rapport-donneur-${r.id}-copie-${emailCopie}`,
         templateData,

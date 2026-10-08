@@ -246,11 +246,14 @@ export const envoyerPourSignature = createServerFn({ method: "POST" })
     if (data.envoyerEmail && destinataire) {
       try {
         const { sendTemplateEmail } = await import("./email-templates/send-email");
-        await sendTemplateEmail("document-a-signer", destinataire, {
+        const { resoudreCopieEnsio } = await import("./copie-ensio.server");
+        const result = await sendTemplateEmail("document-a-signer", destinataire, {
+          copieEnsio: await resoudreCopieEnsio(context.supabase, destinataire, doc.nom),
           idempotencyKey: `document-${doc.id}-${cible.cle ?? "c"}-${Date.now()}`,
           templateData: { nom: cible.nom ?? "", document: doc.nom, lien },
         });
-        emailEnvoye = true;
+        emailEnvoye = result.sent;
+        if (!result.sent) emailErreur = "Email non envoyé : adresse bloquée ou service indisponible.";
       } catch (e) {
         emailErreur = e instanceof Error ? e.message : "Envoi impossible";
       }

@@ -34,8 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Envoyer un rappel DKV réel à contacts@irvetechnologie.fr avec client et adresse.
-- [ ] Reprendre les informations de facturation du contrat ENSIO et inclure Antoni dans tous les envois ENSIO.
+- [x] Envoyer le test DKV demandé à contacts@irvetechnologie.fr avec GLAIS Claire et son adresse (exemple passé clairement indiqué).
+- [x] Compléter la fiche ENSIO avec Antoni et le siège contractuel ; ajouter les copies documentaires, conserver les confirmations et vérifier le préremplissage en session réelle.
 - [x] Exclure Antoni des rappels DKV : destinataire vérifié, contacts@irvetechnologie.fr uniquement.
 
 - [x] Préremplir les coordonnées ENSIO des attachements et afficher « Client » pour DKV, BUMP, etc.

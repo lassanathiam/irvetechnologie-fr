@@ -9,6 +9,7 @@ import { template as attachementTravauxTemplate } from './attachement-travaux'
 import { template as rapportDonneurTemplate } from './rapport-donneur'
 import { template as documentASignerTemplate } from './document-a-signer'
 import { template as rappelRdvTemplate } from './rappel-rdv'
+import { template as ensioDocumentInfoTemplate } from './ensio-document-info'
 
 
 
@@ -39,6 +40,8 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'attachement-travaux': attachementTravauxTemplate,
   'rapport-donneur': rapportDonneurTemplate,
   'document-a-signer': documentASignerTemplate,
+  'ensio-document-info': ensioDocumentInfoTemplate,
+  'rappel-rdv': rappelRdvTemplate,
 }
 
 

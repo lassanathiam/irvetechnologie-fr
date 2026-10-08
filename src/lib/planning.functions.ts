@@ -800,6 +800,7 @@ export const archiverRendezVous = createServerFn({ method: "POST" })
       if (emailPartenaire && emailPartenaire !== emailClient) {
         try {
           const res = await sendTemplateEmail("chantier-archive", emailPartenaire, {
+            copieEnsio: await (await import("@/lib/copie-ensio.server")).resoudreCopieEnsio(context.supabase, emailPartenaire, rdv.partenaire),
             templateData: { ...base, destinataire: "partenaire", montant_ht: rdv.montant_ht },
             idempotencyKey: `chantier-archive-partenaire-${data.id}`,
           });
@@ -1281,9 +1282,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
       part = p;
     }
     const vus = new Set<string>();
-    const destinataires = data.destinataire
-      ? [data.destinataire.trim()]
-      : [part?.email, part?.email_copie, rdv.client_email, COMPANY.email]
+    const destinataires = [data.destinataire?.trim() || part?.email, part?.email_copie, data.destinataire ? null : rdv.client_email, COMPANY.email]
           .map((e) => e?.trim())
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
 

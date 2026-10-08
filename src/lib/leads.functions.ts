@@ -278,7 +278,9 @@ export const envoyerReponseExpress = createServerFn({ method: "POST" })
     }
 
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
     const result = await sendTemplateEmail("devis-client", data.email, {
+      copieEnsio: await resoudreCopieEnsio(context.supabase, data.email, nomComplet),
       idempotencyKey: `devis-${devis.id}`,
       replyTo: "contacts@irvetechnologie.fr",
       templateData: {
