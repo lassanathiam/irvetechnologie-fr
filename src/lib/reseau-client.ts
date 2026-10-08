@@ -5,8 +5,7 @@ const CONNUS: Array<[RegExp, string]> = [
   [/\bamara\b/i, "AMARA"],
   [/\bcap\s?bornes?\b/i, "CAP BORNES"],
   [/\btotal\s?(energies?|énergies?)?\b/i, "TOTALENERGIES"],
-  [/\b(k2v|kv2)\b/i, "KV2"],
-  [/\bkdb\b/i, "KDB"],
+  [/\bdkv\b/i, "DKV"],
 ];
 
 /** Retrouve le donneur d'ordre principal dans un texte (désignation, titre, notes). */
@@ -27,4 +26,10 @@ export function nomReseauClient(value: unknown): string | null {
 export function precisionReseauClient(value: unknown): string {
   const nom = nomReseauClient(value);
   return nom ? `Donneur d’ordre principal : ${nom}` : "Donneur d’ordre principal : à préciser";
+}
+
+/** DKV : la borne est livrée directement chez le client, pas de retrait chez ENSIO. */
+export const NOTE_LIVRAISON_DKV = "Borne livrée chez le client — pas de retrait chez ENSIO";
+export function estLivraisonDirecte(value: unknown): boolean {
+  return nomReseauClient(value) === "DKV";
 }

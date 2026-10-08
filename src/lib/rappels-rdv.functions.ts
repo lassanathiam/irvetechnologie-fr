@@ -11,7 +11,7 @@ export const listRappelsRdv = createServerFn({ method: "GET" })
     const fin = new Date(Date.now() + 2 * 86400_000);
     const { data, error } = await context.supabase
       .from("rendezvous")
-      .select("id, titre, client_nom, adresse, cp_ville, date_debut, technicien, statut, date_a_confirmer")
+      .select("id, titre, client_nom, adresse, cp_ville, date_debut, technicien, statut, date_a_confirmer, reseau_client")
       .eq("archive", false)
       .neq("statut", "annule")
       .gte("date_debut", debut.toISOString())
