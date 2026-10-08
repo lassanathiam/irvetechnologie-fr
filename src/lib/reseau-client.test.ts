@@ -11,10 +11,9 @@ describe("client du donneur d’ordre", () => {
     expect(nomReseauClient(" ")).toEqual(null);
   });
   test("transmet le client à chaque installation de l’attachement", () => {
-    expect(precisionReseauClient("Amara").includes("Amara")).toEqual(true);
+    expect(precisionReseauClient("Amara").includes("AMARA")).toEqual(true);
     expect(precisionReseauClient("KDB").includes("KDB")).toEqual(true);
   });
-});
   test("lit le donneur principal dans la désignation", () => {
     expect(detecterReseauClient("Borne de recharge — CAP BORNES")).toEqual("CAP BORNES");
     expect(detecterReseauClient("Borne triphasée - BUMP")).toEqual("BUMP");
