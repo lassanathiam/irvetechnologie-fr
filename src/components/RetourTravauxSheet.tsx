@@ -1,7 +1,7 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Check, Circle, Cable, Loader2, Trash2, Wrench, X } from "lucide-react";
+import { Camera, Check, Circle, Cable, Loader2, Trash2, WifiOff, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -15,6 +15,7 @@ import {
   supprimerPhotoChantier,
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
+import { ajouterFile, retirerFile, useFileAttente } from "@/lib/offline-photos";
 
 export type RetourTravauxRdv = {
   id: string;
@@ -54,6 +55,18 @@ export default function RetourTravauxSheet({
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
   const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
+
+  // Hors-ligne : photos et enregistrements gardés sur le téléphone,
+  // envoi automatique dès le retour du réseau.
+  const { items: fileAttente, enLigne } = useFileAttente(rdv.id);
+  const nbFileAvant = useRef(0);
+  useEffect(() => {
+    if (fileAttente.length < nbFileAvant.current) {
+      void qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      void qc.invalidateQueries({ queryKey: ["rendezvous"] });
+    }
+    nbFileAvant.current = fileAttente.length;
+  }, [fileAttente.length, qc, rdv.id]);
 
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
