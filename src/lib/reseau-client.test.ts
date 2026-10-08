@@ -1,5 +1,5 @@
 import { describe, expect, it as test } from "bun:test";
-import { detecterReseauClient, nomReseauClient, precisionReseauClient } from "./reseau-client";
+import { detecterReseauClient, estLivraisonDirecte, nomReseauClient, precisionReseauClient } from "./reseau-client";
 
 describe("client du donneur d’ordre", () => {
   test("conserve le nom lu, y compris les sigles incertains", () => {
@@ -12,7 +12,11 @@ describe("client du donneur d’ordre", () => {
   });
   test("transmet le client à chaque installation de l’attachement", () => {
     expect(precisionReseauClient("Amara").includes("AMARA")).toEqual(true);
-    expect(precisionReseauClient("KDB").includes("KDB")).toEqual(true);
+    expect(precisionReseauClient("DKV").includes("DKV")).toEqual(true);
+  });
+ test("DKV = borne livrée chez le client", () => {
+    expect(estLivraisonDirecte("Borne de recharge — DKV")).toEqual(true);
+    expect(estLivraisonDirecte("BUMP")).toEqual(false);
   });
   test("lit le donneur principal dans la désignation", () => {
     expect(detecterReseauClient("Borne de recharge — CAP BORNES")).toEqual("CAP BORNES");

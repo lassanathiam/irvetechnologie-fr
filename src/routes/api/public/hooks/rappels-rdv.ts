@@ -13,11 +13,12 @@ export const Route = createFileRoute("/api/public/hooks/rappels-rdv")({
         const { creerNotification } = await import("@/lib/notifications.server");
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         const { COMPANY } = await import("@/lib/company");
+        const { estLivraisonDirecte, NOTE_LIVRAISON_DKV } = await import("@/lib/reseau-client");
 
         const demain = jourParis(new Date(Date.now() + 86400_000));
         const { data: rows } = await supabaseAdmin
           .from("rendezvous")
-          .select("id, client_nom, cp_ville, date_debut, technicien")
+          .select("id, client_nom, cp_ville, date_debut, technicien, reseau_client")
           .eq("archive", false)
           .neq("statut", "annule")
           .gte("date_debut", new Date(Date.now()).toISOString())
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/api/public/hooks/rappels-rdv")({
         });
         const lignes = liste.map((r) => ({
           heure: new Date(r.date_debut).toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" }),
-          client: r.client_nom,
+          client: estLivraisonDirecte(r.reseau_client) ? `${r.client_nom} [DKV : ${NOTE_LIVRAISON_DKV}]` : r.client_nom,
           lieu: r.cp_ville ?? "",
           technicien: r.technicien ?? "",
         }));
@@ -51,6 +52,16 @@ export const Route = createFileRoute("/api/public/hooks/rappels-rdv")({
           lien: "/planning",
           meta: { jour: demain },
         });
+        const dkv = liste.filter((r) => estLivraisonDirecte(r.reseau_client));
+        if (dkv.length) {
+          await creerNotification(supabaseAdmin, {
+            type: "rappel_rdv",
+            titre: `DKV demain : ${NOTE_LIVRAISON_DKV}`,
+            message: dkv.map((r) => `${r.client_nom}${r.cp_ville ? ` (${r.cp_ville})` : ""}`).join(" · "),
+            lien: "/planning",
+            meta: { jour: demain, dkv: true },
+          });
+        }
         try {
           await sendTemplateEmail("rappel-rdv", COMPANY.email, {
             templateData: { date: dateTxt, lignes },
