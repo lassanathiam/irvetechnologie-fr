@@ -3,7 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, Copy, Loader2, Mail, Plus, Printer, Download, Receipt, Trash2 } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Plus, Printer, Download, Receipt, Trash2 } from "lucide-react";
+import { deplacer } from "@/lib/reorder";
 import { ProShell } from "@/components/ProShell";
 import { downloadElementAsPdf } from "@/lib/pdf-download";
 import { DocumentPrint } from "@/components/DocumentPrint";
@@ -534,7 +535,7 @@ function DevisDetail() {
                   <Plus className="h-3.5 w-3.5" /> Ajouter une ligne
                 </button>
               </div>
-              {editState.lines.map((line) => (
+              {editState.lines.map((line, idx) => (
                 <div key={line.key} className="border border-border rounded-sm p-3 space-y-2 lg:grid lg:grid-cols-[minmax(220px,1fr)_minmax(300px,420px)] lg:gap-3 lg:space-y-0">
                   <div className="flex items-center gap-2">
                     <input
@@ -549,6 +550,14 @@ function DevisDetail() {
                       }
                       className="flex-1 bg-input border border-border rounded-sm px-3 py-2 text-sm"
                     />
+                    <button type="button" aria-label="Monter la ligne" disabled={idx === 0} className="text-muted-foreground hover:text-primary disabled:opacity-30"
+                      onClick={() => setEditState({ ...editState, lines: deplacer(editState.lines, idx, -1) })}>
+                      <ChevronUp className="h-4 w-4" />
+                    </button>
+                    <button type="button" aria-label="Descendre la ligne" disabled={idx === editState.lines.length - 1} className="text-muted-foreground hover:text-primary disabled:opacity-30"
+                      onClick={() => setEditState({ ...editState, lines: deplacer(editState.lines, idx, 1) })}>
+                      <ChevronDown className="h-4 w-4" />
+                    </button>
                     <button
                       type="button"
                       onClick={() =>
