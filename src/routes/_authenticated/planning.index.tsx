@@ -1009,6 +1009,30 @@ function PlanningPage() {
 
   return (
     <ProShell>
+      {suggestionsNouveaux.length > 0 && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="dialog" aria-label="Chantiers à regrouper">
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-xl">
+            <h2 className="text-lg font-bold">Chantiers proches à regrouper</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ces nouveaux rendez-vous sont près d’autres chantiers à venir. Appelez les clients pour regrouper les déplacements.</p>
+            <ul className="mt-4 space-y-4">
+              {suggestionsNouveaux.map(({ rdv, voisins }) => (
+                <li key={rdv.id} className="rounded-lg border border-border p-3">
+                  <p className="font-bold">{rdv.client_nom} <span className="text-xs font-normal text-muted-foreground">· {new Date(rdv.date_debut).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · {rdv.cp_ville}</span></p>
+                  <ul className="mt-2 space-y-2">
+                    {voisins.map(({ rdv: v, km }) => (
+                      <li key={v.id} className="flex items-center gap-2 text-sm">
+                        <span className="min-w-0 flex-1 truncate">{Math.round(km)} km — {v.client_nom} ({new Date(v.date_debut).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })})</span>
+                        {telLien(v.client_telephone) && <a href={telLien(v.client_telephone) ?? undefined} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-slate-50"><Phone className="h-4 w-4" /> Appeler</a>}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <Button className="mt-4 w-full" onClick={() => setSuggestionDepuis(null)}>J’ai noté</Button>
+          </div>
+        </div>
+      )}
       <section id="mission-terrain" className="mx-auto mb-6 w-full min-w-0 max-w-full scroll-mt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
