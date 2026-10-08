@@ -36,6 +36,7 @@
 
 - [ ] Envoyer un rappel DKV réel à contacts@irvetechnologie.fr avec client et adresse.
 - [ ] Reprendre les informations de facturation du contrat ENSIO et inclure Antoni dans tous les envois ENSIO.
+- [x] Exclure Antoni des rappels DKV : destinataire vérifié, contacts@irvetechnologie.fr uniquement.
 
 - [x] Préremplir les coordonnées ENSIO des attachements et afficher « Client » pour DKV, BUMP, etc.
 
