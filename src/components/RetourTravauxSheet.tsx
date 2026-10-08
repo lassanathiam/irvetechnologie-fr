@@ -237,6 +237,32 @@ export default function RetourTravauxSheet({
           </div>
         )}
 
+        {enAttente.length > 0 && (
+          <div className="mt-2 flex flex-wrap gap-2">
+            {enAttente.map((i) => (
+              <div key={i.id} className="relative">
+                <img
+                  src={String((i.payload as { data_url?: string }).data_url ?? "")}
+                  alt="Photo en attente d'envoi"
+                  className="h-20 w-20 rounded-md object-cover opacity-75"
+                  decoding="async"
+                />
+                <span className="absolute inset-x-0 bottom-0 rounded-b-md bg-amber-400 px-1 text-center text-[9px] font-bold leading-4 text-slate-900">
+                  En attente
+                </span>
+                <button
+                  type="button"
+                  onClick={() => void retirerFile(i.id)}
+                  className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
+                  aria-label="Annuler la photo en attente"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
         {enCours === cat ? (
           <div className="mt-2 flex min-h-11 items-center justify-center gap-2 rounded-lg border border-dashed border-border text-sm font-semibold">
             <Loader2 className="h-4 w-4 animate-spin" /> Envoi…
@@ -289,6 +315,9 @@ export default function RetourTravauxSheet({
             </p>
             <p className="mt-1 text-xs font-bold text-primary">
               Photos enregistrées : {liste.length}
+              {fileAttente.filter((i) => i.type === "photo").length > 0
+                ? ` · ${fileAttente.filter((i) => i.type === "photo").length} en attente d'envoi`
+                : ""}
             </p>
           </div>
           <button
@@ -300,6 +329,16 @@ export default function RetourTravauxSheet({
             <X className="h-4 w-4" />
           </button>
         </div>
+
+        {!enLigne && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 p-3">
+            <WifiOff className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+            <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+              Pas de réseau : les photos et l'enregistrement sont gardés sur le
+              téléphone et partiront tout seuls dès le retour du réseau.
+            </p>
+          </div>
+        )}
 
         <div className="mb-3 rounded-lg border border-primary/30 bg-primary/10 p-3">
           <p className="flex items-center gap-2 text-sm font-bold">
