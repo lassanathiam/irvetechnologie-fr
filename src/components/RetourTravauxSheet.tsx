@@ -16,6 +16,16 @@ import {
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
 import { ajouterFile, retirerFile, useFileAttente } from "@/lib/offline-photos";
+import { groupePhoto } from "@/lib/planning.functions";
+
+const COULEURS_GROUPE: Record<ReturnType<typeof groupePhoto>, { nom: string; carte: string; badge: string }> = {
+  avant: { nom: "Avant", carte: "border-amber-400/50 border-l-amber-400 bg-amber-400/10", badge: "bg-amber-400 text-slate-900" },
+  borne: { nom: "Borne", carte: "border-lime-400/50 border-l-lime-400 bg-lime-400/10", badge: "bg-lime-300 text-slate-900" },
+  tableau: { nom: "Tableau", carte: "border-sky-400/50 border-l-sky-400 bg-sky-400/10", badge: "bg-sky-300 text-slate-900" },
+  essai: { nom: "Essai", carte: "border-fuchsia-400/50 border-l-fuchsia-400 bg-fuchsia-400/10", badge: "bg-fuchsia-300 text-slate-900" },
+  cable: { nom: "Câble", carte: "border-orange-400/50 border-l-orange-400 bg-orange-400/10", badge: "bg-orange-300 text-slate-900" },
+  autre: { nom: "Autre", carte: "border-border border-l-muted-foreground", badge: "bg-secondary text-foreground" },
+};
 
 export type RetourTravauxRdv = {
   id: string;
@@ -192,9 +202,12 @@ export default function RetourTravauxSheet({
       (i) => i.type === "photo" && (i.payload as { categorie?: string }).categorie === cat,
     );
     return (
-      <div key={cat} className="rounded-lg border border-border p-3">
+      <div key={cat} className={`rounded-lg border border-l-4 p-3 ${COULEURS_GROUPE[groupePhoto(cat)].carte}`}>
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold">
+            <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${COULEURS_GROUPE[groupePhoto(cat)].badge}`}>
+              {COULEURS_GROUPE[groupePhoto(cat)].nom}
+            </span>
             {RETOUR_CATEGORIES_LABELS[cat] ?? cat}
           </p>
           {items.length > 0 && (
