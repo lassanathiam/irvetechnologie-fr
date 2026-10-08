@@ -645,6 +645,7 @@ export type Database = {
           prix_unitaire: number
           quantite: number
           tva: number
+          unite: string
         }
         Insert: {
           created_at?: string
@@ -656,6 +657,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           tva?: number
+          unite?: string
         }
         Update: {
           created_at?: string
@@ -667,6 +669,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           tva?: number
+          unite?: string
         }
         Relationships: [
           {
@@ -830,6 +833,7 @@ export type Database = {
           prix_unitaire: number
           quantite: number
           tva: number
+          unite: string
         }
         Insert: {
           created_at?: string
@@ -841,6 +845,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           tva?: number
+          unite?: string
         }
         Update: {
           created_at?: string
@@ -852,6 +857,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           tva?: number
+          unite?: string
         }
         Relationships: [
           {

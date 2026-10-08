@@ -1,3 +1,4 @@
+import { formatQuantite } from "@/lib/unites";
 import * as React from "react";
 import {
   Body,
@@ -19,6 +20,7 @@ type Item = {
   libelle: string;
   description?: string | null;
   quantite: number;
+  unite?: string | null;
   prix_unitaire: number;
   tva: number;
 };
@@ -131,7 +133,7 @@ export function DevisClientEmail(data: DevisEmailData) {
                 <Column style={{ padding: "10px 0" }}>
                   <Text style={{ color: ink, fontSize: 13, fontWeight: 600, margin: 0 }}>{item.libelle}</Text>
                   <Text style={{ color: muted, fontSize: 11, margin: "2px 0 0" }}>
-                    {item.quantite} × {euro(item.prix_unitaire)} — TVA {item.tva} %
+                    {formatQuantite(item.quantite, item.unite)} × {euro(item.prix_unitaire)} — TVA {item.tva} %
                   </Text>
                 </Column>
                 <Column align="right" style={{ padding: "10px 0", whiteSpace: "nowrap" }}>
