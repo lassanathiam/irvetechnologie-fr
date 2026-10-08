@@ -1442,7 +1442,7 @@ function PlanningPage() {
           className="bg-card border border-border rounded-xl p-5 shadow-sm mb-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-3"
         >
           <Field label="Client" name="client_nom" required />
-          <Field label="Donneur d’ordre principal (BUMP, 50FIVE, AMARA…)" name="reseau_client" />
+          <Field label="Client (BUMP, 50FIVE, AMARA, DKV…)" name="reseau_client" />
           <Field label="Téléphone" name="client_telephone" />
           <Field label="Email" name="client_email" type="email" />
           <AdresseFields required />
@@ -2419,7 +2419,7 @@ function PlanningPage() {
                             className="mt-4 border-t border-border pt-4 grid gap-3 sm:grid-cols-2"
                           >
                             <Field label="Client" name="client_nom" defaultValue={r.client_nom ?? ""} required />
-                            <Field label="Donneur d’ordre principal (BUMP, 50FIVE, AMARA…)" name="reseau_client" defaultValue={r.reseau_client ?? ""} />
+                            <Field label="Client (BUMP, 50FIVE, AMARA, DKV…)" name="reseau_client" defaultValue={r.reseau_client ?? ""} />
                             <Field label="Téléphone" name="client_telephone" defaultValue={r.client_telephone ?? ""} />
                             <Field label="Email" name="client_email" type="email" defaultValue={r.client_email ?? ""} />
                             <Field label="Objet" name="titre" defaultValue={r.titre ?? ""} />
