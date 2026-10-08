@@ -187,19 +187,22 @@ export default function RetourTravauxSheet({
     onError: (e) => toast.error(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
 
+  const obligatoires = new Set<string>(categoriesRetourObligatoires(rdv.type, rdv.partenaire));
+  const etapes = photosParEtape([...obligatoires, ...optionnelles, ...liste.map((p) => p.categorie)]);
+
   function ligne(cat: string) {
     const items = parCategorie(cat);
     const enAttente = fileAttente.filter(
       (i) => i.type === "photo" && (i.payload as { categorie?: string }).categorie === cat,
     );
     return (
-      <div key={cat} className={`rounded-lg border border-l-4 p-3 ${COULEURS_GROUPE[groupePhoto(cat)].carte}`}>
+      <div key={cat} className="rounded-lg border border-[var(--photo-tone)] bg-[var(--photo-soft)] p-3">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm font-semibold">
-            <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-bold uppercase ${COULEURS_GROUPE[groupePhoto(cat)].badge}`}>
-              {COULEURS_GROUPE[groupePhoto(cat)].nom}
-            </span>
             {RETOUR_CATEGORIES_LABELS[cat] ?? cat}
+            <span className="mt-1 block text-xs font-normal text-muted-foreground">
+              {obligatoires.has(cat) ? "Obligatoire" : "Facultative"}
+            </span>
           </p>
           {items.length > 0 && (
             <span className="inline-flex items-center gap-1 text-xs font-bold text-emerald-600 dark:text-emerald-400">
@@ -359,15 +362,16 @@ export default function RetourTravauxSheet({
           </ol>
         </div>
 
-        <div className="grid gap-2">
-          {categoriesRetourObligatoires(rdv.type, rdv.partenaire).map((c) => ligne(c))}
-        </div>
-
-        <p className="mt-4 text-xs font-bold uppercase tracking-wide text-muted-foreground">
-          Photos complémentaires
-        </p>
-        <div className="mt-2 grid gap-2">
-          {optionnelles.map((c) => ligne(c))}
+        <div className="grid gap-5">
+          {etapes.map((etape, index) => (
+            <section key={etape.id} className={etape.couleur} aria-label={etape.nom}>
+              <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--photo-tone)] text-[var(--photo-ink)]">{index + 1}</span>
+                {etape.nom}
+              </h3>
+              <div className="grid gap-2">{etape.categories.map((cat) => ligne(cat))}</div>
+            </section>
+          ))}
         </div>
 
         <div className="mt-4 rounded-lg border border-border p-3">

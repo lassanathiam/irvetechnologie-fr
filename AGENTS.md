@@ -4,6 +4,7 @@
 - Resolve attachment billing identity from donneurs_ordre and missing operational contacts from the matching active partenaires record; keep billing and delivery addresses independent to avoid invoicing the depot.
 - Les prix « À partir de » du site sont stockés dans `app_settings` sous `tarifs_site_public` et modifiés via l’espace pro (pourquoi : garder l’affichage public synchronisé sans redéploiement).
 - Planning opens on Mission terrain; management tools stay in a collapsible full-planning area and both views share the selected appointment so technicians can read client details without navigating away.
+- Photo workflow grouping lives in a browser-safe presentation module; keep stored categories and closure requirements unchanged so reorganizing the checklist never invalidates existing evidence.
 - Sur ordinateur, le Planning suit deux zones stables : rendez-vous et mission à gauche, carte et logistique à droite ; le trajet suit immédiatement la carte (pourquoi : réduire les espaces vides et rapprocher les outils liés).
 - Le retour terrain utilise le type du rendez-vous : installation = preuves complètes, maintenance = deux preuves essentielles et câble/métrage seulement si des travaux de câble ont réellement lieu (pourquoi : éviter des photos et champs inutiles en maintenance).
 - Les retours donneur d’ordre utilisent l’email principal et l’email de copie de la fiche partenaire, avec un envoi individuel et dédupliqué à chacun (pourquoi : le service d’email ne propose pas de champ CC natif).
