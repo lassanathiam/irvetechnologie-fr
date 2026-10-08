@@ -605,8 +605,6 @@ function PlanningPage() {
       .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toutes, moiId]);
-  const missionTerrain =
-    chantiersDuJour.find((r) => r.id === active) ?? enCours.filter(estPourMoi)[0] ?? chantiersDuJour[0] ?? null;
   /** Tous les chantiers affectés à l'intervenant choisi, aujourd'hui inclus, triés par date. */
   const chantiersAVenir = useMemo(() => {
     const debutJour = new Date();
@@ -623,6 +621,14 @@ function PlanningPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toutes, moiId]);
 
+  /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
+  const missionTerrain =
+    chantiersAVenir.find((r) => r.id === active) ??
+    chantiersDuJour.find((r) => r.id === active) ??
+    enCours.filter(estPourMoi)[0] ??
+    chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine") ??
+    chantiersDuJour[0] ??
+    null;
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
   const bilan = useQuery({
@@ -1024,7 +1030,7 @@ function PlanningPage() {
                   <div className="grid h-12 w-12 shrink-0 place-items-center rounded-xl bg-slate-800"><MapPin className="h-6 w-6 text-slate-300" /></div>
                 </div>
                 <div className="mt-5 grid grid-cols-2 gap-3">
-                  {telLien(missionTerrain.client_telephone) ? <Button asChild variant="secondary" className="h-12"><a href={telLien(missionTerrain.client_telephone) ?? undefined}><Phone /> Appeler</a></Button> : <Button variant="secondary" className="h-12" disabled><Phone /> Appeler</Button>}
+                  {telLien(missionTerrain.client_telephone) ? <Button asChild className="h-12 bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700"><a href={telLien(missionTerrain.client_telephone) ?? undefined}><Phone /> Appeler</a></Button> : <Button variant="secondary" className="h-12" disabled><Phone /> Appeler</Button>}
                   <Button asChild variant="secondary" className="h-12"><a href={wazeLien(missionTerrain.adresse, missionTerrain.cp_ville, missionTerrain.lat, missionTerrain.lng)} target="_blank" rel="noreferrer"><Navigation /> Itinéraire</a></Button>
                 </div>
               </div>
@@ -1051,7 +1057,7 @@ function PlanningPage() {
 
               {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => setActive(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
             </div>
-          ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucune intervention prévue aujourd’hui</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
+          ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Le planning complet reste disponible ci-dessous.</p></div>
         )}
 
         {modeIntervention && chantiersAVenir.length > 0 && (
@@ -1072,13 +1078,16 @@ function PlanningPage() {
                     <button
                       type="button"
                       onClick={() => {
-                        if (estAujourdhui) setActive(r.id);
+                        setActive(r.id);
                         setDossier(r.id);
                       }}
                       className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left transition hover:border-primary/50"
                     >
-                      <span className={`inline-flex shrink-0 rounded-md px-2 py-1 text-xs font-bold ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-muted text-foreground"}`}>
-                        {d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}
+                      <span className={`flex w-16 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 text-center leading-tight ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-slate-900 text-slate-50 dark:bg-slate-700"}`}>
+                        <span className="text-[11px] font-bold uppercase">{estAujourdhui ? "Auj." : d.toLocaleDateString("fr-FR", { weekday: "short" })}</span>
+                        <span className="text-2xl font-extrabold">{d.getDate()}</span>
+                        <span className="text-[11px] font-semibold">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
+                        <span className="text-sm font-extrabold">{d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="block truncate text-sm font-bold">{r.client_nom}{!moi && r.technicien ? ` · ${r.technicien.split(" ")[0]}` : ""}</span>
@@ -1086,6 +1095,11 @@ function PlanningPage() {
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
                     </button>
+                    {telLien(r.client_telephone) && (
+                      <a href={telLien(r.client_telephone) ?? undefined} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700">
+                        <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
+                      </a>
+                    )}
                   </li>
                 );
               })}
