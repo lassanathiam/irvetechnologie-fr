@@ -110,9 +110,19 @@ export default function RetourTravauxSheet({
     for (const file of Array.from(files).slice(0, 6)) {
       try {
         const data_url = await compressImage(file);
-        await uploadFn({
-          data: { rendezvous_id: rdv.id, categorie: cat, data_url },
-        });
+        if (!enLigne) {
+          // Pas de réseau : la photo attend sur le téléphone, envoi automatique plus tard.
+          await ajouterFile({
+            rdv_id: rdv.id,
+            type: "photo",
+            label: RETOUR_CATEGORIES_LABELS[cat] ?? cat,
+            payload: { rendezvous_id: rdv.id, categorie: cat, data_url },
+          });
+        } else {
+          await uploadFn({
+            data: { rendezvous_id: rdv.id, categorie: cat, data_url },
+          });
+        }
         ok++;
       } catch (e) {
         toast.error(e instanceof Error ? e.message : "Envoi de la photo impossible.");
@@ -120,8 +130,14 @@ export default function RetourTravauxSheet({
     }
     setEnCours(null);
     if (ok) {
-      toast.success(`${ok} photo${ok > 1 ? "s" : ""} enregistrée${ok > 1 ? "s" : ""}.`);
-      await qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      toast.success(
+        enLigne
+          ? `${ok} photo${ok > 1 ? "s" : ""} enregistrée${ok > 1 ? "s" : ""}.`
+          : `Pas de réseau : ${ok} photo${ok > 1 ? "s" : ""} gardée${ok > 1 ? "s" : ""} sur le téléphone, envoi dès le retour du réseau.`,
+      );
+      if (enLigne) {
+        await qc.invalidateQueries({ queryKey: ["photos-chantier", rdv.id] });
+      }
     }
   }
 
@@ -132,25 +148,38 @@ export default function RetourTravauxSheet({
   });
 
   const enregistrer = useMutation({
-    mutationFn: () => {
+    mutationFn: async () => {
       if (maintenance && cablePose && !(Number(reel.replace(",", ".")) > 0)) {
         throw new Error("Indiquez le métrage de câble tiré ou remplacé.");
       }
       if (maintenance && cablePose && !observations.trim()) {
         throw new Error("Ajoutez un commentaire sur les travaux de câble réalisés.");
       }
-      return saveFn({
-        data: {
-          id: rdv.id,
-          metrage_inclus_m: maintenance ? 0 : inclus,
-          metrage_reel_m: maintenance && !cablePose ? 0 : reel,
-          retour_observations: observations,
-          retour_delestage: delestage,
-        },
-      });
+      const payload = {
+        id: rdv.id,
+        metrage_inclus_m: maintenance ? 0 : inclus,
+        metrage_reel_m: maintenance && !cablePose ? 0 : reel,
+        retour_observations: observations,
+        retour_delestage: delestage,
+      };
+      if (!enLigne) {
+        // Pas de réseau : l'enregistrement attend sur le téléphone, envoi automatique plus tard.
+        await ajouterFile({
+          rdv_id: rdv.id,
+          type: "retour",
+          label: "Retour de travaux",
+          payload,
+        });
+        return;
+      }
+      return saveFn({ data: payload });
     },
     onSuccess: async () => {
-      toast.success("Retour de travaux enregistré.");
+      if (enLigne) {
+        toast.success("Retour de travaux enregistré.");
+      } else {
+        toast.success("Enregistré sur le téléphone — il partira dès le retour du réseau.");
+      }
       await qc.invalidateQueries({ queryKey: ["rendezvous"] });
       onClose();
     },
@@ -159,6 +188,9 @@ export default function RetourTravauxSheet({
 
   function ligne(cat: string) {
     const items = parCategorie(cat);
+    const enAttente = fileAttente.filter(
+      (i) => i.type === "photo" && (i.payload as { categorie?: string }).categorie === cat,
+    );
     return (
       <div key={cat} className="rounded-lg border border-border p-3">
         <div className="flex items-start justify-between gap-2">
