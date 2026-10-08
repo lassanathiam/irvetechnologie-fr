@@ -88,6 +88,7 @@ import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien, wazeLien } from "@/lib/contact-client";
 import { estNoteAutoDepuisDevis } from "@/lib/devis-to-planning";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
+import { chantiersVoisins, RAYON_VOISIN_KM, RAYON_VOISIN_ELARGI_KM } from "@/lib/voisins";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 import { useIsMobile } from "@/hooks/use-mobile";
 import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
@@ -362,6 +363,7 @@ function PlanningPage() {
     onSuccess: () => {
       setOpen(false);
       setError(null);
+      setSuggestionDepuis(Date.now() - 60_000);
       refresh();
     },
     onError: (e: unknown) =>
@@ -674,6 +676,32 @@ function PlanningPage() {
     chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine") ??
     chantiersDuJour[0] ??
     null;
+  /** Tous les chantiers à venir non terminés (toutes affectations), pour suggérer les regroupements. */
+  const aVenirTous = useMemo(() => {
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes.filter(
+      (r) =>
+        !estArchiveLogique(r) &&
+        r.statut !== "annule" &&
+        !r.termine_at &&
+        new Date(r.date_debut).getTime() >= debutJour.getTime(),
+    );
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [toutes]);
+  const voisinsMission = useMemo(
+    () => (missionTerrain ? chantiersVoisins(missionTerrain, aVenirTous) : []),
+    [missionTerrain, aVenirTous],
+  );
+  /** Après création ou import : propose les chantiers proches des nouveaux rendez-vous. */
+  const [suggestionDepuis, setSuggestionDepuis] = useState<number | null>(null);
+  const suggestionsNouveaux = useMemo(() => {
+    if (suggestionDepuis == null) return [];
+    return toutes
+      .filter((r) => new Date(r.created_at).getTime() >= suggestionDepuis)
+      .map((r) => ({ rdv: r, voisins: chantiersVoisins(r, aVenirTous, 3) }))
+      .filter((x) => x.voisins.length > 0);
+  }, [suggestionDepuis, toutes, aVenirTous]);
   /** Bilan « Nos chantiers réalisés » (mois choisi). */
   const fetchBilan = useServerFn(listChantiersRealises);
   const bilan = useQuery({
@@ -981,6 +1009,30 @@ function PlanningPage() {
 
   return (
     <ProShell>
+      {suggestionsNouveaux.length > 0 && (
+        <div className="fixed inset-0 z-50 grid place-items-center bg-slate-950/60 p-4" role="dialog" aria-label="Chantiers à regrouper">
+          <div className="max-h-[85vh] w-full max-w-lg overflow-y-auto rounded-xl border border-border bg-card p-5 shadow-xl">
+            <h2 className="text-lg font-bold">Chantiers proches à regrouper</h2>
+            <p className="mt-1 text-sm text-muted-foreground">Ces nouveaux rendez-vous sont près d’autres chantiers à venir. Appelez les clients pour regrouper les déplacements.</p>
+            <ul className="mt-4 space-y-4">
+              {suggestionsNouveaux.map(({ rdv, voisins }) => (
+                <li key={rdv.id} className="rounded-lg border border-border p-3">
+                  <p className="font-bold">{rdv.client_nom} <span className="text-xs font-normal text-muted-foreground">· {new Date(rdv.date_debut).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })} · {rdv.cp_ville}</span></p>
+                  <ul className="mt-2 space-y-2">
+                    {voisins.map(({ rdv: v, km }) => (
+                      <li key={v.id} className="flex items-center gap-2 text-sm">
+                        <span className="min-w-0 flex-1 truncate">{Math.round(km)} km — {v.client_nom} ({new Date(v.date_debut).toLocaleDateString("fr-FR", { day: "numeric", month: "short" })})</span>
+                        {telLien(v.client_telephone) && <a href={telLien(v.client_telephone) ?? undefined} className="inline-flex h-9 shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-3 text-xs font-bold text-slate-50"><Phone className="h-4 w-4" /> Appeler</a>}
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              ))}
+            </ul>
+            <Button className="mt-4 w-full" onClick={() => setSuggestionDepuis(null)}>J’ai noté</Button>
+          </div>
+        </div>
+      )}
       <section id="mission-terrain" className="mx-auto mb-6 w-full min-w-0 max-w-full scroll-mt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">
@@ -1056,6 +1108,37 @@ function PlanningPage() {
                     {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
                   </>}
                 </div>
+
+                {voisinsMission.length > 0 && (
+                  <div className="mb-5 rounded-xl border border-emerald-400/60 bg-emerald-50 p-4 dark:bg-emerald-500/10" aria-label="Chantiers proches">
+                    <p className="font-bold text-emerald-800 dark:text-emerald-300">
+                      <MapPin className="mr-1 inline h-4 w-4" />
+                      {voisinsMission.length} chantier{voisinsMission.length > 1 ? "s" : ""} à moins de {voisinsMission[0].elargi ? RAYON_VOISIN_ELARGI_KM : RAYON_VOISIN_KM} km
+                    </p>
+                    <p className="mt-1 text-xs text-muted-foreground">Appelez le client pour regrouper les déplacements, même si la date ne correspond pas.</p>
+                    <ul className="mt-3 space-y-2">
+                      {voisinsMission.map(({ rdv: v, km }) => (
+                        <li key={v.id} className="rounded-lg border border-border bg-card p-3">
+                          <button type="button" className="w-full text-left" onClick={() => choisirMission(v.id)}>
+                            <p className="flex min-w-0 items-center gap-2 text-sm font-bold">
+                              {departement(v.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-xs font-extrabold text-slate-900">{departement(v.cp_ville)}</span>}
+                              <span className="truncate">{v.client_nom}</span>
+                              <span className="ml-auto shrink-0 text-emerald-700 dark:text-emerald-300">{Math.round(km)} km</span>
+                            </p>
+                            <p className="mt-0.5 text-xs text-muted-foreground">
+                              {new Date(v.date_debut).toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })} · {v.cp_ville ?? v.adresse} · {v.technicien ? v.technicien.split(" ")[0] : "Non affecté"}
+                            </p>
+                          </button>
+                          {telLien(v.client_telephone) && (
+                            <a href={telLien(v.client_telephone) ?? undefined} className="mt-2 flex h-10 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-sm font-bold text-slate-50 hover:bg-emerald-700">
+                              <Phone className="h-4 w-4" /> Appeler pour échanger
+                            </a>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
                   {!missionTerrain.demarre_at && <Button className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-2 py-3 text-center text-sm font-bold leading-tight sm:px-4 sm:text-base" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play className="shrink-0" /><span className="min-w-0 break-words">Je suis arrivé — démarrer</span></Button>}
@@ -1206,7 +1289,10 @@ function PlanningPage() {
             <ImportRdvDialog
               partenaires={(partenaires.data ?? []).map((p) => p.nom)}
               onClose={() => setImportOpen(false)}
-              onDone={refresh}
+              onDone={() => {
+                setSuggestionDepuis(Date.now() - 10 * 60_000);
+                refresh();
+              }}
             />
           )}
           <button
