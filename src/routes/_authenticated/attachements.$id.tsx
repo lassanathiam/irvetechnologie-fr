@@ -3,7 +3,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Ban, CheckCircle2, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Ban, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { deplacer } from "@/lib/reorder";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
 import { Button } from "@/components/ui/button";
@@ -115,12 +116,16 @@ function AttachementDetail() {
         <Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} />
         <Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} />
       </div>
-      <div className="space-y-3">{lines.map((line) => <div key={line.key} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[1.4fr_1.5fr_.5fr_.7fr_auto]">
+      <div className="space-y-3">{lines.map((line, idx) => <div key={line.key} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[1.4fr_1.5fr_.5fr_.7fr_auto]">
         <Input aria-label="Travaux" placeholder="Travaux réalisés" value={line.libelle} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, libelle: e.target.value } : l))} />
         <Input aria-label="Description" placeholder="Description" value={line.description} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, description: e.target.value } : l))} />
         <Input aria-label="Quantité" type="number" min="0.01" step="0.01" value={line.quantite} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, quantite: e.target.value } : l))} />
         <Input aria-label="Prix HT" type="number" min="0" step="0.01" value={line.prix} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, prix: e.target.value } : l))} />
-        <Button variant="ghost" size="icon" aria-label="Supprimer la ligne" onClick={() => setLines(lines.length > 1 ? lines.filter((l) => l.key !== line.key) : [newLine()])}><Trash2 /></Button>
+        <div className="flex items-center">
+          <Button variant="ghost" size="icon" aria-label="Monter la ligne" disabled={idx === 0} onClick={() => setLines(deplacer(lines, idx, -1))}><ChevronUp /></Button>
+          <Button variant="ghost" size="icon" aria-label="Descendre la ligne" disabled={idx === lines.length - 1} onClick={() => setLines(deplacer(lines, idx, 1))}><ChevronDown /></Button>
+          <Button variant="ghost" size="icon" aria-label="Supprimer la ligne" onClick={() => setLines(lines.length > 1 ? lines.filter((l) => l.key !== line.key) : [newLine()])}><Trash2 /></Button>
+        </div>
       </div>)}<Button variant="outline" onClick={() => setLines([...lines, newLine()])}><Plus /> Ajouter une ligne</Button></div>
       <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button></div>

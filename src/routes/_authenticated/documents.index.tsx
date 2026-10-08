@@ -1,7 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { decouperDossier } from "@/lib/reorder";
 import { ChevronRight, FileCheck2, FileClock, FileSignature, FolderOpen, Loader2, Search, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
@@ -55,11 +56,30 @@ function DocumentsPage() {
   const [q, setQ] = useState("");
   const [cible, setCible] = useState<string>("contrats");
   const [envoi, setEnvoi] = useState(false);
+  const [sous, setSous] = useState<string>("");
+  const [cibleSous, setCibleSous] = useState<string>("");
+  const [locaux, setLocaux] = useState<Record<string, string[]>>({});
+  useEffect(() => {
+    try { setLocaux(JSON.parse(localStorage.getItem("irve-sous-dossiers") || "{}")); } catch { /* ignore */ }
+  }, []);
+  const sousDe = (parent: string) => {
+    const set = new Set<string>(locaux[parent] ?? []);
+    for (const d of data) { const x = decouperDossier(d.dossier); if (x.parent === parent && x.sous) set.add(x.sous); }
+    return [...set].sort((a, b) => a.localeCompare(b, "fr"));
+  };
+  const nouveauSous = (parent: string) => {
+    const nom = window.prompt("Nom du sous-dossier (ex. MODOP, PV chantiers)")?.trim().replace(/\//g, "-").slice(0, 60);
+    if (!nom) return null;
+    const next = { ...locaux, [parent]: [...new Set([...(locaux[parent] ?? []), nom])] };
+    setLocaux(next);
+    localStorage.setItem("irve-sous-dossiers", JSON.stringify(next));
+    return nom;
+  };
   const input = useRef<HTMLInputElement | null>(null);
 
   const liste = useMemo(
-    () => data.filter((d) => (dossier === "tous" || d.dossier === dossier) && d.nom.toLowerCase().includes(q.toLowerCase())),
-    [data, dossier, q],
+    () => data.filter((d) => (dossier === "tous" || (decouperDossier(d.dossier).parent === dossier && (!sous || decouperDossier(d.dossier).sous === sous))) && d.nom.toLowerCase().includes(q.toLowerCase())),
+    [data, dossier, sous, q],
   );
   const signes = data.filter((d) => d.statut === "signe").length;
   const enAttente = data.filter((d) => d.statut === "envoye" || d.statut === "consulte").length;
@@ -70,10 +90,11 @@ function DocumentsPage() {
     try {
       for (const f of Array.from(files)) {
         const pdf = await versPdf(f);
+        const dest = cibleSous ? `${cible}/${cibleSous}` : cible;
         const path = `${cible}/${crypto.randomUUID()}.pdf`;
         const { error } = await supabase.storage.from("documents").upload(path, pdf, { contentType: "application/pdf" });
         if (error) throw new Error(error.message);
-        await creer({ data: { dossier: cible, nom: f.name.replace(/\.(pdf|jpe?g|png)$/i, ""), storage_path: path, mime: "application/pdf", taille: pdf.byteLength } });
+        await creer({ data: { dossier: dest, nom: f.name.replace(/\.(pdf|jpe?g|png)$/i, ""), storage_path: path, mime: "application/pdf", taille: pdf.byteLength } });
       }
       toast.success("Document ajouté");
       qc.invalidateQueries({ queryKey: ["documents"] });
@@ -102,8 +123,16 @@ function DocumentsPage() {
           <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-end">
             <label className="space-y-1 text-xs font-semibold text-muted-foreground">
               Ranger dans
-              <select value={cible} onChange={(e) => setCible(e.target.value)} className="block h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground sm:w-52" aria-label="Dossier de rangement">
+              <select value={cible} onChange={(e) => { setCible(e.target.value); setCibleSous(""); }} className="block h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground sm:w-52" aria-label="Dossier de rangement">
                 {DOSSIERS.map((d) => <option key={d.cle} value={d.cle}>{d.label}</option>)}
+              </select>
+            </label>
+            <label className="space-y-1 text-xs font-semibold text-muted-foreground">
+              Sous-dossier
+              <select value={cibleSous} onChange={(e) => { if (e.target.value === "__nouveau") { const n = nouveauSous(cible); setCibleSous(n ?? cibleSous); } else setCibleSous(e.target.value); }} className="block h-10 w-full rounded-md border border-input bg-background px-3 text-sm font-normal text-foreground sm:w-48" aria-label="Sous-dossier de rangement">
+                <option value="">Aucun</option>
+                {sousDe(cible).map((n) => <option key={n} value={n}>{n}</option>)}
+                <option value="__nouveau">+ Nouveau sous-dossier…</option>
               </select>
             </label>
             <input ref={input} type="file" accept="application/pdf,image/jpeg,image/png" multiple hidden onChange={(e) => importer(e.target.files)} />
@@ -130,11 +159,23 @@ function DocumentsPage() {
 
         <div className="flex flex-wrap gap-2" aria-label="Filtrer par dossier">
           {[{ cle: "tous", label: "Tous" }, ...DOSSIERS].map((d) => (
-            <Button key={d.cle} type="button" size="sm" variant={dossier === d.cle ? "default" : "outline"} onClick={() => setDossier(d.cle)}>
-              {d.label} ({d.cle === "tous" ? data.length : data.filter((x) => x.dossier === d.cle).length})
+            <Button key={d.cle} type="button" size="sm" variant={dossier === d.cle ? "default" : "outline"} onClick={() => { setDossier(d.cle); setSous(""); }}>
+              {d.label} ({d.cle === "tous" ? data.length : data.filter((x) => decouperDossier(x.dossier).parent === d.cle).length})
             </Button>
           ))}
         </div>
+        {dossier !== "tous" && (
+          <div className="flex flex-wrap items-center gap-2" aria-label="Sous-dossiers">
+            <FolderOpen className="h-4 w-4 text-muted-foreground" />
+            <Button type="button" size="sm" variant={sous === "" ? "secondary" : "ghost"} onClick={() => setSous("")}>Tout le dossier</Button>
+            {sousDe(dossier).map((n) => (
+              <Button key={n} type="button" size="sm" variant={sous === n ? "secondary" : "ghost"} onClick={() => setSous(n)}>
+                {n} ({data.filter((x) => x.dossier === `${dossier}/${n}`).length})
+              </Button>
+            ))}
+            <Button type="button" size="sm" variant="outline" onClick={() => { const n = nouveauSous(dossier); if (n) { setSous(n); setCible(dossier); setCibleSous(n); } }}>+ Nouveau sous-dossier</Button>
+          </div>
+        )}
 
         <div className="relative max-w-sm">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
@@ -159,7 +200,7 @@ function DocumentsPage() {
                     <Link to="/documents/$id" params={{ id: d.id }} className="min-w-0 flex-1 rounded-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                       <span className="block truncate font-semibold text-foreground">{d.nom}</span>
                       <span className="mt-1 block text-xs text-muted-foreground">
-                        {DOSSIERS.find((x) => x.cle === d.dossier)?.label ?? d.dossier} · {new Date(d.created_at).toLocaleDateString("fr-FR")}
+                        {(() => { const x = decouperDossier(d.dossier); const l = DOSSIERS.find((y) => y.cle === x.parent)?.label ?? x.parent; return x.sous ? `${l} › ${x.sous}` : l; })()} · {new Date(d.created_at).toLocaleDateString("fr-FR")}
                       </span>
                       <span className={`mt-2 inline-block rounded-full px-2 py-0.5 text-[11px] font-bold ${st.cls}`}>{st.label}</span>
                       {d.viewed_at && d.statut !== "signe" ? <span className="ml-2 text-[11px] text-muted-foreground">Lu le {new Date(d.viewed_at).toLocaleDateString("fr-FR")}</span> : null}

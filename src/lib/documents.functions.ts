@@ -43,7 +43,7 @@ export const creerDocument = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) =>
     z
       .object({
-        dossier: z.string().min(1).max(40),
+        dossier: z.string().trim().min(1).max(120),
         nom: z.string().trim().min(1).max(200),
         storage_path: z.string().min(1).max(400),
         mime: z.string().max(100).nullable(),
@@ -111,7 +111,7 @@ export const enregistrerPreparation = createServerFn({ method: "POST" })
         nbPages: z.number().int().min(1).max(500),
         zones: z.array(z.any()).max(200),
         signataires: z.array(signataireSchema).max(10),
-        dossier: z.string().max(40).optional(),
+        dossier: z.string().trim().max(120).optional(),
       })
       .parse(d),
   )
