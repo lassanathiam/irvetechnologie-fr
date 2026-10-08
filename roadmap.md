@@ -34,7 +34,7 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Ouvrir Planning sur Mission terrain, replier les outils complets et afficher les détails du client sélectionné sur place ; vérifier en session réelle.
+- [x] Ouvrir Planning sur Mission terrain, replier les outils complets et afficher les détails du client sélectionné sur place ; vérifié en session réelle pour Altaj et Lassana.
 
 - [x] Envoyer le test DKV demandé à contacts@irvetechnologie.fr avec GLAIS Claire et son adresse (exemple passé clairement indiqué).
 - [x] Compléter la fiche ENSIO avec Antoni et le siège contractuel ; ajouter les copies documentaires, conserver les confirmations et vérifier le préremplissage en session réelle.
