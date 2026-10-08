@@ -46,6 +46,7 @@ function AttachementsPage() {
   const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
   const [search, setSearch] = useState(""); const [open, setOpen] = useState(false); const [error, setError] = useState<string | null>(null);
   const [catalogue, setCatalogue] = useState("");
+  const [donneurId, setDonneurId] = useState("");
   const [form, setForm] = useState({ client_nom: "", client_email: "", client_telephone: "", client_adresse: "", client_cp_ville: "", numero_ticket: "", numero_affaire: "", bon_commande: "", objet: "Travaux fibre optique", date_emission: today(), date_echeance: plusJours(60), autoliquidation: true, validation_requise: true, proposition_autorisee: true, notes: "" });
   const [delai, setDelai] = useState(60);
   const [lines, setLines] = useState<Line[]>([newLine()]);
@@ -57,6 +58,7 @@ function AttachementsPage() {
   const appliquerDonneur = (id: string) => {
     const d = (donneurs.data ?? []).find((x: any) => x.id === id);
     if (!d) return;
+    setDonneurId(id);
     const jours = Number(d.delai_paiement_jours) || 60;
     const k = cleBordereau(d.nom); const fm = /fin de mois/i.test(d.notes ?? "");
     setCle(k); setFinMois(fm);
@@ -156,7 +158,7 @@ function AttachementsPage() {
     return { lignes, global };
   }, [list.data]);
 
-  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => setOpen((v) => !v)}><Plus /> Nouvel attachement</Button></div></header>
+  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
   {termines.length > 0 && <section className="rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
     <div><h2 className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-5 w-5 text-primary" /> Attachements ENSIO proposés ({termines.filter(estFini).length} terminé{termines.filter(estFini).length > 1 ? "s" : ""} · {termines.filter((r) => !estFini(r)).length} planifié{termines.filter((r) => !estFini(r)).length > 1 ? "s" : ""})</h2>
       <p className="text-sm text-muted-foreground">Chaque chantier ENSIO, terminé ou planifié, arrive ici, rangé par semaine. Chaque ligne précise « travaux terminés » ou « travaux planifiés ». Un clic prépare la feuille : une ligne par chantier avec l’adresse et le prix du bordereau. Vous ajoutez ensuite vos lignes en plus et les glissez où vous voulez.</p></div>
@@ -172,12 +174,12 @@ function AttachementsPage() {
   </section>}
   {open && <section ref={formRef} className="scroll-mt-4 rounded-md border border-border bg-card p-5 space-y-5">
     <label className="block text-xs text-muted-foreground">Donneur d’ordre enregistré
-      <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" defaultValue="" onChange={(e) => appliquerDonneur(e.target.value)}>
-        <option value="">Choisir pour préremplir (Axians, Infratel…)</option>
+      <select className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm" value={donneurId} onChange={(e) => appliquerDonneur(e.target.value)}>
+        <option value="">Choisir le donneur d’ordre</option>
         {(donneurs.data ?? []).map((d: any) => <option key={d.id} value={d.id}>{d.nom}{d.charge_affaires_nom ? ` — ${d.charge_affaires_nom}` : ""}</option>)}
       </select>
     </label>
-    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} /><Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} /><Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} /><Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} /><Field label="Code postal / ville" value={form.client_cp_ville} onChange={(v) => setForm({ ...form, client_cp_ville: v })} /><Field label="Numéro de ticket *" value={form.numero_ticket} onChange={(v) => setForm({ ...form, numero_ticket: v })} /><Field label="Numéro d’affaire" value={form.numero_affaire} onChange={(v) => setForm({ ...form, numero_affaire: v })} /><Field label="Bon de commande" value={form.bon_commande} onChange={(v) => setForm({ ...form, bon_commande: v })} /><Field label="Objet" value={form.objet} onChange={(v) => setForm({ ...form, objet: v })} /><Field label="Date de l’attachement" type="date" value={form.date_emission} onChange={setDateEmission} /><label className="text-xs text-muted-foreground">Délai de paiement (jours)<Input className="mt-1.5" type="number" min="0" max="365" value={String(delai)} onChange={(e) => setDelaiJours(Number(e.target.value) || 0)} /></label><Field label="Échéance (calculée)" type="date" value={form.date_echeance} onChange={(v) => { setForm({ ...form, date_echeance: v }); setDelai(diffDays(form.date_emission, v)); }} /></div>
+    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3"><Field label="Société destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} /><Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} /><Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} /><Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} /><Field label="Code postal / ville" value={form.client_cp_ville} onChange={(v) => setForm({ ...form, client_cp_ville: v })} /><Field label="Numéro de ticket *" value={form.numero_ticket} onChange={(v) => setForm({ ...form, numero_ticket: v })} /><Field label="Numéro d’affaire" value={form.numero_affaire} onChange={(v) => setForm({ ...form, numero_affaire: v })} /><Field label="Bon de commande" value={form.bon_commande} onChange={(v) => setForm({ ...form, bon_commande: v })} /><Field label="Objet" value={form.objet} onChange={(v) => setForm({ ...form, objet: v })} /><Field label="Date de l’attachement" type="date" value={form.date_emission} onChange={setDateEmission} /><label className="text-xs text-muted-foreground">Délai de paiement (jours)<Input className="mt-1.5" type="number" min="0" max="365" value={String(delai)} onChange={(e) => setDelaiJours(Number(e.target.value) || 0)} /></label><Field label="Échéance (calculée)" type="date" value={form.date_echeance} onChange={(v) => { setForm({ ...form, date_echeance: v }); setDelai(diffDays(form.date_emission, v)); }} /></div>
     {cle === "ensio" && <div className="rounded-md border border-primary/40 bg-primary/5 p-3 space-y-2">
       <p className="text-sm font-semibold">Attachement de la semaine ENSIO</p>
       <div className="flex flex-wrap items-end gap-2">
