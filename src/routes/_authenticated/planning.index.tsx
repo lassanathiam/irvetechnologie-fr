@@ -1027,26 +1027,33 @@ function PlanningPage() {
               <div className="space-y-0 p-5 sm:p-6">
 
                 <div className="mb-5 border-b border-border pb-4" aria-label="Détails du client">
-                  <h2 className="mb-3 flex items-center gap-2 font-bold"><ClipboardCheck className="h-4 w-4 text-primary" /> Détails de l’intervention</h2>
-                  <dl className="grid gap-3 text-sm sm:grid-cols-2">
-                    {[
-                      ["Intervention", TYPES.find((t) => t.v === missionTerrain.type)?.l ?? missionTerrain.type],
-                      ["Affecté à", missionTerrain.technicien ?? "Non affecté"],
-                      ["Adresse", [missionTerrain.adresse, missionTerrain.cp_ville].filter(Boolean).join(", ")],
-                      ["Téléphone", missionTerrain.client_telephone],
-                      ["E-mail", missionTerrain.client_email],
-                      ["Donneur d’ordre", missionTerrain.partenaire],
-                      ["Travaux prévus", missionTerrain.designation],
-                      ["Puissance", missionTerrain.puissance_borne],
-                      ["Raccordement", missionTerrain.phase_installation],
-                      ["Pose", missionTerrain.type_pose],
-                      ["Métrage", missionTerrain.metrage_m ? `${missionTerrain.metrage_m} m` : null],
-                    ].filter(([, valeur]) => valeur).map(([label, valeur]) => (
-                      <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words font-medium">{valeur}</dd></div>
-                    ))}
-                  </dl>
-                  {missionTerrain.etiquettes?.length > 0 && <p className="mt-3 break-words text-sm">{missionTerrain.etiquettes.join(" · ")}</p>}
-                  {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
+                  <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg text-left font-bold" aria-expanded={detailsOuverts} onClick={() => setDetailsOuverts((v) => !v)}>
+                    <span className="flex items-center gap-2"><ClipboardCheck className="h-4 w-4 text-primary" /> Détails de l’intervention</span>
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs font-semibold text-primary">
+                      {detailsOuverts ? <>Fermer <ChevronUp className="h-4 w-4" /></> : <>Voir les détails <ChevronDown className="h-4 w-4" /></>}
+                    </span>
+                  </button>
+                  {detailsOuverts && <>
+                    <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
+                      {[
+                        ["Intervention", TYPES.find((t) => t.v === missionTerrain.type)?.l ?? missionTerrain.type],
+                        ["Affecté à", missionTerrain.technicien ?? "Non affecté"],
+                        ["Adresse", [missionTerrain.adresse, missionTerrain.cp_ville].filter(Boolean).join(", ")],
+                        ["Téléphone", missionTerrain.client_telephone],
+                        ["E-mail", missionTerrain.client_email],
+                        ["Donneur d’ordre", missionTerrain.partenaire],
+                        ["Travaux prévus", missionTerrain.designation],
+                        ["Puissance", missionTerrain.puissance_borne],
+                        ["Raccordement", missionTerrain.phase_installation],
+                        ["Pose", missionTerrain.type_pose],
+                        ["Métrage", missionTerrain.metrage_m ? `${missionTerrain.metrage_m} m` : null],
+                      ].filter(([, valeur]) => valeur).map(([label, valeur]) => (
+                        <div key={label} className="min-w-0"><dt className="text-xs text-muted-foreground">{label}</dt><dd className="break-words font-medium">{valeur}</dd></div>
+                      ))}
+                    </dl>
+                    {missionTerrain.etiquettes?.length > 0 && <p className="mt-3 break-words text-sm">{missionTerrain.etiquettes.join(" · ")}</p>}
+                    {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
+                  </>}
                 </div>
 
                 <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
