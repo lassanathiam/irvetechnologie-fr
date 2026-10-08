@@ -226,6 +226,16 @@ const STATUTS_DOSSIER = ["planifie", "confirme", "en_cours", "en_pause", "termin
 const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
 const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
 
+/** Département à partir du code postal (« 44330 Le Pallet » → « 44 »). */
+function departement(cpVille?: string | null): string | null {
+  const m = (cpVille ?? "").match(/\b(\d{5})\b/);
+  if (!m) return null;
+  const cp = m[1];
+  if (cp.startsWith("97") || cp.startsWith("98")) return cp.slice(0, 3);
+  if (cp.startsWith("20")) return Number(cp) < 20200 ? "2A" : "2B";
+  return cp.slice(0, 2);
+}
+
 function optionValue<const T extends readonly string[]>(value: string, options: T, fallback: T[number]): T[number] {
   return options.includes(value) ? (value as T[number]) : fallback;
 }
@@ -586,8 +596,9 @@ function PlanningPage() {
     setActive(null);
   };
   const moi = TECHNICIENS.find((t) => t.id === moiId) ?? null;
+  /** Strict : un chantier sans intervenant n'est affecté à personne (il va dans « À affecter »). */
   const estPourMoi = (r: { technicien?: string | null }) =>
-    !moi || !r.technicien?.trim() || technicienByNom(r.technicien)?.id === moi.id;
+    !moi || technicienByNom(r.technicien)?.id === moi.id;
   const chantiersDuJour = useMemo(() => {
     const maintenant = new Date();
     return toutes
@@ -621,6 +632,20 @@ function PlanningPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [toutes, moiId]);
 
+  const chantiersNonAffectes = useMemo(() => {
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes
+      .filter(
+        (r) =>
+          !estArchiveLogique(r) &&
+          r.statut !== "annule" &&
+          !r.termine_at &&
+          !technicienByNom(r.technicien) &&
+          new Date(r.date_debut).getTime() >= debutJour.getTime(),
+      )
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  }, [toutes]);
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
   const missionTerrain =
     chantiersAVenir.find((r) => r.id === active) ??
@@ -1022,7 +1047,7 @@ function PlanningPage() {
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
-                    <h3 className="mt-2 truncate text-xl font-bold">{missionTerrain.client_nom}</h3>
+                    <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
@@ -1090,7 +1115,8 @@ function PlanningPage() {
                         <span className="text-sm font-extrabold">{d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
                       </span>
                       <span className="min-w-0 flex-1">
-                        <span className="block truncate text-sm font-bold">{r.client_nom}{!moi && r.technicien ? ` · ${r.technicien.split(" ")[0]}` : ""}</span>
+                        <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
+                        <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
@@ -1100,6 +1126,35 @@ function PlanningPage() {
                         <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
                       </a>
                     )}
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        )}
+        {modeIntervention && chantiersNonAffectes.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border-2 border-amber-400 bg-card p-4">
+            <p className="text-sm font-bold text-amber-700 dark:text-amber-300">
+              À affecter ({chantiersNonAffectes.length}) — personne n’est encore prévu sur ces chantiers
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {chantiersNonAffectes.map((r) => {
+                const d = new Date(r.date_debut);
+                return (
+                  <li key={r.id} className="rounded-lg border border-border bg-muted/30 p-3">
+                    <div className="flex min-w-0 items-center gap-2">
+                      {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
+                      <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
+                    </div>
+                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
+                    <div className="mt-2 grid grid-cols-2 gap-2">
+                      {TECHNICIENS.map((t) => (
+                        <Button key={t.id} size="sm" className="h-10" disabled={affecter.isPending} onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}>
+                          Affecter à {t.nom.split(" ")[0]}
+                        </Button>
+                      ))}
+                    </div>
                   </li>
                 );
               })}
