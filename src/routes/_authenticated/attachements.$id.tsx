@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Ban, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
-import { deplacer } from "@/lib/reorder";
+import { LignesAttachement } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,7 @@ export const Route = createFileRoute("/_authenticated/attachements/$id")({
   component: AttachementDetail,
 });
 
-type Line = { key: string; libelle: string; description: string; quantite: string; prix: string };
+type Line = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null };
 const newLine = (): Line => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "" });
 const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
 const diffDays = (from: string, to: string) => { const a = new Date(`${from}T00:00:00`).getTime(); const b = new Date(`${to}T00:00:00`).getTime(); const n = Math.round((b - a) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
@@ -43,14 +43,14 @@ function AttachementDetail() {
       validation_requise: Boolean(a.validation_requise), proposition_autorisee: a.proposition_autorisee !== false, notes: a.notes ?? "",
     });
     setDelai(diffDays(a.date_emission, a.date_echeance));
-    setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)) })));
+    setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)), rendezvous_id: item.rendezvous_id ?? null })));
   }, [query.data]);
 
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["attachement", id] }); void qc.invalidateQueries({ queryKey: ["attachements"] }); };
   const send = useMutation({ mutationFn: () => sendFn({ data: { id, message: message || null } }), onSuccess: (r) => { setError(null); setFeedback(r.sent ? "Attachement envoyé par e-mail." : "E-mail non envoyé."); refresh(); }, onError: (e) => setError(e instanceof Error ? e.message : "Envoi impossible.") });
   const convert = useMutation({ mutationFn: () => convertFn({ data: { id } }), onSuccess: (r) => { refresh(); navigate({ to: "/factures/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Conversion impossible.") });
   const save = useMutation({
-    mutationFn: () => updateFn({ data: { id, ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, objet: form.objet || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }),
+    mutationFn: () => updateFn({ data: { id, ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, objet: form.objet || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l: any) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }),
     onSuccess: () => { setError(null); setFeedback("Modifications enregistrées."); setEdit(false); refresh(); },
     onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
@@ -116,17 +116,7 @@ function AttachementDetail() {
         <Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} />
         <Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} />
       </div>
-      <div className="space-y-3">{lines.map((line, idx) => <div key={line.key} className="grid gap-2 rounded-md border border-border p-3 sm:grid-cols-[1.4fr_1.5fr_.5fr_.7fr_auto]">
-        <Input aria-label="Travaux" placeholder="Travaux réalisés" value={line.libelle} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, libelle: e.target.value } : l))} />
-        <Input aria-label="Description" placeholder="Description" value={line.description} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, description: e.target.value } : l))} />
-        <Input aria-label="Quantité" type="number" min="0.01" step="0.01" value={line.quantite} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, quantite: e.target.value } : l))} />
-        <Input aria-label="Prix HT" type="number" min="0" step="0.01" value={line.prix} onChange={(e) => setLines(lines.map((l) => l.key === line.key ? { ...l, prix: e.target.value } : l))} />
-        <div className="flex items-center">
-          <Button variant="ghost" size="icon" aria-label="Monter la ligne" disabled={idx === 0} onClick={() => setLines(deplacer(lines, idx, -1))}><ChevronUp /></Button>
-          <Button variant="ghost" size="icon" aria-label="Descendre la ligne" disabled={idx === lines.length - 1} onClick={() => setLines(deplacer(lines, idx, 1))}><ChevronDown /></Button>
-          <Button variant="ghost" size="icon" aria-label="Supprimer la ligne" onClick={() => setLines(lines.length > 1 ? lines.filter((l) => l.key !== line.key) : [newLine()])}><Trash2 /></Button>
-        </div>
-      </div>)}<Button variant="outline" onClick={() => setLines([...lines, newLine()])}><Plus /> Ajouter une ligne</Button></div>
+      <LignesAttachement lines={lines} setLines={setLines} />
       <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button></div>
     </section> : <section className="grid gap-4 sm:grid-cols-3"><Stat label="Ticket obligatoire" value={a.numero_ticket} /><Stat label="Numéro d’affaire" value={a.numero_affaire || "Non renseigné"} /><Stat label="Bon de commande" value={a.bon_commande || "Non renseigné"} /></section>}
