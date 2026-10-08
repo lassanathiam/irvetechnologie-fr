@@ -8,7 +8,7 @@ type Donneur = {
 type Contact = { contact_nom?: string | null; email?: string | null; telephone?: string | null };
 
 /** Adresse de facturation du donneur conservée ; contact opérationnel issu de sa fiche partenaire. */
-export function coordonneesAttachement<T extends Donneur>(donneur: T, contact?: Contact | null): T {
+export function coordonneesAttachement<T extends Donneur>(donneur: T, contact?: Contact | null): T & Donneur {
   if (!/\bensio\b/i.test(donneur.nom)) return donneur;
   return {
     ...donneur,
