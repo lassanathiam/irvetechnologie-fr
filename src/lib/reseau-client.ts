@@ -25,7 +25,7 @@ export function nomReseauClient(value: unknown): string | null {
 
 export function precisionReseauClient(value: unknown): string {
   const nom = nomReseauClient(value);
-  return nom ? `Donneur d’ordre principal : ${nom}` : "Donneur d’ordre principal : à préciser";
+  return nom ? `Client : ${nom}` : "Client : à préciser";
 }
 
 /** DKV : la borne est livrée directement chez le client, pas de retrait chez ENSIO. */

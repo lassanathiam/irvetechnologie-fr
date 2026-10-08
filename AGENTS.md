@@ -1,6 +1,7 @@
 
 - Sous-traitants = lignes `partenaires` avec type=sous_traitant ; ils partagent le lien privé + code et voient uniquement les `rendezvous` où sous_traitant_id = leur id (pourquoi : réutiliser la sécurité par jeton existante).
 - Store the contracting customer's network in rendezvous.reseau_client, independently of resident, partner and hardware; snapshot it into attachment line descriptions so printed and shared documents retain the commercial context.
+- Resolve attachment billing identity from donneurs_ordre and missing operational contacts from the matching active partenaires record; keep billing and delivery addresses independent to avoid invoicing the depot.
 - Les prix « À partir de » du site sont stockés dans `app_settings` sous `tarifs_site_public` et modifiés via l’espace pro (pourquoi : garder l’affichage public synchronisé sans redéploiement).
 - Le Planning conserve la vue complète et place « Mission terrain » avant les rendez-vous, avec un parcours guidé par étapes (pourquoi : faciliter l’usage sur chantier sans répéter la mission dans une colonne dédiée).
 - Sur ordinateur, le Planning suit deux zones stables : rendez-vous et mission à gauche, carte et logistique à droite ; le trajet suit immédiatement la carte (pourquoi : réduire les espaces vides et rapprocher les outils liés).

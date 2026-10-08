@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
+import { listDonneurs } from "@/lib/bordereau.functions";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
   head: () => ({ meta: [{ title: "Attachement de travaux — IRVE Technologie" }, { name: "description", content: "Consulter, modifier, envoyer et convertir un attachement de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachement de travaux — IRVE Technologie" }, { property: "og:description", content: "Consultation d’un attachement de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -27,6 +28,8 @@ function AttachementDetail() {
   const { id } = Route.useParams(); const qc = useQueryClient(); const navigate = useNavigate();
   const getFn = useServerFn(getAttachement); const sendFn = useEnvoiConfirme(envoyerAttachement, "Confirmer l'envoi de l'attachement ?"); const convertFn = useServerFn(convertirAttachementEnFacture);
   const updateFn = useServerFn(updateAttachement); const deleteFn = useServerFn(supprimerAttachement); const traiterFn = useServerFn(traiterPropositionAttachement);
+  const donneursFn = useServerFn(listDonneurs);
+  const donneurs = useQuery({ queryKey: ["donneurs-ordre"], queryFn: () => donneursFn() });
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [edit, setEdit] = useState(false); const [delai, setDelai] = useState(60);
@@ -97,8 +100,13 @@ function AttachementDetail() {
 
     {edit && form ? <section className="rounded-md border border-primary/40 bg-card p-5 space-y-5">
       <h2 className="text-sm font-bold uppercase text-primary">Modification en direct</h2>
+      {/ensio/i.test(form.client_nom) && <Button variant="outline" disabled={!donneurs.data} onClick={() => {
+        const d = donneurs.data?.find((x) => /ensio/i.test(x.nom));
+        if (!d) return;
+        setForm((f: any) => ({ ...f, client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || "", client_telephone: d.charge_affaires_telephone || "", client_adresse: d.adresse || "", client_cp_ville: d.cp_ville || "" }));
+      }}><RotateCcw /> Reprendre les coordonnées ENSIO</Button>}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <Field label="Destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} />
+        <Field label="Société destinataire *" value={form.client_nom} onChange={(v) => setForm({ ...form, client_nom: v })} />
         <Field label="E-mail du chargé d’affaires" type="email" value={form.client_email} onChange={(v) => setForm({ ...form, client_email: v })} />
         <Field label="Téléphone" value={form.client_telephone} onChange={(v) => setForm({ ...form, client_telephone: v })} />
         <Field label="Adresse" value={form.client_adresse} onChange={(v) => setForm({ ...form, client_adresse: v })} />

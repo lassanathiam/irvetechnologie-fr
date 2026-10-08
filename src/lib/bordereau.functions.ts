@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { BORDEREAU_AXIANS } from "@/lib/bordereau-axians";
+import { coordonneesAttachement } from "@/lib/coordonnees-attachement";
 
 /** Bordereau de prix : initialisé depuis les valeurs Axians, puis modifiable dans la plateforme. */
 export const listBordereau = createServerFn({ method: "GET" })
@@ -121,7 +122,11 @@ export const listDonneurs = createServerFn({ method: "GET" })
       if (again.error) throw new Error(again.error.message);
       data = again.data;
     }
-    return data ?? [];
+    const { data: contacts, error: contactError } = await context.supabase.from("partenaires")
+      .select("nom, contact_nom, email, telephone").eq("actif", true).eq("type", "donneur_ordre").ilike("nom", "%ensio%");
+    if (contactError) throw new Error(contactError.message);
+    const contact = contacts?.find((p) => p.nom.trim().toLowerCase() === "ensio");
+    return (data ?? []).map((d) => coordonneesAttachement(d, contact));
   });
 
 const donneurSchema = z.object({
