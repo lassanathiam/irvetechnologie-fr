@@ -22,6 +22,13 @@
       "when": 1791493999257,
       "tag": "0002_rendezvous_reseau_client",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791530377268,
+      "tag": "0003_push_subscriptions",
+      "breakpoints": true
     }
   ]
 }

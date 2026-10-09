@@ -12,6 +12,7 @@ import {
   setEmailRappel,
 } from "@/lib/notifications.functions";
 import { ProShell } from "@/components/ProShell";
+import { PushActivation } from "@/components/PushActivation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -92,6 +93,7 @@ function NotificationsPage() {
   return (
     <ProShell>
       <div className="mx-auto w-full max-w-4xl space-y-6 p-4 sm:p-6">
+        <PushActivation />
         <header className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="flex items-center gap-2 font-display text-2xl font-bold">
