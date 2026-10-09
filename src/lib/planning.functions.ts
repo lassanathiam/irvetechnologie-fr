@@ -99,6 +99,7 @@ const rdvSchema = z.object({
   cp_ville: z.string().trim().max(160).optional().nullable(),
   date_debut: z.string().min(10).max(40),
   duree_min: z.coerce.number().int().min(15).max(1440).default(120),
+  creneau_fin: z.string().regex(/^[0-2]\d:[0-5]\d$/).optional().nullable().or(z.literal("").transform(() => null)),
   technicien: z.string().trim().max(160).optional().nullable(),
   notes: z.string().trim().max(4000).optional().nullable(),
   demande_id: z.string().uuid().optional().nullable(),
@@ -119,6 +120,7 @@ const rdvSchema = z.object({
 
 export type RendezVousInput = z.input<typeof rdvSchema>;
 export type DossierRendezVousInput = {
+  creneau_fin?: string | null;
   reseau_client?: string | null;
   id: string;
   titre: string;
@@ -535,6 +537,7 @@ const dossierSchema = z.object({
   cp_ville: z.string().trim().max(160).optional().nullable(),
   date_debut: z.string().min(10).max(40),
   duree_min: z.coerce.number().int().min(15).max(1440).default(120),
+  creneau_fin: z.string().regex(/^[0-2]\d:[0-5]\d$/).optional().nullable().or(z.literal("").transform(() => null)),
   technicien: z.string().trim().max(160).optional().nullable(),
   notes: z.string().trim().max(4000).optional().nullable(),
   origine: z.enum(["direct", "sous_traitance"]).default("direct"),
@@ -606,6 +609,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       designation: data.designation ?? null,
       etiquettes: data.etiquettes ?? [],
       ...(data.reseau_client !== undefined ? { reseau_client: data.reseau_client || null } : {}),
+      ...(data.creneau_fin !== undefined ? { creneau_fin: data.creneau_fin || null } : {}),
       metrage_m: data.metrage_m,
       puissance_borne: data.puissance_borne ?? null,
       phase_installation: data.phase_installation ?? null,

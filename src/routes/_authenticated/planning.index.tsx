@@ -1,3 +1,4 @@
+import { creneauTexte } from "@/lib/creneau";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -956,6 +957,7 @@ function PlanningPage() {
       date_debut: d.toISOString(),
 
       duree_min: Number(get("duree_min") || 120),
+      creneau_fin: get("creneau_fin") || null,
       technicien: get("technicien") || null,
       notes: get("notes") || null,
       origine: (get("origine") || "direct") as "direct" | "sous_traitance",
@@ -1064,7 +1066,7 @@ function PlanningPage() {
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
-                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
+                    <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin, true)}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <ReseauClientBadge nom={missionTerrain.reseau_client} />
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
@@ -1140,7 +1142,7 @@ function PlanningPage() {
                   </div>
                 )}
 
-                <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${new Date(missionTerrain.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
+                <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin)} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
                   {!missionTerrain.demarre_at && <Button className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-2 py-3 text-center text-sm font-bold leading-tight sm:px-4 sm:text-base" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play className="shrink-0" /><span className="min-w-0 break-words">Je suis arrivé — démarrer</span></Button>}
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 min-h-11 h-auto w-full min-w-0 whitespace-normal border-destructive/40 px-2 py-3 text-center text-sm leading-tight text-destructive sm:px-4" disabled={demarrer.isPending} onClick={() => { if (window.confirm(`Annuler le démarrage des travaux chez ${missionTerrain.client_nom} ?\n\nÀ utiliser seulement si vous avez démarré par erreur. Le chantier repasse en « confirmé ».`)) demarrer.mutate({ id: missionTerrain.id, demarre: false }); }}><span className="min-w-0 break-words">Annuler les travaux démarrés par erreur</span></Button>}
                 </EtapeMission>
@@ -1159,7 +1161,7 @@ function PlanningPage() {
                 </EtapeMission>
               </div>
 
-              {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => choisirMission(r.id)}><Clock3 /> {new Date(r.date_debut).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })} · {r.client_nom}</Button>)}</div></div>}
+              {chantiersDuJour.length > 1 && <div className="border-t border-border bg-muted/40 p-4"><p className="mb-2 text-xs font-semibold text-muted-foreground">Autres interventions aujourd’hui</p><div className="flex gap-2 overflow-x-auto">{chantiersDuJour.filter((r) => r.id !== missionTerrain.id).map((r) => <Button key={r.id} variant="outline" className="h-11 shrink-0" onClick={() => choisirMission(r.id)}><Clock3 /> {creneauTexte(r.date_debut, r.creneau_fin, true)} · {r.client_nom}</Button>)}</div></div>}
             </div>
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Consultez « Voir tout le planning » pour les autres rendez-vous.</p></div>
         )}
@@ -1190,7 +1192,7 @@ function PlanningPage() {
                         <span className="text-[11px] font-bold uppercase">{estAujourdhui ? "Auj." : d.toLocaleDateString("fr-FR", { weekday: "short" })}</span>
                         <span className="text-2xl font-extrabold">{d.getDate()}</span>
                         <span className="text-[11px] font-semibold">{d.toLocaleDateString("fr-FR", { month: "short" })}</span>
-                        <span className="text-sm font-extrabold">{d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</span>
+                        <span className="text-sm font-extrabold">{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
                       </span>
                       <span className="min-w-0 flex-1">
                         <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
@@ -1225,7 +1227,7 @@ function PlanningPage() {
                       {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
                       <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
                     </div>
-                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {creneauTexte(r.date_debut, r.creneau_fin)}</p>
                     <ReseauClientBadge nom={r.reseau_client} />
                     <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">
@@ -1605,6 +1607,7 @@ function PlanningPage() {
             required
             defaultValue={prefillDate ? `${prefillDate}T09:00` : undefined}
           />
+          <Field label="Créneau : arrivée au plus tard (facultatif, ex. 16:00)" name="creneau_fin" type="time" />
           <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue="120" />
           <label className="block">
             <span className="text-mono text-xs text-muted-foreground">Technicien</span>
@@ -1997,7 +2000,7 @@ function PlanningPage() {
                                 <CalendarClock className="h-3 w-3" />{" "}
                                 {r.date_a_confirmer
                                   ? "Rendez-vous à prendre"
-                                  : `${dateTimeFr(r.date_debut)} · ${dureeFr(r.duree_min)}`}
+                                  : `${dateTimeFr(r.date_debut)}${r.creneau_fin ? ` (${creneauTexte(r.date_debut, r.creneau_fin)})` : ""} · ${dureeFr(r.duree_min)}`}
                                </span>
                               {r.date_a_confirmer && (
                                 <button
@@ -2534,6 +2537,7 @@ function PlanningPage() {
                                 cp_ville: g("cp_ville") || null,
                                 date_debut: d.toISOString(),
                                 duree_min: Number(g("duree_min") || 120),
+                                creneau_fin: g("creneau_fin") || null,
                                 technicien: g("technicien") || null,
                                 notes: g("notes") || null,
                                 origine: optionValue(g("origine"), ORIGINES_DOSSIER, "direct"),
@@ -2603,6 +2607,7 @@ function PlanningPage() {
                                 className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm"
                               />
                             </label>
+                            <Field label="Créneau : arrivée au plus tard (facultatif, ex. 16:00)" name="creneau_fin" type="time" defaultValue={r.creneau_fin ?? ""} />
                             <Field label="Durée sur site (min)" name="duree_min" type="number" defaultValue={String(r.duree_min ?? 120)} />
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Technicien</span>

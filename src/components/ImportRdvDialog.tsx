@@ -99,6 +99,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
             adresse: l.adresse,
             cp_ville: l.cp_ville,
             date_debut: date.toISOString(),
+            creneau_fin: l.creneau_fin ?? null,
             duree_min: 120,
             notes: notes || null,
             origine: partenaire ? "sous_traitance" : "direct",
@@ -178,6 +179,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
                 <input className={champ} value={l.adresse} onChange={(e) => maj(i, { adresse: e.target.value })} placeholder="Adresse" />
                 <input className={champ} value={l.cp_ville ?? ""} onChange={(e) => maj(i, { cp_ville: e.target.value || null })} placeholder="CP / ville" />
                 <input type="datetime-local" className={champ} value={l.date_debut ?? ""} onChange={(e) => maj(i, { date_debut: e.target.value || null })} />
+                <label className="mt-1 flex items-center gap-2 text-xs">Jusqu'à <input type="time" className={champ} value={l.creneau_fin ?? ""} onChange={(e) => maj(i, { creneau_fin: e.target.value || null })} /></label>
                 <select className={champ} value={l.type} onChange={(e) => maj(i, { type: e.target.value as Ligne["type"] })}>
                   <option value="installation">Installation</option>
                   <option value="maintenance">Maintenance</option>

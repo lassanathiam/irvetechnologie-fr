@@ -29,6 +29,13 @@
       "when": 1791530377268,
       "tag": "0003_push_subscriptions",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1791530668649,
+      "tag": "0004_creneau_fin",
+      "breakpoints": true
     }
   ]
 }
