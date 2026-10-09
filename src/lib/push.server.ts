@@ -8,18 +8,18 @@ const b64u = (buf: ArrayBuffer | Uint8Array) => {
   for (const x of b) s += String.fromCharCode(x);
   return btoa(s).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
 };
-const fromB64u = (s: string) => {
+const fromB64u = (s: string): Uint8Array<ArrayBuffer> => {
   const p = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
   return Uint8Array.from(atob(p), (c) => c.charCodeAt(0));
 };
 const concat = (...arr: Uint8Array[]) => {
-  const out = new Uint8Array(arr.reduce((n, a) => n + a.length, 0));
+  const out: Uint8Array<ArrayBuffer> = new Uint8Array(arr.reduce((n, a) => n + a.length, 0));
   let o = 0;
   for (const a of arr) { out.set(a, o); o += a.length; }
   return out;
 };
 
-async function hkdf(salt: Uint8Array, ikm: Uint8Array, info: Uint8Array, len: number) {
+async function hkdf(salt: Uint8Array<ArrayBuffer>, ikm: Uint8Array<ArrayBuffer>, info: Uint8Array<ArrayBuffer>, len: number) {
   const key = await crypto.subtle.importKey("raw", ikm, "HKDF", false, ["deriveBits"]);
   return new Uint8Array(await crypto.subtle.deriveBits({ name: "HKDF", hash: "SHA-256", salt, info }, key, len * 8));
 }

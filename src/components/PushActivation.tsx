@@ -8,7 +8,7 @@ import { enregistrerAbonnementPush, supprimerAbonnementPush, testerPush } from "
 
 type Etat = "chargement" | "actif" | "inactif" | "non-supporte" | "iphone-installer" | "iframe" | "refuse";
 
-const versUint8 = (s: string) => {
+const versUint8 = (s: string): Uint8Array<ArrayBuffer> => {
   const p = s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4);
   return Uint8Array.from(atob(p), (c) => c.charCodeAt(0));
 };
