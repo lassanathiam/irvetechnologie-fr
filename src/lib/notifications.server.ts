@@ -51,6 +51,13 @@ export async function creerNotification(
       meta: notif.meta ?? {},
     });
     if (error) console.error("Notification non enregistrée:", error.message);
+    const { envoyerPushATous } = await import("@/lib/push.server");
+    await envoyerPushATous({
+      title: notif.titre,
+      body: notif.message ?? undefined,
+      url: notif.lien ?? "/notifications",
+      tag: `${notif.type}-${Date.now()}`,
+    });
   } catch (error) {
     console.error(
       "Notification non enregistrée:",
