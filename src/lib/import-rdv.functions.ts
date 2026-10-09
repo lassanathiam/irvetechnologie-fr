@@ -1,3 +1,4 @@
+import { normaliserHeure } from "@/lib/creneau";
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
@@ -11,6 +12,7 @@ export type RdvExtrait = {
   adresse: string;
   cp_ville: string | null;
   date_debut: string | null; // YYYY-MM-DDTHH:mm
+  creneau_fin: string | null; // HH:mm
   type: "visite" | "installation" | "maintenance" | "sav" | "controle";
   designation: string | null;
   numero_dossier: string | null;
@@ -19,8 +21,9 @@ export type RdvExtrait = {
 
 const PROMPT = `Tu reçois une fiche d'intervention, une capture d'écran, un PDF ou un tableau envoyé par un partenaire donneur d'ordre (bornes de recharge / électricité / télécom).
 Extrais CHAQUE intervention à planifier. Réponds UNIQUEMENT avec un JSON, sans texte autour :
-{"rdv":[{"client_nom":"...","client_telephone":null,"client_email":null,"adresse":"numéro et rue","cp_ville":"code postal et ville","date_debut":"YYYY-MM-DDTHH:mm ou null","type":"installation|maintenance|sav|visite|controle","designation":"matériel / prestation courte","numero_dossier":"n° de ticket, commande ou dossier ou null","notes":"infos utiles (accès, contact sur place, remarques) ou null"}]}
+{"rdv":[{"client_nom":"...","client_telephone":null,"client_email":null,"adresse":"numéro et rue","cp_ville":"code postal et ville","date_debut":"YYYY-MM-DDTHH:mm ou null","creneau_fin":"HH:mm ou null","type":"installation|maintenance|sav|visite|controle","designation":"matériel / prestation courte","numero_dossier":"n° de ticket, commande ou dossier ou null","notes":"infos utiles (accès, contact sur place, remarques) ou null"}]}
 Ajoute pour CHAQUE intervention le champ "reseau_client" : donneur d'ordre principal (rang 1) pour lequel ENSIO sous-traite (ex. BUMP, 50FIVE, AMARA, CAP BORNES, TOTALENERGIES, DKV), souvent écrit dans la désignation comme « Borne de recharge — BUMP », tel qu'il est écrit dans le document. Cherche dans les colonnes client/enseigne/réseau/opérateur, les en-têtes et logos si leur rôle est clair. Ce n'est ni le nom du particulier (client_nom), ni le donneur d'ordre ENSIO, ni le fabricant ou modèle matériel de borne (designation). Conserve exactement les sigles et l'orthographe lus ; ne corrige pas un nom par supposition. Si plusieurs clients commerciaux sont présents, associe chacun à la bonne intervention. Mets null si absent ou ambigu.
+Créneau : si le passage est indiqué comme une plage (ex. « entre 14h et 16h », « 14h-16h », « créneau 8h/10h »), mets le début dans date_debut et la fin dans creneau_fin ; sinon creneau_fin = null.
 Règles : n'invente rien, mets null si absent. Téléphone au format français. Une ligne de tableau = une intervention. Dépannage = "sav".`;
 
 const TYPES = ["visite", "installation", "maintenance", "sav", "controle"] as const;
@@ -114,6 +117,7 @@ export const analyserDocumentRdv = createServerFn({ method: "POST" })
           adresse: s(o["adresse"]) ?? "",
           cp_ville: s(o["cp_ville"], 160),
           date_debut: date && /^\d{4}-\d{2}-\d{2}/.test(date) ? date.slice(0, 16) : null,
+          creneau_fin: normaliserHeure(o["creneau_fin"]),
           type: t && (TYPES as readonly string[]).includes(t) ? t : "installation",
           designation: s(o["designation"], 200),
           numero_dossier: s(o["numero_dossier"], 80),

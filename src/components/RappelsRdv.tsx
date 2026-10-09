@@ -1,3 +1,4 @@
+import { creneauTexte } from "@/lib/creneau";
 import { estLivraisonDirecte, NOTE_LIVRAISON_DKV } from "@/lib/reseau-client";
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
@@ -16,8 +17,6 @@ import {
 } from "@/components/ui/dialog";
 
 const jourParis = (d: Date) => d.toLocaleDateString("fr-CA", { timeZone: "Europe/Paris" });
-const heure = (v: string) =>
-  new Date(v).toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" });
 
 function useRappels() {
   const charger = useServerFn(listRappelsRdv);
@@ -43,7 +42,7 @@ function Liste({ titre, items }: { titre: string; items: Rdv[] }) {
       <ul className="space-y-1 text-sm">
         {items.map((r) => (
           <li key={r.id} className="rounded-lg border border-border bg-card px-3 py-2">
-            <span className="font-semibold">{heure(r.date_debut)}</span> — {r.client_nom}
+            <span className="font-semibold">{creneauTexte(r.date_debut, r.creneau_fin, true)}</span> — {r.client_nom}
             {r.cp_ville ? <span className="text-muted-foreground"> · {r.cp_ville}</span> : null}
             {r.technicien ? <span className="text-muted-foreground"> · {r.technicien}</span> : null}
             {r.date_a_confirmer ? <span className="text-destructive"> · date à confirmer</span> : null}

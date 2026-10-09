@@ -1227,7 +1227,7 @@ function PlanningPage() {
                       {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
                       <span className="min-w-0 truncate text-sm font-bold">{r.client_nom}</span>
                     </div>
-                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {d.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}</p>
+                    <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {creneauTexte(r.date_debut, r.creneau_fin)}</p>
                     <ReseauClientBadge nom={r.reseau_client} />
                     <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">

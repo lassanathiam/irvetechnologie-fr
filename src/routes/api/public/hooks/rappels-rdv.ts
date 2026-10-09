@@ -13,12 +13,13 @@ export const Route = createFileRoute("/api/public/hooks/rappels-rdv")({
         const { creerNotification } = await import("@/lib/notifications.server");
         const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
         const { COMPANY } = await import("@/lib/company");
+        const { creneauTexte } = await import("@/lib/creneau");
         const { estLivraisonDirecte, NOTE_LIVRAISON_DKV } = await import("@/lib/reseau-client");
 
         const demain = jourParis(new Date(Date.now() + 86400_000));
         const { data: rows } = await supabaseAdmin
           .from("rendezvous")
-          .select("id, client_nom, adresse, cp_ville, date_debut, technicien, reseau_client")
+          .select("id, client_nom, adresse, cp_ville, date_debut, technicien, reseau_client, creneau_fin")
           .eq("archive", false)
           .neq("statut", "annule")
           .gte("date_debut", new Date(Date.now()).toISOString())
@@ -40,7 +41,7 @@ export const Route = createFileRoute("/api/public/hooks/rappels-rdv")({
           timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long",
         });
         const lignes = liste.map((r) => ({
-          heure: new Date(r.date_debut).toLocaleTimeString("fr-FR", { timeZone: "Europe/Paris", hour: "2-digit", minute: "2-digit" }),
+          heure: creneauTexte(r.date_debut, r.creneau_fin, true),
           client: estLivraisonDirecte(r.reseau_client) ? `${r.client_nom} [DKV : ${NOTE_LIVRAISON_DKV}]` : r.client_nom,
           lieu: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           technicien: r.technicien ?? "",
