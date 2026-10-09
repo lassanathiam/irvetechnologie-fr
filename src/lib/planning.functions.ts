@@ -120,6 +120,7 @@ const rdvSchema = z.object({
 
 export type RendezVousInput = z.input<typeof rdvSchema>;
 export type DossierRendezVousInput = {
+  creneau_fin?: string | null;
   reseau_client?: string | null;
   id: string;
   titre: string;
