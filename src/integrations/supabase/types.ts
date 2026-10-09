@@ -1494,6 +1494,7 @@ export type Database = {
           client_telephone: string | null
           cp_ville: string | null
           created_at: string
+          creneau_fin: string | null
           date_a_confirmer: boolean
           date_debut: string
           delai_paiement_jours: number | null
@@ -1567,6 +1568,7 @@ export type Database = {
           client_telephone?: string | null
           cp_ville?: string | null
           created_at?: string
+          creneau_fin?: string | null
           date_a_confirmer?: boolean
           date_debut: string
           delai_paiement_jours?: number | null
@@ -1640,6 +1642,7 @@ export type Database = {
           client_telephone?: string | null
           cp_ville?: string | null
           created_at?: string
+          creneau_fin?: string | null
           date_a_confirmer?: boolean
           date_debut?: string
           delai_paiement_jours?: number | null

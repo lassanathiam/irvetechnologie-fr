@@ -1,0 +1,1 @@
+ALTER TABLE public.rendezvous ADD COLUMN creneau_fin text CHECK (creneau_fin IS NULL OR creneau_fin ~ '^[0-2][0-9]:[0-5][0-9]$');
