@@ -17,7 +17,7 @@ export type FicheExtraite = {
 
 const PROMPT = `Tu reçois une fiche technique ou un compte rendu de visite technique d'un chantier de borne de recharge.
 Réponds UNIQUEMENT avec un JSON, sans texte autour :
-{"client_nom":"nom du client particulier ou null","adresse":"numéro et rue ou null","cp_ville":"code postal et ville ou null","puissance_borne":"ex. 7,4 kW ou null","phase_installation":"Monophasé|Triphasé ou null","type_pose":"Murale|Sur pied ou null","metrage_m":nombre de mètres de câble prévu ou null,"repartiteur":true si la fiche prévoit la pose d'un répartiteur, coffret, tableau secondaire, sous-distributeur ou départ dans un tableau divisionnaire sinon false,"resume":"résumé utile pour le technicien en 2 à 6 lignes : tableau, protections, cheminement, accès, contraintes, matériel ; ou null"}
+{"client_nom":"nom du client particulier ou null","adresse":"numéro et rue ou null","cp_ville":"code postal et ville ou null","puissance_borne":"ex. 7,4 kW ou null","phase_installation":"Monophasé|Triphasé ou null","type_pose":"Murale|Sur pied ou null","metrage_m":nombre de mètres de câble prévu ou null,"repartiteur":true si la fiche prévoit la pose d'un répartiteur, coffret, tableau secondaire, sous-distributeur ou départ dans un tableau divisionnaire sinon false (false si la fiche dit sans/aucun tableau divisionnaire),"resume":"résumé utile pour le technicien en 2 à 6 lignes : tableau, protections, cheminement, accès, contraintes, matériel ; ou null"}
 N'invente rien, mets null si absent.`;
 
 const s = (v: unknown, max = 300) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
@@ -85,7 +85,7 @@ export const analyserFicheTechnique = createServerFn({ method: "POST" })
       phase_installation: s(o["phase_installation"], 40),
       type_pose: s(o["type_pose"], 80),
       metrage_m: Number.isFinite(metrage) && metrage > 0 && metrage < 10000 ? metrage : null,
-      repartiteur: o["repartiteur"] === true || /r[ée]partiteur|coffret|tableau secondaire|sous[- ]distributeur|divisionnaire/i.test(String(o["resume"] ?? "")),
+      repartiteur: o["repartiteur"] === true,
       resume: s(o["resume"], 2000),
     };
     const { data: rdvs } = await context.supabase
@@ -144,7 +144,7 @@ export const enregistrerFicheTechnique = createServerFn({ method: "POST" })
       if (!rdv.phase_installation && c.phase_installation) maj.phase_installation = c.phase_installation;
       if (!rdv.type_pose && c.type_pose) maj.type_pose = c.type_pose;
       if (!rdv.metrage_m && c.metrage_m) maj.metrage_m = c.metrage_m;
-      if (!rdv.retour_repartiteur && (c.repartiteur || /r[ée]partiteur|coffret|tableau secondaire|sous[- ]distributeur|divisionnaire/i.test(data.resume ?? ""))) maj.retour_repartiteur = true;
+      if (!rdv.retour_repartiteur && (c.repartiteur)) maj.retour_repartiteur = true;
       if (data.resume && !(rdv.notes ?? "").includes(data.resume.slice(0, 40))) {
         maj.notes = [rdv.notes, `Fiche technique :\n${data.resume}`].filter(Boolean).join("\n\n").slice(0, 8000);
       }
