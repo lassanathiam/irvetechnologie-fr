@@ -56,6 +56,7 @@ import {
   updateStatutRendezVous,
   updateAdresseRendezVous,
   updateDossierRendezVous,
+  majOptionsChantier,
   validerChantier,
   updateFacturationRdv,
   type DossierRendezVousInput,
@@ -401,6 +402,13 @@ function PlanningPage() {
   const remove = useMutation({
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: refresh,
+  });
+  const majOptions = useMutation({
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number }) =>
+      majOptionsChantier({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Mise à jour impossible."),
   });
   const valider = useMutation({
     mutationFn: (p: { id: string; valide: boolean; commentaire?: string | null; par?: string | null }) =>
@@ -2260,6 +2268,50 @@ function PlanningPage() {
                                  />
                                  {toutOuvert ? "Réduire" : "Afficher tout"}
                                </button>
+                              <label
+                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 cursor-pointer ${
+                                  r.retour_repartiteur
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border text-muted-foreground hover:border-primary"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 accent-current"
+                                  checked={Boolean(r.retour_repartiteur)}
+                                  disabled={majOptions.isPending}
+                                  onChange={(e) =>
+                                    majOptions.mutate({ id: r.id, retour_repartiteur: e.target.checked })
+                                  }
+                                />
+                                Répartiteur / tableau (65 €)
+                              </label>
+                              <label
+                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 cursor-pointer ${
+                                  Number(r.metrage_m ?? 0) > Number(r.metrage_inclus_m ?? 15)
+                                    ? "border-primary text-primary bg-primary/10"
+                                    : "border-border text-muted-foreground hover:border-primary"
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  className="h-4 w-4 accent-current"
+                                  checked={Number(r.metrage_m ?? 0) > Number(r.metrage_inclus_m ?? 15)}
+                                  disabled={majOptions.isPending}
+                                  onChange={(e) => {
+                                    const inclus = Number(r.metrage_inclus_m ?? 15);
+                                    const actuel = Number(r.metrage_m ?? 0);
+                                    majOptions.mutate({
+                                      id: r.id,
+                                      metrage_m: e.target.checked
+                                        ? Math.max(actuel, inclus + 1)
+                                        : Math.min(actuel, inclus),
+                                    });
+                                  }}
+                                />
+                                Métrage &gt; forfait
+                                {Number(r.metrage_m ?? 0) > 0 && ` (${Number(r.metrage_m)} m)`}
+                              </label>
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
