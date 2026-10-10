@@ -56,6 +56,7 @@ import {
   updateStatutRendezVous,
   updateAdresseRendezVous,
   updateDossierRendezVous,
+  majOptionsChantier,
   validerChantier,
   updateFacturationRdv,
   type DossierRendezVousInput,
