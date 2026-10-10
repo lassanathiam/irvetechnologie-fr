@@ -191,7 +191,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
         .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at")
         .eq("id", data.rendezvous_id)
         .maybeSingle(),
-      context.supabase.from("rapport_modeles").select("*").eq("actif", true),
+      context.supabase.from("rapport_modeles").select("*").eq("actif", true).eq("usage_unique", false),
       context.supabase
         .from("rapport_remplis")
         .select("*")
