@@ -101,6 +101,7 @@ function AttachementsPage() {
     for (const r of termines) { const { lundi } = semaine(String(estFini(r) ? (r.termine_at ?? r.date_debut) : r.date_debut).slice(0, 10)); m.set(lundi, [...(m.get(lundi) ?? []), r]); }
     return [...m.entries()].sort((x, y) => y[0].localeCompare(x[0]));
   }, [termines]);
+  const catalogueEnsio = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && l.donneur_ordre === "ensio"), [bordereau.data]);
   const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
   function choisirSemaine(date: string) {
     setSemaineDu(date);
@@ -138,32 +139,57 @@ function AttachementsPage() {
       setLines((cur) => [...cur.filter((l) => l.libelle.trim() || Number(l.prix) > 0), ...nouvelles]);
     } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }
   }
-  const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec tous les attachements de la semaine (copie à Antoni et à vous) ?");
+  const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec les attachements cochés (copie à Antoni et à vous) ?");
   const [lot, setLot] = useState<string | null>(null); const [lotInfo, setLotInfo] = useState<string | null>(null);
-  /** Vendredi : un attachement par client, puis un seul email groupé. */
-  async function attachementsParClient(lundi: string, ids: string[]) {
-    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
-    if (!d) { setError("Fiche ENSIO introuvable dans les donneurs d’ordre."); return; }
+  /** Préparation de la semaine : une feuille par client, modifiable, gardée sur l’appareil pour ne rien perdre. */
+  type Prep = { lundi: string; groupes: { r: any; lines: Line[] }[] };
+  const PREP_KEY = "irve-prep-attachements";
+  const [prep, setPrepState] = useState<Prep | null>(null);
+  useEffect(() => { try { const s = localStorage.getItem(PREP_KEY); if (s) setPrepState(JSON.parse(s)); } catch { /* rien */ } }, []);
+  const setPrep = (p: Prep | null) => { setPrepState(p); try { if (p) localStorage.setItem(PREP_KEY, JSON.stringify(p)); else localStorage.removeItem(PREP_KEY); } catch { /* rien */ } };
+  const prepRef = useRef<HTMLElement | null>(null);
+  async function preparerSemaine(lundi: string, ids: string[]) {
     setLot(lundi); setError(null); setLotInfo(null);
     try {
       const rows = await chantiersFn({ data: { ids } });
-      const n = numSemaine(lundi); const { dimanche } = semaine(lundi);
+      const groupes = (rows as any[]).map((r) => ({ r, lines: lignesChantier(r, "ensio") })).filter((g) => g.lines.length);
+      if (!groupes.length) { setError("Aucun chantier à préparer."); return; }
+      setPrep({ lundi, groupes });
+      setTimeout(() => prepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } catch (e) { setError(e instanceof Error ? e.message : "Préparation impossible."); } finally { setLot(null); }
+  }
+  /** Validation : un attachement brouillon par client, rien n’est envoyé. */
+  async function creerBrouillons() {
+    if (!prep) return;
+    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
+    if (!d) { setError("Fiche ENSIO introuvable dans les donneurs d’ordre."); return; }
+    setLot("brouillons"); setError(null);
+    try {
+      const { lundi } = prep; const n = numSemaine(lundi); const { dimanche } = semaine(lundi);
       const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
       const jours = Number(d.delai_paiement_jours) || 45; const fm = /fin de mois/i.test(d.notes ?? "");
       const emission = today(); const ech = fm ? finDeMois(addDays(emission, jours)) : addDays(emission, jours);
-      const crees: string[] = [];
-      for (const r of rows as any[]) {
-        const items = lignesChantier(r, "ensio");
+      const restants: Prep["groupes"] = []; let nb = 0;
+      for (const g of prep.groupes) {
+        const items = g.lines.filter((l) => l.libelle.trim() && Number(l.quantite) > 0);
         if (!items.length) continue;
-        const res = await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } });
-        crees.push(res.id);
+        try {
+          await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${g.r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: g.r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? g.r.id, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } });
+          nb++;
+        } catch { restants.push(g); }
       }
+      setPrep(restants.length ? { lundi, groupes: restants } : null);
       void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
-      if (!crees.length) { setError("Aucun attachement créé."); return; }
-      setLotInfo(`${crees.length} attachement(s) créé(s), un par client.`);
-      try { const r = await envoyerGroupe({ data: { ids: crees } }); setLotInfo(r.sent ? `${crees.length} attachements créés et envoyés à ENSIO en un seul email.` : `${crees.length} attachements créés ; l’email n’est pas parti, envoyez-les depuis la liste.`); }
-      catch (e) { setLotInfo(`${crees.length} attachements créés. ${e instanceof Error ? e.message : ""}`); }
+      setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
     } catch (e) { setError(e instanceof Error ? e.message : "Création impossible."); } finally { setLot(null); }
+  }
+  const brouillons = useMemo(() => (list.data ?? []).filter((a: any) => (a.statut || "brouillon") === "brouillon" && !a.sent_at), [list.data]);
+  const [brCoches, setBrCoches] = useState<string[]>([]);
+  async function envoyerBrouillons(ids: string[]) {
+    if (!ids.length) return;
+    setLot("envoi"); setError(null);
+    try { const r = await envoyerGroupe({ data: { ids } }); setLotInfo(r.sent ? `${ids.length} attachement(s) validé(s) et envoyé(s) à ENSIO en un seul email.` : "L’email n’est pas parti."); setBrCoches([]); void qc.invalidateQueries({ queryKey: ["attachements"] }); }
+    catch (e) { setError(e instanceof Error ? e.message : "Envoi impossible."); } finally { setLot(null); }
   }
   const ajouterDepuisCatalogue = (id: string) => {
     const ligne = catalogueOptions.find((l: any) => l.id === id);
@@ -199,14 +225,30 @@ function AttachementsPage() {
     {parSemaine.map(([lundi, rs]) => { const ven = addDays(lundi, 4); const ids = rs.map((r: any) => r.id); const sel = ids.filter((i: string) => coches.includes(i)); const aPreparer = sel.length ? sel : ids;
       return <div key={lundi} className="rounded-md border border-border">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
-          <strong className="text-sm">Semaine {numSemaine(lundi)} — vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</strong>
-          <div className="flex flex-wrap gap-2"><Button size="sm" disabled={lot !== null} onClick={() => void attachementsParClient(lundi, aPreparer)}>{lot === lundi ? <Loader2 className="animate-spin" /> : <Sparkles />} Un attachement par client + envoi groupé ({aPreparer.length})</Button><Button size="sm" variant="outline" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Une seule feuille</Button></div>
+          <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-5 w-5" checked={sel.length === ids.length} onChange={(e) => setCoches((c) => e.target.checked ? [...new Set([...c, ...ids])] : c.filter((x) => !ids.includes(x)))} />S{numSemaine(lundi)} — tout cocher <span className="font-normal text-muted-foreground">(vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })})</span></label>
+          <div className="flex flex-wrap gap-2"><Button size="sm" disabled={lot !== null} onClick={() => void preparerSemaine(lundi, aPreparer)}>{lot === lundi ? <Loader2 className="animate-spin" /> : <Sparkles />} Préparer les lignes ({aPreparer.length})</Button><Button size="sm" variant="outline" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Une seule feuille</Button></div>
         </div>
         <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><ReseauClientBadge nom={r.reseau_client} /><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
       </div>; })}
     {lotInfo && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">{lotInfo}</p>}
     {error && !open && <p className="text-sm text-destructive">{error}</p>}
-    <p className="text-xs text-muted-foreground">Astuce : cochez seulement certains chantiers pour ne préparer qu’eux ; sans coche, toute la semaine est prise.</p>
+    <p className="text-xs text-muted-foreground">Astuce : cochez la semaine (tout est sélectionné), décochez ce qui ne doit pas partir, puis « Préparer les lignes ».</p>
+  </section>}
+  {prep && <section ref={prepRef} className="scroll-mt-4 rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">S{numSemaine(prep.lundi)} — lignes à vérifier ({prep.groupes.length} client{prep.groupes.length > 1 ? "s" : ""})</h2><Button size="sm" variant="outline" onClick={() => { if (confirm("Abandonner cette préparation ?")) setPrep(null); }}>Abandonner</Button></div>
+    <p className="text-sm text-muted-foreground">Ajoutez les prestations en plus (tableau secondaire, câble…) sous chaque client. Tout est gardé sur cet appareil tant que vous n’avez pas validé.</p>
+    {prep.groupes.map((g, gi) => <div key={g.r.id} className="rounded-md border border-border p-3 space-y-2">
+      <div className="flex flex-wrap items-center gap-2 text-sm"><strong>{g.r.client_nom}</strong><ReseauClientBadge nom={g.r.reseau_client} /><span className="text-muted-foreground">{[g.r.adresse, g.r.cp_ville].filter(Boolean).join(", ")}</span><span className="ml-auto font-mono">{euro(g.lines.reduce((s, l) => s + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0))} HT</span></div>
+      <LignesAttachement lines={g.lines} catalogue={catalogueEnsio} setLines={(up: any) => setPrep({ ...prep, groupes: prep.groupes.map((x, i) => i === gi ? { ...x, lines: typeof up === "function" ? up(x.lines) : up } : x) })} />
+    </div>)}
+    <div className="flex flex-wrap items-center justify-between gap-2"><strong>Total semaine : {euro(prep.groupes.reduce((s, g) => s + g.lines.reduce((t, l) => t + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0), 0))} HT</strong><Button disabled={lot !== null} onClick={() => void creerBrouillons()}>{lot === "brouillons" && <Loader2 className="animate-spin" />} Valider → mettre en brouillon</Button></div>
+    {error && <p className="text-sm text-destructive">{error}</p>}
+  </section>}
+  {brouillons.length > 0 && <section className="rounded-md border border-border bg-card p-5 space-y-3">
+    <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold">Brouillons à valider ({brouillons.length})</h2>
+      <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-5 w-5" checked={brCoches.length === brouillons.length} onChange={(e) => setBrCoches(e.target.checked ? brouillons.map((a: any) => a.id) : [])} />Valider tous les attachements</label></div>
+    <ul className="divide-y divide-border rounded-md border border-border">{brouillons.map((a: any) => <li key={a.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-5 w-5" checked={brCoches.includes(a.id)} onChange={(e) => setBrCoches((c) => e.target.checked ? [...c, a.id] : c.filter((x) => x !== a.id))} /><Link to="/attachements/$id" params={{ id: a.id }} className="font-medium underline-offset-2 hover:underline">{a.numero}</Link><span className="text-muted-foreground">{a.numero_ticket}</span><span className="ml-auto font-mono">{euro(Number(a.total_ht))} HT</span></li>)}</ul>
+    <div className="flex flex-wrap items-center justify-between gap-2"><span className="text-sm text-muted-foreground">Cochez tout, ou un par un pour valider partiellement. Touchez un numéro pour le réajuster.</span><Button disabled={!brCoches.length || lot !== null} onClick={() => void envoyerBrouillons(brCoches)}>{lot === "envoi" && <Loader2 className="animate-spin" />} Valider et envoyer ({brCoches.length})</Button></div>
   </section>}
   {open && <section ref={formRef} className="scroll-mt-4 rounded-md border border-border bg-card p-5 space-y-5">
     <label className="block text-xs text-muted-foreground">Donneur d’ordre enregistré
