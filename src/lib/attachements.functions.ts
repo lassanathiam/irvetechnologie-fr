@@ -108,7 +108,7 @@ export const listAttachements = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("attachements_travaux")
-      .select("id, numero, client_nom, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count")
+      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count")
       .is("facture_id", null)
       .order("created_at", { ascending: false })
       .limit(250);
@@ -390,6 +390,8 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
     const liste = rows ?? [];
     if (!liste.length) throw new Error("Aucun attachement à envoyer.");
     const email = liste[0].client_email;
+    const emails = new Set(liste.map((a: any) => String(a.client_email ?? "").trim().toLowerCase()));
+    if (emails.size > 1) throw new Error("Ces attachements concernent plusieurs destinataires. Cochez seulement ceux d’un même donneur d’ordre.");
     if (!email) throw new Error("Ajoutez l’adresse e-mail du chargé d’affaires ENSIO.");
     const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
     const message = await messageAdaptif(context.supabase, liste[0]);
@@ -414,7 +416,7 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
       },
     });
     if (result.sent) {
-      await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", data.ids);
+      await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", liste.map((a: any) => a.id));
     }
     return { ...result, nb: lignes.length };
   });
