@@ -294,7 +294,7 @@ export const envoyerAttachement = createServerFn({ method: "POST" })
         total_ht: Number(attachment.total_ht),
         autoliquidation: attachment.autoliquidation,
         validation_requise: attachment.validation_requise,
-        message: data.message ?? null,
+        message: (data.message?.trim() ? data.message : await messageAdaptif(context.supabase, attachment)),
         lien: link,
       },
     });
