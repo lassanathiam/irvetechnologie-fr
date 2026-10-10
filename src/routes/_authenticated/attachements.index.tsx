@@ -8,7 +8,8 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createAttachement, listAttachements } from "@/lib/attachements.functions";
+import { createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
 import { precisionReseauClient } from "@/lib/reseau-client";
@@ -108,6 +109,24 @@ function AttachementsPage() {
     const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
     setForm((f) => ({ ...f, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, objet: `Attachement semaine ${n} — du ${fr(lundi)} au ${fr(dimanche)}` }));
   }
+  /** Lignes d’un chantier : forfait, câble au-delà de 15 m, répartiteur coché au retour. */
+  function lignesChantier(r: any, k: "ensio" | "axians"): Line[] {
+    const base = (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === k);
+    const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
+    const cable = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "2.10" : "2.6"));
+    const out: Line[] = [];
+    const f = forfait(r.puissance_borne);
+    const lieu = [r.client_nom, precisionReseauClient(r.reseau_client), r.adresse, r.cp_ville].filter(Boolean).join(" — ");
+    const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
+    out.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
+    const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
+    const c = cable(r.puissance_borne);
+    if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
+    const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
+    if (rep) out.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)) }));
+      
+    return out;
+  }
   async function importerSemaine(ids?: string[], cleForce?: "ensio" | "axians") {
     const { dimanche } = semaine(semaineDu);
     setImportEnCours(true); setError(null);
@@ -115,23 +134,36 @@ function AttachementsPage() {
       const rows = await chantiersFn({ data: ids?.length ? { ids } : { au: dimanche, motcle: cleForce ?? cle } });
       if (!rows.length) { setError("Aucun chantier ENSIO à attacher (tous déjà attachés)."); return; }
       const k = cleForce ?? cle;
-      const base = (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === k);
-      const forfait = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "1.2" : "1.1"));
-      const cable = (p?: string | null) => base.find((l: any) => l.reference === (/(11|22)/.test(p ?? "") ? "2.10" : "2.6"));
-      const nouvelles: Line[] = [];
-      for (const r of rows) {
-        const f = forfait(r.puissance_borne);
-        const lieu = [r.client_nom, precisionReseauClient(r.reseau_client), r.adresse, r.cp_ville].filter(Boolean).join(" — ");
-        const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
-        nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
-        const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
-        const c = cable(r.puissance_borne);
-        if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
-        const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
-        if (rep) nouvelles.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)) }));
-      }
+      const nouvelles: Line[] = rows.flatMap((r: any) => lignesChantier(r, k));
       setLines((cur) => [...cur.filter((l) => l.libelle.trim() || Number(l.prix) > 0), ...nouvelles]);
     } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }
+  }
+  const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec tous les attachements de la semaine (copie à Antoni et à vous) ?");
+  const [lot, setLot] = useState<string | null>(null); const [lotInfo, setLotInfo] = useState<string | null>(null);
+  /** Vendredi : un attachement par client, puis un seul email groupé. */
+  async function attachementsParClient(lundi: string, ids: string[]) {
+    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
+    if (!d) { setError("Fiche ENSIO introuvable dans les donneurs d’ordre."); return; }
+    setLot(lundi); setError(null); setLotInfo(null);
+    try {
+      const rows = await chantiersFn({ data: { ids } });
+      const n = numSemaine(lundi); const { dimanche } = semaine(lundi);
+      const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
+      const jours = Number(d.delai_paiement_jours) || 45; const fm = /fin de mois/i.test(d.notes ?? "");
+      const emission = today(); const ech = fm ? finDeMois(addDays(emission, jours)) : addDays(emission, jours);
+      const crees: string[] = [];
+      for (const r of rows as any[]) {
+        const items = lignesChantier(r, "ensio");
+        if (!items.length) continue;
+        const res = await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } });
+        crees.push(res.id);
+      }
+      void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
+      if (!crees.length) { setError("Aucun attachement créé."); return; }
+      setLotInfo(`${crees.length} attachement(s) créé(s), un par client.`);
+      try { const r = await envoyerGroupe({ data: { ids: crees } }); setLotInfo(r.sent ? `${crees.length} attachements créés et envoyés à ENSIO en un seul email.` : `${crees.length} attachements créés ; l’email n’est pas parti, envoyez-les depuis la liste.`); }
+      catch (e) { setLotInfo(`${crees.length} attachements créés. ${e instanceof Error ? e.message : ""}`); }
+    } catch (e) { setError(e instanceof Error ? e.message : "Création impossible."); } finally { setLot(null); }
   }
   const ajouterDepuisCatalogue = (id: string) => {
     const ligne = catalogueOptions.find((l: any) => l.id === id);
@@ -168,10 +200,12 @@ function AttachementsPage() {
       return <div key={lundi} className="rounded-md border border-border">
         <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border bg-muted/30 px-3 py-2">
           <strong className="text-sm">Semaine {numSemaine(lundi)} — vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}</strong>
-          <Button size="sm" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Préparer l’attachement ({aPreparer.length})</Button>
+          <div className="flex flex-wrap gap-2"><Button size="sm" disabled={lot !== null} onClick={() => void attachementsParClient(lundi, aPreparer)}>{lot === lundi ? <Loader2 className="animate-spin" /> : <Sparkles />} Un attachement par client + envoi groupé ({aPreparer.length})</Button><Button size="sm" variant="outline" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Une seule feuille</Button></div>
         </div>
         <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><ReseauClientBadge nom={r.reseau_client} /><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
       </div>; })}
+    {lotInfo && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">{lotInfo}</p>}
+    {error && !open && <p className="text-sm text-destructive">{error}</p>}
     <p className="text-xs text-muted-foreground">Astuce : cochez seulement certains chantiers pour ne préparer qu’eux ; sans coche, toute la semaine est prise.</p>
   </section>}
   {open && <section ref={formRef} className="scroll-mt-4 rounded-md border border-border bg-card p-5 space-y-5">

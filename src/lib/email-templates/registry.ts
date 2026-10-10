@@ -6,6 +6,7 @@ import { template as chantierArchiveTemplate } from './chantier-archive'
 import { template as rdvConfirmeTemplate } from './rdv-confirme'
 import { template as rdvPropositionTemplate } from './rdv-proposition'
 import { template as attachementTravauxTemplate } from './attachement-travaux'
+import { template as attachementsSemaineTemplate } from './attachements-semaine'
 import { template as rapportDonneurTemplate } from './rapport-donneur'
 import { template as documentASignerTemplate } from './document-a-signer'
 import { template as rappelRdvTemplate } from './rappel-rdv'
@@ -38,6 +39,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'rdv-confirme': rdvConfirmeTemplate,
   'rdv-proposition': rdvPropositionTemplate,
   'attachement-travaux': attachementTravauxTemplate,
+  'attachements-semaine': attachementsSemaineTemplate,
   'rapport-donneur': rapportDonneurTemplate,
   'document-a-signer': documentASignerTemplate,
   'ensio-document-info': ensioDocumentInfoTemplate,
