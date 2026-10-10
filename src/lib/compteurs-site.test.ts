@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it as test } from "bun:test";
 import { compter } from "./compteurs-site.functions";
 
 test("compte seulement les chantiers terminés, ajoute le chiffre de départ", () => {

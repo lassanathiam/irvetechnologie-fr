@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it as test } from "bun:test";
 import { classerChantiers, scoreFiche, SEUIL_SUR } from "./fiche-match";
 
 const chantiers = [
@@ -9,10 +9,10 @@ const chantiers = [
 describe("rapprochement fiche technique", () => {
   test("le nom du client (même inversé, sans accent) retrouve le bon chantier", () => {
     const r = classerChantiers({ client_nom: "Geoffroy Lebrec", cp_ville: "44300" }, chantiers);
-    expect(r[0]!.id).toBe("a");
-    expect(r[0]!.score).toBeGreaterThanOrEqual(SEUIL_SUR);
+    expect(r[0]!.id).toEqual("a");
+    expect(r[0]!.score >= SEUIL_SUR).toBeTrue();
   });
   test("un client inconnu n'est pas rangé automatiquement", () => {
-    expect(scoreFiche({ client_nom: "Dupont Marc", cp_ville: "75001" }, chantiers[0]!)).toBeLessThan(SEUIL_SUR);
+    expect(scoreFiche({ client_nom: "Dupont Marc", cp_ville: "75001" }, chantiers[0]!) < SEUIL_SUR).toBeTrue();
   });
 });

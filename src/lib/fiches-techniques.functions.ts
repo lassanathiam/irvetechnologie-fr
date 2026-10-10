@@ -136,7 +136,7 @@ export const enregistrerFicheTechnique = createServerFn({ method: "POST" })
       .maybeSingle();
     if (rdv) {
       const c = data.completer ?? {};
-      const maj: Record<string, unknown> = {};
+      const maj: { puissance_borne?: string; phase_installation?: string; type_pose?: string; metrage_m?: number; notes?: string } = {};
       if (!rdv.puissance_borne && c.puissance_borne) maj.puissance_borne = c.puissance_borne;
       if (!rdv.phase_installation && c.phase_installation) maj.phase_installation = c.phase_installation;
       if (!rdv.type_pose && c.type_pose) maj.type_pose = c.type_pose;
