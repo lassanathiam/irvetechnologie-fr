@@ -199,7 +199,8 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (data.ids?.length) return rows ?? [];
     const ids = (rows ?? []).map((r) => r.id);
-    // Seuls les attachements facturés bloquent un chantier ; les autres restent refaisables.
+    // Règle anti-doublon : un chantier déjà dans un attachement envoyé, accepté ou facturé n'est plus proposé.
+    // Seuls les brouillons restent refaisables ; pour refaire un envoyé, l'annuler d'abord (libère ses chantiers).
     const deja = new Set<string>(); const anciens = new Map<string, { id: string; numero: string; statut: string }[]>();
     if (ids.length) {
       const { data: items } = await context.supabase
@@ -208,7 +209,7 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
         .in("rendezvous_id", ids);
       for (const it of (items ?? []) as any[]) {
         const a = it.attachements_travaux; if (!a || !it.rendezvous_id || a.statut === "annule") continue;
-        if (a.facture_id || a.statut === "facture") { deja.add(it.rendezvous_id); continue; }
+        if (a.facture_id || a.statut !== "brouillon") { deja.add(it.rendezvous_id); continue; }
         const l = anciens.get(it.rendezvous_id) ?? []; if (!l.some((x) => x.id === a.id)) l.push({ id: a.id, numero: a.numero, statut: a.statut }); anciens.set(it.rendezvous_id, l);
       }
     }
