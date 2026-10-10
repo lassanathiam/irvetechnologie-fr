@@ -17,7 +17,7 @@ import { precisionReseauClient } from "@/lib/reseau-client";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
-  head: () => ({ meta: [{ title: "Attachements travaux — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements travaux — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Attachements de pose de bornes — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de pose de bornes ENSIO et les autres travaux." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements de pose de bornes — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de pose de bornes et des travaux." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   validateSearch: (s: Record<string, unknown>): { rdv?: string } => ({ rdv: typeof s.rdv === "string" ? s.rdv : undefined }),
   component: AttachementsPage,
 });
@@ -49,7 +49,7 @@ function AttachementsPage() {
   const [search, setSearch] = useState(""); const [open, setOpen] = useState(false); const [error, setError] = useState<string | null>(null);
   const [catalogue, setCatalogue] = useState("");
   const [donneurId, setDonneurId] = useState("");
-  const [form, setForm] = useState({ client_nom: "", client_email: "", client_telephone: "", client_adresse: "", client_cp_ville: "", numero_ticket: "", numero_affaire: "", bon_commande: "", objet: "Travaux fibre optique", date_emission: today(), date_echeance: plusJours(60), autoliquidation: true, validation_requise: true, proposition_autorisee: true, notes: "" });
+  const [form, setForm] = useState({ client_nom: "", client_email: "", client_telephone: "", client_adresse: "", client_cp_ville: "", numero_ticket: "", numero_affaire: "", bon_commande: "", objet: "Pose de bornes de recharge", date_emission: today(), date_echeance: plusJours(60), autoliquidation: true, validation_requise: true, proposition_autorisee: true, notes: "" });
   const [delai, setDelai] = useState(60);
   const [lines, setLines] = useState<Line[]>([newLine()]);
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
@@ -223,7 +223,7 @@ function AttachementsPage() {
     return { lignes, global };
   }, [list.data]);
 
-  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Fibre optique</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
+  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
   {termines.length > 0 && <section className="rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
     <div><h2 className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-5 w-5 text-primary" /> Attachements ENSIO proposés ({termines.filter(estFini).length} terminé{termines.filter(estFini).length > 1 ? "s" : ""} · {termines.filter((r) => !estFini(r)).length} planifié{termines.filter((r) => !estFini(r)).length > 1 ? "s" : ""})</h2>
       <p className="text-sm text-muted-foreground">Chaque chantier ENSIO, terminé ou planifié, arrive ici, rangé par semaine. Chaque ligne précise « travaux terminés » ou « travaux planifiés ». Un clic prépare la feuille : une ligne par chantier avec l’adresse et le prix du bordereau. Vous ajoutez ensuite vos lignes en plus et les glissez où vous voulez.</p></div>
