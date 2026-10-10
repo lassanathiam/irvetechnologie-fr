@@ -1242,6 +1242,7 @@ export type Database = {
           nom: string
           structure: Json
           updated_at: string
+          usage_unique: boolean
         }
         Insert: {
           actif?: boolean
@@ -1253,6 +1254,7 @@ export type Database = {
           nom: string
           structure?: Json
           updated_at?: string
+          usage_unique?: boolean
         }
         Update: {
           actif?: boolean
@@ -1264,6 +1266,7 @@ export type Database = {
           nom?: string
           structure?: Json
           updated_at?: string
+          usage_unique?: boolean
         }
         Relationships: []
       }

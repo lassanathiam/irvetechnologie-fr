@@ -1,0 +1,2 @@
+ALTER TABLE public.rapport_modeles ADD COLUMN usage_unique boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.rapport_modeles.usage_unique IS 'PV importé pour un seul chantier : jamais listé dans les modèles réutilisables.';

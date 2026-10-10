@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Printer, Save, Send } from "lucide-react";
+import { ArrowLeft, FileUp, Loader2, Printer, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -13,6 +13,8 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
 import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import {
+  analyserFeuilleRapport,
+  creerModeleJetable,
   enregistrerRapportRempli,
   envoyerRapportRempli,
   getRapportChantier,
@@ -34,6 +36,14 @@ export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")(
 });
 
 type Val = string | boolean | null;
+type ModeleRow = {
+  id: string;
+  nom: string;
+  donneur_ordre: string;
+  logo_data: string | null;
+  email_destinataire: string | null;
+  structure: unknown;
+};
 
 function RapportChantierPage() {
   return (
@@ -63,8 +73,53 @@ function RapportChantierPageInner() {
   const [email, setEmail] = useState("");
   const [rempliId, setRempliId] = useState<string | null>(null);
   const [apercu, setApercu] = useState(false);
+  const [modeleLocal, setModeleLocal] = useState<ModeleRow | null>(null);
+  const [pvClient, setPvClient] = useState("");
+  const [pvBusy, setPvBusy] = useState(false);
+  const analyserFn = useServerFn(analyserFeuilleRapport);
+  const jetableFn = useServerFn(creerModeleJetable);
 
-  const modele = data?.modeles.find((m) => m.id === modeleId) ?? null;
+  const modele = data?.modeles.find((m) => m.id === modeleId) ?? (modeleLocal && modeleLocal.id === modeleId ? modeleLocal : null);
+
+  async function importerPv(file: File) {
+    if (!pvClient) {
+      toast.error("Choisissez d'abord le client (donneur d'ordre).");
+      return;
+    }
+    if (file.size > 9_000_000) {
+      toast.error("Fichier trop lourd (9 Mo maximum).");
+      return;
+    }
+    setPvBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error("Lecture du fichier impossible."));
+        r.readAsDataURL(file);
+      });
+      const analyse = await analyserFn({ data: { data_url: dataUrl } });
+      const structure = {
+        ...analyse,
+        original: { data_url: dataUrl, type: file.type === "application/pdf" ? "pdf" : "image" },
+      };
+      const saved = await jetableFn({
+        data: {
+          nom: `PV ${pvClient} — ${data?.rdv.client_nom ?? "chantier"}`,
+          donneur_ordre: pvClient,
+          structure,
+        },
+      });
+      setModeleLocal(saved as ModeleRow);
+      setModeleId(saved.id);
+      setValeurs({});
+      toast.success("PV prêt : vérifiez les champs préremplis puis complétez.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPvBusy(false);
+    }
+  }
   const structure = modele ? normaliserStructure(modele.structure) : null;
 
   // Initialisation depuis le chantier / rapport existant
@@ -163,7 +218,39 @@ function RapportChantierPageInner() {
         </p>
       </div>
 
-      {!data.modeles.length ? (
+      <div className="neo-dashboard-panel space-y-3 rounded-lg border border-border p-3 print:hidden">
+        <h2 className="text-sm font-bold">Importer un PV juste pour ce chantier</h2>
+        <p className="text-xs text-muted-foreground">
+          Photo ou PDF de la feuille papier : elle reste telle quelle, vous la remplissez dessus. Rien n'est enregistré comme modèle réutilisable.
+        </p>
+        <label className="block text-sm">Client (donneur d'ordre)
+          <select
+            value={pvClient}
+            onChange={(e) => setPvClient(e.target.value)}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+          >
+            <option value="">— Choisir —</option>
+            {(data.donneurs ?? []).map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </label>
+        <label className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-primary text-sm font-semibold ${pvBusy ? "opacity-50" : ""}`}>
+          {pvBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
+          {pvBusy ? "Lecture de la feuille…" : "Prendre en photo ou choisir le PV"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="hidden"
+            disabled={pvBusy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) void importerPv(f);
+            }}
+          />
+        </label>
+      </div>
+
+      {!data.modeles.length && !modele ? (
         <p className="rounded-lg border border-border p-4 text-sm">
           Aucun modèle de rapport. <Link to="/rapports/modeles" className="text-primary underline">Créer un modèle</Link>
         </p>

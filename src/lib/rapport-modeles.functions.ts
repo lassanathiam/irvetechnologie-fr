@@ -115,9 +115,40 @@ export const listModelesRapport = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("rapport_modeles")
       .select("*")
+      .eq("usage_unique", false)
       .order("donneur_ordre", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+/** PV importé pour un seul chantier : conservé pour l'impression, jamais listé comme modèle réutilisable. */
+export const creerModeleJetable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        nom: z.string().trim().min(1).max(160),
+        donneur_ordre: z.string().trim().min(1).max(160),
+        structure: z.unknown(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: staff } = await context.supabase.rpc("is_staff");
+    if (!staff) throw new Error("Accès réservé à l'équipe.");
+    const { data: saved, error } = await context.supabase
+      .from("rapport_modeles")
+      .insert({
+        nom: data.nom,
+        donneur_ordre: data.donneur_ordre,
+        structure: normaliserStructure(data.structure) as unknown as Json,
+        actif: false,
+        usage_unique: true,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return saved;
   });
 
 export const enregistrerModeleRapport = createServerFn({ method: "POST" })
@@ -160,7 +191,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
         .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at")
         .eq("id", data.rendezvous_id)
         .maybeSingle(),
-      context.supabase.from("rapport_modeles").select("*").eq("actif", true),
+      context.supabase.from("rapport_modeles").select("*").eq("actif", true).eq("usage_unique", false),
       context.supabase
         .from("rapport_remplis")
         .select("*")
@@ -172,16 +203,27 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     if (!rdvQ.data) throw new Error("Chantier introuvable.");
     const modeles = modQ.data ?? [];
     const rempli = rempQ.data?.[0] ?? null;
-    const modele =
+    let modele =
       (rempli && modeles.find((m) => m.id === rempli.modele_id)) ||
       modelePourPartenaire(modeles, rdvQ.data.partenaire);
+    // Le rapport en cours peut utiliser un PV à usage unique (hors liste) : on le recharge à part.
+    if (!modele && rempli) {
+      const { data: m } = await context.supabase.from("rapport_modeles").select("*").eq("id", rempli.modele_id).maybeSingle();
+      modele = m ?? null;
+    }
     let email_donneur: string | null = null;
     const { data: rdvP } = await context.supabase.from("rendezvous").select("partenaire_id").eq("id", data.rendezvous_id).maybeSingle();
     if (rdvP?.partenaire_id) {
       const { data: p } = await context.supabase.from("partenaires").select("email").eq("id", rdvP.partenaire_id).maybeSingle();
       email_donneur = p?.email?.trim() || null;
     }
-    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli, email_donneur };
+    const { data: donneursRows } = await context.supabase
+      .from("partenaires")
+      .select("nom")
+      .eq("actif", true)
+      .order("nom", { ascending: true });
+    const donneurs = [...new Set([...(donneursRows ?? []).map((p) => p.nom), ...modeles.map((m) => m.donneur_ordre)])].sort((a, b) => a.localeCompare(b, "fr"));
+    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli, email_donneur, donneurs };
   });
 
 export const enregistrerRapportRempli = createServerFn({ method: "POST" })
