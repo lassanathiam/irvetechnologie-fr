@@ -218,6 +218,38 @@ function RapportChantierPageInner() {
         </p>
       </div>
 
+      <div className="neo-dashboard-panel space-y-3 rounded-lg border border-border p-3 print:hidden">
+        <h2 className="text-sm font-bold">Importer un PV juste pour ce chantier</h2>
+        <p className="text-xs text-muted-foreground">
+          Photo ou PDF de la feuille papier : elle reste telle quelle, vous la remplissez dessus. Rien n'est enregistré comme modèle réutilisable.
+        </p>
+        <label className="block text-sm">Client (donneur d'ordre)
+          <select
+            value={pvClient}
+            onChange={(e) => setPvClient(e.target.value)}
+            className="mt-1 w-full rounded-md border border-border bg-background px-3 py-2"
+          >
+            <option value="">— Choisir —</option>
+            {(data.donneurs ?? []).map((d) => <option key={d} value={d}>{d}</option>)}
+          </select>
+        </label>
+        <label className={`flex min-h-12 cursor-pointer items-center justify-center gap-2 rounded-lg border border-dashed border-primary text-sm font-semibold ${pvBusy ? "opacity-50" : ""}`}>
+          {pvBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <FileUp className="h-4 w-4" />}
+          {pvBusy ? "Lecture de la feuille…" : "Prendre en photo ou choisir le PV"}
+          <input
+            type="file"
+            accept="image/jpeg,image/png,image/webp,application/pdf"
+            className="hidden"
+            disabled={pvBusy}
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              e.target.value = "";
+              if (f) void importerPv(f);
+            }}
+          />
+        </label>
+      </div>
+
       {!data.modeles.length ? (
         <p className="rounded-lg border border-border p-4 text-sm">
           Aucun modèle de rapport. <Link to="/rapports/modeles" className="text-primary underline">Créer un modèle</Link>
