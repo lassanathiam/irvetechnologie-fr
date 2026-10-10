@@ -379,3 +379,42 @@ export const changerStatutAttachement = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { statut };
   });
+
+/** Un seul email pour tous les attachements de la semaine (un lien par client). */
+export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.from("attachements_travaux").select("*").in("id", data.ids).order("numero");
+    if (error) throw new Error(error.message);
+    const liste = rows ?? [];
+    if (!liste.length) throw new Error("Aucun attachement à envoyer.");
+    const email = liste[0].client_email;
+    if (!email) throw new Error("Ajoutez l’adresse e-mail du chargé d’affaires ENSIO.");
+    const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
+    const message = await messageAdaptif(context.supabase, liste[0]);
+    const lignes = await Promise.all(liste.map(async (a: any) => {
+      const it = await context.supabase.from("attachement_items").select("description").eq("attachement_id", a.id).order("ordre").limit(1);
+      const desc = String(it.data?.[0]?.description ?? "");
+      const client = desc.split(" — ")[0]?.replace(/^\d{2}\/\d{2}\/\d{4} · /, "") || a.objet || a.numero;
+      return { client, numero: a.numero, total_ht: Number(a.total_ht), lien: `${base}/attachement/${a.public_token}` };
+    }));
+    const semaine = /semaine S(\d+)/.exec(message)?.[0] ?? liste[0].numero_ticket;
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
+    const result = await sendTemplateEmail("attachements-semaine", email, {
+      copieEnsio: await resoudreCopieEnsio(context.supabase, email, liste[0].client_nom),
+      idempotencyKey: `attachements-semaine-${data.ids.join("-").slice(0, 80)}-${new Date().toISOString()}`,
+      templateData: {
+        destinataire: liste[0].client_nom,
+        semaine: semaine.replace(/^semaine /, "semaine "),
+        message: message.replace(/^Bonjour, /, "").replace("l'attachement", "les attachements").replace("sur le lien ci-dessus", "ci-dessous"),
+        lignes,
+        total_ht: lignes.reduce((s, l) => s + l.total_ht, 0),
+      },
+    });
+    if (result.sent) {
+      await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", data.ids);
+    }
+    return { ...result, nb: lignes.length };
+  });
