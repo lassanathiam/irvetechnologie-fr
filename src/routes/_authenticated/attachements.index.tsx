@@ -143,6 +143,14 @@ function AttachementsPage() {
     } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }
   }
   const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec les attachements cochés (copie à Antoni et à vous) ?");
+  const copieEquipe = useEnvoiConfirme(copieEquipeAttachements, "Vous envoyer la copie de cet attachement à contacts@irvetechnologie.fr (aucun envoi au client) ?");
+  const [copieEnCours, setCopieEnCours] = useState<string | null>(null);
+  async function envoyerCopie(id: string) {
+    setCopieEnCours(id); setError(null);
+    try { const r = await copieEquipe({ data: { ids: [id] } }); setLotInfo(r.sent ? "Copie envoyée à contacts@irvetechnologie.fr." : "La copie n'est pas partie."); }
+    catch (e) { setError(e instanceof Error ? e.message : "Copie impossible."); }
+    finally { setCopieEnCours(null); }
+  }
   const [lot, setLot] = useState<string | null>(null); const [lotInfo, setLotInfo] = useState<string | null>(null);
   /** Préparation de la semaine : une feuille par client, modifiable, gardée sur l’appareil pour ne rien perdre. */
   type Prep = { lundi: string; groupes: { r: any; lines: Line[] }[] };
