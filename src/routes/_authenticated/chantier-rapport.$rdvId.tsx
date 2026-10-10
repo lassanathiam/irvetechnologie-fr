@@ -13,6 +13,8 @@ import { SignaturePad } from "@/components/SignaturePad";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
 import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import {
+  analyserFeuilleRapport,
+  creerModeleJetable,
   enregistrerRapportRempli,
   envoyerRapportRempli,
   getRapportChantier,
