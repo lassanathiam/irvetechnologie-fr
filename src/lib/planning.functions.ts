@@ -145,6 +145,7 @@ export type DossierRendezVousInput = {
   designation?: string | null;
   etiquettes?: string[];
   metrage_m?: number;
+  retour_repartiteur?: boolean;
   puissance_borne?: string | null;
   phase_installation?: string | null;
   type_pose?: string | null;
@@ -553,6 +554,7 @@ const dossierSchema = z.object({
   type_pose: z.string().trim().max(80).optional().nullable(),
   sous_traitant_id: z.string().uuid().optional().nullable(),
   reseau_client: z.string().trim().max(160).optional().nullable(),
+  retour_repartiteur: z.boolean().optional(),
   montant_sous_traitant_ht: z.number().min(0).max(1_000_000).optional().nullable(),
 });
 
@@ -611,6 +613,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       ...(data.reseau_client !== undefined ? { reseau_client: data.reseau_client || null } : {}),
       ...(data.creneau_fin !== undefined ? { creneau_fin: data.creneau_fin || null } : {}),
       metrage_m: data.metrage_m,
+      ...(data.retour_repartiteur !== undefined ? { retour_repartiteur: data.retour_repartiteur } : {}),
       puissance_borne: data.puissance_borne ?? null,
       phase_installation: data.phase_installation ?? null,
       type_pose: data.type_pose ?? null,
@@ -980,6 +983,7 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
     designation?: string | null;
     etiquettes?: string[];
     metrage_m?: number;
+    retour_repartiteur?: boolean;
     puissance_borne?: string | null;
     phase_installation?: string | null;
     type_pose?: string | null;
@@ -998,6 +1002,7 @@ export const updateFacturationRdv = createServerFn({ method: "POST" })
         puissance_borne: z.string().trim().max(40).optional().nullable(),
         phase_installation: z.string().trim().max(40).optional().nullable(),
         type_pose: z.string().trim().max(80).optional().nullable(),
+        retour_repartiteur: z.boolean().optional(),
       })
       .parse(raw),
   )
