@@ -2583,6 +2583,7 @@ function PlanningPage() {
                                 designation: g("designation") || null,
                                 etiquettes: parseEtiquettes(g("etiquettes")),
                                 metrage_m: Number(g("metrage_m") || 0),
+                                retour_repartiteur: fd.get("retour_repartiteur") === "on",
                                 puissance_borne: g("puissance_borne") || null,
                                 phase_installation: g("phase_installation") || null,
                                 type_pose: g("type_pose") || null,
@@ -2701,6 +2702,7 @@ function PlanningPage() {
                               <Field label="Désignation du chantier" name="designation" defaultValue={r.designation ?? ""} />
                             </div>
                             <Field label="Métrage estimé (m)" name="metrage_m" type="number" defaultValue={String(r.metrage_m ?? 0)} />
+                            <label className="flex items-center gap-2 text-sm font-medium sm:col-span-2"><input type="checkbox" name="retour_repartiteur" className="h-5 w-5" defaultChecked={Boolean(r.retour_repartiteur)} />Répartiteur / tableau secondaire posé (ENSIO BPU 2.1 — 65 €) · le métrage au-delà du forfait (15 m ENSIO) est facturé automatiquement dans l'attachement</label>
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
                               <select name="puissance_borne" defaultValue={r.puissance_borne ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
@@ -2902,6 +2904,7 @@ function PlanningPage() {
                                 designation: g("designation") || null,
                                 etiquettes: parseEtiquettes(g("etiquettes")),
                                 metrage_m: Number(g("metrage_m") || 0),
+                                retour_repartiteur: fd.get("retour_repartiteur") === "on",
                                 puissance_borne: g("puissance_borne") || null,
                                 phase_installation: g("phase_installation") || null,
                                 type_pose: g("type_pose") || null,
@@ -2963,6 +2966,7 @@ function PlanningPage() {
                               />
                             </div>
                             <Field label="Métrage estimé (m)" name="metrage_m" type="number" defaultValue={String(r.metrage_m ?? 0)} />
+                            <label className="flex items-center gap-2 text-sm font-medium sm:col-span-2"><input type="checkbox" name="retour_repartiteur" className="h-5 w-5" defaultChecked={Boolean(r.retour_repartiteur)} />Répartiteur / tableau secondaire posé (ENSIO BPU 2.1 — 65 €) · le métrage au-delà du forfait (15 m ENSIO) est facturé automatiquement dans l'attachement</label>
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Puissance de la borne</span>
                               <select name="puissance_borne" defaultValue={r.puissance_borne ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
