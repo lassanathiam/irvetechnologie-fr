@@ -199,13 +199,18 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     if (data.ids?.length) return rows ?? [];
     const ids = (rows ?? []).map((r) => r.id);
-    const deja = new Set<string>();
+    // Seuls les attachements facturés bloquent un chantier ; les autres restent refaisables.
+    const deja = new Set<string>(); const anciens = new Map<string, { id: string; numero: string; statut: string }[]>();
     if (ids.length) {
       const { data: items } = await context.supabase
         .from("attachement_items")
-        .select("rendezvous_id, attachements_travaux!inner(statut)")
+        .select("rendezvous_id, attachements_travaux!inner(id, numero, statut, facture_id)")
         .in("rendezvous_id", ids);
-      for (const it of (items ?? []) as any[]) if (it.attachements_travaux?.statut !== "annule" && it.rendezvous_id) deja.add(it.rendezvous_id);
+      for (const it of (items ?? []) as any[]) {
+        const a = it.attachements_travaux; if (!a || !it.rendezvous_id || a.statut === "annule") continue;
+        if (a.facture_id || a.statut === "facture") { deja.add(it.rendezvous_id); continue; }
+        const l = anciens.get(it.rendezvous_id) ?? []; if (!l.some((x) => x.id === a.id)) l.push({ id: a.id, numero: a.numero, statut: a.statut }); anciens.set(it.rendezvous_id, l);
+      }
     }
-    return (rows ?? []).filter((r) => !deja.has(r.id) && !/annul/i.test(r.statut ?? ""));
+    return (rows ?? []).filter((r) => !deja.has(r.id) && !/annul/i.test(r.statut ?? "")).map((r) => ({ ...r, anciens_attachements: anciens.get(r.id) ?? [] }));
   });

@@ -8,7 +8,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { changerStatutAttachement, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -39,7 +39,7 @@ const etatChantier = (r: any) => (estFini(r) ? "Travaux terminés, retour travau
 
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
-  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement);
+  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement); const statutFn = useServerFn(changerStatutAttachement);
   const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersAAttacher);
   const [cle, setCle] = useState<"axians" | "ensio">("axians"); const [finMois, setFinMois] = useState(false); const [semaineDu, setSemaineDu] = useState(today()); const [importEnCours, setImportEnCours] = useState(false);
   const list = useQuery({ queryKey: ["attachements"], queryFn: () => listFn() });
@@ -178,6 +178,10 @@ function AttachementsPage() {
           nb++;
         } catch { restants.push(g); }
       }
+      // Les anciens attachements (non facturés) de ces chantiers sont remplacés : on les annule.
+      const refaits = new Set(prep.groupes.filter((g) => !restants.includes(g)).map((g) => g.r.id));
+      const aAnnuler = new Set<string>(); for (const r of termines) if (refaits.has(r.id)) for (const a of r.anciens_attachements ?? []) aAnnuler.add(a.id);
+      for (const id of aAnnuler) { try { await statutFn({ data: { id, action: "annuler" } }); } catch { /* facturé entre-temps */ } }
       setPrep(restants.length ? { lundi, groupes: restants } : null);
       void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
       setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
@@ -228,7 +232,7 @@ function AttachementsPage() {
           <label className="flex cursor-pointer items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-5 w-5" checked={sel.length === ids.length} onChange={(e) => setCoches((c) => e.target.checked ? [...new Set([...c, ...ids])] : c.filter((x) => !ids.includes(x)))} />S{numSemaine(lundi)} — tout cocher <span className="font-normal text-muted-foreground">(vendredi {new Date(`${ven}T12:00:00`).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })})</span></label>
           <div className="flex flex-wrap gap-2"><Button size="sm" disabled={lot !== null} onClick={() => void preparerSemaine(lundi, aPreparer)}>{lot === lundi ? <Loader2 className="animate-spin" /> : <Sparkles />} Préparer les lignes ({aPreparer.length})</Button><Button size="sm" variant="outline" onClick={() => { choisirSemaine(lundi); void preparer(aPreparer); }}><ClipboardList /> Une seule feuille</Button></div>
         </div>
-        <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><ReseauClientBadge nom={r.reseau_client} /><span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
+        <ul className="divide-y divide-border">{rs.map((r: any) => <li key={r.id}><label className="flex cursor-pointer flex-wrap items-center gap-3 px-3 py-2 text-sm"><input type="checkbox" className="h-4 w-4" checked={coches.includes(r.id)} onChange={(e) => setCoches((c) => e.target.checked ? [...c, r.id] : c.filter((x) => x !== r.id))} /><span className="font-medium">{r.client_nom}</span><ReseauClientBadge nom={r.reseau_client} />{(r.anciens_attachements ?? []).length > 0 && <span className="rounded-full border border-amber-500/50 px-2 py-0.5 text-xs text-amber-600 dark:text-amber-400">À refaire · déjà dans {r.anciens_attachements.map((a: any) => a.numero).join(", ")}</span>}<span className="text-muted-foreground">{[r.adresse, r.cp_ville].filter(Boolean).join(", ")}</span><span className={`ml-auto rounded-full px-2 py-0.5 text-xs font-medium ${estFini(r) ? "bg-primary/15 text-primary" : "bg-amber-500/15 text-amber-600 dark:text-amber-400"}`}>{estFini(r) ? `Terminé · retour envoyé (${new Date(r.termine_at ?? r.date_debut).toLocaleDateString("fr-FR")})` : `Planifié le ${new Date(r.date_debut).toLocaleDateString("fr-FR")} · pas encore fait`}</span></label></li>)}</ul>
       </div>; })}
     {lotInfo && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">{lotInfo}</p>}
     {error && !open && <p className="text-sm text-destructive">{error}</p>}
