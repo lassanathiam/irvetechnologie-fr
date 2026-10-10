@@ -380,6 +380,27 @@ export const changerStatutAttachement = createServerFn({ method: "POST" })
     return { statut };
   });
 
+/** Construit le contenu de l'email groupé (une ligne par attachement). */
+async function preparerEmailGroupe(supabase: any, liste: any[]) {
+  const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
+  const message = await messageAdaptif(supabase, liste[0]);
+  const lignes = await Promise.all(liste.map(async (a: any) => {
+    const it = await supabase.from("attachement_items").select("description").eq("attachement_id", a.id).order("ordre").limit(1);
+    const desc = String(it.data?.[0]?.description ?? "");
+    const client = desc.split(" — ")[0]?.replace(/^\d{2}\/\d{2}\/\d{4} · /, "") || a.objet || a.numero;
+    return { client, numero: a.numero, total_ht: Number(a.total_ht), lien: `${base}/attachement/${a.public_token}` };
+  }));
+  const semaine = /semaine S(\d+)/.exec(message)?.[0] ?? liste[0].numero_ticket;
+  return {
+    destinataire: liste[0].client_nom,
+    semaine: semaine.replace(/^semaine /, "semaine "),
+    message: message.replace(/^Bonjour, /, "").replace("l'attachement", "les attachements").replace("sur le lien ci-dessus", "ci-dessous"),
+    lignes,
+    lien_global: `${base}/attachements-lot/${liste.map((a: any) => a.public_token).join(".")}?m=${encodeURIComponent(message)}`,
+    total_ht: lignes.reduce((s, l) => s + l.total_ht, 0),
+  };
+}
+
 /** Un seul email pour tous les attachements de la semaine (un lien par client). */
 export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -393,31 +414,34 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
     const emails = new Set(liste.map((a: any) => String(a.client_email ?? "").trim().toLowerCase()));
     if (emails.size > 1) throw new Error("Ces attachements concernent plusieurs destinataires. Cochez seulement ceux d’un même donneur d’ordre.");
     if (!email) throw new Error("Ajoutez l’adresse e-mail du chargé d’affaires ENSIO.");
-    const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
-    const message = await messageAdaptif(context.supabase, liste[0]);
-    const lignes = await Promise.all(liste.map(async (a: any) => {
-      const it = await context.supabase.from("attachement_items").select("description").eq("attachement_id", a.id).order("ordre").limit(1);
-      const desc = String(it.data?.[0]?.description ?? "");
-      const client = desc.split(" — ")[0]?.replace(/^\d{2}\/\d{2}\/\d{4} · /, "") || a.objet || a.numero;
-      return { client, numero: a.numero, total_ht: Number(a.total_ht), lien: `${base}/attachement/${a.public_token}` };
-    }));
-    const semaine = /semaine S(\d+)/.exec(message)?.[0] ?? liste[0].numero_ticket;
+    const templateData = await preparerEmailGroupe(context.supabase, liste);
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
     const result = await sendTemplateEmail("attachements-semaine", email, {
       copieEnsio: await resoudreCopieEnsio(context.supabase, email, liste[0].client_nom),
       idempotencyKey: `attachements-semaine-${data.ids.join("-").slice(0, 80)}-${new Date().toISOString()}`,
-      templateData: {
-        destinataire: liste[0].client_nom,
-        semaine: semaine.replace(/^semaine /, "semaine "),
-        message: message.replace(/^Bonjour, /, "").replace("l'attachement", "les attachements").replace("sur le lien ci-dessus", "ci-dessous"),
-        lignes,
-        lien_global: `${base}/attachements-lot/${liste.map((a: any) => a.public_token).join(".")}?m=${encodeURIComponent(message)}`,
-        total_ht: lignes.reduce((s, l) => s + l.total_ht, 0),
-      },
+      templateData,
     });
     if (result.sent) {
       await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", liste.map((a: any) => a.id));
     }
-    return { ...result, nb: lignes.length };
+    return { ...result, nb: templateData.lignes.length };
+  });
+
+/** Renvoie à l'équipe (contacts@) la copie d'attachements déjà envoyés. Aucun envoi client, aucun changement de statut. */
+export const copieEquipeAttachements = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.from("attachements_travaux").select("*").in("id", data.ids).order("numero");
+    if (error) throw new Error(error.message);
+    const liste = (rows ?? []).filter((a: any) => a.sent_at);
+    if (!liste.length) throw new Error("Aucun attachement envoyé parmi la sélection.");
+    const templateData = await preparerEmailGroupe(context.supabase, liste);
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const result = await sendTemplateEmail("attachements-semaine", "contacts@irvetechnologie.fr", {
+      idempotencyKey: `attachements-copie-equipe-${data.ids.join("-").slice(0, 80)}-${new Date().toISOString()}`,
+      templateData: { ...templateData, message: `Copie équipe — ${templateData.message}` },
+    });
+    return { ...result, nb: templateData.lignes.length };
   });
