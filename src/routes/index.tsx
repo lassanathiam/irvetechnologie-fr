@@ -12,6 +12,7 @@ import { listPublicAvis, submitAvisClient } from "@/lib/demande.functions";
 import { BornesCarrousel } from "@/components/BornesCarrousel";
 import heroAccueil from "@/assets/hero-accueil.jpg";
 import { getTarifsSitePublic, TARIFS_SITE_DEFAUT } from "@/lib/tarifs-site.functions";
+import { getCompteursPublics } from "@/lib/compteurs-site.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -138,6 +139,8 @@ function Index() {
   const real_r = useReveal<HTMLDivElement>();
   const fetchRealisations = useServerFn(listPublicRealisations);
   const fetchTarifs = useServerFn(getTarifsSitePublic);
+  const fetchCompteurs = useServerFn(getCompteursPublics);
+  const compteurs = useQuery({ queryKey: ["compteurs-publics"], queryFn: () => fetchCompteurs() });
   const realisationsQuery = useQuery({
     queryKey: ["realisations-publiques"],
     queryFn: () => fetchRealisations(),
@@ -585,6 +588,26 @@ function Index() {
       </>
       )}
 
+
+      {compteurs.data && compteurs.data.b2c + compteurs.data.b2b + compteurs.data.maintenance > 0 && (
+      <section className="py-12 border-t border-border" aria-label="Chantiers réalisés">
+        <div className="mx-auto max-w-5xl px-6 text-center">
+          <h2 className="text-2xl font-bold sm:text-3xl">Nos chantiers réalisés</h2>
+          <div className="mt-6 grid gap-4 sm:grid-cols-3">
+            {[
+              [compteurs.data.b2c, "installations chez des particuliers"],
+              [compteurs.data.b2b, "installations pour des professionnels"],
+              [compteurs.data.maintenance, "maintenances et dépannages"],
+            ].filter(([n]) => Number(n) > 0).map(([n, l]) => (
+              <div key={String(l)} className="rounded-xl border border-border bg-card p-6">
+                <p className="text-4xl font-extrabold text-primary">{n}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{l}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+      )}
 
       {!homeCompact && (
       <>

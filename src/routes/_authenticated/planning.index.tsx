@@ -3,7 +3,7 @@ import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
 import {
   Archive,
@@ -94,6 +94,9 @@ import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagn
 import { useIsMobile } from "@/hooks/use-mobile";
 import RetourTravauxSheet, { type RetourTravauxRdv } from "@/components/RetourTravauxSheet";
 import { ImportRdvDialog } from "@/components/ImportRdvDialog";
+import { DateAvecJour } from "@/components/DateAvecJour";
+import { FichesTechniquesDialog } from "@/components/FichesTechniquesDialog";
+import { FichesChantier } from "@/components/FichesChantier";
 import { DonneurOrdreField } from "@/components/DonneurOrdreField";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -551,6 +554,7 @@ function PlanningPage() {
   /** Couleur d'identification de chaque partenaire (carte + fiches). */
   const fetchPartenaires = useServerFn(listPartenaires);
   const [importOpen, setImportOpen] = useState(false);
+  const [fichesOpen, setFichesOpen] = useState(false);
   const partenaires = useQuery({
     queryKey: ["partenaires"],
     queryFn: () => fetchPartenaires(),
@@ -1107,6 +1111,7 @@ function PlanningPage() {
                       ))}
                     </dl>
                     {missionTerrain.etiquettes?.length > 0 && <p className="mt-3 break-words text-sm">{missionTerrain.etiquettes.join(" · ")}</p>}
+                    <FichesChantier rendezvousId={missionTerrain.id} />
                     {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
                   </>}
                 </div>
@@ -1287,6 +1292,16 @@ function PlanningPage() {
           >
             <FileUp className="h-4 w-4" /> Importer (photo, PDF, Excel)
           </button>
+          <button
+            type="button"
+            onClick={() => setFichesOpen(true)}
+            className="text-mono text-xs px-4 py-2.5 rounded-sm inline-flex items-center gap-2 border border-primary/60 text-primary hover:bg-primary/10"
+          >
+            <FileUp className="h-4 w-4" /> Fiches techniques
+          </button>
+          {fichesOpen && (
+            <FichesTechniquesDialog chantiers={(list.data ?? []).filter((r) => !r.archive)} onClose={() => setFichesOpen(false)} onDone={refresh} />
+          )}
           {importOpen && (
             <ImportRdvDialog
               partenaires={(partenaires.data ?? []).map((p) => p.nom)}
@@ -1496,7 +1511,7 @@ function PlanningPage() {
               <span className="text-mono text-xs text-muted-foreground">
                 Date du premier chantier
               </span>
-              <input
+              <DateAvecJour
                 type="datetime-local"
                 value={dateGroupee}
                 onChange={(e) => setDateGroupee(e.target.value)}
@@ -2594,7 +2609,7 @@ function PlanningPage() {
                             </label>
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Date & heure</span>
-                              <input
+                              <DateAvecJour
                                 type="datetime-local"
                                 name="date_debut"
                                 required
@@ -2814,7 +2829,7 @@ function PlanningPage() {
                               <span className="text-mono text-xs text-muted-foreground">
                                 Date et heure du rendez-vous
                               </span>
-                              <input
+                              <DateAvecJour
                                 type="datetime-local"
                                 name="date_debut"
                                 required
@@ -3509,6 +3524,10 @@ function Legende({ color, label }: { color: string; label: string }) {
   );
 }
 
+function FieldInput(props: InputHTMLAttributes<HTMLInputElement>) {
+  return props.type === "date" || props.type === "datetime-local" ? <DateAvecJour {...props} /> : <input {...props} />;
+}
+
 function Field({
   label,
   name,
@@ -3527,7 +3546,7 @@ function Field({
   return (
     <label className="block">
       <span className="text-mono text-xs text-muted-foreground">{label}</span>
-      <input
+      <FieldInput
         name={name}
         type={type}
         required={required}
