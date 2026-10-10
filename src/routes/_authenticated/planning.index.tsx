@@ -404,7 +404,7 @@ function PlanningPage() {
     onSuccess: refresh,
   });
   const majOptions = useMutation({
-    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number }) =>
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null }) =>
       majOptionsChantier({ data: p }),
     onSuccess: refresh,
     onError: (e: unknown) =>
