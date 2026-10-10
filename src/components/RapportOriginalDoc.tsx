@@ -91,7 +91,7 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
     let actif = true;
     chargerPdf(original.data_url).then((doc) => actif && setPdf(doc)).catch(() => actif && setPdf(null));
     return () => { actif = false; };
-  }, [original]);
+  }, [original?.type, original?.data_url]);
   if (!original) return null;
 
   const fields = structure.sections.flatMap((section, sectionIndex) =>
@@ -106,7 +106,7 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
         return (
           <Calque key={champ.id} placement={placement} edit={edit} onMove={(next) => {
             if (!onChange) return;
-            const copy = structuredClone(structure);
+            const copy = { ...structure, sections: structure.sections.map((s, i) => i !== sectionIndex ? s : { ...s, champs: s.champs.map((c, j) => j !== champIndex ? c : { ...c }) }) };
             const target = copy.sections[sectionIndex]?.champs[champIndex];
             if (target) target.placement = next;
             onChange(copy);
@@ -122,7 +122,7 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
         return (
           <Calque key={role} placement={placement} edit={edit} onMove={(next) => {
             if (!onChange) return;
-            const copy = structuredClone(structure);
+            const copy = { ...structure };
             copy.signatures = { ...(copy.signatures ?? {}), [role]: next };
             onChange(copy);
           }}>
