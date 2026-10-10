@@ -2272,7 +2272,7 @@ function PlanningPage() {
                                 const inclus =
                                   Number(r.metrage_inclus_m ?? 0) ||
                                   metrageInclusDefaut(r.partenaire);
-                                const metrage = Number(r.metrage_m ?? 0);
+                                const metrage = Math.max(Number(r.metrage_m ?? 0), Number(r.metrage_reel_m ?? 0));
                                 const depasse = metrage > inclus;
                                 return (
                                   <>
