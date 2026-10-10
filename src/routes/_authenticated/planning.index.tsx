@@ -762,14 +762,17 @@ function PlanningPage() {
   const groups = useMemo(() => {
     const map = new Map<string, typeof rows>();
     const choisi = toutes.find((r) => r.id === dossierCarte);
+    /** Chantiers terminés/clôturés : regroupés par partenaire pour retrouver vite chaque donneur d'ordre. */
+    const parPartenaire = vueListe === "clotures";
     for (const r of rows) {
       if (r.id === choisi?.id) continue;
-      const k = dayKey(r.date_debut);
+      const k = parPartenaire ? (r.partenaire?.trim() || "Sans partenaire") : dayKey(r.date_debut);
       map.set(k, [...(map.get(k) ?? []), r]);
     }
-    const groupes = [...map.entries()];
-    return choisi ? [[`${dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
-  }, [rows, toutes, dossierCarte]);
+    let groupes = [...map.entries()];
+    if (parPartenaire) groupes = groupes.sort(([a], [b]) => a.localeCompare(b, "fr"));
+    return choisi ? [[`${parPartenaire ? (choisi.partenaire?.trim() || "Sans partenaire") : dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
+  }, [rows, toutes, dossierCarte, vueListe]);
 
   const choisirDepuisCarte = (id: string) => {
     setActive(id);
