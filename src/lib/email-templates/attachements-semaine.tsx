@@ -4,7 +4,7 @@ import type { TemplateEntry } from "./registry";
 import { COMPANY } from "@/lib/company";
 
 type Ligne = { client: string; numero: string; total_ht: number; lien: string };
-type Props = { destinataire: string; semaine: string; message: string; lignes: Ligne[]; total_ht: number };
+type Props = { destinataire: string; semaine: string; message: string; lignes: Ligne[]; lien_global?: string; total_ht: number };
 
 const euro = (n: number) => new Intl.NumberFormat("fr-FR", { style: "currency", currency: "EUR" }).format(n || 0);
 
@@ -19,6 +19,7 @@ export function AttachementsSemaineEmail(data: Props) {
         <Section style={{ padding: "28px 32px" }}>
           <Heading as="h1" style={{ color: "#10231f", fontSize: 22, margin: "0 0 14px" }}>Attachements de travaux — {data.semaine}</Heading>
           <Text style={{ color: "#5d6d68", fontSize: 14, lineHeight: "22px" }}>Bonjour {data.destinataire},<br />{data.message}</Text>
+          {data.lien_global ? <Section style={{ textAlign: "center", padding: "6px 0 16px" }}><a href={data.lien_global} style={{ backgroundColor: "#00a86b", color: "#ffffff", padding: "12px 20px", borderRadius: 6, fontWeight: 700, textDecoration: "none", display: "inline-block" }}>Ouvrir tous les attachements (un seul PDF)</a></Section> : null}
           {(data.lignes ?? []).map((l) => <Section key={l.numero} style={{ borderTop: "1px solid #e3e9e7", padding: "10px 0" }}>
             <Text style={{ color: "#10231f", fontSize: 14, fontWeight: 700, margin: 0 }}>{l.client} — {euro(l.total_ht)} HT</Text>
             <Text style={{ fontSize: 13, margin: "4px 0 0" }}><a href={l.lien} style={{ color: "#00a86b", fontWeight: 700 }}>Consulter et valider l’attachement {l.numero} — {l.client}</a></Text>

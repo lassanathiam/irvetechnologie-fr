@@ -412,6 +412,7 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
         semaine: semaine.replace(/^semaine /, "semaine "),
         message: message.replace(/^Bonjour, /, "").replace("l'attachement", "les attachements").replace("sur le lien ci-dessus", "ci-dessous"),
         lignes,
+        lien_global: `${base}/attachements-lot/${liste.map((a: any) => a.public_token).join(".")}?m=${encodeURIComponent(message)}`,
         total_ht: lignes.reduce((s, l) => s + l.total_ht, 0),
       },
     });
