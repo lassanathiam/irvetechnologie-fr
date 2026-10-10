@@ -138,32 +138,57 @@ function AttachementsPage() {
       setLines((cur) => [...cur.filter((l) => l.libelle.trim() || Number(l.prix) > 0), ...nouvelles]);
     } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }
   }
-  const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec tous les attachements de la semaine (copie à Antoni et à vous) ?");
+  const envoyerGroupe = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant à ENSIO un seul email avec les attachements cochés (copie à Antoni et à vous) ?");
   const [lot, setLot] = useState<string | null>(null); const [lotInfo, setLotInfo] = useState<string | null>(null);
-  /** Vendredi : un attachement par client, puis un seul email groupé. */
-  async function attachementsParClient(lundi: string, ids: string[]) {
-    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
-    if (!d) { setError("Fiche ENSIO introuvable dans les donneurs d’ordre."); return; }
+  /** Préparation de la semaine : une feuille par client, modifiable, gardée sur l’appareil pour ne rien perdre. */
+  type Prep = { lundi: string; groupes: { r: any; lines: Line[] }[] };
+  const PREP_KEY = "irve-prep-attachements";
+  const [prep, setPrepState] = useState<Prep | null>(null);
+  useEffect(() => { try { const s = localStorage.getItem(PREP_KEY); if (s) setPrepState(JSON.parse(s)); } catch { /* rien */ } }, []);
+  const setPrep = (p: Prep | null) => { setPrepState(p); try { if (p) localStorage.setItem(PREP_KEY, JSON.stringify(p)); else localStorage.removeItem(PREP_KEY); } catch { /* rien */ } };
+  const prepRef = useRef<HTMLElement | null>(null);
+  async function preparerSemaine(lundi: string, ids: string[]) {
     setLot(lundi); setError(null); setLotInfo(null);
     try {
       const rows = await chantiersFn({ data: { ids } });
-      const n = numSemaine(lundi); const { dimanche } = semaine(lundi);
+      const groupes = (rows as any[]).map((r) => ({ r, lines: lignesChantier(r, "ensio") })).filter((g) => g.lines.length);
+      if (!groupes.length) { setError("Aucun chantier à préparer."); return; }
+      setPrep({ lundi, groupes });
+      setTimeout(() => prepRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 50);
+    } catch (e) { setError(e instanceof Error ? e.message : "Préparation impossible."); } finally { setLot(null); }
+  }
+  /** Validation : un attachement brouillon par client, rien n’est envoyé. */
+  async function creerBrouillons() {
+    if (!prep) return;
+    const d = (donneurs.data as any[] | undefined)?.find((x) => /ensio/i.test(x.nom));
+    if (!d) { setError("Fiche ENSIO introuvable dans les donneurs d’ordre."); return; }
+    setLot("brouillons"); setError(null);
+    try {
+      const { lundi } = prep; const n = numSemaine(lundi); const { dimanche } = semaine(lundi);
       const fr = (x: string) => new Date(`${x}T12:00:00`).toLocaleDateString("fr-FR");
       const jours = Number(d.delai_paiement_jours) || 45; const fm = /fin de mois/i.test(d.notes ?? "");
       const emission = today(); const ech = fm ? finDeMois(addDays(emission, jours)) : addDays(emission, jours);
-      const crees: string[] = [];
-      for (const r of rows as any[]) {
-        const items = lignesChantier(r, "ensio");
+      const restants: Prep["groupes"] = []; let nb = 0;
+      for (const g of prep.groupes) {
+        const items = g.lines.filter((l) => l.libelle.trim() && Number(l.quantite) > 0);
         if (!items.length) continue;
-        const res = await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } });
-        crees.push(res.id);
+        try {
+          await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${g.r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: g.r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? g.r.id, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } });
+          nb++;
+        } catch { restants.push(g); }
       }
+      setPrep(restants.length ? { lundi, groupes: restants } : null);
       void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
-      if (!crees.length) { setError("Aucun attachement créé."); return; }
-      setLotInfo(`${crees.length} attachement(s) créé(s), un par client.`);
-      try { const r = await envoyerGroupe({ data: { ids: crees } }); setLotInfo(r.sent ? `${crees.length} attachements créés et envoyés à ENSIO en un seul email.` : `${crees.length} attachements créés ; l’email n’est pas parti, envoyez-les depuis la liste.`); }
-      catch (e) { setLotInfo(`${crees.length} attachements créés. ${e instanceof Error ? e.message : ""}`); }
+      setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
     } catch (e) { setError(e instanceof Error ? e.message : "Création impossible."); } finally { setLot(null); }
+  }
+  const brouillons = useMemo(() => (list.data ?? []).filter((a: any) => (a.statut || "brouillon") === "brouillon" && !a.sent_at), [list.data]);
+  const [brCoches, setBrCoches] = useState<string[]>([]);
+  async function envoyerBrouillons(ids: string[]) {
+    if (!ids.length) return;
+    setLot("envoi"); setError(null);
+    try { const r = await envoyerGroupe({ data: { ids } }); setLotInfo(r.sent ? `${ids.length} attachement(s) validé(s) et envoyé(s) à ENSIO en un seul email.` : "L’email n’est pas parti."); setBrCoches([]); void qc.invalidateQueries({ queryKey: ["attachements"] }); }
+    catch (e) { setError(e instanceof Error ? e.message : "Envoi impossible."); } finally { setLot(null); }
   }
   const ajouterDepuisCatalogue = (id: string) => {
     const ligne = catalogueOptions.find((l: any) => l.id === id);
