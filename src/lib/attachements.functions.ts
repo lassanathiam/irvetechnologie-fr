@@ -130,7 +130,9 @@ export const getAttachement = createServerFn({ method: "GET" })
       .select("id, signataire_nom, commentaire, total_ht, statut, lignes, created_at, traite_at")
       .eq("attachement_id", data.id)
       .order("created_at", { ascending: false });
-    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [] };
+    if (props.error) throw new Error(props.error.message);
+    const message_suggestion = await messageAdaptif(context.supabase, result.data);
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion };
   });
 
 export const traiterPropositionAttachement = createServerFn({ method: "POST" })
