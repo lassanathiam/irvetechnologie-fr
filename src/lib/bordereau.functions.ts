@@ -173,7 +173,7 @@ export const listChantiersPeriode = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: rows, error } = await context.supabase
       .from("rendezvous")
-      .select("id, client_nom, reseau_client, adresse, cp_ville, date_debut, termine_at, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, partenaire, designation, titre")
+      .select("id, client_nom, reseau_client, adresse, cp_ville, date_debut, termine_at, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, retour_repartiteur, partenaire, designation, titre")
       .gte("date_debut", `${data.du}T00:00:00`)
       .lte("date_debut", `${data.au}T23:59:59`)
       .ilike("partenaire", `%${data.motcle}%`)
@@ -191,7 +191,7 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     let q = context.supabase
       .from("rendezvous")
-      .select("id, client_nom, reseau_client, adresse, cp_ville, date_debut, termine_at, chantier_valide, statut, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, partenaire")
+      .select("id, client_nom, reseau_client, adresse, cp_ville, date_debut, termine_at, chantier_valide, statut, montant_ht, puissance_borne, metrage_reel_m, metrage_inclus_m, retour_repartiteur, partenaire")
       .order("date_debut");
     if (data.ids?.length) q = q.in("id", data.ids);
     else { q = q.lte("date_debut", `${data.au ?? "2999-12-31"}T23:59:59`).ilike("partenaire", `%${data.motcle ?? "ensio"}%`); }

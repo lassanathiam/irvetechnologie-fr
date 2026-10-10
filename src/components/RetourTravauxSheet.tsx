@@ -27,6 +27,7 @@ export type RetourTravauxRdv = {
   metrage_reel_m?: number | string | null;
   retour_observations?: string | null;
   retour_delestage?: boolean | null;
+  retour_repartiteur?: boolean | null;
   type_pose?: string | null;
   type?: string | null;
   partenaire?: string | null;
@@ -52,6 +53,8 @@ export default function RetourTravauxSheet({
   );
   const [observations, setObservations] = useState(rdv.retour_observations ?? "");
   const [delestage, setDelestage] = useState(Boolean(rdv.retour_delestage));
+  const [repartiteur, setRepartiteur] = useState(Boolean(rdv.retour_repartiteur));
+  const ensio = /ensio|nco/i.test(rdv.partenaire ?? "");
   const [enCours, setEnCours] = useState<string | null>(null);
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
@@ -162,6 +165,7 @@ export default function RetourTravauxSheet({
         metrage_reel_m: maintenance && !cablePose ? 0 : reel,
         retour_observations: observations,
         retour_delestage: delestage,
+        ...(ensio ? { retour_repartiteur: repartiteur } : {}),
       };
       if (!enLigne) {
         // Pas de réseau : l'enregistrement attend sur le téléphone, envoi automatique plus tard.
@@ -436,6 +440,19 @@ export default function RetourTravauxSheet({
             />
             Délestage mis en place
           </label>
+
+          {ensio && (
+            <div className="mt-3 rounded-lg border border-primary/40 bg-primary/5 p-3">
+              <p className="text-xs font-bold uppercase text-primary">Pour l’attachement ENSIO</p>
+              <label className="mt-2 flex items-center gap-2 text-sm font-medium">
+                <input type="checkbox" checked={repartiteur} onChange={(e) => setRepartiteur(e.target.checked)} className="h-5 w-5" />
+                Répartiteur / tableau secondaire installé (ligne 2.1 — 65 €)
+              </label>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {Number(reel.replace(",", ".")) > 15 ? `Câble en plus : ${Math.round((Number(reel.replace(",", ".")) - 15) * 100) / 100} m au-delà des 15 m, ajouté automatiquement à l’attachement.` : "Métrage supplémentaire : saisissez le métrage réel ci-dessus, tout ce qui dépasse 15 m est ajouté automatiquement."}
+              </p>
+            </div>
+          )}
 
           <label className="mt-3 block text-xs text-muted-foreground">
             {maintenance && cablePose ? "Commentaire sur le câble (obligatoire)" : "Observations de fin d’intervention"}
