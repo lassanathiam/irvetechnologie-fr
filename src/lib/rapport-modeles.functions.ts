@@ -1,7 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
-import { normaliserStructure, modelePourPartenaire } from "./rapport-modeles";
+import { normaliserStructure, modelePourPartenaire, modelePourReseau } from "./rapport-modeles";
 import type { Json } from "@/integrations/supabase/types";
 
 function siteBase() {
@@ -14,7 +14,7 @@ Analyse-la pour permettre de remplir le document ORIGINAL sans refaire sa mise e
 Règles :
 - Garde l'ordre, les intitulés exacts et les rubriques de la feuille.
 - Une case à cocher simple = "case" ; une question Conforme/Non conforme ou Oui/Non = "ouinon" ; zone de commentaire = "zone" ; valeur mesurée = "nombre".
-- "auto" vaut "client_nom", "adresse", "date", "technicien", "telephone", "entreprise" (société installatrice), "projet" (numéro/description du projet), "phase" (mono/triphasé) ou "ville" (lieu "Fait à") si le champ correspond, sinon null.
+- "auto" vaut "client_nom", "adresse", "date", "technicien", "telephone", "entreprise" (société installatrice), "projet" (numéro/description du projet), "phase" (mono/triphasé) ou "ville" (lieu "Fait à") ; pour une case "Installation" mets "installation", pour une case "Maintenance" mets "maintenance" ; sinon null.
 - Si c est un PDF de plusieurs pages, reprends toutes les pages.
 - placement décrit la zone vide exacte à remplir, en coordonnées proportionnelles de 0 à 1 : page commence à 0, x depuis la gauche, y depuis le haut, w largeur et h hauteur.
 - Repère aussi les deux zones de signature existantes. N'inclus jamais le logo comme champ.`;
@@ -188,7 +188,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     const [rdvQ, modQ, rempQ] = await Promise.all([
       context.supabase
         .from("rendezvous")
-        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at")
+        .select("id, client_nom, client_telephone, client_email, adresse, cp_ville, technicien, partenaire, date_debut, designation, titre, phase_installation, termine_at, type, reseau_client")
         .eq("id", data.rendezvous_id)
         .maybeSingle(),
       context.supabase.from("rapport_modeles").select("*").eq("actif", true).eq("usage_unique", false),
@@ -205,6 +205,7 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     const rempli = rempQ.data?.[0] ?? null;
     let modele =
       (rempli && modeles.find((m) => m.id === rempli.modele_id)) ||
+      modelePourReseau(modeles, rdvQ.data.reseau_client) ||
       modelePourPartenaire(modeles, rdvQ.data.partenaire);
     // Le rapport en cours peut utiliser un PV à usage unique (hors liste) : on le recharge à part.
     if (!modele && rempli) {

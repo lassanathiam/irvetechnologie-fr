@@ -156,6 +156,8 @@ function RapportChantierPageInner() {
       projet: rdv.designation || rdv.titre || "",
       phase: /tri/i.test(rdv.phase_installation ?? "") ? "Triphasée" : rdv.phase_installation ? "Monophasée" : "",
       ville: (rdv.cp_ville ?? "").replace(/^\s*\d{5}\s*/, ""),
+      installation: rdv.type === "maintenance" ? "" : "1",
+      maintenance: rdv.type === "maintenance" ? "1" : "",
     };
     setValeurs((v) => {
       const n = { ...v };
