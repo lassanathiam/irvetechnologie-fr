@@ -240,6 +240,10 @@ export function InterventionsMap({
       const mk = leaflet
         .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
         .addTo(layer.current);
+      mk.bindTooltip(
+        `<strong>${escapeHtml(m.label)}</strong>${m.date ? `<br>${escapeHtml(m.date)}` : ""}`,
+        { direction: "top", offset: [0, -18], className: "rdv-map-date-tooltip" },
+      );
       mk.bindPopup(
         () => {
           const contenu = document.createElement("div");
@@ -247,12 +251,16 @@ export function InterventionsMap({
           const titre = document.createElement("strong");
           titre.textContent = m.label;
           contenu.append(titre);
-          for (const texte of [m.sub, m.date, m.trajet ? `Trajet : ${m.trajet}` : null]) {
+          for (const texte of [m.date, m.sub, m.trajet ? `Trajet : ${m.trajet}` : null]) {
             if (!texte) continue;
             const ligne = document.createElement("span");
             ligne.textContent = texte;
+            if (texte === m.date) ligne.className = "rdv-map-popup-date";
             contenu.append(ligne);
           }
+          const statut = document.createElement("span");
+          statut.textContent = ({ planifie: "Planifié", confirme: "Confirmé", en_cours: "Travaux en cours", en_pause: "En pause", termine: "Terminé", realise: "Réalisé", annule: "Annulé" } as Record<string, string>)[m.statut ?? "planifie"] ?? m.statut ?? "";
+          contenu.append(statut);
           if (selectionMode) {
             const aide = document.createElement("span");
             aide.className = "rdv-map-popup-accent";
@@ -339,7 +347,7 @@ export function InterventionsMap({
   useEffect(() => {
     drawMarkers();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markers, selectedIds, selectionMode]);
+   }, [markers, selectedIds, selectionMode]);
 
   useEffect(() => {
     const mk = activeId ? byId.current[activeId] : null;

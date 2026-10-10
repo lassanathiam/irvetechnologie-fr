@@ -948,6 +948,9 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   word-break: normal;
 }
 .rdv-map-popup-content > span { color: var(--muted-foreground); }
+.rdv-map-popup-content .rdv-map-popup-date { color: var(--primary); font-weight: 800; font-size: 14px; padding-bottom: 4px; }
+.leaflet-tooltip.rdv-map-date-tooltip { background: var(--card); color: var(--foreground); border: 1px solid var(--border); border-radius: 4px; box-shadow: var(--shadow-sm); font-size: 12px; line-height: 1.5; }
+[id^="planning-dossier-"] { scroll-margin-top: 90px; }
 .rdv-map-popup-content .rdv-map-popup-accent { color: var(--primary); font-weight: 700; }
 .rdv-map-assignment { display: grid; gap: 7px; margin-top: 5px; padding-top: 8px; border-top: 1px solid var(--border); }
 .rdv-map-assignment-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; }
