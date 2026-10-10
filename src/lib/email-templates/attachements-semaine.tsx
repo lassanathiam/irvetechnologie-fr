@@ -21,7 +21,7 @@ export function AttachementsSemaineEmail(data: Props) {
           <Text style={{ color: "#5d6d68", fontSize: 14, lineHeight: "22px" }}>Bonjour {data.destinataire},<br />{data.message}</Text>
           {(data.lignes ?? []).map((l) => <Section key={l.numero} style={{ borderTop: "1px solid #e3e9e7", padding: "10px 0" }}>
             <Text style={{ color: "#10231f", fontSize: 14, fontWeight: 700, margin: 0 }}>{l.client} — {euro(l.total_ht)} HT</Text>
-            <Text style={{ fontSize: 13, margin: "4px 0 0" }}><a href={l.lien} style={{ color: "#00a86b", fontWeight: 700 }}>Consulter et valider l’attachement {l.numero}</a></Text>
+            <Text style={{ fontSize: 13, margin: "4px 0 0" }}><a href={l.lien} style={{ color: "#00a86b", fontWeight: 700 }}>Consulter et valider l’attachement {l.numero} — {l.client}</a></Text>
           </Section>)}
           <Text style={{ color: "#10231f", fontSize: 14, fontWeight: 700, borderTop: "1px solid #e3e9e7", paddingTop: 10 }}>Total de la semaine : {euro(data.total_ht)} HT</Text>
           <Text style={{ color: "#5d6d68", fontSize: 11, lineHeight: "18px" }}>{COMPANY.raisonSociale} · {COMPANY.adresse}, {COMPANY.cpVille}<br />{COMPANY.email} · {COMPANY.telephone}</Text>
