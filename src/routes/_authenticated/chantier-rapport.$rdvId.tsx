@@ -250,7 +250,7 @@ function RapportChantierPageInner() {
         </label>
       </div>
 
-      {!data.modeles.length ? (
+      {!data.modeles.length && !modele ? (
         <p className="rounded-lg border border-border p-4 text-sm">
           Aucun modèle de rapport. <Link to="/rapports/modeles" className="text-primary underline">Créer un modèle</Link>
         </p>
