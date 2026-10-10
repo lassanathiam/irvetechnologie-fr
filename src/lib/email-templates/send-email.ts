@@ -94,6 +94,37 @@ export async function sendTemplateEmail(
     throw error
   }
 
+  // Copie systématique à l'équipe : devis, factures, attachements, documents à
+  // signer et rapports. Dédupliquée : pas de copie si le destinataire principal
+  // ou la copie ENSIO est déjà l'adresse de l'équipe, ni pour les envois internes.
+  const TEMPLATES_COPIE_EQUIPE = new Set([
+    "devis-client",
+    "attachement-travaux",
+    "rapport-donneur",
+    "rdv-confirme",
+    "rdv-proposition",
+    "document-a-signer",
+  ]);
+  const copieEnsioAdresse = options.copieEnsio?.trim().toLowerCase() ?? null;
+  const equipe = "contacts@irvetechnologie.fr";
+  if (
+    TEMPLATES_COPIE_EQUIPE.has(templateName) &&
+    recipient.trim().toLowerCase() !== equipe &&
+    copieEnsioAdresse !== equipe
+  ) {
+    const templateCopie =
+      templateName === "document-a-signer" ? "ensio-document-info" : templateName;
+    const dataCopie =
+      templateName === "document-a-signer"
+        ? { document: templateData.document, nom: templateData.nom }
+        : templateData;
+    await sendTemplateEmail(templateCopie, equipe, {
+      templateData: dataCopie,
+      replyTo: options.replyTo,
+      idempotencyKey: `${options.idempotencyKey || crypto.randomUUID()}-equipe`,
+    });
+  }
+
   const copie = options.copieEnsio?.trim()
   if (copie && copie.toLowerCase() !== recipient.trim().toLowerCase() && templateName !== 'rappel-rdv') {
     const result = await sendTemplateEmail(templateName === 'document-a-signer' ? 'ensio-document-info' : templateName, copie, {
