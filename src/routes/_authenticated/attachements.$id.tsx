@@ -12,7 +12,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
-import { listDonneurs } from "@/lib/bordereau.functions";
+import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
   head: () => ({ meta: [{ title: "Attachement de travaux — IRVE Technologie" }, { name: "description", content: "Consulter, modifier, envoyer et convertir un attachement de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachement de travaux — IRVE Technologie" }, { property: "og:description", content: "Consultation d’un attachement de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -30,6 +30,8 @@ function AttachementDetail() {
   const updateFn = useServerFn(updateAttachement); const deleteFn = useServerFn(supprimerAttachement); const traiterFn = useServerFn(traiterPropositionAttachement);
   const donneursFn = useServerFn(listDonneurs);
   const donneurs = useQuery({ queryKey: ["donneurs-ordre"], queryFn: () => donneursFn() });
+  const bordereauFn = useServerFn(listBordereau);
+  const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [edit, setEdit] = useState(false); const [delai, setDelai] = useState(60);
@@ -124,7 +126,7 @@ function AttachementDetail() {
         <Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} />
         <Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} />
       </div>
-      <LignesAttachement lines={lines} setLines={setLines} />
+      <LignesAttachement lines={lines} setLines={setLines} catalogue={(bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(`${form?.client_nom ?? ""} ${a.client_nom ?? ""}`) ? "ensio" : "axians"))} />
       <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button></div>
     </section> : <section className="grid gap-4 sm:grid-cols-3"><Stat label="Ticket obligatoire" value={a.numero_ticket} /><Stat label="Numéro d’affaire" value={a.numero_affaire || "Non renseigné"} /><Stat label="Bon de commande" value={a.bon_commande || "Non renseigné"} /></section>}
