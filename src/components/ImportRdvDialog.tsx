@@ -1,5 +1,6 @@
 import { DonneurOrdreField } from "@/components/DonneurOrdreField";
 import { useState } from "react";
+import { DateAvecJour } from "@/components/DateAvecJour";
 import { useServerFn } from "@tanstack/react-start";
 import { FileUp, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -178,7 +179,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
                 <input className={champ} value={l.client_email ?? ""} onChange={(e) => maj(i, { client_email: e.target.value || null })} placeholder="Email" />
                 <input className={champ} value={l.adresse} onChange={(e) => maj(i, { adresse: e.target.value })} placeholder="Adresse" />
                 <input className={champ} value={l.cp_ville ?? ""} onChange={(e) => maj(i, { cp_ville: e.target.value || null })} placeholder="CP / ville" />
-                <input type="datetime-local" className={champ} value={l.date_debut ?? ""} onChange={(e) => maj(i, { date_debut: e.target.value || null })} />
+                <DateAvecJour type="datetime-local" className={champ} value={l.date_debut ?? ""} onChange={(e) => maj(i, { date_debut: e.target.value || null })} />
                 <label className="mt-1 flex items-center gap-2 text-xs">Jusqu'à <input type="time" className={champ} value={l.creneau_fin ?? ""} onChange={(e) => maj(i, { creneau_fin: e.target.value || null })} /></label>
                 <select className={champ} value={l.type} onChange={(e) => maj(i, { type: e.target.value as Ligne["type"] })}>
                   <option value="installation">Installation</option>
