@@ -101,6 +101,7 @@ function AttachementsPage() {
     for (const r of termines) { const { lundi } = semaine(String(estFini(r) ? (r.termine_at ?? r.date_debut) : r.date_debut).slice(0, 10)); m.set(lundi, [...(m.get(lundi) ?? []), r]); }
     return [...m.entries()].sort((x, y) => y[0].localeCompare(x[0]));
   }, [termines]);
+  const catalogueEnsio = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && l.donneur_ordre === "ensio"), [bordereau.data]);
   const catalogueOptions = useMemo(() => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === cle), [bordereau.data, cle]);
   function choisirSemaine(date: string) {
     setSemaineDu(date);
