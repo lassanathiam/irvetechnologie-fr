@@ -9,7 +9,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { changerStatutAttachement, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { changerStatutAttachement, copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
