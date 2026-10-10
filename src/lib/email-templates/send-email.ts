@@ -100,6 +100,7 @@ export async function sendTemplateEmail(
   const TEMPLATES_COPIE_EQUIPE = new Set([
     "devis-client",
     "attachement-travaux",
+    "attachements-semaine",
     "rapport-donneur",
     "rdv-confirme",
     "rdv-proposition",
