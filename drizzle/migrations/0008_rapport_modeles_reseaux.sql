@@ -1,0 +1,1 @@
+ALTER TABLE public.rapport_modeles ADD COLUMN IF NOT EXISTS reseaux text[] NOT NULL DEFAULT '{}';

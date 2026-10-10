@@ -1240,6 +1240,7 @@ export type Database = {
           id: string
           logo_data: string | null
           nom: string
+          reseaux: string[]
           structure: Json
           updated_at: string
           usage_unique: boolean
@@ -1252,6 +1253,7 @@ export type Database = {
           id?: string
           logo_data?: string | null
           nom: string
+          reseaux?: string[]
           structure?: Json
           updated_at?: string
           usage_unique?: boolean
@@ -1264,6 +1266,7 @@ export type Database = {
           id?: string
           logo_data?: string | null
           nom?: string
+          reseaux?: string[]
           structure?: Json
           updated_at?: string
           usage_unique?: boolean

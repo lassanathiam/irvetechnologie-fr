@@ -1,6 +1,6 @@
 /** Types et utilitaires partagés (client + serveur) des modèles de rapport donneur d'ordre. */
 export type ChampType = "texte" | "zone" | "nombre" | "date" | "case" | "ouinon";
-export type ChampAuto = "client_nom" | "adresse" | "date" | "technicien" | "telephone" | "entreprise" | "projet" | "phase" | "ville" | null;
+export type ChampAuto = "client_nom" | "adresse" | "date" | "technicien" | "telephone" | "entreprise" | "projet" | "phase" | "ville" | "installation" | "maintenance" | null;
 export type PlacementRapport = { page: number; x: number; y: number; w: number; h: number };
 export type ModeleChamp = { id: string; label: string; type: ChampType; auto?: ChampAuto; placement?: PlacementRapport | null };
 export type ModeleSection = { titre: string; champs: ModeleChamp[] };
@@ -13,7 +13,7 @@ export type ModeleStructure = {
 };
 
 const TYPES: ChampType[] = ["texte", "zone", "nombre", "date", "case", "ouinon"];
-const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone", "entreprise", "projet", "phase", "ville"];
+const AUTOS = ["client_nom", "adresse", "date", "technicien", "telephone", "entreprise", "projet", "phase", "ville", "installation", "maintenance"];
 
 /** Nettoie une structure (IA ou saisie) pour garantir un format valide. */
 export function normaliserStructure(raw: unknown): ModeleStructure {
@@ -86,4 +86,24 @@ export function modelePourPartenaire<T extends { donneur_ordre: string; actif: b
       return m.actif && d && (p.includes(d) || d.includes(p));
     }) ?? null
   );
+}
+
+/** PV attendu selon le client du donneur d'ordre (rendezvous.reseau_client). */
+export type PvAttendu = { kind: "pv"; cle: "50FIVE" | "TIME2PLUG" | "ENSIO" } | { kind: "crm"; outil: string } | null;
+export function pvPourReseau(reseau: string | null | undefined): PvAttendu {
+  const r = (reseau ?? "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  if (!r) return null;
+  if (r.includes("50FIVE") || r.includes("FIFTYFIVE")) return { kind: "pv", cle: "50FIVE" };
+  if (r.includes("TIME2PLUG")) return { kind: "pv", cle: "TIME2PLUG" };
+  if (r.includes("CAPBORNE") || r.includes("AMARA")) return { kind: "pv", cle: "ENSIO" };
+  if (r.includes("BUMP")) return { kind: "crm", outil: "Kizéo" };
+  if (r.includes("DKV")) return { kind: "crm", outil: "Docusign" };
+  return null;
+}
+
+/** Modèle dont la liste `reseaux` contient la clé du PV attendu. */
+export function modelePourReseau<T extends { reseaux?: string[] | null; actif: boolean }>(modeles: T[], reseau: string | null | undefined): T | null {
+  const pv = pvPourReseau(reseau);
+  if (pv?.kind !== "pv") return null;
+  return modeles.find((m) => m.actif && (m.reseaux ?? []).includes(pv.cle)) ?? null;
 }
