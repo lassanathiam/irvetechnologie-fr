@@ -115,9 +115,40 @@ export const listModelesRapport = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("rapport_modeles")
       .select("*")
+      .eq("usage_unique", false)
       .order("donneur_ordre", { ascending: true });
     if (error) throw new Error(error.message);
     return data ?? [];
+  });
+
+/** PV importé pour un seul chantier : conservé pour l'impression, jamais listé comme modèle réutilisable. */
+export const creerModeleJetable = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z
+      .object({
+        nom: z.string().trim().min(1).max(160),
+        donneur_ordre: z.string().trim().min(1).max(160),
+        structure: z.unknown(),
+      })
+      .parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: staff } = await context.supabase.rpc("is_staff");
+    if (!staff) throw new Error("Accès réservé à l'équipe.");
+    const { data: saved, error } = await context.supabase
+      .from("rapport_modeles")
+      .insert({
+        nom: data.nom,
+        donneur_ordre: data.donneur_ordre,
+        structure: normaliserStructure(data.structure) as unknown as Json,
+        actif: false,
+        usage_unique: true,
+      })
+      .select("*")
+      .single();
+    if (error) throw new Error(error.message);
+    return saved;
   });
 
 export const enregistrerModeleRapport = createServerFn({ method: "POST" })
