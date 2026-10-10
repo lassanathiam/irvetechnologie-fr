@@ -403,6 +403,13 @@ function PlanningPage() {
     mutationFn: (id: string) => deleteFn({ data: { id } }),
     onSuccess: refresh,
   });
+  const majOptions = useMutation({
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number }) =>
+      majOptionsChantier({ data: p }),
+    onSuccess: refresh,
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Mise à jour impossible."),
+  });
   const valider = useMutation({
     mutationFn: (p: { id: string; valide: boolean; commentaire?: string | null; par?: string | null }) =>
       validerFn({ data: p }),
