@@ -1300,7 +1300,7 @@ function PlanningPage() {
             <FileUp className="h-4 w-4" /> Fiches techniques
           </button>
           {fichesOpen && (
-            <FichesTechniquesDialog chantiers={__RDVS__} onClose={() => setFichesOpen(false)} onDone={refresh} />
+            <FichesTechniquesDialog chantiers={(list.data ?? []).filter((r) => !r.archive)} onClose={() => setFichesOpen(false)} onDone={refresh} />
           )}
           {importOpen && (
             <ImportRdvDialog
@@ -3524,7 +3524,7 @@ function Legende({ color, label }: { color: string; label: string }) {
   );
 }
 
-function FieldInput(props: React.InputHTMLAttributes<HTMLInputElement>) {
+function FieldInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return props.type === "date" || props.type === "datetime-local" ? <DateAvecJour {...props} /> : <input {...props} />;
 }
 
