@@ -101,3 +101,18 @@ export const proposerValorisationPublic = createServerFn({ method: "POST" })
     });
     return { ok: true, total_ht: total };
   });
+
+/** Lot d'attachements (un seul lien / un seul PDF) : tous les jetons doivent être valides. */
+export const getAttachementsLotPublic = createServerFn({ method: "GET" })
+  .inputValidator((data: unknown) => z.object({ tokens: z.array(z.string().uuid()).min(1).max(100) }).parse(data))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.from("attachements_travaux").select("*").in("public_token", data.tokens).order("numero");
+    if (error) throw new Error(error.message);
+    const liste = (rows ?? []).filter((a: any) => a.statut !== "annule");
+    if (!liste.length) throw new Error("Ce lien n’est plus valide.");
+    const { data: items } = await supabaseAdmin.from("attachement_items").select("*").in("attachement_id", liste.map((a: any) => a.id)).order("ordre");
+    const now = new Date().toISOString();
+    await Promise.all(liste.map((a: any) => supabaseAdmin.from("attachements_travaux").update({ viewed_at: a.viewed_at ?? now, last_viewed_at: now, view_count: Number(a.view_count ?? 0) + 1 }).eq("id", a.id)));
+    return liste.map((a: any) => ({ attachement: a, items: (items ?? []).filter((i: any) => i.attachement_id === a.id) }));
+  });
