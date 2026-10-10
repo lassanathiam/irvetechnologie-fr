@@ -1727,6 +1727,47 @@ export type Database = {
           },
         ]
       }
+      rendezvous_fiches: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          mime: string | null
+          nom: string
+          path: string
+          rendezvous_id: string
+          resume: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime?: string | null
+          nom: string
+          path: string
+          rendezvous_id: string
+          resume?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mime?: string | null
+          nom?: string
+          path?: string
+          rendezvous_id?: string
+          resume?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rendezvous_fiches_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: false
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       rendezvous_photos: {
         Row: {
           categorie: string
