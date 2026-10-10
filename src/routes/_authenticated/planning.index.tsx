@@ -3,7 +3,7 @@ import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
 import {
   Archive,
