@@ -44,6 +44,65 @@ async function nextNumber(supabase: any, year: number) {
   return `${prefix}${String((Number.isFinite(previous) ? previous : 0) + 1).padStart(4, "0")}`;
 }
 
+const estFiniRdv = (r: any) => Boolean(r.termine_at || r.chantier_valide || ["termine", "realise"].includes(r.statut));
+
+const fr = (iso: string) => `${iso.slice(8, 10)}/${iso.slice(5, 7)}/${iso.slice(0, 4)}`;
+
+/** Lundi de la semaine d'une date (ISO). */
+function lundiDe(dateStr: string) {
+  const d = new Date(`${dateStr}T12:00:00`);
+  const j = (d.getDay() + 6) % 7;
+  d.setDate(d.getDate() - j);
+  return d.toISOString().slice(0, 10);
+}
+
+/** Numéro de semaine ISO d'une date. */
+function semaineIso(dateStr: string) {
+  const d = new Date(`${dateStr}T12:00:00Z`);
+  const jour = (d.getUTCDay() + 6) % 7;
+  d.setUTCDate(d.getUTCDate() - jour + 3);
+  const premierJeudi = new Date(Date.UTC(d.getUTCFullYear(), 0, 4));
+  const jP = (premierJeudi.getUTCDay() + 6) % 7;
+  premierJeudi.setUTCDate(premierJeudi.getUTCDate() - jP + 3);
+  return 1 + Math.round((d.getTime() - premierJeudi.getTime()) / (7 * 86400000));
+}
+
+/** Message adaptatif : semaine couverte et état des travaux (réalisés / à réaliser). */
+async function messageAdaptif(supabase: any, attachment: any) {
+  const { data: lignes } = await supabase.from("attachement_items").select("rendezvous_id").eq("attachement_id", attachment.id);
+  const ids = [...new Set((lignes ?? []).map((l: any) => l.rendezvous_id).filter(Boolean))] as string[];
+  let dates: string[] = [];
+  let tousFini = true;
+  if (ids.length) {
+    const { data: rdvs } = await supabase.from("rendezvous").select("id, date_debut, statut, termine_at, chantier_valide").in("id", ids);
+    const rows = rdvs ?? [];
+    dates = rows.map((r: any) => String(r.termine_at || r.date_debut || "").slice(0, 10)).filter(Boolean);
+    if (rows.length) tousFini = rows.every(estFiniRdv);
+  }
+  let lundi: string | null = null;
+  if (dates.length) {
+    lundi = lundiDe(dates.sort()[0]);
+  } else {
+    // Repli : ticket "S04-2026" sinon semaine de la date d'émission.
+    const m = /^S(\d{1,2})-(\d{4})/.exec(attachment.numero_ticket || "");
+    if (m) {
+      const janvier = new Date(Date.UTC(Number(m[2]), 0, 4));
+      const jP = (janvier.getUTCDay() + 6) % 7;
+      janvier.setUTCDate(janvier.getUTCDate() - jP + 3);
+      janvier.setUTCDate(janvier.getUTCDate() + (Number(m[1]) - 1) * 7);
+      lundi = lundiDe(janvier.toISOString().slice(0, 10));
+    } else {
+      lundi = lundiDe(String(attachment.date_emission).slice(0, 10));
+    }
+  }
+  if (!lundi) lundi = lundiDe(String(attachment.date_emission).slice(0, 10));
+  const d = new Date(`${lundi}T12:00:00`);
+  d.setDate(d.getDate() + 6);
+  const dimanche = d.toISOString().slice(0, 10);
+  const etat = tousFini ? "réalisés" : "réalisés ou à réaliser";
+  return `Bonjour, merci de trouver sur le lien ci-dessus l'attachement des travaux ${etat} pour la semaine S${semaineIso(lundi)} (du ${fr(lundi)} au ${fr(dimanche)}).`;
+}
+
 export const listAttachements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
