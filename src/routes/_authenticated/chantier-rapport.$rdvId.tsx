@@ -65,8 +65,53 @@ function RapportChantierPageInner() {
   const [email, setEmail] = useState("");
   const [rempliId, setRempliId] = useState<string | null>(null);
   const [apercu, setApercu] = useState(false);
+  const [modeleLocal, setModeleLocal] = useState<ModeleRow | null>(null);
+  const [pvClient, setPvClient] = useState("");
+  const [pvBusy, setPvBusy] = useState(false);
+  const analyserFn = useServerFn(analyserFeuilleRapport);
+  const jetableFn = useServerFn(creerModeleJetable);
 
-  const modele = data?.modeles.find((m) => m.id === modeleId) ?? null;
+  const modele = data?.modeles.find((m) => m.id === modeleId) ?? (modeleLocal && modeleLocal.id === modeleId ? modeleLocal : null);
+
+  async function importerPv(file: File) {
+    if (!pvClient) {
+      toast.error("Choisissez d'abord le client (donneur d'ordre).");
+      return;
+    }
+    if (file.size > 9_000_000) {
+      toast.error("Fichier trop lourd (9 Mo maximum).");
+      return;
+    }
+    setPvBusy(true);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = () => resolve(String(r.result));
+        r.onerror = () => reject(new Error("Lecture du fichier impossible."));
+        r.readAsDataURL(file);
+      });
+      const analyse = await analyserFn({ data: { data_url: dataUrl } });
+      const structure = {
+        ...analyse,
+        original: { data_url: dataUrl, type: file.type === "application/pdf" ? "pdf" : "image" },
+      };
+      const saved = await jetableFn({
+        data: {
+          nom: `PV ${pvClient} — ${data?.rdv.client_nom ?? "chantier"}`,
+          donneur_ordre: pvClient,
+          structure,
+        },
+      });
+      setModeleLocal(saved as ModeleRow);
+      setModeleId(saved.id);
+      setValeurs({});
+      toast.success("PV prêt : vérifiez les champs préremplis puis complétez.");
+    } catch (e) {
+      toast.error((e as Error).message);
+    } finally {
+      setPvBusy(false);
+    }
+  }
   const structure = modele ? normaliserStructure(modele.structure) : null;
 
   // Initialisation depuis le chantier / rapport existant
