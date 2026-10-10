@@ -48,6 +48,6 @@ export function AttachementTravauxEmail(data: Props) {
 
 export const template: TemplateEntry = {
   component: AttachementTravauxEmail,
-  displayName: "Attachement de travaux fibre",
+  displayName: "Attachement de travaux",
   subject: (data) => `IRVE Technologie — Attachement de travaux — Ticket ${data["numero_ticket"]}`,
 };

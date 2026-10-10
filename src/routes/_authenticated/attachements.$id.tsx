@@ -16,7 +16,7 @@ import { euro } from "@/lib/company";
 import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
-  head: () => ({ meta: [{ title: "Attachement de travaux — IRVE Technologie" }, { name: "description", content: "Consulter, modifier, envoyer et convertir un attachement de travaux fibre." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachement de travaux — IRVE Technologie" }, { property: "og:description", content: "Consultation d’un attachement de travaux fibre." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
+  head: () => ({ meta: [{ title: "Attachement de travaux — IRVE Technologie" }, { name: "description", content: "Consulter, modifier, envoyer et convertir un attachement de pose de bornes ou de travaux." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachement de travaux — IRVE Technologie" }, { property: "og:description", content: "Consultation d’un attachement de pose de bornes ou de travaux." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
   component: AttachementDetail,
 });
 
