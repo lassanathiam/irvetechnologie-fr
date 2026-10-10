@@ -1543,6 +1543,7 @@ export type Database = {
           retour_complete_at: string | null
           retour_delestage: boolean
           retour_observations: string | null
+          retour_repartiteur: boolean
           sous_traitant_id: string | null
           statut: string
           statut_facturation: string
@@ -1617,6 +1618,7 @@ export type Database = {
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
+          retour_repartiteur?: boolean
           sous_traitant_id?: string | null
           statut?: string
           statut_facturation?: string
@@ -1691,6 +1693,7 @@ export type Database = {
           retour_complete_at?: string | null
           retour_delestage?: boolean
           retour_observations?: string | null
+          retour_repartiteur?: boolean
           sous_traitant_id?: string | null
           statut?: string
           statut_facturation?: string

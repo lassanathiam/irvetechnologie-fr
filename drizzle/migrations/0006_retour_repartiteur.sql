@@ -1,0 +1,1 @@
+ALTER TABLE public.rendezvous ADD COLUMN IF NOT EXISTS retour_repartiteur boolean NOT NULL DEFAULT false;
