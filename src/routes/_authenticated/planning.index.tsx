@@ -1144,6 +1144,46 @@ function PlanningPage() {
                   </>}
                 </div>
 
+                {(() => {
+                  const inclus = Number(missionTerrain.metrage_inclus_m ?? 0) || metrageInclusDefaut(missionTerrain.partenaire);
+                  const metrage = Math.max(Number(missionTerrain.metrage_m ?? 0), Number(missionTerrain.metrage_reel_m ?? 0));
+                  const depasse = metrage > inclus;
+                  return (
+                    <div className="mb-5 rounded-xl border border-border bg-muted/30 p-4" aria-label="Facturation chantier">
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">À facturer — à cocher sur place</p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        <button
+                          type="button"
+                          disabled={majOptions.isPending}
+                          onClick={() => majOptions.mutate({ id: missionTerrain.id, retour_repartiteur: !missionTerrain.retour_repartiteur })}
+                          className={`flex min-h-[52px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-bold ${
+                            missionTerrain.retour_repartiteur
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary"
+                          }`}
+                        >
+                          <span className="text-lg">{missionTerrain.retour_repartiteur ? "☑" : "☐"}</span>
+                          Répartiteur / tableau secondaire posé (65 €)
+                        </button>
+                        <button
+                          type="button"
+                          disabled={majOptions.isPending}
+                          onClick={() => majOptions.mutate({ id: missionTerrain.id, metrage_m: depasse ? Math.min(metrage, inclus) : Math.max(metrage, inclus + 1) })}
+                          className={`flex min-h-[52px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-bold ${
+                            depasse
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary"
+                          }`}
+                        >
+                          <span className="text-lg">{depasse ? "☑" : "☐"}</span>
+                          Métrage &gt; forfait ({inclus} m){metrage > 0 ? ` · ${metrage} m tirés` : ""}
+                        </button>
+                      </div>
+                      <p className="mt-2 text-xs text-muted-foreground">Ces cases alimentent automatiquement les lignes de l’attachement. Vous pouvez décocher si finalement non posé.</p>
+                    </div>
+                  );
+                })()}
+
                 {voisinsMission.length > 0 && (
                   <div className="mb-5 rounded-xl border border-emerald-400/60 bg-emerald-50 p-4 dark:bg-emerald-500/10" aria-label="Chantiers proches">
                     <p className="font-bold text-emerald-800 dark:text-emerald-300">
