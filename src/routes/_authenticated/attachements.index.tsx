@@ -121,7 +121,7 @@ function AttachementsPage() {
     const lieu = [r.client_nom, precisionReseauClient(r.reseau_client), r.adresse, r.cp_ville].filter(Boolean).join(" — ");
     const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
     out.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
-    const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
+    const sup = Math.max(0, Number(r.metrage_reel_m ?? r.metrage_m ?? 0) - 15);
     const c = cable(r.puissance_borne);
     if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
     const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
