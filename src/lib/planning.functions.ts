@@ -2269,22 +2269,27 @@ export const affecterTechnicien = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Bascule rapide des options de facturation chantier (répartiteur, métrage) depuis la carte planning. */
+/** Bascule rapide des options chantier (répartiteur, métrage, donneur d'ordre) depuis la carte planning. */
 export const majOptionsChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number }) =>
+  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null }) =>
     z
       .object({
         id: z.string().uuid(),
         retour_repartiteur: z.boolean().optional(),
         metrage_m: z.number().min(0).max(10000).optional(),
+        partenaire: z.string().max(160).nullable().optional(),
       })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: { retour_repartiteur?: boolean; metrage_m?: number } = {};
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; origine?: string } = {};
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
     if (data.metrage_m !== undefined) patch.metrage_m = data.metrage_m;
+    if (data.partenaire !== undefined) {
+      patch.partenaire = data.partenaire?.trim() ? data.partenaire.trim() : null;
+      patch.origine = patch.partenaire ? "sous_traitance" : "direct";
+    }
     const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
