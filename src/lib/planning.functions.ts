@@ -2268,3 +2268,24 @@ export const affecterTechnicien = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Bascule rapide des options de facturation chantier (répartiteur, métrage) depuis la carte planning. */
+export const majOptionsChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        retour_repartiteur: z.boolean().optional(),
+        metrage_m: z.number().min(0).max(10000).optional(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number } = {};
+    if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
+    if (data.metrage_m !== undefined) patch.metrage_m = data.metrage_m;
+    const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
