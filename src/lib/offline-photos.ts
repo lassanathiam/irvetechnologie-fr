@@ -133,6 +133,7 @@ export async function traiterFile(): Promise<void> {
               metrage_reel_m?: number | string | null;
               retour_observations?: string | null;
               retour_delestage?: boolean;
+              retour_repartiteur?: boolean;
             },
           });
         }

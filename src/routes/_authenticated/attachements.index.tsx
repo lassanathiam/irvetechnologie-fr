@@ -126,7 +126,9 @@ function AttachementsPage() {
         nouvelles.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
         const sup = Math.max(0, Number(r.metrage_reel_m ?? 0) - 15);
         const c = cable(r.puissance_borne);
-        if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
+        if (sup > 0 && c) nouvelles.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
+        const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
+        if (rep) nouvelles.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)) }));
       }
       setLines((cur) => [...cur.filter((l) => l.libelle.trim() || Number(l.prix) > 0), ...nouvelles]);
     } catch (e) { setError(e instanceof Error ? e.message : "Import impossible."); } finally { setImportEnCours(false); }

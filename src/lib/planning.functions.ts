@@ -1694,6 +1694,7 @@ export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
       metrage_reel_m?: number | string | null;
       retour_observations?: string | null;
       retour_delestage?: boolean;
+      retour_repartiteur?: boolean;
       type_pose?: string | null;
     }) =>
       z
@@ -1703,6 +1704,7 @@ export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
           metrage_reel_m: num(0, 10000, 0),
           retour_observations: z.string().trim().max(4000).optional().nullable(),
           retour_delestage: z.boolean().default(false),
+          retour_repartiteur: z.boolean().optional(),
           type_pose: z.string().trim().max(80).optional().nullable(),
         })
         .parse(raw),
@@ -1716,6 +1718,7 @@ export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
         metrage_m: data.metrage_reel_m || undefined,
         retour_observations: data.retour_observations ?? null,
         retour_delestage: data.retour_delestage,
+        ...(data.retour_repartiteur === undefined ? {} : { retour_repartiteur: data.retour_repartiteur }),
         retour_complete_at: new Date().toISOString(),
         ...(data.type_pose ? { type_pose: data.type_pose } : {}),
       })
