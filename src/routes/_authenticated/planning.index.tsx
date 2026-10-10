@@ -62,7 +62,7 @@ import {
   type DossierRendezVousInput,
   type RendezVousInput,
 } from "@/lib/planning.functions";
-import { RETOUR_CATEGORIES_LABELS } from "@/lib/planning.functions";
+import { RETOUR_CATEGORIES_LABELS, metrageInclusDefaut } from "@/lib/planning.functions";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 
