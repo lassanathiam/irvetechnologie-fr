@@ -203,16 +203,27 @@ export const getRapportChantier = createServerFn({ method: "POST" })
     if (!rdvQ.data) throw new Error("Chantier introuvable.");
     const modeles = modQ.data ?? [];
     const rempli = rempQ.data?.[0] ?? null;
-    const modele =
+    let modele =
       (rempli && modeles.find((m) => m.id === rempli.modele_id)) ||
       modelePourPartenaire(modeles, rdvQ.data.partenaire);
+    // Le rapport en cours peut utiliser un PV à usage unique (hors liste) : on le recharge à part.
+    if (!modele && rempli) {
+      const { data: m } = await context.supabase.from("rapport_modeles").select("*").eq("id", rempli.modele_id).maybeSingle();
+      modele = m ?? null;
+    }
     let email_donneur: string | null = null;
     const { data: rdvP } = await context.supabase.from("rendezvous").select("partenaire_id").eq("id", data.rendezvous_id).maybeSingle();
     if (rdvP?.partenaire_id) {
       const { data: p } = await context.supabase.from("partenaires").select("email").eq("id", rdvP.partenaire_id).maybeSingle();
       email_donneur = p?.email?.trim() || null;
     }
-    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli, email_donneur };
+    const { data: donneursRows } = await context.supabase
+      .from("partenaires")
+      .select("nom")
+      .eq("actif", true)
+      .order("nom", { ascending: true });
+    const donneurs = [...new Set([...(donneursRows ?? []).map((p) => p.nom), ...modeles.map((m) => m.donneur_ordre)])].sort((a, b) => a.localeCompare(b, "fr"));
+    return { rdv: rdvQ.data, modeles, modele: modele ?? null, rempli, email_donneur, donneurs };
   });
 
 export const enregistrerRapportRempli = createServerFn({ method: "POST" })
