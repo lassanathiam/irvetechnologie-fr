@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Printer, Save, Send } from "lucide-react";
+import { ArrowLeft, FileUp, Loader2, Printer, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -36,6 +36,14 @@ export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")(
 });
 
 type Val = string | boolean | null;
+type ModeleRow = {
+  id: string;
+  nom: string;
+  donneur_ordre: string;
+  logo_data: string | null;
+  email_destinataire: string | null;
+  structure: unknown;
+};
 
 function RapportChantierPage() {
   return (
