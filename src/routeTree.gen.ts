@@ -21,6 +21,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
+import { Route as AttachementsLotTokensRouteImport } from './routes/attachements-lot.$tokens'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
@@ -116,6 +117,11 @@ const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
 const AttachementTokenRoute = AttachementTokenRouteImport.update({
   id: '/attachement/$token',
   path: '/attachement/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AttachementsLotTokensRoute = AttachementsLotTokensRouteImport.update({
+  id: '/attachements-lot/$tokens',
+  path: '/attachements-lot/$tokens',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevisClientTokenRoute = DevisClientTokenRouteImport.update({
@@ -332,6 +338,7 @@ export interface FileRoutesByFullPath {
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
+  '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -381,6 +388,7 @@ export interface FileRoutesByTo {
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
+  '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -432,6 +440,7 @@ export interface FileRoutesById {
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
+  '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
@@ -483,6 +492,7 @@ export interface FileRouteTypes {
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
+    | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -532,6 +542,7 @@ export interface FileRouteTypes {
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
+    | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
+    | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/partenaire/$token'
@@ -631,6 +643,7 @@ export interface RootRouteChildren {
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
+  AttachementsLotTokensRoute: typeof AttachementsLotTokensRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
   PartenaireTokenRoute: typeof PartenaireTokenRoute
@@ -730,6 +743,13 @@ declare module '@tanstack/react-router' {
       path: '/attachement/$token'
       fullPath: '/attachement/$token'
       preLoaderRoute: typeof AttachementTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/attachements-lot/$tokens': {
+      id: '/attachements-lot/$tokens'
+      path: '/attachements-lot/$tokens'
+      fullPath: '/attachements-lot/$tokens'
+      preLoaderRoute: typeof AttachementsLotTokensRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devis-client/$token': {
@@ -1059,6 +1079,7 @@ const rootRouteChildren: RootRouteChildren = {
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AttachementTokenRoute: AttachementTokenRoute,
+  AttachementsLotTokensRoute: AttachementsLotTokensRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
   PartenaireTokenRoute: PartenaireTokenRoute,
