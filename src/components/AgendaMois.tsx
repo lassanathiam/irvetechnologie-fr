@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 export type AgendaEvent = {
   id: string;
@@ -13,13 +14,6 @@ export type AgendaEvent = {
 };
 
 const DOTS: Record<string, string> = {
-  planifie: "bg-blue-600",
-  confirme: "bg-sky-500",
-  realise: "bg-emerald-500",
-  annule: "bg-muted-foreground",
-};
-
-const BARS: Record<string, string> = {
   planifie: "bg-blue-600",
   confirme: "bg-sky-500",
   realise: "bg-emerald-500",
@@ -152,16 +146,19 @@ export function AgendaMois({
             const load = charge(list);
             const plein = load >= 420;
             return (
-              <button
+              <Button
                 key={k}
                 type="button"
+                variant="ghost"
                 onClick={() => {
                   setSelected(k);
                   setDetailsOuverts(true);
                 }}
                 onDoubleClick={() => onPickDay?.(k)}
                 title={list.length ? `${list.length} rendez-vous` : "Journée libre"}
-                className={`group relative text-left h-[54px] sm:h-[62px] rounded-lg border px-1 pt-1 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
+                aria-label={`${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(d)} : ${list.length} rendez-vous`}
+                aria-pressed={isSel}
+                className={`group relative block w-full text-left h-[54px] sm:h-[62px] rounded-lg border px-1 pt-1 pb-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   isSel
                     ? "border-primary bg-primary/12 shadow-sm"
                     : plein
@@ -180,20 +177,8 @@ export function AgendaMois({
                 >
                   {d.getDate()}
                 </span>
-                <span className="absolute left-1.5 right-1.5 bottom-1.5 flex flex-col gap-[3px]">
-                  {list.slice(0, 2).map((e) => (
-                    <span
-                      key={e.id}
-                      className={`h-[4px] w-full rounded-full ${BARS[e.statut ?? "planifie"] ?? "bg-primary"}`}
-                    />
-                  ))}
-                  {list.length > 2 && (
-                    <span className="text-mono text-[9px] font-bold text-muted-foreground leading-none">
-                      +{list.length - 2}
-                    </span>
-                  )}
-                </span>
-              </button>
+                {list.length > 0 && <span className="absolute bottom-1.5 right-1.5 grid h-5 min-w-5 place-items-center rounded-md bg-primary px-1 text-[11px] font-bold leading-none text-primary-foreground">{list.length}</span>}
+              </Button>
             );
           })}
         </div>

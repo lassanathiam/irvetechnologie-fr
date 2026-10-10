@@ -310,6 +310,7 @@ function PlanningPage() {
   const voirie = useQuery({ queryKey: ["voirie"], queryFn: () => fetchVoirie() });
   const recherche = Route.useSearch();
   const [active, setActive] = useState<string | null>(recherche.rdv ?? null);
+  const [dossierCarte, setDossierCarte] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [panel, setPanel] = useState<{
@@ -759,12 +760,26 @@ function PlanningPage() {
 
   const groups = useMemo(() => {
     const map = new Map<string, typeof rows>();
+    const choisi = toutes.find((r) => r.id === dossierCarte);
     for (const r of rows) {
+      if (r.id === choisi?.id) continue;
       const k = dayKey(r.date_debut);
       map.set(k, [...(map.get(k) ?? []), r]);
     }
-    return [...map.entries()];
-  }, [rows]);
+    const groupes = [...map.entries()];
+    return choisi ? [[`${dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
+  }, [rows, toutes, dossierCarte]);
+
+  const choisirDepuisCarte = (id: string) => {
+    setActive(id);
+    if (modeSelection) return;
+    setDossier(id);
+    setDossierCarte(id);
+    setOuverts((actuels) => ({ ...actuels, [id]: true }));
+    window.requestAnimationFrame(() => {
+      document.getElementById(`planning-dossier-${id}`)?.scrollIntoView({ block: "start" });
+    });
+  };
 
   const points: MapMarker[] = useMemo(
     () =>
@@ -784,7 +799,8 @@ function PlanningPage() {
           sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           statut: r.statut,
           couleur: couleurPartenaire(r.partenaire),
-          date: dateTimeFr(r.date_debut),
+          date: `${dayKey(r.date_debut)} · ${creneauTexte(r.date_debut, r.creneau_fin, true)}`,
+          dateCourte: new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" }).format(new Date(r.date_debut)),
           technicien: r.technicien ?? null,
           trajet:
             r.distance_km != null
@@ -1751,7 +1767,7 @@ function PlanningPage() {
             <InterventionsMap
               markers={points}
               activeId={active}
-              onSelect={(id) => { setActive(id); setDossier(id); }}
+              onSelect={choisirDepuisCarte}
               height={isMobile ? 300 : 620}
               scrollWheelZoom
               selectionMode={modeSelection}
@@ -1940,7 +1956,7 @@ function PlanningPage() {
                     return (
                       <li
                         key={r.id}
-                        
+                        id={`planning-dossier-${r.id}`}
                         className={`relative overflow-hidden border rounded-xl p-4 pl-5 h-fit transition-all duration-200 hover:shadow-md before:absolute before:left-0 before:top-0 before:bottom-0 before:w-1.5 ${st.barre} ${st.fond} ${
                           active === r.id
                             ? "border-primary shadow-md ring-1 ring-primary/30"
