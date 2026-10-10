@@ -434,6 +434,7 @@ function PlanningPage() {
       designation?: string | null;
       etiquettes?: string[];
       metrage_m?: number;
+      retour_repartiteur?: boolean;
       puissance_borne?: string | null;
       phase_installation?: string | null;
       type_pose?: string | null;
