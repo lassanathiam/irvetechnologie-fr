@@ -800,7 +800,6 @@ function PlanningPage() {
           statut: r.statut,
           couleur: couleurPartenaire(r.partenaire),
           date: `${dayKey(r.date_debut)} · ${creneauTexte(r.date_debut, r.creneau_fin, true)}`,
-          dateCourte: new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "2-digit" }).format(new Date(r.date_debut)),
           technicien: r.technicien ?? null,
           trajet:
             r.distance_km != null

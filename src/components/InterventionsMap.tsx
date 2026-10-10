@@ -11,7 +11,6 @@ export type MapMarker = {
   sub?: string | null;
   statut?: string | null;
   date?: string | null;
-  dateCourte?: string | null;
   /** Ex. "54 km · 48 min" — trajet routier depuis la base. */
   trajet?: string | null;
   /** Couleur du partenaire / donneur d'ordre (repère visuel sur la carte). */
