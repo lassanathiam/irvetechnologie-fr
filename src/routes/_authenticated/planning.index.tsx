@@ -2268,50 +2268,54 @@ function PlanningPage() {
                                  />
                                  {toutOuvert ? "Réduire" : "Afficher tout"}
                                </button>
-                              <label
-                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 cursor-pointer ${
-                                  r.retour_repartiteur
-                                    ? "border-primary text-primary bg-primary/10"
-                                    : "border-border text-muted-foreground hover:border-primary"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 accent-current"
-                                  checked={Boolean(r.retour_repartiteur)}
-                                  disabled={majOptions.isPending}
-                                  onChange={(e) =>
-                                    majOptions.mutate({ id: r.id, retour_repartiteur: e.target.checked })
-                                  }
-                                />
-                                Répartiteur / tableau (65 €)
-                              </label>
-                              <label
-                                className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 cursor-pointer ${
-                                  Number(r.metrage_m ?? 0) > Number(r.metrage_inclus_m ?? 15)
-                                    ? "border-primary text-primary bg-primary/10"
-                                    : "border-border text-muted-foreground hover:border-primary"
-                                }`}
-                              >
-                                <input
-                                  type="checkbox"
-                                  className="h-4 w-4 accent-current"
-                                  checked={Number(r.metrage_m ?? 0) > Number(r.metrage_inclus_m ?? 15)}
-                                  disabled={majOptions.isPending}
-                                  onChange={(e) => {
-                                    const inclus = Number(r.metrage_inclus_m ?? 15);
-                                    const actuel = Number(r.metrage_m ?? 0);
-                                    majOptions.mutate({
-                                      id: r.id,
-                                      metrage_m: e.target.checked
-                                        ? Math.max(actuel, inclus + 1)
-                                        : Math.min(actuel, inclus),
-                                    });
-                                  }}
-                                />
-                                Métrage &gt; forfait
-                                {Number(r.metrage_m ?? 0) > 0 && ` (${Number(r.metrage_m)} m)`}
-                              </label>
+                              {(() => {
+                                const inclus =
+                                  Number(r.metrage_inclus_m ?? 0) ||
+                                  metrageInclusDefaut(r.partenaire);
+                                const metrage = Number(r.metrage_m ?? 0);
+                                const depasse = metrage > inclus;
+                                return (
+                                  <>
+                                    <button
+                                      type="button"
+                                      disabled={majOptions.isPending}
+                                      onClick={() =>
+                                        majOptions.mutate({
+                                          id: r.id,
+                                          retour_repartiteur: !r.retour_repartiteur,
+                                        })
+                                      }
+                                      className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
+                                        r.retour_repartiteur
+                                          ? "border-primary text-primary bg-primary/10"
+                                          : "border-border text-muted-foreground hover:border-primary"
+                                      }`}
+                                    >
+                                      {r.retour_repartiteur ? "☑" : "☐"} Répartiteur / tableau (65 €)
+                                    </button>
+                                    <button
+                                      type="button"
+                                      disabled={majOptions.isPending}
+                                      onClick={() =>
+                                        majOptions.mutate({
+                                          id: r.id,
+                                          metrage_m: depasse
+                                            ? Math.min(metrage, inclus)
+                                            : Math.max(metrage, inclus + 1),
+                                        })
+                                      }
+                                      className={`text-mono text-[11px] font-bold min-h-[38px] px-3 rounded-sm border inline-flex items-center gap-1.5 ${
+                                        depasse
+                                          ? "border-primary text-primary bg-primary/10"
+                                          : "border-border text-muted-foreground hover:border-primary"
+                                      }`}
+                                    >
+                                      {depasse ? "☑" : "☐"} Métrage &gt; forfait ({inclus} m)
+                                      {metrage > 0 && ` · ${metrage} m`}
+                                    </button>
+                                  </>
+                                );
+                              })()}
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
