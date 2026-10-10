@@ -19,7 +19,7 @@ import {
   envoyerRapportRempli,
   getRapportChantier,
 } from "@/lib/rapport-modeles.functions";
-import { normaliserStructure } from "@/lib/rapport-modeles";
+import { pvPourReseau, normaliserStructure } from "@/lib/rapport-modeles";
 
 export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")({
   head: () => ({
@@ -252,6 +252,7 @@ function RapportChantierPageInner() {
         </label>
       </div>
 
+      {(() => { const pv = pvPourReseau(data.rdv.reseau_client); return pv?.kind === "crm" ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold print:hidden">Client {data.rdv.reseau_client} : pas de PV papier, à remplir dans {pv.outil}.</p> : !modele ? <p className="rounded-lg border border-border p-3 text-sm print:hidden">PV à choisir dans la liste ci-dessous.</p> : null; })()}
       {!data.modeles.length && !modele ? (
         <p className="rounded-lg border border-border p-4 text-sm">
           Aucun modèle de rapport. <Link to="/rapports/modeles" className="text-primary underline">Créer un modèle</Link>
