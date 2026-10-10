@@ -5,6 +5,7 @@ import { Euro, Loader2, Save } from "lucide-react";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
+import { CompteursSiteEditor } from "@/components/CompteursSiteEditor";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -157,6 +158,7 @@ function TarifsSitePage() {
             </Button>
           </div>
         )}
+        <CompteursSiteEditor />
       </div>
     </ProShell>
   );
