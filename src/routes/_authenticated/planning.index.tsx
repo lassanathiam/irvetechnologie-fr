@@ -2313,6 +2313,35 @@ function PlanningPage() {
                                       {depasse ? "☑" : "☐"} Métrage &gt; forfait ({inclus} m)
                                       {metrage > 0 && ` · ${metrage} m`}
                                     </button>
+                                    <select
+                                      aria-label="Donneur d'ordre"
+                                      disabled={majOptions.isPending}
+                                      value={r.partenaire ?? ""}
+                                      onChange={(e) =>
+                                        majOptions.mutate({
+                                          id: r.id,
+                                          partenaire: e.target.value || null,
+                                        })
+                                      }
+                                      className={`text-mono text-[11px] font-bold min-h-[38px] px-2 rounded-sm border bg-background ${
+                                        r.partenaire
+                                          ? "border-primary text-primary bg-primary/10"
+                                          : "border-amber-500/60 text-amber-700 dark:text-amber-300"
+                                      }`}
+                                    >
+                                      <option value="">⚠ Sans donneur d'ordre (client direct)</option>
+                                      {(partenaires.data ?? [])
+                                        .filter((p) => p.actif)
+                                        .map((p) => (
+                                          <option key={p.id} value={p.nom}>
+                                            {p.nom}
+                                          </option>
+                                        ))}
+                                      {r.partenaire &&
+                                        !(partenaires.data ?? []).some(
+                                          (p) => p.nom === r.partenaire,
+                                        ) && <option value={r.partenaire}>{r.partenaire}</option>}
+                                    </select>
                                   </>
                                 );
                               })()}
