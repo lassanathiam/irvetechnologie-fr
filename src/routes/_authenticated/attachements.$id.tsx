@@ -49,6 +49,7 @@ function AttachementDetail() {
     });
     setDelai(diffDays(a.date_emission, a.date_echeance));
     setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)), rendezvous_id: item.rendezvous_id ?? null })));
+    setMessage((m) => m || data.message_suggestion || "");
   }, [query.data]);
 
   const refresh = () => { void qc.invalidateQueries({ queryKey: ["attachement", id] }); void qc.invalidateQueries({ queryKey: ["attachements"] }); };
