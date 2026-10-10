@@ -65,7 +65,7 @@ export function FichesTechniquesDialog({ chantiers, onClose, onDone }: { chantie
       if (l.fait || !l.rdv) continue;
       setBusy(`Rangement ${i + 1}/${lignes.length}…`);
       try {
-        await enregistrer({ data: { rendezvous_id: l.rdv, nom: l.nom, data_url: l.data_url, resume: l.fiche.resume, completer: { puissance_borne: l.fiche.puissance_borne, phase_installation: l.fiche.phase_installation, type_pose: l.fiche.type_pose, metrage_m: l.fiche.metrage_m } } });
+        await enregistrer({ data: { rendezvous_id: l.rdv, nom: l.nom, data_url: l.data_url, resume: l.fiche.resume, completer: { puissance_borne: l.fiche.puissance_borne, phase_installation: l.fiche.phase_installation, type_pose: l.fiche.type_pose, metrage_m: l.fiche.metrage_m, repartiteur: l.fiche.repartiteur } } });
         setLignes((x) => x.map((y, j) => (j === i ? { ...y, fait: true } : y)));
         ok++;
       } catch (e) {
