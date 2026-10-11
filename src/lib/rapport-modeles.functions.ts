@@ -406,3 +406,36 @@ export const listChantiersTerminesDonneur = createServerFn({ method: "POST" })
     }
     return (rows ?? []).map((r) => ({ ...r, pv_signe: faits.has(r.id) }));
   });
+
+/** PV à signer par le client via lien SMS (jeton privé, avant signature uniquement). */
+export const getPvASigner = createServerFn({ method: "GET" })
+  .inputValidator((i: unknown) => z.object({ token: z.string().uuid() }).parse(i))
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: r } = await supabaseAdmin
+      .from("rapport_remplis")
+      .select("id, modele_id, valeurs, signature_client, signature_technicien, signataire_nom, technicien")
+      .eq("public_token", data.token)
+      .maybeSingle();
+    if (!r) throw new Error("PV introuvable.");
+    const { data: modele } = await supabaseAdmin.from("rapport_modeles").select("nom, donneur_ordre, logo_data, structure").eq("id", r.modele_id).maybeSingle();
+    if (!modele) throw new Error("PV introuvable.");
+    return { rapport: { ...r, id: undefined }, modele, dejaSigne: Boolean(r.signature_client) };
+  });
+
+export const signerPvClient = createServerFn({ method: "POST" })
+  .inputValidator((i: unknown) =>
+    z.object({ token: z.string().uuid(), nom: z.string().trim().min(2).max(160), signature: z.string().startsWith("data:image/").max(1_500_000) }).parse(i),
+  )
+  .handler(async ({ data }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: r } = await supabaseAdmin.from("rapport_remplis").select("id, signature_client, signature_technicien").eq("public_token", data.token).maybeSingle();
+    if (!r) throw new Error("PV introuvable.");
+    if (r.signature_client) throw new Error("Ce PV est déjà signé.");
+    const { error } = await supabaseAdmin
+      .from("rapport_remplis")
+      .update({ signature_client: data.signature, signataire_nom: data.nom, signed_at: r.signature_technicien ? new Date().toISOString() : null })
+      .eq("id", r.id);
+    if (error) throw new Error("Signature impossible.");
+    return { ok: true as const };
+  });

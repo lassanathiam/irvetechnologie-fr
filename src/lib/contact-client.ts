@@ -25,3 +25,11 @@ export function wazeLien(adresse?: string | null, cpVille?: string | null, lat?:
   const q = [adresse, cpVille].filter(Boolean).join(", ");
   return `https://waze.com/ul?q=${encodeURIComponent(q)}&navigate=yes`;
 }
+
+/** Lien SMS prérempli (fonctionne sur iPhone et Android). */
+export function smsLien(numero?: string | null, message?: string): string | null {
+  if (!numero) return null;
+  const brut = numero.replace(/[^\d+]/g, "");
+  if (brut.length < 6) return null;
+  return `sms:${brut}${message ? `?&body=${encodeURIComponent(message)}` : ""}`;
+}

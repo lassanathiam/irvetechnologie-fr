@@ -19,7 +19,8 @@ import {
   envoyerRapportRempli,
   getRapportChantier,
 } from "@/lib/rapport-modeles.functions";
-import { pvPourReseau, normaliserStructure } from "@/lib/rapport-modeles";
+import { pvPourReseau, normaliserStructure, valeursConformite } from "@/lib/rapport-modeles";
+import { smsLien } from "@/lib/contact-client";
 
 export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")({
   head: () => ({
@@ -335,6 +336,28 @@ function RapportChantierPageInner() {
             <SignaturePad label="Signature technicien" value={sigT} onChange={setSigT} />
             <label className="block text-sm">Nom du client signataire<Input value={nomClient} onChange={(e) => setNomClient(e.target.value)} /></label>
             <SignaturePad label="Signature client" value={sigC} onChange={setSigC} />
+            {!sigC && (
+              <Button
+                variant="outline"
+                className="w-full"
+                disabled={save.isPending}
+                onClick={async () => {
+                  const r = await save.mutateAsync();
+                  const lien = `${window.location.origin}/signer-pv/${r.public_token}`;
+                  const msg = `Bonjour ${nomClient}, merci de signer le PV de réception de votre borne : ${lien}\nIRVE Technologie`;
+                  const sms = smsLien(data.rdv.client_telephone, msg);
+                  if (!sms) {
+                    await navigator.clipboard?.writeText(lien).catch(() => {});
+                    toast.info("Pas de numéro mobile : lien copié, collez-le dans un SMS.");
+                    return;
+                  }
+                  if (!window.confirm(`Ouvrir un SMS vers ${data.rdv.client_telephone} avec le lien de signature ?`)) return;
+                  window.location.href = sms;
+                }}
+              >
+                <Send className="h-4 w-4" /> Faire signer le client par SMS
+              </Button>
+            )}
           </div>
 
           <label className="block text-sm">Envoyer à
