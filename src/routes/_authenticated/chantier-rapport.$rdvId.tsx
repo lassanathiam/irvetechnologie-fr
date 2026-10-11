@@ -131,6 +131,7 @@ function RapportChantierPageInner() {
     const m = data.modele;
     setModeleId(m?.id ?? null);
     setEmail(data.rempli?.sent_to || m?.email_destinataire || data.email_donneur || "");
+    setEmailClient(data.rdv.client_email ?? "");
     const r = data.rempli;
     if (r) {
       setRempliId(r.id);
