@@ -34,12 +34,15 @@ function PagePdf({ pdf, index, children }: { pdf: PdfDoc; index: number; childre
       const base = page.getViewport({ scale: 1 });
       setRatio(base.height / base.width);
       const width = canvas.parentElement?.clientWidth ?? 794;
-      const viewport = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
+      const viewport = page.getViewport({ scale: (width / base.width) * Math.max(window.devicePixelRatio || 1, 1600 / width) });
+      canvas.dataset.rendu = "0";
       canvas.width = viewport.width;
       canvas.height = viewport.height;
       const context = canvas.getContext("2d");
       if (!context) return;
       await page.render({ canvasContext: context, viewport, canvas }).promise;
+      canvas.dataset.rendu = "1";
+      canvas.dispatchEvent(new Event("rendu"));
     })().catch(() => undefined);
     return () => { annule = true; };
   }, [pdf, index]);
@@ -55,7 +58,7 @@ function Calque({ placement, children, edit, onMove }: { placement: PlacementRap
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   return (
     <div
-      className={`absolute flex touch-none items-center overflow-hidden font-semibold text-foreground ${edit ? "cursor-move border-2 border-dashed border-primary bg-card/85" : "print:border-0"}`}
+      className={`absolute flex touch-none items-center font-semibold text-foreground ${edit ? "cursor-move overflow-hidden border-2 border-dashed border-primary bg-card/85" : "overflow-visible print:border-0"}`}
       style={{ left: `${placement.x * 100}%`, top: `${placement.y * 100}%`, width: `${placement.w * 100}%`, height: `${placement.h * 100}%` }}
       onPointerDown={(event) => {
         if (!edit || !onMove) return;
@@ -112,8 +115,8 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
             if (target) target.placement = next;
             onChange(copy);
           }}>
-            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil/i.test(champ.label) ? (
-              <span className="absolute top-0 h-full w-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "50%" : "0%" }} />
+            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil|^ACCEPT|^RESERVE/i.test(champ.label) ? (
+              <span className="absolute top-0 h-full -translate-x-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "75%" : "25%", width: "min(50%, 3.2em)", minWidth: "2.4em" }} />
             ) : <RapportTexteCalibre valeur={value} multiligne={champ.type === "zone"} />}
           </Calque>
         );
