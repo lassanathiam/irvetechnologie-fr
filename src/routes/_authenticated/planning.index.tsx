@@ -1139,9 +1139,9 @@ function PlanningPage() {
                       ))}
                     </dl>
                     {missionTerrain.etiquettes?.length > 0 && <p className="mt-3 break-words text-sm">{missionTerrain.etiquettes.join(" · ")}</p>}
-                    <FichesChantier rendezvousId={missionTerrain.id} />
                     {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
                   </>}
+                  <FichesChantier rendezvousId={missionTerrain.id} />
                 </div>
 
                 {(() => {
@@ -1223,7 +1223,7 @@ function PlanningPage() {
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
                 </EtapeMission>
                 <EtapeMission titre="Rapport et signatures" detail="Rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
-                  {missionTerrain.demarre_at && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Rapport</Link></Button>}
+                  {pvPourReseau((missionTerrain as { reseau_client?: string | null }).reseau_client)?.kind !== "crm" && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Ouvrir le PV / rapport</Link></Button>}
                   {(() => { const pv = pvPourReseau((missionTerrain as { reseau_client?: string | null }).reseau_client); if (!pv) return null; return <p className="mt-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-sm font-semibold">{pv.kind === "pv" ? `PV ${pv.cle} à faire signer en fin d'intervention` : `Pas de PV : à remplir dans ${pv.outil}`}</p>; })()}
                 </EtapeMission>
                 <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>
@@ -2259,6 +2259,20 @@ function PlanningPage() {
                                )}
                              </div>
                              )}
+
+                            {/* Documents du chantier toujours visibles : fiches techniques + PV */}
+                            <FichesChantier rendezvousId={r.id} />
+                            {(() => {
+                              const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
+                              const termine = Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise");
+                              if (pv?.kind === "crm") return <p className="mt-2 text-xs font-semibold text-muted-foreground">Pas de PV : à remplir dans {pv.outil}</p>;
+                              if (!pv && !termine) return null;
+                              return (
+                                <Link to="/chantier-rapport/$rdvId" params={{ rdvId: r.id }} className="mt-2 inline-flex min-h-[40px] items-center gap-1.5 rounded-sm border-2 border-sky-500 px-3 text-xs font-bold text-sky-600 dark:text-sky-400">
+                                  <ClipboardCheck className="h-3.5 w-3.5" /> {pv ? `Ouvrir le PV ${pv.cle}` : "Ouvrir le PV / rapport"}
+                                </Link>
+                              );
+                            })()}
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
