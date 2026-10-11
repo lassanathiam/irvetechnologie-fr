@@ -86,7 +86,6 @@ export function RapportTexteCalibre({ valeur, multiligne = false }: { valeur: st
       // Ligne simple : le souligné est dans la moitié basse de la zone ou juste dessous
       // (un souligné au-dessus appartient au champ précédent).
       const lignes = multiligne ? trouvees.filter((y) => y >= -1) : trouvees.filter((y) => y >= hauteur * 0.3).slice(0, 1);
-      span.dataset.lignes = trouvees.map((y) => Math.round(y)).join(",") + "|" + Math.round(hauteur);
       const s = span.style;
       s.position = "";
       s.top = "";
