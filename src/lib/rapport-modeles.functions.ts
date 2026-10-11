@@ -326,6 +326,43 @@ export const envoyerRapportRempli = createServerFn({ method: "POST" })
     return { ok: true as const };
   });
 
+/** Envoie le PV signé au client final (email), sans changer le statut d'envoi au donneur d'ordre. */
+export const envoyerPvAuClient = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) =>
+    z.object({ id: z.string().uuid(), destinataire: z.string().trim().email().max(255) }).parse(i),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: r, error } = await context.supabase
+      .from("rapport_remplis")
+      .select("id, public_token, signed_at, rendezvous_id, modele_id")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!r) throw new Error("Rapport introuvable.");
+    if (!r.signed_at) throw new Error("Le PV doit être signé avant de l'envoyer au client.");
+    const [{ data: modele }, { data: rdv }] = await Promise.all([
+      context.supabase.from("rapport_modeles").select("nom, donneur_ordre").eq("id", r.modele_id).maybeSingle(),
+      r.rendezvous_id
+        ? context.supabase.from("rendezvous").select("client_nom, adresse, cp_ville").eq("id", r.rendezvous_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+    ]);
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const res = await sendTemplateEmail("rapport-donneur", data.destinataire, {
+      idempotencyKey: `pv-client-${r.id}-${data.destinataire}`,
+      templateData: {
+        modele_nom: modele?.nom ?? "PV de réception",
+        donneur_ordre: modele?.donneur_ordre ?? "",
+        client_nom: rdv?.client_nom ?? "",
+        adresse: [rdv?.adresse, rdv?.cp_ville].filter(Boolean).join(", "),
+        rapport_url: `${siteBase()}/rapport-donneur/${r.public_token}`,
+        zip_url: null,
+      },
+    });
+    if (!res.sent) throw new Error("Email non envoyé (adresse bloquée ou service indisponible).");
+    return { ok: true as const };
+  });
+
 /** Consultation publique par lien privé (lecture seule). */
 export const getRapportDonneurPublic = createServerFn({ method: "GET" })
   .inputValidator((i: unknown) => z.object({ token: z.string().uuid() }).parse(i))
