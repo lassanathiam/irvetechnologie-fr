@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Afficher les réponses Oui/Non des PV à droite sur les lignes, sans toucher aux choix imprimés, et vérifier le résultat.
+
 - [x] Faire remonter le dossier sélectionné sur la carte, clarifier les dates sans encombrer et afficher les totaux quotidiens dans l’agenda ; vérifié sur les vrais dossiers et les journées à 1, 2, 3 et 4 rendez-vous.
 
 - [x] Regrouper les photos du retour de travaux par étape réelle, avec une couleur commune par famille, sans changer les preuves exigées.
