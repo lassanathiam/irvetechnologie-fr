@@ -180,6 +180,9 @@ export const MESURES: MesureField[] = [
   { key: "tension", label: "Tension mesurée", unit: "V", placeholder: "232" },
   { key: "puissance", label: "Puissance paramétrée", unit: "kW", placeholder: "7,4" },
   { key: "courant_charge", label: "Courant en charge", unit: "A", placeholder: "31" },
+  { key: "couple_borne", label: "Couple de serrage — bornier borne", unit: "N·m", placeholder: "2,5" },
+  { key: "couple_protections", label: "Couple de serrage — disjoncteur / différentiel", unit: "N·m", placeholder: "2,5" },
+  { key: "couple_repartiteur", label: "Couple de serrage — répartiteur / peigne", unit: "N·m", placeholder: "2" },
 ];
 
 /** Mesures exigées par l'assureur (valeurs chiffrées, pas de simple « conforme »). */
@@ -190,6 +193,9 @@ export const MESURES_ASSURANCE: MesureField[] = [
   { key: "ddr_temps", label: "Test différentiel — temps", unit: "ms", placeholder: "28" },
   { key: "courant_max", label: "Intensité maximale", unit: "A", placeholder: "32" },
   { key: "puissance_testee", label: "Puissance de charge testée", unit: "kW", placeholder: "7,4" },
+  { key: "couple_borne", label: "Couple de serrage — bornier borne", unit: "N·m", placeholder: "2,5" },
+  { key: "couple_protections", label: "Couple de serrage — disjoncteur / différentiel", unit: "N·m", placeholder: "2,5" },
+  { key: "couple_repartiteur", label: "Couple de serrage — répartiteur / peigne", unit: "N·m", placeholder: "2" },
 ];
 
 export const RAPPORT_TYPES = {
@@ -312,10 +318,35 @@ export const PRESET_PUISSANCE: Record<string, { disjoncteur: string; section: st
 };
 
 /** Mesures préremplies à partir d'une typologie (les valeurs saisies sont conservées). */
+/**
+ * Couples de serrage usuels (N·m) selon la section du câble d'alimentation.
+ * Valeurs courantes des fabricants (Schneider, Legrand, Hager) et des notices
+ * de bornes résidentielles ; la notice de l'appareil reste prioritaire.
+ */
+export function couplesSerrage(section?: string): { couple_borne: string; couple_protections: string; couple_repartiteur: string } {
+  const mm = Number((section ?? "").replace(",", ".").match(/G?(\d+(?:\.\d+)?)\s*$/i)?.[1] ?? 6);
+  if (mm <= 2.5) return { couple_borne: "1,2", couple_protections: "2", couple_repartiteur: "1,2" };
+  if (mm <= 4) return { couple_borne: "2", couple_protections: "2", couple_repartiteur: "1,5" };
+  if (mm <= 6) return { couple_borne: "2,5", couple_protections: "2,5", couple_repartiteur: "2" };
+  if (mm <= 10) return { couple_borne: "3", couple_protections: "3", couple_repartiteur: "2,5" };
+  return { couple_borne: "3,5", couple_protections: "3,5", couple_repartiteur: "3" };
+}
+
+/** Complète seulement les couples vides (une valeur saisie n'est jamais écrasée). */
+export function avecCouples(current: Record<string, string>): Record<string, string> {
+  const c = couplesSerrage(current.section);
+  return {
+    ...current,
+    couple_borne: current.couple_borne || c.couple_borne,
+    couple_protections: current.couple_protections || c.couple_protections,
+    couple_repartiteur: current.couple_repartiteur || c.couple_repartiteur,
+  };
+}
+
 export function mesuresFromTypologie(t: Typologie, current: Record<string, string>): Record<string, string> {
   const preset = t.puissance ? PRESET_PUISSANCE[t.puissance] : undefined;
-  if (!preset) return current;
-  return {
+  if (!preset) return avecCouples(current);
+  return avecCouples({
     ...current,
     disjoncteur: current.disjoncteur || preset.disjoncteur,
     section: current.section || preset.section,
@@ -324,7 +355,7 @@ export function mesuresFromTypologie(t: Typologie, current: Record<string, strin
     puissance: current.puissance || preset.puissance,
     puissance_testee: current.puissance_testee || preset.puissance,
     tension: current.tension || (t.phase === "Triphasé" ? "400" : "230"),
-  };
+  });
 }
 
 /** Abonnements Enedis courants (kVA). */

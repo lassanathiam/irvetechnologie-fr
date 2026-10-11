@@ -18,3 +18,10 @@ describe("PV pré-cochés conformes", () => {
   it("Time2plug : sans réserve à la date", () =>
     expect(valeursConformite(st(["reception_sans_reserve", "date_effet_sans_reserve"]), "01/10/2026")).toEqual({ reception_sans_reserve: true, date_effet_sans_reserve: "01/10/2026" }));
 });
+
+import { couplesSerrage, avecCouples } from "./rapport-checklist";
+describe("couples de serrage", () => {
+  it("6 mm² → 2,5 N·m borne", () => expect(couplesSerrage("3G6").couple_borne).toBe("2,5"));
+  it("10 mm² → 3 N·m protections", () => expect(couplesSerrage("5G10").couple_protections).toBe("3"));
+  it("ne remplace pas une saisie", () => expect(avecCouples({ couple_borne: "1,8" }).couple_borne).toBe("1,8"));
+});
