@@ -36,7 +36,7 @@ function SignaturesPage() {
   const rows = liste.data ?? [];
 
   return (
-    <ProShell titre="Signatures clients">
+    <ProShell>
       <div className="mx-auto w-full max-w-3xl space-y-4 px-4 py-6">
         <div className="rounded-xl border border-border bg-card p-4">
           <h1 className="flex items-center gap-2 text-lg font-semibold text-foreground">
