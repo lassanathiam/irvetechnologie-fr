@@ -61,6 +61,7 @@ function RapportChantierPageInner() {
   const getFn = useServerFn(getRapportChantier);
   const saveFn = useServerFn(enregistrerRapportRempli);
   const sendFn = useEnvoiConfirme(envoyerRapportRempli, "Confirmer l'envoi du rapport de travaux ?");
+  const sendClientFn = useEnvoiConfirme(envoyerPvAuClient, "Confirmer l'envoi du PV signé au client ?");
   const { data, isLoading, error } = useQuery({
     queryKey: ["rapport-chantier", rdvId],
     queryFn: () => getFn({ data: { rendezvous_id: rdvId } }),
