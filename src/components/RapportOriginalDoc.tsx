@@ -113,7 +113,7 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
           ? 0.82
           : Math.min(0.82, Math.max(0.60, placement.x + placement.w + 0.025));
         const affichage = champ.type === "ouinon" && !edit
-          ? { ...placement, x: reponseX, w: 0.93 - reponseX }
+          ? { ...placement, x: reponseX, w: Math.min(0.09, 0.93 - reponseX) }
           : placement;
         return (
           <Calque key={champ.id} placement={affichage} edit={edit} onMove={(next) => {
