@@ -108,7 +108,7 @@ export const listAttachements = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("attachements_travaux")
-      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count")
+      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count, public_token")
       .is("facture_id", null)
       .order("created_at", { ascending: false })
       .limit(250);
@@ -423,7 +423,10 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
       templateData,
     });
     if (result.sent) {
-      await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", liste.map((a: any) => a.id));
+      const ids = liste.map((a: any) => a.id); const now = new Date().toISOString();
+      await context.supabase.from("attachements_travaux").update({ sent_at: now }).in("id", ids);
+      // Ne jamais rétrograder un attachement accepté ou facturé lors d'un renvoi groupé.
+      await context.supabase.from("attachements_travaux").update({ statut: "envoye" }).in("id", ids).in("statut", ["brouillon", "envoye", "refuse"]);
     }
     return { ...result, nb: templateData.lignes.length };
   });
