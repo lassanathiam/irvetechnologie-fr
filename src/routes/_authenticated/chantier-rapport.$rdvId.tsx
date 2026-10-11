@@ -163,6 +163,7 @@ function RapportChantierPageInner() {
       const n = { ...v };
       for (const s of structure.sections)
         for (const c of s.champs) if (c.auto && n[c.id] == null) n[c.id] = c.type === "case" ? auto[c.auto] === "1" : auto[c.auto] ?? null;
+      for (const [k, val] of Object.entries(valeursConformite(structure, auto.date ?? ""))) if (n[k] == null) n[k] = val;
       return n;
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
