@@ -192,6 +192,7 @@ function RapportChantierPageInner() {
       }) : Promise.reject(new Error("Choisissez un modèle de rapport.")),
     onSuccess: (r) => {
       setRempliId(r.id);
+      setPublicToken(r.public_token ?? null);
       qc.invalidateQueries({ queryKey: ["rapport-chantier", rdvId] });
       toast.success(sigC && sigT ? "Rapport signé et enregistré" : "Brouillon enregistré");
     },
