@@ -16,6 +16,7 @@ import {
   analyserFeuilleRapport,
   creerModeleJetable,
   enregistrerRapportRempli,
+  envoyerPvAuClient,
   envoyerRapportRempli,
   getRapportChantier,
 } from "@/lib/rapport-modeles.functions";
