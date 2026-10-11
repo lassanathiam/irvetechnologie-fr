@@ -34,7 +34,7 @@ function PagePdf({ pdf, index, children }: { pdf: PdfDoc; index: number; childre
       const base = page.getViewport({ scale: 1 });
       setRatio(base.height / base.width);
       const width = canvas.parentElement?.clientWidth ?? 794;
-      const viewport = page.getViewport({ scale: (width / base.width) * (window.devicePixelRatio || 1) });
+      const viewport = page.getViewport({ scale: (width / base.width) * Math.max(2, window.devicePixelRatio || 1) });
       canvas.dataset.rendu = "0";
       canvas.width = viewport.width;
       canvas.height = viewport.height;
