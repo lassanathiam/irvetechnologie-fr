@@ -76,6 +76,7 @@ function RapportChantierPageInner() {
   const [email, setEmail] = useState("");
   const [emailClient, setEmailClient] = useState("");
   const [rempliId, setRempliId] = useState<string | null>(null);
+  const [publicToken, setPublicToken] = useState<string | null>(null);
   const [apercu, setApercu] = useState(false);
   const [modeleLocal, setModeleLocal] = useState<ModeleRow | null>(null);
   const [pvClient, setPvClient] = useState("");
