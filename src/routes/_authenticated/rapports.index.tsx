@@ -18,6 +18,7 @@ import {
   type Typologie,
   type ChecklistMode,
   mesuresFromTypologie,
+  avecCouples,
 } from "@/lib/rapport-checklist";
 import {
   createRapport,
@@ -68,7 +69,7 @@ function RapportsPage() {
   const [prefill, setPrefill] = useState<Record<string, string>>({});
   const [prefillKey, setPrefillKey] = useState(0);
   const [checks, setChecks] = useState<Record<string, CheckState>>({});
-  const [mesures, setMesures] = useState<Record<string, string>>({});
+  const [mesures, setMesures] = useState<Record<string, string>>(() => avecCouples({}));
   const [photos, setPhotos] = useState<Partial<Record<PhotoKind, string>>>({});
   const [sigTech, setSigTech] = useState<string | null>(null);
   const [sigClient, setSigClient] = useState<string | null>(null);
@@ -154,7 +155,7 @@ function RapportsPage() {
           if (typeof d.mode === "string") setMode(d.mode as ChecklistMode);
           if (d.typologie) setTypologie(d.typologie as Typologie);
           if (d.checks) setChecks(d.checks as Record<string, CheckState>);
-          if (d.mesures) setMesures(d.mesures as Record<string, string>);
+          if (d.mesures) setMesures(avecCouples(d.mesures as Record<string, string>));
           if (d.photos) setPhotos(d.photos as Partial<Record<PhotoKind, string>>);
           if (typeof d.sigTech === "string") setSigTech(d.sigTech);
           if (typeof d.sigClient === "string") setSigClient(d.sigClient);
@@ -220,7 +221,7 @@ function RapportsPage() {
       });
       setPrefillKey((k) => k + 1);
       setLinked({ devis_id: d.devis_id ?? null, rendezvous_id: d.rendezvous_id ?? null });
-      if (d.longueur) setMesures((m) => ({ ...m, longueur: d.longueur!.replace(".", ",") }));
+      setMesures((m) => avecCouples(d.longueur ? { ...m, longueur: d.longueur.replace(".", ",") } : m));
       if (d.borne_puissance) {
         const p = d.borne_puissance.replace(".", ",").replace(/\s+/g, " ");
         setTypologie((t) => ({ ...t, puissance: t.puissance ?? p }));
