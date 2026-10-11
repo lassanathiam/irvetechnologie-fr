@@ -379,6 +379,38 @@ function RapportChantierPageInner() {
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email du donneur d'ordre" />
           </label>
 
+          {signe && (
+            <div className="neo-dashboard-panel space-y-3 rounded-lg border border-border p-3">
+              <h2 className="text-sm font-bold">Envoyer le PV signé au client</h2>
+              <label className="block text-sm">Email du client
+                <Input type="email" value={emailClient} onChange={(e) => setEmailClient(e.target.value)} placeholder="email du client" />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" disabled={!emailClient || sendClient.isPending} onClick={() => sendClient.mutate()}>
+                  {sendClient.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Envoyer par email
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const token = publicToken ?? (await save.mutateAsync()).public_token;
+                    const lien = `${window.location.origin}/rapport-donneur/${token}`;
+                    const msg = `Bonjour ${nomClient}, voici votre PV de réception signé : ${lien}\nIRVE Technologie`;
+                    const sms = smsLien(data.rdv.client_telephone, msg);
+                    if (!sms) {
+                      await navigator.clipboard?.writeText(lien).catch(() => {});
+                      toast.info("Pas de numéro mobile : lien copié, collez-le dans un SMS.");
+                      return;
+                    }
+                    if (!window.confirm(`Ouvrir un SMS vers ${data.rdv.client_telephone} avec le lien du PV signé ?`)) return;
+                    window.location.href = sms;
+                  }}
+                >
+                  <Send className="h-4 w-4" /> Envoyer par SMS
+                </Button>
+              </div>
+            </div>
+          )}
+
           <div className="sticky bottom-2 flex flex-wrap gap-2 rounded-lg bg-background/90 p-2 backdrop-blur">
             <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>
               {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Enregistrer
