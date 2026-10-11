@@ -115,8 +115,8 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
             if (target) target.placement = next;
             onChange(copy);
           }}>
-            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil/i.test(champ.label) ? (
-              <span className="absolute top-0 h-full w-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "50%" : "0%" }} />
+            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil|^ACCEPT|^RESERVE/i.test(champ.label) ? (
+              <span className="absolute top-0 h-full -translate-x-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "75%" : "25%", width: "min(50%, 3.2em)", minWidth: "2.4em" }} />
             ) : <RapportTexteCalibre valeur={value} multiligne={champ.type === "zone"} />}
           </Calque>
         );
