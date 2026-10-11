@@ -466,7 +466,11 @@ export const signerPvClient = createServerFn({ method: "POST" })
   )
   .handler(async ({ data }) => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    const { data: r } = await supabaseAdmin.from("rapport_remplis").select("id, signature_client, signature_technicien").eq("public_token", data.token).maybeSingle();
+    const { data: r } = await supabaseAdmin
+      .from("rapport_remplis")
+      .select("id, signature_client, signature_technicien, rendezvous_id, modele_id")
+      .eq("public_token", data.token)
+      .maybeSingle();
     if (!r) throw new Error("PV introuvable.");
     if (r.signature_client) throw new Error("Ce PV est déjà signé.");
     const { error } = await supabaseAdmin
@@ -474,5 +478,18 @@ export const signerPvClient = createServerFn({ method: "POST" })
       .update({ signature_client: data.signature, signataire_nom: data.nom, signed_at: r.signature_technicien ? new Date().toISOString() : null })
       .eq("id", r.id);
     if (error) throw new Error("Signature impossible.");
+    const [{ data: rdv }, { data: modele }] = await Promise.all([
+      r.rendezvous_id
+        ? supabaseAdmin.from("rendezvous").select("client_nom").eq("id", r.rendezvous_id).maybeSingle()
+        : Promise.resolve({ data: null }),
+      supabaseAdmin.from("rapport_modeles").select("nom").eq("id", r.modele_id).maybeSingle(),
+    ]);
+    const { creerNotification } = await import("@/lib/notifications.server");
+    await creerNotification(supabaseAdmin, {
+      type: "pv_signe",
+      titre: `PV signé par ${data.nom}`,
+      message: `${modele?.nom ?? "PV"} — ${rdv?.client_nom ?? "client"}. Le document signé est prêt à transmettre.`,
+      lien: "/signatures",
+    });
     return { ok: true as const };
   });

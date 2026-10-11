@@ -12,6 +12,8 @@ export const NOTIF_LABELS: Record<string, string> = {
   chantier_termine: "Chantier terminé",
   photos_telechargees: "Photos téléchargées",
   attachement_reponse: "Réponse à un attachement",
+  document_signe: "Document signé",
+  pv_signe: "PV signé par le client",
   rappel_rdv: "Rappel de rendez-vous",
 };
 
