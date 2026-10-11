@@ -18,7 +18,7 @@ async function chargerPdf(dataUrl: string): Promise<PdfDoc> {
 
 function valeurAffichee(v: string | boolean | null | undefined, type: string) {
   if (type === "case") return v === true || v === "true" ? "✓" : "";
-  if (type === "ouinon") return v === "oui" ? "Oui" : v === "non" ? "Non" : v === "na" ? "N/A" : "";
+  if (type === "ouinon") return v === "oui" ? "OUI" : v === "non" ? "NON" : v === "na" ? "N/A" : "";
   return v == null ? "" : String(v);
 }
 
@@ -107,17 +107,23 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
         const placement = champ.placement;
         if (!placement) return null;
         const value = valeurAffichee(valeurs[champ.id], champ.type);
+        // Les anciens modèles ciblent les choix imprimés : réserver une zone
+        // de réponse distincte à leur droite sans modifier le document original.
+        const reponseX = placement.w > 0.4
+          ? 0.82
+          : Math.min(0.82, Math.max(0.60, placement.x + placement.w + 0.025));
+        const affichage = champ.type === "ouinon" && !edit
+          ? { ...placement, x: reponseX, w: 0.93 - reponseX }
+          : placement;
         return (
-          <Calque key={champ.id} placement={placement} edit={edit} onMove={(next) => {
+          <Calque key={champ.id} placement={affichage} edit={edit} onMove={(next) => {
             if (!onChange) return;
             const copy = { ...structure, sections: structure.sections.map((s, i) => i !== sectionIndex ? s : { ...s, champs: s.champs.map((c, j) => j !== champIndex ? c : { ...c }) }) };
             const target = copy.sections[sectionIndex]?.champs[champIndex];
             if (target) target.placement = next;
             onChange(copy);
           }}>
-            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil|^ACCEPT|^RESERVE/i.test(champ.label) ? (
-              <span className="absolute top-0 h-full -translate-x-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "75%" : "25%", width: "min(50%, 3.2em)", minWidth: "2.4em" }} />
-            ) : <RapportTexteCalibre valeur={value} multiligne={champ.type === "zone"} />}
+            {edit ? <RapportTexteCalibre valeur={champ.label} /> : <RapportTexteCalibre valeur={value} multiligne={champ.type === "zone"} reponse={champ.type === "ouinon"} />}
           </Calque>
         );
       })}
