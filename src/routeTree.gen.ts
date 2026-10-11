@@ -51,6 +51,7 @@ import { Route as AuthenticatedRapportsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedRapportsIdRouteImport } from './routes/_authenticated/rapports.$id'
 import { Route as AuthenticatedRapportsModelesRouteImport } from './routes/_authenticated/rapports.modeles'
 import { Route as AuthenticatedRealisationsIndexRouteImport } from './routes/_authenticated/realisations.index'
+import { Route as AuthenticatedSignaturesIndexRouteImport } from './routes/_authenticated/signatures.index'
 import { Route as AuthenticatedStockIndexRouteImport } from './routes/_authenticated/stock.index'
 import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/public/borne-photo.$'
 import { Route as ApiPublicHooksRappelsRdvRouteImport } from './routes/api/public/hooks/rappels-rdv'
@@ -288,6 +289,12 @@ const AuthenticatedRealisationsIndexRoute =
     path: '/realisations/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSignaturesIndexRoute =
+  AuthenticatedSignaturesIndexRouteImport.update({
+    id: '/signatures/',
+    path: '/signatures/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedStockIndexRoute = AuthenticatedStockIndexRouteImport.update({
   id: '/stock/',
   path: '/stock/',
@@ -374,6 +381,7 @@ export interface FileRoutesByFullPath {
   '/planning/': typeof AuthenticatedPlanningIndexRoute
   '/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/signatures/': typeof AuthenticatedSignaturesIndexRoute
   '/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
@@ -425,6 +433,7 @@ export interface FileRoutesByTo {
   '/planning': typeof AuthenticatedPlanningIndexRoute
   '/rapports': typeof AuthenticatedRapportsIndexRoute
   '/realisations': typeof AuthenticatedRealisationsIndexRoute
+  '/signatures': typeof AuthenticatedSignaturesIndexRoute
   '/stock': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
@@ -478,6 +487,7 @@ export interface FileRoutesById {
   '/_authenticated/planning/': typeof AuthenticatedPlanningIndexRoute
   '/_authenticated/rapports/': typeof AuthenticatedRapportsIndexRoute
   '/_authenticated/realisations/': typeof AuthenticatedRealisationsIndexRoute
+  '/_authenticated/signatures/': typeof AuthenticatedSignaturesIndexRoute
   '/_authenticated/stock/': typeof AuthenticatedStockIndexRoute
   '/api/public/borne-photo/$': typeof ApiPublicBornePhotoSplatRoute
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
@@ -531,6 +541,7 @@ export interface FileRouteTypes {
     | '/planning/'
     | '/rapports/'
     | '/realisations/'
+    | '/signatures/'
     | '/stock/'
     | '/api/public/borne-photo/$'
     | '/api/public/hooks/rappels-rdv'
@@ -582,6 +593,7 @@ export interface FileRouteTypes {
     | '/planning'
     | '/rapports'
     | '/realisations'
+    | '/signatures'
     | '/stock'
     | '/api/public/borne-photo/$'
     | '/api/public/hooks/rappels-rdv'
@@ -634,6 +646,7 @@ export interface FileRouteTypes {
     | '/_authenticated/planning/'
     | '/_authenticated/rapports/'
     | '/_authenticated/realisations/'
+    | '/_authenticated/signatures/'
     | '/_authenticated/stock/'
     | '/api/public/borne-photo/$'
     | '/api/public/hooks/rappels-rdv'
@@ -968,6 +981,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRealisationsIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/signatures/': {
+      id: '/_authenticated/signatures/'
+      path: '/signatures'
+      fullPath: '/signatures/'
+      preLoaderRoute: typeof AuthenticatedSignaturesIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/stock/': {
       id: '/_authenticated/stock/'
       path: '/stock'
@@ -1052,6 +1072,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedPlanningIndexRoute: typeof AuthenticatedPlanningIndexRoute
   AuthenticatedRapportsIndexRoute: typeof AuthenticatedRapportsIndexRoute
   AuthenticatedRealisationsIndexRoute: typeof AuthenticatedRealisationsIndexRoute
+  AuthenticatedSignaturesIndexRoute: typeof AuthenticatedSignaturesIndexRoute
   AuthenticatedStockIndexRoute: typeof AuthenticatedStockIndexRoute
 }
 
@@ -1082,6 +1103,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedPlanningIndexRoute: AuthenticatedPlanningIndexRoute,
   AuthenticatedRapportsIndexRoute: AuthenticatedRapportsIndexRoute,
   AuthenticatedRealisationsIndexRoute: AuthenticatedRealisationsIndexRoute,
+  AuthenticatedSignaturesIndexRoute: AuthenticatedSignaturesIndexRoute,
   AuthenticatedStockIndexRoute: AuthenticatedStockIndexRoute,
 }
 

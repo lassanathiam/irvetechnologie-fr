@@ -23,6 +23,7 @@ import {
   Menu,
   Receipt,
   Sparkles,
+  PenLine,
   ShieldCheck,
   X,
   Zap,
@@ -61,6 +62,7 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
       { to: "/devis", label: "Devis", icon: FileText },
       { to: "/facturation", label: "À facturer", icon: Euro },
       { to: "/factures", label: "Mes factures", icon: Receipt },
+      { to: "/signatures", label: "Signatures", icon: PenLine },
     ],
   },
   {
