@@ -58,7 +58,7 @@ export function lignesImprimees(zone: HTMLElement): number[] {
     for (let x = 0; x < w; x++) {
       const i = (y * w + x) * 4;
       const lum = data[i] * 0.3 + data[i + 1] * 0.59 + data[i + 2] * 0.11;
-      if (data[i + 3] > 100 && lum < 200) sombres++;
+      if (data[i + 3] > 100 && lum < 220) sombres++;
     }
     const estLigne = sombres >= w * 0.5;
     if (estLigne && !dansLigne) lignes.push((yDebut + y) / sy - (r.top - page.top));
