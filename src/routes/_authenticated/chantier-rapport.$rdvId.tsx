@@ -137,6 +137,7 @@ function RapportChantierPageInner() {
     const r = data.rempli;
     if (r) {
       setRempliId(r.id);
+      setPublicToken(r.public_token ?? null);
       setValeurs((r.valeurs as Record<string, Val>) ?? {});
       setSigC(r.signature_client);
       setSigT(r.signature_technicien);
