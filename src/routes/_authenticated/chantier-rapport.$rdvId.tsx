@@ -206,6 +206,14 @@ function RapportChantierPageInner() {
     },
     onError: (e: Error) => toast.error(e.message),
   });
+  const sendClient = useMutation({
+    mutationFn: async () => {
+      const r = await save.mutateAsync();
+      return sendClientFn({ data: { id: r.id, destinataire: emailClient } });
+    },
+    onSuccess: () => toast.success("PV envoyé au client"),
+    onError: (e: Error) => toast.error(e.message),
+  });
 
   if (isLoading) return <Loader2 className="m-6 h-6 w-6 animate-spin" />;
   if (error || !data) return <p className="p-6 text-destructive">{(error as Error)?.message ?? "Chantier introuvable."}</p>;
