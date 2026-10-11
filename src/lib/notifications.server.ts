@@ -15,6 +15,7 @@ export type NotificationType =
   | "attachement_reponse"
   | "attachement_proposition"
   | "document_signe"
+  | "pv_signe"
   | "rappel_rdv";
 
 export type NouvelleNotification = {
