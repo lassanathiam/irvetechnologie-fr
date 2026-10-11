@@ -73,6 +73,7 @@ function RapportChantierPageInner() {
   const [nomClient, setNomClient] = useState("");
   const [technicien, setTechnicien] = useState("");
   const [email, setEmail] = useState("");
+  const [emailClient, setEmailClient] = useState("");
   const [rempliId, setRempliId] = useState<string | null>(null);
   const [apercu, setApercu] = useState(false);
   const [modeleLocal, setModeleLocal] = useState<ModeleRow | null>(null);
