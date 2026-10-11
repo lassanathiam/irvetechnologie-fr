@@ -16,6 +16,7 @@ import {
   analyserFeuilleRapport,
   creerModeleJetable,
   enregistrerRapportRempli,
+  envoyerPvAuClient,
   envoyerRapportRempli,
   getRapportChantier,
 } from "@/lib/rapport-modeles.functions";
@@ -60,6 +61,7 @@ function RapportChantierPageInner() {
   const getFn = useServerFn(getRapportChantier);
   const saveFn = useServerFn(enregistrerRapportRempli);
   const sendFn = useEnvoiConfirme(envoyerRapportRempli, "Confirmer l'envoi du rapport de travaux ?");
+  const sendClientFn = useEnvoiConfirme(envoyerPvAuClient, "Confirmer l'envoi du PV signé au client ?");
   const { data, isLoading, error } = useQuery({
     queryKey: ["rapport-chantier", rdvId],
     queryFn: () => getFn({ data: { rendezvous_id: rdvId } }),
@@ -72,7 +74,9 @@ function RapportChantierPageInner() {
   const [nomClient, setNomClient] = useState("");
   const [technicien, setTechnicien] = useState("");
   const [email, setEmail] = useState("");
+  const [emailClient, setEmailClient] = useState("");
   const [rempliId, setRempliId] = useState<string | null>(null);
+  const [publicToken, setPublicToken] = useState<string | null>(null);
   const [apercu, setApercu] = useState(false);
   const [modeleLocal, setModeleLocal] = useState<ModeleRow | null>(null);
   const [pvClient, setPvClient] = useState("");
@@ -129,9 +133,11 @@ function RapportChantierPageInner() {
     const m = data.modele;
     setModeleId(m?.id ?? null);
     setEmail(data.rempli?.sent_to || m?.email_destinataire || data.email_donneur || "");
+    setEmailClient(data.rdv.client_email ?? "");
     const r = data.rempli;
     if (r) {
       setRempliId(r.id);
+      setPublicToken(r.public_token ?? null);
       setValeurs((r.valeurs as Record<string, Val>) ?? {});
       setSigC(r.signature_client);
       setSigT(r.signature_technicien);
@@ -186,6 +192,7 @@ function RapportChantierPageInner() {
       }) : Promise.reject(new Error("Choisissez un modèle de rapport.")),
     onSuccess: (r) => {
       setRempliId(r.id);
+      setPublicToken(r.public_token ?? null);
       qc.invalidateQueries({ queryKey: ["rapport-chantier", rdvId] });
       toast.success(sigC && sigT ? "Rapport signé et enregistré" : "Brouillon enregistré");
     },
@@ -200,6 +207,14 @@ function RapportChantierPageInner() {
       toast.success("Rapport envoyé avec les photos");
       qc.invalidateQueries({ queryKey: ["rapport-chantier", rdvId] });
     },
+    onError: (e: Error) => toast.error(e.message),
+  });
+  const sendClient = useMutation({
+    mutationFn: async () => {
+      const r = await save.mutateAsync();
+      return sendClientFn({ data: { id: r.id, destinataire: emailClient } });
+    },
+    onSuccess: () => toast.success("PV envoyé au client"),
     onError: (e: Error) => toast.error(e.message),
   });
 
@@ -363,6 +378,38 @@ function RapportChantierPageInner() {
           <label className="block text-sm">Envoyer à
             <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email du donneur d'ordre" />
           </label>
+
+          {signe && (
+            <div className="neo-dashboard-panel space-y-3 rounded-lg border border-border p-3">
+              <h2 className="text-sm font-bold">Envoyer le PV signé au client</h2>
+              <label className="block text-sm">Email du client
+                <Input type="email" value={emailClient} onChange={(e) => setEmailClient(e.target.value)} placeholder="email du client" />
+              </label>
+              <div className="flex flex-wrap gap-2">
+                <Button variant="outline" disabled={!emailClient || sendClient.isPending} onClick={() => sendClient.mutate()}>
+                  {sendClient.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Envoyer par email
+                </Button>
+                <Button
+                  variant="outline"
+                  onClick={async () => {
+                    const token = publicToken ?? (await save.mutateAsync()).public_token;
+                    const lien = `${window.location.origin}/rapport-donneur/${token}`;
+                    const msg = `Bonjour ${nomClient}, voici votre PV de réception signé : ${lien}\nIRVE Technologie`;
+                    const sms = smsLien(data.rdv.client_telephone, msg);
+                    if (!sms) {
+                      await navigator.clipboard?.writeText(lien).catch(() => {});
+                      toast.info("Pas de numéro mobile : lien copié, collez-le dans un SMS.");
+                      return;
+                    }
+                    if (!window.confirm(`Ouvrir un SMS vers ${data.rdv.client_telephone} avec le lien du PV signé ?`)) return;
+                    window.location.href = sms;
+                  }}
+                >
+                  <Send className="h-4 w-4" /> Envoyer par SMS
+                </Button>
+              </div>
+            </div>
+          )}
 
           <div className="sticky bottom-2 flex flex-wrap gap-2 rounded-lg bg-background/90 p-2 backdrop-blur">
             <Button variant="outline" onClick={() => save.mutate()} disabled={save.isPending}>
