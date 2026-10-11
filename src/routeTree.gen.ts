@@ -27,6 +27,7 @@ import { Route as FactureClientTokenRouteImport } from './routes/facture-client.
 import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as RapportDonneurTokenRouteImport } from './routes/rapport-donneur.$token'
 import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
+import { Route as SignerPvTokenRouteImport } from './routes/signer-pv.$token'
 import { Route as SignerTokenRouteImport } from './routes/signer.$token'
 import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
@@ -147,6 +148,11 @@ const RapportDonneurTokenRoute = RapportDonneurTokenRouteImport.update({
 const RdvTokenRoute = RdvTokenRouteImport.update({
   id: '/rdv/$token',
   path: '/rdv/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignerPvTokenRoute = SignerPvTokenRouteImport.update({
+  id: '/signer-pv/$token',
+  path: '/signer-pv/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SignerTokenRoute = SignerTokenRouteImport.update({
@@ -344,6 +350,7 @@ export interface FileRoutesByFullPath {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
+  '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
@@ -394,6 +401,7 @@ export interface FileRoutesByTo {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
+  '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
@@ -446,6 +454,7 @@ export interface FileRoutesById {
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
+  '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
@@ -498,6 +507,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
+    | '/signer-pv/$token'
     | '/signer/$token'
     | '/attachements/$id'
     | '/attachements/bordereau'
@@ -548,6 +558,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
+    | '/signer-pv/$token'
     | '/signer/$token'
     | '/attachements/$id'
     | '/attachements/bordereau'
@@ -599,6 +610,7 @@ export interface FileRouteTypes {
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
+    | '/signer-pv/$token'
     | '/signer/$token'
     | '/_authenticated/attachements/$id'
     | '/_authenticated/attachements/bordereau'
@@ -649,6 +661,7 @@ export interface RootRouteChildren {
   PartenaireTokenRoute: typeof PartenaireTokenRoute
   RapportDonneurTokenRoute: typeof RapportDonneurTokenRoute
   RdvTokenRoute: typeof RdvTokenRoute
+  SignerPvTokenRoute: typeof SignerPvTokenRoute
   SignerTokenRoute: typeof SignerTokenRoute
   ApiPublicBornePhotoSplatRoute: typeof ApiPublicBornePhotoSplatRoute
   ApiPublicHooksRappelsRdvRoute: typeof ApiPublicHooksRappelsRdvRoute
@@ -785,6 +798,13 @@ declare module '@tanstack/react-router' {
       path: '/rdv/$token'
       fullPath: '/rdv/$token'
       preLoaderRoute: typeof RdvTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signer-pv/$token': {
+      id: '/signer-pv/$token'
+      path: '/signer-pv/$token'
+      fullPath: '/signer-pv/$token'
+      preLoaderRoute: typeof SignerPvTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/signer/$token': {
@@ -1085,6 +1105,7 @@ const rootRouteChildren: RootRouteChildren = {
   PartenaireTokenRoute: PartenaireTokenRoute,
   RapportDonneurTokenRoute: RapportDonneurTokenRoute,
   RdvTokenRoute: RdvTokenRoute,
+  SignerPvTokenRoute: SignerPvTokenRoute,
   SignerTokenRoute: SignerTokenRoute,
   ApiPublicBornePhotoSplatRoute: ApiPublicBornePhotoSplatRoute,
   ApiPublicHooksRappelsRdvRoute: ApiPublicHooksRappelsRdvRoute,
