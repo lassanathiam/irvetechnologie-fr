@@ -107,3 +107,20 @@ export function modelePourReseau<T extends { reseaux?: string[] | null; actif: b
   if (pv?.kind !== "pv") return null;
   return modeles.find((m) => m.actif && (m.reseaux ?? []).includes(pv.cle)) ?? null;
 }
+
+/** Réponses « travaux conformes » cochées d'office (le technicien ajoute seulement constats et commentaires). */
+export function valeursConformite(structure: ModeleStructure, dateFr: string): Record<string, string | boolean> {
+  const ids = new Set(structure.sections.flatMap((s) => s.champs.map((c) => c.id)));
+  const v: Record<string, string | boolean> = {};
+  const put = (id: string, val: string | boolean) => { if (ids.has(id)) v[id] = val; };
+  // 50FIVE : contrôles OK
+  for (const id of ["tension_conformite", "bornes_connectees_conformite", "charge_t2_conformite", "charge_e_conformite", "resistance_terre_conformite", "photos_bornes_conformite"]) put(id, "oui");
+  // Time2plug : réception sans réserve
+  put("reception_sans_reserve", true);
+  put("date_effet_sans_reserve", dateFr);
+  // ENSIO : réception finale acceptée, sans réserve
+  put("reception_finale", true);
+  put("prestation_acceptee", "oui");
+  put("reserves", "non");
+  return v;
+}

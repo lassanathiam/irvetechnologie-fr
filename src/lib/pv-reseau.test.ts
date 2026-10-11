@@ -9,3 +9,12 @@ describe("PV selon le client du chantier", () => {
   it("BUMP → Kizéo", () => expect(pvPourReseau("BUMP")).toEqual({ kind: "crm", outil: "Kizéo" }));
   it("DKV → Docusign", () => expect(pvPourReseau("DKV")).toEqual({ kind: "crm", outil: "Docusign" }));
 });
+
+import { valeursConformite } from "./rapport-modeles";
+describe("PV pré-cochés conformes", () => {
+  const st = (ids: string[]) => ({ titre: "", sections: [{ titre: "", champs: ids.map((id) => ({ id, label: id, type: "texte" as const })) }] });
+  it("ENSIO : finale, acceptée, sans réserve", () =>
+    expect(valeursConformite(st(["reception_finale", "prestation_acceptee", "reserves"]), "01/10/2026")).toEqual({ reception_finale: true, prestation_acceptee: "oui", reserves: "non" }));
+  it("Time2plug : sans réserve à la date", () =>
+    expect(valeursConformite(st(["reception_sans_reserve", "date_effet_sans_reserve"]), "01/10/2026")).toEqual({ reception_sans_reserve: true, date_effet_sans_reserve: "01/10/2026" }));
+});
