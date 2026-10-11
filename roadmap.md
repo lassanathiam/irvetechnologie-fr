@@ -70,3 +70,4 @@
 - [x] Recentrer la carte, moderniser les commandes de géolocalisation et fiabiliser l’affectation depuis un repère
 - [x] Harmoniser l’axe, les marges et les largeurs de tout le site sur téléphone sans modifier les parcours
 - [x] Conserver le PV ENSIO importé tel quel et superposer uniquement les informations et signatures
+- [ ] Corriger et vérifier le calibrage des valeurs et signatures sur le PV réel d’EON.
