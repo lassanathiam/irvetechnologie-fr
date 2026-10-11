@@ -47,7 +47,9 @@ export function lignesImprimees(zone: HTMLElement): number[] {
   if (w < 4 || h < 2) return [];
   let data: Uint8ClampedArray;
   try {
-    data = source.getContext("2d", { willReadFrequently: true })!.getImageData(x0, yDebut, w, h).data;
+    const contexte = source.getContext("2d", { willReadFrequently: true });
+    if (!contexte) return [];
+    data = contexte.getImageData(x0, yDebut, w, h).data;
   } catch {
     return [];
   }
@@ -71,7 +73,7 @@ export function lignesImprimees(zone: HTMLElement): number[] {
  * Pose la valeur sur sa ligne imprimée, juste au-dessus du souligné,
  * à l'échelle de la feuille (indépendant de la largeur de l'écran).
  */
-export function RapportTexteCalibre({ valeur, multiligne = false }: { valeur: string; multiligne?: boolean }) {
+export function RapportTexteCalibre({ valeur, multiligne = false, reponse = false }: { valeur: string; multiligne?: boolean; reponse?: boolean }) {
   const ref = useRef<HTMLSpanElement>(null);
   useEffect(() => {
     const span = ref.current;
@@ -80,7 +82,8 @@ export function RapportTexteCalibre({ valeur, multiligne = false }: { valeur: st
     const ajuster = () => {
       const feuille = zone.closest("[data-report-page]");
       const largeur = feuille?.getBoundingClientRect().width ?? 794;
-      const base = Math.min(13, (largeur * 13) / 794);
+      const police = reponse ? 16 : 13;
+      const base = Math.min(police, (largeur * police) / 794);
       const hauteur = zone.clientHeight;
       const trouvees = valeur ? lignesImprimees(zone) : [];
       // Ligne simple : le souligné est dans la moitié basse de la zone ou juste dessous
@@ -149,7 +152,7 @@ export function RapportTexteCalibre({ valeur, multiligne = false }: { valeur: st
       canvas?.removeEventListener("rendu", ajuster);
       img?.removeEventListener("load", ajuster);
     };
-  }, [valeur, multiligne]);
+  }, [valeur, multiligne, reponse]);
   return (
     <span
       ref={ref}
