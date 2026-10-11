@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Loader2 } from "lucide-react";
 import type { ModeleStructure, PlacementRapport } from "@/lib/rapport-modeles";
+import { RapportTexteCalibre } from "./RapportTexteCalibre";
 
 type Valeurs = Record<string, string | boolean | null>;
 type PdfDoc = { numPages: number; getPage: (n: number) => Promise<any> };
@@ -54,7 +55,7 @@ function Calque({ placement, children, edit, onMove }: { placement: PlacementRap
   const drag = useRef<{ dx: number; dy: number } | null>(null);
   return (
     <div
-      className={`absolute flex touch-none items-center overflow-hidden px-1 text-[clamp(7px,1.45vw,13px)] font-semibold text-slate-950 ${edit ? "cursor-move border-2 border-dashed border-blue-600 bg-blue-50/85" : "print:border-0"}`}
+      className={`absolute flex touch-none items-center overflow-hidden font-semibold text-foreground ${edit ? "cursor-move border-2 border-dashed border-primary bg-card/85" : "print:border-0"}`}
       style={{ left: `${placement.x * 100}%`, top: `${placement.y * 100}%`, width: `${placement.w * 100}%`, height: `${placement.h * 100}%` }}
       onPointerDown={(event) => {
         if (!edit || !onMove) return;
@@ -111,7 +112,9 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
             if (target) target.placement = next;
             onChange(copy);
           }}>
-            {edit ? champ.label : value}
+            {edit ? <RapportTexteCalibre valeur={champ.label} /> : champ.type === "ouinon" && value && /OK\s*\/\s*NOK|installé|génie civil/i.test(champ.label) ? (
+              <span className="absolute top-0 h-full w-1/2 rounded-full border border-current" style={{ left: valeurs[champ.id] === "non" ? "50%" : "0%" }} />
+            ) : <RapportTexteCalibre valeur={value} multiligne={champ.type === "zone"} />}
           </Calque>
         );
       })}
@@ -135,12 +138,12 @@ export function RapportOriginalDoc({ structure, valeurs, signatureClient, signat
 
   if (original.type === "image") {
     return (
-      <div data-report-page={0} className="relative mx-auto w-full max-w-[210mm] overflow-hidden bg-white">
+      <div data-report-page={0} className="rapport-original relative mx-auto w-full max-w-[210mm] overflow-hidden">
         <img src={original.data_url} alt="Document original" className="block h-auto w-full" />
         {overlay(0)}
       </div>
     );
   }
   if (!pdf) return <div className="flex min-h-40 items-center justify-center bg-white text-slate-600"><Loader2 className="mr-2 h-5 w-5 animate-spin" /> Chargement du document original…</div>;
-  return <div className="mx-auto w-full max-w-[210mm] space-y-4 print:space-y-0">{Array.from({ length: pdf.numPages }, (_, page) => <PagePdf key={page} pdf={pdf} index={page}>{overlay(page)}</PagePdf>)}</div>;
+  return <div className="rapport-original mx-auto w-full max-w-[210mm] space-y-4 print:space-y-0">{Array.from({ length: pdf.numPages }, (_, page) => <PagePdf key={page} pdf={pdf} index={page}>{overlay(page)}</PagePdf>)}</div>;
 }

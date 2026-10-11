@@ -964,3 +964,12 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
   cursor: pointer;
 }
 .rdv-map-assignment-actions button.is-active { background: var(--primary); color: var(--primary-foreground); }
+
+.rapport-original {
+  --rapport-paper: #ffffff;
+  --rapport-ink: #101820;
+  color: var(--rapport-ink);
+  background: var(--rapport-paper);
+}
+.rapport-original [data-report-page] { background: var(--rapport-paper); }
+.rapport-original [data-report-page] > .absolute { color: var(--rapport-ink); }
