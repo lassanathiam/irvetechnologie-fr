@@ -423,7 +423,10 @@ export const envoyerAttachementsGroupes = createServerFn({ method: "POST" })
       templateData,
     });
     if (result.sent) {
-      await context.supabase.from("attachements_travaux").update({ sent_at: new Date().toISOString(), statut: "envoye" }).in("id", liste.map((a: any) => a.id));
+      const ids = liste.map((a: any) => a.id); const now = new Date().toISOString();
+      await context.supabase.from("attachements_travaux").update({ sent_at: now }).in("id", ids);
+      // Ne jamais rétrograder un attachement accepté ou facturé lors d'un renvoi groupé.
+      await context.supabase.from("attachements_travaux").update({ statut: "envoye" }).in("id", ids).in("statut", ["brouillon", "envoye", "refuse"]);
     }
     return { ...result, nb: templateData.lignes.length };
   });
