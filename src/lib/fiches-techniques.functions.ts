@@ -168,3 +168,15 @@ export const listFichesTechniques = createServerFn({ method: "POST" })
     const { data: signed } = await context.supabase.storage.from("documents").createSignedUrls(list.map((r) => r.path), 3600);
     return list.map((r, i) => ({ id: r.id, nom: r.nom, created_at: r.created_at, url: signed?.[i]?.signedUrl ?? null }));
   });
+
+/** Lien frais (10 min) pour ouvrir une fiche technique. */
+export const lienFicheTechnique = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((i: unknown) => z.object({ id: z.string().uuid() }).parse(i))
+  .handler(async ({ data, context }) => {
+    const { data: f, error } = await context.supabase.from("rendezvous_fiches").select("path, nom").eq("id", data.id).maybeSingle();
+    if (error || !f) throw new Error("Fiche introuvable.");
+    const { data: s, error: e2 } = await context.supabase.storage.from("documents").createSignedUrl(f.path, 600);
+    if (e2 || !s?.signedUrl) throw new Error("Ouverture de la fiche impossible.");
+    return { url: s.signedUrl };
+  });
