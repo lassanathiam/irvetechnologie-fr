@@ -240,6 +240,16 @@ const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
 const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
 
 /** Département à partir du code postal (« 44330 Le Pallet » → « 44 »). */
+/** Checklist de retrait du matériel (dépôt / fournisseur), cochée par le technicien. */
+const CHECKLIST_MATERIEL: [string, string][] = [
+  ["borne", "Borne complète (borne + support)"],
+  ["badges", "Badge(s) RFID / carte"],
+  ["protections", "Protections (disjoncteur, différentiel)"],
+  ["parafoudre", "Parafoudre / coffret"],
+  ["cable", "Câble"],
+  ["accessoires", "Visserie, notice, accessoires"],
+];
+
 function departement(cpVille?: string | null): string | null {
   const m = (cpVille ?? "").match(/\b(\d{5})\b/);
   if (!m) return null;
@@ -2007,6 +2017,36 @@ function PlanningPage() {
           </div>
           </div>
 
+          {vueArchives && (
+            <div className="space-y-2">
+              <input
+                type="search"
+                value={rechercheArchives}
+                onChange={(e) => setRechercheArchives(e.target.value)}
+                placeholder="Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"
+                className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                {[...new Set(toutes.filter((r) => ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
+                  .sort((a, b) => a.localeCompare(b, "fr"))
+                  .map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setRechercheArchives((q) => (q.toLowerCase() === n.toLowerCase() ? "" : n))}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${rechercheArchives.toLowerCase() === n.toLowerCase() ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                {rechercheArchives && (
+                  <button type="button" onClick={() => setRechercheArchives("")} className="rounded-full border border-border px-3 py-1.5 text-xs">
+                    Effacer ({rows.length} trouvé{rows.length > 1 ? "s" : ""})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
@@ -2035,7 +2075,7 @@ function PlanningPage() {
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
                      const dossierOuvert = dossier === r.id;
-                     const toutOuvert = !!ouverts[r.id];
+                     const toutOuvert = ouverts[r.id] ?? vueArchives;
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
