@@ -1495,6 +1495,7 @@ export type Database = {
           chantier_valide: boolean
           chantier_valide_at: string | null
           chantier_valide_par: string | null
+          checklist_materiel: Json
           client_email: string | null
           client_nom: string
           client_telephone: string | null
@@ -1570,6 +1571,7 @@ export type Database = {
           chantier_valide?: boolean
           chantier_valide_at?: string | null
           chantier_valide_par?: string | null
+          checklist_materiel?: Json
           client_email?: string | null
           client_nom: string
           client_telephone?: string | null
@@ -1645,6 +1647,7 @@ export type Database = {
           chantier_valide?: boolean
           chantier_valide_at?: string | null
           chantier_valide_par?: string | null
+          checklist_materiel?: Json
           client_email?: string | null
           client_nom?: string
           client_telephone?: string | null

@@ -240,6 +240,16 @@ const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
 const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
 
 /** Département à partir du code postal (« 44330 Le Pallet » → « 44 »). */
+/** Checklist de retrait du matériel (dépôt / fournisseur), cochée par le technicien. */
+const CHECKLIST_MATERIEL: [string, string][] = [
+  ["borne", "Borne complète (borne + support)"],
+  ["badges", "Badge(s) RFID / carte"],
+  ["protections", "Protections (disjoncteur, différentiel)"],
+  ["parafoudre", "Parafoudre / coffret"],
+  ["cable", "Câble"],
+  ["accessoires", "Visserie, notice, accessoires"],
+];
+
 function departement(cpVille?: string | null): string | null {
   const m = (cpVille ?? "").match(/\b(\d{5})\b/);
   if (!m) return null;
@@ -404,7 +414,7 @@ function PlanningPage() {
     onSuccess: refresh,
   });
   const majOptions = useMutation({
-    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null }) =>
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean> }) =>
       majOptionsChantier({ data: p }),
     onSuccess: refresh,
     onError: (e: unknown) =>
@@ -602,13 +612,22 @@ function PlanningPage() {
   const nbArchives = toutes.filter((r) => ongletDe(r) === "clotures").length;
   const nbAnnules = toutes.filter((r) => ongletDe(r) === "annules").length;
   const nbEnCours = toutes.length - nbArchives - nbAnnules;
+  const [rechercheArchives, setRechercheArchives] = useState("");
   const rows = useMemo(
-    () =>
-      toutes
+    () => {
+      const q = rechercheArchives.trim().toLowerCase();
+      return toutes
         .filter((r) => ongletDe(r) === vueListe)
-        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
+        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut)
+        .filter((r) => {
+          if (vueListe !== "clotures" || !q) return true;
+          const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
+            .filter(Boolean).join(" ").toLowerCase();
+          return q.split(/\s+/).every((m) => (/^\d{2}$/.test(m) ? departement(r.cp_ville) === m : texte.includes(m)));
+        });
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.data, vueListe, filtreStatut],
+    [list.data, vueListe, filtreStatut, rechercheArchives],
   );
   /** Chantiers en cours : toujours remontés en tête de page. */
   const enCours = useMemo(
@@ -1183,6 +1202,35 @@ function PlanningPage() {
                     </div>
                   );
                 })()}
+
+                {(() => {
+                  const coche = (missionTerrain.checklist_materiel ?? {}) as Record<string, boolean>;
+                  const faits = CHECKLIST_MATERIEL.filter(([k]) => coche[k]).length;
+                  return (
+                    <div className="mb-5 rounded-xl border border-border bg-muted/30 p-4" aria-label="Matériel récupéré">
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        Matériel récupéré — {faits}/{CHECKLIST_MATERIEL.length}
+                      </p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {CHECKLIST_MATERIEL.map(([k, label]) => (
+                          <button
+                            key={k}
+                            type="button"
+                            disabled={majOptions.isPending}
+                            onClick={() => majOptions.mutate({ id: missionTerrain.id, checklist_materiel: { ...coche, [k]: !coche[k] } })}
+                            className={`flex min-h-[48px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-bold ${
+                              coche[k] ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"
+                            }`}
+                          >
+                            <span className="text-lg">{coche[k] ? "☑" : "☐"}</span>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
 
                 {voisinsMission.length > 0 && (
                   <div className="mb-5 rounded-xl border border-emerald-400/60 bg-emerald-50 p-4 dark:bg-emerald-500/10" aria-label="Chantiers proches">
@@ -1969,6 +2017,36 @@ function PlanningPage() {
           </div>
           </div>
 
+          {vueArchives && (
+            <div className="space-y-2">
+              <input
+                type="search"
+                value={rechercheArchives}
+                onChange={(e) => setRechercheArchives(e.target.value)}
+                placeholder="Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"
+                className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm"
+              />
+              <div className="flex flex-wrap gap-2">
+                {[...new Set(toutes.filter((r) => ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
+                  .sort((a, b) => a.localeCompare(b, "fr"))
+                  .map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setRechercheArchives((q) => (q.toLowerCase() === n.toLowerCase() ? "" : n))}
+                      className={`rounded-full border px-3 py-1.5 text-xs font-semibold ${rechercheArchives.toLowerCase() === n.toLowerCase() ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground"}`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                {rechercheArchives && (
+                  <button type="button" onClick={() => setRechercheArchives("")} className="rounded-full border border-border px-3 py-1.5 text-xs">
+                    Effacer ({rows.length} trouvé{rows.length > 1 ? "s" : ""})
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
           {list.isLoading ? (
             <Loader2 className="h-5 w-5 animate-spin text-primary" />
           ) : !groups.length ? (
@@ -1997,7 +2075,7 @@ function PlanningPage() {
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
                      const dossierOuvert = dossier === r.id;
-                     const toutOuvert = !!ouverts[r.id];
+                     const toutOuvert = ouverts[r.id] ?? vueArchives;
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
