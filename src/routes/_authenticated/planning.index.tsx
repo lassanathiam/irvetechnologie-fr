@@ -547,6 +547,8 @@ function PlanningPage() {
   const pauser = useMutation({
     mutationFn: (p: { id: string; pause: boolean }) => pauserFn({ data: p }),
     onSuccess: (_r, p) => {
+      // Mise en pause : on referme le chantier pour laisser place au prochain rendez-vous.
+      if (p.pause) { setActive(null); setDossier(null); }
       refresh();
       toast.success(p.pause ? "Chantier mis en pause. Aucun email envoyé." : "Travaux repris.");
     },
@@ -705,12 +707,19 @@ function PlanningPage() {
       .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
   }, [toutes]);
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
+  // Un chantier en pause ne reprend jamais la place tout seul : il faut l'ouvrir depuis « Chantiers en pause ».
   const missionTerrain =
     toutes.find((r) => r.id === active && estPourMoi(r)) ??
-    enCours.filter(estPourMoi)[0] ??
-    chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine") ??
-    chantiersDuJour[0] ??
+    enCours.filter((r) => estPourMoi(r) && r.statut !== "en_pause")[0] ??
+    chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine" && r.statut !== "en_pause") ??
+    chantiersDuJour.find((r) => r.statut !== "en_pause") ??
     null;
+  /** Chantiers en pause de l'intervenant, quelle que soit leur date. */
+  const chantiersEnPause = toutes
+    .filter((r) => r.statut === "en_pause" && !r.termine_at && !estArchiveLogique(r) && estPourMoi(r))
+    .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  /** Liste « à venir » sans le chantier déjà affiché ni ceux en pause (rangés à part). */
+  const listeAVenir = chantiersAVenir.filter((r) => r.id !== missionTerrain?.id && r.statut !== "en_pause");
   /** Tous les chantiers à venir non terminés (toutes affectations), pour suggérer les regroupements. */
   const aVenirTous = useMemo(() => {
     const debutJour = new Date();
@@ -1288,13 +1297,36 @@ function PlanningPage() {
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Consultez « Voir tout le planning » pour les autres rendez-vous.</p></div>
         )}
 
-        {chantiersAVenir.length > 0 && (
-          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
-            <p className="text-xs font-semibold text-muted-foreground">
-              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({chantiersAVenir.length})
+        {chantiersEnPause.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-amber-500/60 bg-amber-50 p-4 dark:bg-amber-500/10" aria-label="Chantiers en pause">
+            <p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
+              <Pause className="mr-1 inline h-3.5 w-3.5" /> Chantiers en pause ({chantiersEnPause.length})
             </p>
             <ul className="mt-2 grid gap-2">
-              {chantiersAVenir.map((r) => {
+              {chantiersEnPause.map((r) => (
+                <li key={r.id}>
+                  <button
+                    type="button"
+                    onClick={() => choisirMission(r.id)}
+                    className={`flex w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-left text-sm ${r.id === missionTerrain?.id ? "border-amber-500" : "border-border hover:border-amber-500"}`}
+                  >
+                    {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-xs font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
+                    <span className="min-w-0 flex-1 truncate font-bold">{r.client_nom}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{r.id === missionTerrain?.id ? "Affiché" : "Ouvrir"}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {listeAVenir.length > 0 && (
+          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
+            <p className="text-xs font-semibold text-muted-foreground">
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({listeAVenir.length})
+            </p>
+            <ul className="mt-2 grid gap-2">
+              {listeAVenir.map((r) => {
                 const d = new Date(r.date_debut);
                 const aujourdhui = new Date();
                 const estAujourdhui =
