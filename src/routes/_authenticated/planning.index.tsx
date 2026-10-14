@@ -404,7 +404,7 @@ function PlanningPage() {
     onSuccess: refresh,
   });
   const majOptions = useMutation({
-    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null }) =>
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean> }) =>
       majOptionsChantier({ data: p }),
     onSuccess: refresh,
     onError: (e: unknown) =>
@@ -602,13 +602,22 @@ function PlanningPage() {
   const nbArchives = toutes.filter((r) => ongletDe(r) === "clotures").length;
   const nbAnnules = toutes.filter((r) => ongletDe(r) === "annules").length;
   const nbEnCours = toutes.length - nbArchives - nbAnnules;
+  const [rechercheArchives, setRechercheArchives] = useState("");
   const rows = useMemo(
-    () =>
-      toutes
+    () => {
+      const q = rechercheArchives.trim().toLowerCase();
+      return toutes
         .filter((r) => ongletDe(r) === vueListe)
-        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut),
+        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut)
+        .filter((r) => {
+          if (vueListe !== "clotures" || !q) return true;
+          const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
+            .filter(Boolean).join(" ").toLowerCase();
+          return q.split(/\s+/).every((m) => (/^\d{2}$/.test(m) ? departement(r.cp_ville) === m : texte.includes(m)));
+        });
+    },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.data, vueListe, filtreStatut],
+    [list.data, vueListe, filtreStatut, rechercheArchives],
   );
   /** Chantiers en cours : toujours remontés en tête de page. */
   const enCours = useMemo(
@@ -1183,6 +1192,35 @@ function PlanningPage() {
                     </div>
                   );
                 })()}
+
+                {(() => {
+                  const coche = (missionTerrain.checklist_materiel ?? {}) as Record<string, boolean>;
+                  const faits = CHECKLIST_MATERIEL.filter(([k]) => coche[k]).length;
+                  return (
+                    <div className="mb-5 rounded-xl border border-border bg-muted/30 p-4" aria-label="Matériel récupéré">
+                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
+                        Matériel récupéré — {faits}/{CHECKLIST_MATERIEL.length}
+                      </p>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                        {CHECKLIST_MATERIEL.map(([k, label]) => (
+                          <button
+                            key={k}
+                            type="button"
+                            disabled={majOptions.isPending}
+                            onClick={() => majOptions.mutate({ id: missionTerrain.id, checklist_materiel: { ...coche, [k]: !coche[k] } })}
+                            className={`flex min-h-[48px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-bold ${
+                              coche[k] ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"
+                            }`}
+                          >
+                            <span className="text-lg">{coche[k] ? "☑" : "☐"}</span>
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
 
                 {voisinsMission.length > 0 && (
                   <div className="mb-5 rounded-xl border border-emerald-400/60 bg-emerald-50 p-4 dark:bg-emerald-500/10" aria-label="Chantiers proches">
