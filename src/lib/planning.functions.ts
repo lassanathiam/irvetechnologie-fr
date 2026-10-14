@@ -2283,9 +2283,14 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: { retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; origine?: string } = {};
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string } = {};
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
-    if (data.metrage_m !== undefined) patch.metrage_m = data.metrage_m;
+    if (data.metrage_m !== undefined) {
+      patch.metrage_m = data.metrage_m;
+      // Décocher « métrage > forfait » doit aussi plafonner le métrage réel, sinon le surplus reste facturé.
+      const { data: cur } = await context.supabase.from("rendezvous").select("metrage_reel_m").eq("id", data.id).maybeSingle();
+      if (cur?.metrage_reel_m != null && Number(cur.metrage_reel_m) > data.metrage_m) patch.metrage_reel_m = data.metrage_m;
+    }
     if (data.partenaire !== undefined) {
       patch.partenaire = data.partenaire?.trim() ? data.partenaire.trim() : null;
       patch.origine = patch.partenaire ? "sous_traitance" : "direct";
