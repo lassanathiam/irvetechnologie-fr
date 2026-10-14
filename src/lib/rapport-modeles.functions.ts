@@ -244,14 +244,28 @@ export const enregistrerRapportRempli = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    const signed = Boolean(data.signature_client && data.signature_technicien);
+    // Une signature client déjà posée (ex. via le lien SMS) n'est jamais effacée par un enregistrement.
+    let sigClient = data.signature_client ?? null;
+    let nom = data.signataire_nom ?? null;
+    if (data.id && !sigClient) {
+      const { data: prev } = await context.supabase
+        .from("rapport_remplis")
+        .select("signature_client, signataire_nom")
+        .eq("id", data.id)
+        .maybeSingle();
+      if (prev?.signature_client) {
+        sigClient = prev.signature_client;
+        nom = prev.signataire_nom ?? nom;
+      }
+    }
+    const signed = Boolean(sigClient && data.signature_technicien);
     const row = {
       modele_id: data.modele_id,
       rendezvous_id: data.rendezvous_id,
       valeurs: data.valeurs as Json,
-      signature_client: data.signature_client ?? null,
+      signature_client: sigClient,
       signature_technicien: data.signature_technicien ?? null,
-      signataire_nom: data.signataire_nom ?? null,
+      signataire_nom: nom,
       technicien: data.technicien ?? null,
       signed_at: signed ? new Date().toISOString() : null,
     };
