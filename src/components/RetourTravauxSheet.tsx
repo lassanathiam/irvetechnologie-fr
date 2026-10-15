@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { photosParEtape } from "@/lib/photos-etapes";
+import { photoPvObligatoire } from "@/lib/photo-pv";
 import {
   RETOUR_CATEGORIES_LABELS,
   categoriesRetourObligatoires,
@@ -31,6 +32,7 @@ export type RetourTravauxRdv = {
   type_pose?: string | null;
   type?: string | null;
   partenaire?: string | null;
+  reseau_client?: string | null;
 };
 
 
@@ -58,7 +60,7 @@ export default function RetourTravauxSheet({
   const [enCours, setEnCours] = useState<string | null>(null);
   const maintenance = rdv.type === "maintenance";
   const [cablePose, setCablePose] = useState(maintenance && Number(rdv.metrage_reel_m ?? 0) > 0);
-  const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire);
+  const optionnelles = categoriesRetourOptionnelles(rdv.type, rdv.partenaire, rdv.reseau_client);
 
   // Hors-ligne : photos et enregistrements gardés sur le téléphone,
   // envoi automatique dès le retour du réseau.
@@ -191,7 +193,8 @@ export default function RetourTravauxSheet({
     onError: (e) => toast.error(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
 
-  const obligatoires = new Set<string>(categoriesRetourObligatoires(rdv.type, rdv.partenaire));
+  const obligatoires = new Set<string>(categoriesRetourObligatoires(rdv.type, rdv.partenaire, rdv.reseau_client));
+  const pvManquant = photoPvObligatoire(rdv.partenaire, rdv.reseau_client) && !liste.some((p) => p.categorie === "pv_signe");
   const etapes = photosParEtape([...obligatoires, ...optionnelles, ...liste.map((p) => p.categorie)]);
 
   function ligne(cat: string) {
@@ -367,6 +370,7 @@ export default function RetourTravauxSheet({
         </div>
 
         <div className="grid gap-5">
+          {pvManquant && <p role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-foreground">Photo du PV obligatoire avant de terminer ce chantier ENSIO.</p>}
           {etapes.map((etape, index) => (
             <section key={etape.id} className={etape.couleur} aria-label={etape.nom}>
               <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">

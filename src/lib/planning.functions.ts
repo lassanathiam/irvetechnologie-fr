@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { technicienByNom } from "@/lib/geo";
+import { photoPvObligatoire, verifierPhotoPv } from "@/lib/photo-pv";
 
 /** Trajet routier réel (réseau OSRM, autoroutes/péages compris). Jamais à vol d'oiseau. */
 async function trajetDepuisBase(
@@ -1147,17 +1148,20 @@ export const terminerChantier = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, public_token, type, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
+        "id, public_token, type, client_nom, client_email, adresse, cp_ville, titre, designation, partenaire, partenaire_id, reseau_client, demarre_at, metrage_inclus_m, metrage_reel_m, retour_observations, retour_delestage, delai_paiement_jours, montant_ht",
       )
       .eq("id", data.id)
       .single();
     if (readErr) throw new Error(readErr.message);
 
-    // Retour de travaux : les photos ne sont plus bloquantes (aucune photo obligatoire).
-    const { data: photosRows } = await context.supabase
+    // Seule la photo PV des dossiers ENSIO concernés bloque la clôture.
+    const { data: photosRows, error: photosErr } = await context.supabase
       .from("rendezvous_photos")
       .select("categorie, path")
       .eq("rendezvous_id", data.id);
+
+    if (photosErr) throw new Error("Impossible de vérifier les photos du chantier. Réessayez.");
+    verifierPhotoPv(rdv.partenaire, rdv.reseau_client, photosRows ?? []);
 
     const fin = new Date();
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
@@ -1517,6 +1521,7 @@ export const RETOUR_CATEGORIES_ENSIO_OPTION = [
 ] as const;
 
 export const RETOUR_CATEGORIES = [
+  "pv_signe",
   ...RETOUR_CATEGORIES_OBLIGATOIRES,
   ...RETOUR_CATEGORIES_MAINTENANCE,
   ...RETOUR_CATEGORIES_OPTIONNELLES,
@@ -1531,6 +1536,7 @@ export const RETOUR_CATEGORIES = [
 export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
 
 export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
+  pv_signe: "PV à prendre en photo",
   borne_posee: "Borne posée / emplacement final",
   raccordement_borne: "Raccordement de la borne",
   mise_en_service: "Mise en service et essai",
@@ -1584,15 +1590,15 @@ export function estEnsio(partenaire?: string | null): boolean {
   return /ensio/i.test(partenaire ?? "");
 }
 
-export function categoriesRetourObligatoires(type?: string | null, partenaire?: string | null): readonly RetourCategorie[] {
-  if (type === "maintenance") return RETOUR_CATEGORIES_MAINTENANCE;
-  if (estEnsio(partenaire)) return RETOUR_CATEGORIES_ENSIO;
-  return RETOUR_CATEGORIES_OBLIGATOIRES;
+export function categoriesRetourObligatoires(type?: string | null, partenaire?: string | null, reseauClient?: string | null): readonly RetourCategorie[] {
+  const categories = type === "maintenance" ? RETOUR_CATEGORIES_MAINTENANCE
+    : estEnsio(partenaire) ? RETOUR_CATEGORIES_ENSIO : RETOUR_CATEGORIES_OBLIGATOIRES;
+  return photoPvObligatoire(partenaire, reseauClient) ? [...categories, "pv_signe"] : categories;
 }
 
-export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null): readonly string[] {
+export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null, reseauClient?: string | null): readonly string[] {
   // Liste courte : seulement les photos réellement prises en complément, sans doublon des obligatoires.
-  const principales = new Set<string>(categoriesRetourObligatoires(type, partenaire));
+  const principales = new Set<string>(categoriesRetourObligatoires(type, partenaire, reseauClient));
   const ordre: string[] = type === "maintenance"
     ? ["raccordement_borne", "tableau_electrique", "cheminement_cable", "plaque_serie"]
     : estEnsio(partenaire)

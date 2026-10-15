@@ -17,3 +17,4 @@
 - Fiches techniques de chantier : fichiers dans le bucket `documents` sous `fiches/<rdv>/`, référencés par `rendezvous_fiches` ; l'analyse ne complète que les champs vides du rendez-vous (pourquoi : ne jamais écraser une saisie de l'équipe).
 - Les chiffres « chantiers réalisés » du site = chiffre de départ dans `app_settings.compteurs_site_base` + chantiers terminés/réalisés ; seuls des totaux sont exposés publiquement (pourquoi : aucune donnée client sur le site).
 - PV reports are picked per chantier from rendezvous.reseau_client via pvPourReseau/modelePourReseau (rapport_modeles.reseaux holds the keys); CRM-only clients show a reminder instead of a PV (why: each end-client of the contractor imposes its own acceptance form).
+- PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
