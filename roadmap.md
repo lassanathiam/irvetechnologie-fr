@@ -73,5 +73,5 @@
 - [x] Harmoniser l’axe, les marges et les largeurs de tout le site sur téléphone sans modifier les parcours
 - [x] Conserver le PV ENSIO importé tel quel et superposer uniquement les informations et signatures
 - [x] Recalibrer les noms et réponses du PV réel d’EON, vérifier les trois pages et la signature technicien ; aucune signature client enregistrée dans ce dossier.
-- [ ] Ajouter la photo PV obligatoire pour les chantiers ENSIO concernés, hors Kizéo/Docusign, et vérifier le parcours.
-- [ ] Remplacer « Parafoudre / coffret » par « Coffret » et ajouter le tore de mesure au retrait matériel.
+- [x] Ajouter la photo PV obligatoire pour les chantiers ENSIO concernés, hors Kizéo/Docusign ; règles et blocage testés. Affichage sur un chantier ENSIO concerné non vérifié : aucun dossier concerné déjà démarré accessible dans la sélection actuelle, sans changer les vrais dossiers.
+- [x] Remplacer « Parafoudre / coffret » par « Coffret » et ajouter le tore de mesure au retrait matériel ; checklist vérifiée en session réelle.
