@@ -245,7 +245,8 @@ const CHECKLIST_MATERIEL: [string, string][] = [
   ["borne", "Borne complète (borne + support)"],
   ["badges", "Badge(s) RFID / carte"],
   ["protections", "Protections (disjoncteur, différentiel)"],
-  ["parafoudre", "Parafoudre / coffret"],
+  ["parafoudre", "Coffret"],
+  ["tore_mesure", "Tore de mesure"],
   ["cable", "Câble"],
   ["accessoires", "Visserie, notice, accessoires"],
 ];

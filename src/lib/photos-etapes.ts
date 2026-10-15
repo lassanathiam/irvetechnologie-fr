@@ -34,7 +34,7 @@ export const ETAPES_PHOTOS = [
     categories: [
       "mise_en_service", "ensio_parametrages", "ensio_simulateur_charge", "ensio_tension_sortie",
       "ensio_resistance_pe", "plaque_serie", "ensio_numero_serie", "ensio_etiquette_autel",
-      "ensio_carte_sim", "ensio_badges", "ensio_appel_supervision", "ensio_sms_supervision",
+      "ensio_carte_sim", "ensio_badges", "ensio_appel_supervision", "ensio_sms_supervision", "pv_signe",
     ],
   },
   {
