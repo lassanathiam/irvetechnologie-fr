@@ -10,7 +10,7 @@ export const listFactures = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("factures")
       .select(
-        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_echeance, sent_at, paid_at, devis_id",
+        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_echeance, sent_at, paid_at, devis_id, viewed_at, last_viewed_at, view_count",
       )
       .order("created_at", { ascending: false })
       .limit(200);

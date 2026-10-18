@@ -64,9 +64,13 @@ function FacturesPage() {
       </div>
       </div>
 
-      <div className="mt-8 grid sm:grid-cols-3 gap-4">
+      <div className="mt-8 grid sm:grid-cols-4 gap-4">
         <Stat label="Factures" value={String(list.length)} />
         <Stat label="Total facturé TTC" value={euro(total)} />
+        <Stat
+          label="Consultées par le client"
+          value={String(list.filter((f) => f.viewed_at).length)}
+        />
         <Stat label="Reste à encaisser" value={euro(impaye)} accent />
       </div>
 
@@ -101,6 +105,12 @@ function FacturesPage() {
             >
               {STATUT_LABEL[f.statut] ?? f.statut}
             </span>
+            {f.viewed_at && (
+              <span className="text-[11px] font-semibold text-primary" title={`Vu ${f.view_count} fois`}>
+                Consultée le {dateFr(f.last_viewed_at ?? f.viewed_at)}
+                {f.view_count > 1 ? ` · ${f.view_count} vues` : ""}
+              </span>
+            )}
             <button
               type="button"
               onClick={async () => {
