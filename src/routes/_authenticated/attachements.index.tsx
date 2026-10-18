@@ -16,6 +16,7 @@ import { euro } from "@/lib/company";
 import { precisionReseauClient } from "@/lib/reseau-client";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 import { AttachementsPeriode } from "@/components/AttachementsPeriode";
+import { TelechargerAttachements } from "@/components/TelechargerAttachements";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements de pose de bornes — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de pose de bornes ENSIO et les autres travaux." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements de pose de bornes — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de pose de bornes et des travaux." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),

@@ -8,6 +8,7 @@ import { ArrowLeft, Ban, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Co
 import { LignesAttachement } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
+import { TelechargerAttachements } from "@/components/TelechargerAttachements";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";

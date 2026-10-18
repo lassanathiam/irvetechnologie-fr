@@ -13,7 +13,7 @@ export function AttachementPrint({ doc, items }: { doc: Attachment; items: Line[
   const poseBornes = /ensio|nco/i.test(doc.client_nom);
   const titre = poseBornes ? "Attachement de pose de bornes" : "Attachement de travaux · Fibre optique";
   const objet = poseBornes && (!doc.objet || /fibre optique/i.test(doc.objet)) ? "Pose de bornes de recharge" : doc.objet || "Travaux fibre optique";
-  return <div className="print-doc rounded-sm border border-border bg-card p-6 text-[13px] leading-relaxed sm:p-8">
+  return <div className={`print-doc attachment-doc ${poseBornes ? "" : "attachment-doc-compact"} rounded-sm border border-border bg-card p-6 text-[13px] leading-relaxed sm:p-8`}>
     <div className="flex flex-wrap items-start justify-between gap-6 border-b-2 border-primary pb-4">
       <div className="flex items-start gap-4"><BrandLogo className="h-16 w-16" /><div><div className="text-xl font-extrabold uppercase">{COMPANY.raisonSociale}</div><div className="text-[11px] font-bold uppercase text-primary">{titre}</div><div className="mt-2 text-[11px] text-muted-foreground">{COMPANY.adresse}, {COMPANY.cpVille}<br />{COMPANY.email} · {COMPANY.telephone}<br />SIRET {COMPANY.siret} · TVA {COMPANY.tva}<br />{COMPANY.qualifications}</div></div></div>
       <div className="min-w-[240px] rounded-sm border border-border bg-muted/40 p-4"><div className="text-[10px] font-bold uppercase text-muted-foreground">Destinataire</div><div className="mt-2 text-base font-extrabold">{doc.client_nom}</div><div className="text-[12px] text-muted-foreground">{doc.client_adresse}<br />{doc.client_cp_ville}<br />{doc.client_email}<br />{doc.client_telephone}</div></div>
