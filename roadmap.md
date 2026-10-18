@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [x] Diagnostiquer le 500 des fiches : appel temporairement non reconnu lors du rechargement de l’aperçu, puis appels réussis ; isoler les erreurs de fiches avec réessai sans interrompre Planning. Vérifié connecté : six appels réussis, PDF ALAGON reçu et reconnu, aucune erreur de page.
+
 - [x] Organiser les photos à prendre en huit étapes numérotées selon l’ordre demandé, sans perdre les preuves existantes ; 13 tests réussis avec les règles PV.
 - [x] Ajouter les commentaires individuels sur les photos enregistrées, sans changer validation ni envoi.
 - [ ] Vérifier l’enregistrement et la relecture d’un commentaire dans Planning avec un compte connecté — bloqué : aucune session du demandeur disponible et plusieurs comptes présents.
