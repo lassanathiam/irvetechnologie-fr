@@ -1,3 +1,5 @@
+import { dimensionsPageAttachement } from "./pdf-attachements-layout";
+
 export async function creerPdfAttachements(elements: HTMLElement[]): Promise<Blob> {
   const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
     import("html2canvas-pro"), import("jspdf"),
@@ -14,9 +16,8 @@ export async function creerPdfAttachements(elements: HTMLElement[]): Promise<Blo
       },
     });
     if (index > 0) pdf.addPage();
-    const scale = Math.min(190 / canvas.width, 277 / canvas.height);
-    const width = canvas.width * scale;
-    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", (210 - width) / 2, 10, width, canvas.height * scale);
+    const page = dimensionsPageAttachement(canvas.width, canvas.height);
+    pdf.addImage(canvas.toDataURL("image/jpeg", 0.95), "JPEG", page.x, page.y, page.width, page.height);
   }
   return pdf.output("blob");
 }
