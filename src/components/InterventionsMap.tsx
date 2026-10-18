@@ -15,6 +15,8 @@ export type MapMarker = {
   trajet?: string | null;
   /** Couleur du partenaire / donneur d'ordre (repère visuel sur la carte). */
   couleur?: string | null;
+  /** Chantier signalé problématique / non conforme : point rouge vif. */
+  probleme?: boolean | null;
   /** Intervenant affecté. */
   technicien?: string | null;
 };
@@ -26,15 +28,19 @@ const BASES = TECHNICIENS.map((t) => ({
   label: `${t.nom.split(" ")[0]} · ${t.label}`,
 }));
 
-/** Couleurs de statut : bleu = programmé, vert = réalisé / validé. */
+/** Couleurs de statut : bleu = programmé, orange = en pause, vert = réalisé / validé. */
 export const STATUT_COLORS: Record<string, string> = {
   planifie: "#2563eb",
   confirme: "#0284c7",
   en_cours: "#7c3aed",
+  en_pause: "#f59e0b",
   termine: "#0d9488",
   realise: "#16a34a",
   annule: "#94a3b8",
 };
+
+/** Rouge vif pour les chantiers signalés problématiques / non conformes. */
+export const COULEUR_PROBLEME = "#dc2626";
 
 /**
  * Vraie carte (OpenStreetMap / Leaflet) avec marqueurs cliquables et
@@ -234,7 +240,12 @@ export function InterventionsMap({
 
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
-      const color = m.couleur || etat;
+      // Priorité : problématique (rouge) > en pause (orange) > couleur du partenaire > statut.
+      const color = m.probleme
+        ? COULEUR_PROBLEME
+        : m.statut === "en_pause"
+          ? STATUT_COLORS.en_pause
+          : m.couleur || etat;
       const idx = selectedIds.indexOf(m.id);
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
