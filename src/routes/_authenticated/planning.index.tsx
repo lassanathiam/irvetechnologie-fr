@@ -2048,6 +2048,17 @@ function PlanningPage() {
             })}
             <button
               type="button"
+              onClick={() => setFiltreProbleme((v) => !v)}
+              className={`shrink-0 text-mono text-[11px] px-3 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                filtreProbleme
+                  ? "border-red-600 bg-red-600/15 text-red-700 dark:text-red-300"
+                  : "border-border text-muted-foreground hover:border-red-600/60 hover:text-red-700 dark:hover:text-red-300"
+              }`}
+            >
+              <TriangleAlert className="h-3.5 w-3.5" /> Problématiques ({toutes.filter((r) => ongletDe(r) === vueListe && Boolean((r as { probleme?: boolean | null }).probleme)).length})
+            </button>
+            <button
+              type="button"
               onClick={() => setMontantsVisibles((v) => !v)}
               className="shrink-0 text-mono text-[11px] px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-primary hover:text-primary inline-flex items-center gap-1.5"
             >
@@ -2175,6 +2186,9 @@ function PlanningPage() {
                                 </span>
                               )}
                             </p>
+                            {Boolean((r as { probleme?: boolean | null }).probleme) && (r as { probleme_note?: string | null }).probleme_note && (
+                              <p className="mt-1 rounded-md border border-red-300 bg-red-50 px-2 py-1 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{(r as { probleme_note?: string | null }).probleme_note}</p>
+                            )}
                             {r.designation && (
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
