@@ -240,13 +240,17 @@ export function InterventionsMap({
 
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
-      // Priorité : problématique (rouge) > en pause (orange) > couleur du partenaire > statut.
-      const color = m.probleme
-        ? COULEUR_PROBLEME
-        : m.statut === "en_pause"
-          ? STATUT_COLORS.en_pause
-          : m.couleur || etat;
       const idx = selectedIds.indexOf(m.id);
+      // Priorité : problématique (rouge) > en pause (orange) > couleur du partenaire > statut.
+      // En mode sélection, un chantier non coché reste gris mort (en attente de choix).
+      const color =
+        selectionMode && idx < 0 && !m.probleme
+          ? "#94a3b8"
+          : m.probleme
+            ? COULEUR_PROBLEME
+            : m.statut === "en_pause"
+              ? STATUT_COLORS.en_pause
+              : m.couleur || etat;
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
         .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })

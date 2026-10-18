@@ -2193,6 +2193,26 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
                             <ReseauClientBadge nom={r.reseau_client} />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                const actif = Boolean((r as { probleme?: boolean | null }).probleme);
+                                if (actif) {
+                                  if (window.confirm(`Retirer le signalement « problématique » du chantier de ${r.client_nom} ?`)) majOptions.mutate({ id: r.id, probleme: false });
+                                } else {
+                                  const note = window.prompt(`Signaler le chantier de ${r.client_nom} comme problématique / non conforme.\n\nDécrivez le problème (facultatif) :`);
+                                  if (note !== null) majOptions.mutate({ id: r.id, probleme: true, probleme_note: note || null });
+                                }
+                              }}
+                              className={`mt-2 text-mono text-[11px] px-2.5 py-1.5 rounded-full border inline-flex items-center gap-1.5 transition ${
+                                Boolean((r as { probleme?: boolean | null }).probleme)
+                                  ? "border-red-600 bg-red-600/15 text-red-700 dark:text-red-300"
+                                  : "border-red-300 text-red-600 dark:text-red-400 hover:bg-red-500/10"
+                              }`}
+                            >
+                              <TriangleAlert className="h-3.5 w-3.5" /> {Boolean((r as { probleme?: boolean | null }).probleme) ? "Problème signalé — retirer" : "Signaler un problème"}
+                            </button>
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
