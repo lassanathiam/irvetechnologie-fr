@@ -223,6 +223,24 @@ function AttachementsPage() {
   const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => vue === "tous" || (vue === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search, vue]);
 
+  // Suivi mensuel : pipeline de l'attachement, du brouillon à la facture.
+  const [moisSuivi, setMoisSuivi] = useState(() => new Date().toISOString().slice(0, 7));
+  const moisDispos = useMemo(() => {
+    const s = new Set<string>((list.data ?? []).map((a) => String(a.date_emission).slice(0, 7)));
+    s.add(new Date().toISOString().slice(0, 7));
+    return [...s].sort().reverse();
+  }, [list.data]);
+  const suiviMois = useMemo(() => {
+    const duMois = (list.data ?? []).filter((a) => String(a.date_emission).slice(0, 7) === moisSuivi && a.statut !== "annule");
+    const etapes = [
+      { cle: "realise", label: "Réalisés (brouillons)", test: (a: any) => (a.statut || "brouillon") === "brouillon" && !a.sent_at },
+      { cle: "attente", label: "En attente de validation", test: (a: any) => Boolean(a.sent_at) && !estAttachementCloture(a) && !["accepte", "refuse"].includes(a.statut) },
+      { cle: "valide", label: "Validés par le client", test: (a: any) => a.statut === "accepte" && !estAttachementCloture(a) },
+      { cle: "facture", label: "Facturés · Clôturés", test: (a: any) => estAttachementCloture(a) },
+    ];
+    return etapes.map((e) => { const sel = duMois.filter(e.test); return { ...e, nb: sel.length, ht: sel.reduce((s, a) => s + (Number(a.total_ht) || 0), 0) }; });
+  }, [list.data, moisSuivi]);
+
   const totaux = useMemo(() => {
     const parStatut = new Map<string, { nb: number; ht: number; tva: number; ttc: number }>();
     for (const a of list.data ?? []) {
