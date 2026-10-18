@@ -12,3 +12,8 @@ describe("lecture bon de commande ENSIO", () => {
   it("client", () => expect(c.client).toEqual("ALAGON GEOFFREY"));
   it("montant HT total avec milliers", () => expect(c.montantHt).toEqual(1365));
 });
+
+describe("lecture des autres donneurs d’ordre", () => {
+  it("lit une commande AXIANS avec total HT", () => expect(lireCommande("AXIANS Bon de commande n° AX-2026-123 Devis AT-2026-0042 Total HT : 430,00")).toEqual({ numero: "AX-2026-123", attachement: "AT-2026-0042", client: null, montantHt: 430 }));
+  it("n’invente pas un total HT à partir d’un TTC inconnu", () => expect(lireCommande("Commande n° BC-123 Total TTC 516,00").montantHt).toEqual(null));
+});

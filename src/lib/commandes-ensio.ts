@@ -13,18 +13,19 @@ function nombre(s: string): number {
 export function lireCommande(texte: string): CommandeLue {
   const t = texte.replace(/\s+/g, " ");
   const num = t.match(/CST\s*(\d{6,})/i);
+  const generique = t.match(/(?:bon\s+de\s+commande|commande|purchase\s+order)\s*(?:(?:n[°ºo.]?|num[ée]ro|r[ée]f[ée]rence)\s*[:#.-]?\s*|[:#]\s*)([A-Z0-9][A-Z0-9/_-]{2,59})/i);
   const at = t.match(/AT-\d{4}-\d{3,}/i);
   const client = t.match(/IRVE\s*-\s*([^-]+?)\s*-\s*Semaine/i);
   let montant: number | null = null;
-  const apres = t.split(/Montant HT \(EUR\)/i)[1];
-  const m = apres?.match(/\d{1,3}(?:[\s.\u00a0\u202f]\d{3})*,\d{2}(?!\d)/);
+  const apres = t.split(/(?:Montant HT \(EUR\)|Total\s*(?:net\s*)?(?:H\.?\s*T\.?|hors\s+taxes))\s*[:€]?/i)[1];
+  const m = apres?.match(/\d+(?:[\s.\u00a0\u202f]\d{3})*,\d{2}(?!\d)/);
   if (m) montant = nombre(m[0]);
-  else {
+  else if (num) {
     const tous = [...t.matchAll(/\d{1,3}(?:[\s.\u00a0\u202f]\d{3})*,\d{2}(?!\d)/g)].map((x) => nombre(x[0]));
     if (tous.length) montant = Math.max(...tous);
   }
   return {
-    numero: num ? `CST ${num[1]}` : null,
+    numero: num ? `CST ${num[1]}` : generique ? generique[1] : null,
     attachement: at ? at[0].toUpperCase() : null,
     client: client ? client[1].trim() : null,
     montantHt: montant,

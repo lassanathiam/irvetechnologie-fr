@@ -98,6 +98,7 @@ export async function sendTemplateEmail(
   // signer et rapports. Dédupliquée : pas de copie si le destinataire principal
   // ou la copie ENSIO est déjà l'adresse de l'équipe, ni pour les envois internes.
   const TEMPLATES_COPIE_EQUIPE = new Set([
+    "rapport-ecart-commande",
     "devis-client",
     "attachement-travaux",
     "attachements-semaine",

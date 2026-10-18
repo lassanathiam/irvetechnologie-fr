@@ -11,6 +11,7 @@ import { template as rapportDonneurTemplate } from './rapport-donneur'
 import { template as documentASignerTemplate } from './document-a-signer'
 import { template as rappelRdvTemplate } from './rappel-rdv'
 import { template as ensioDocumentInfoTemplate } from './ensio-document-info'
+import { template as rapportEcartTemplate } from './rapport-ecart-commande'
 
 
 
@@ -32,6 +33,7 @@ export interface TemplateEntry {
  *   // then add to TEMPLATES: 'welcome': welcomeTemplate
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
+  'rapport-ecart-commande': rapportEcartTemplate,
   'devis-client': devisClientTemplate,
   'devis-signe': devisSigneTemplate,
   'chantier-termine': chantierTermineTemplate,
