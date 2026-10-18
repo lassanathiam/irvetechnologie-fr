@@ -2373,6 +2373,11 @@ function PlanningPage() {
 
                             {/* Documents du chantier toujours visibles : fiches techniques + PV */}
                             <FichesChantier rendezvousId={r.id} />
+                            {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
+                              <Button variant="outline" className="mt-2 min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
+                                <Camera className="h-4 w-4" /> Corriger les photos
+                              </Button>
+                            )}
                             {(() => {
                               const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
                               const termine = Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise");
@@ -3713,7 +3718,7 @@ function PlanningPage() {
       </div>
 
       {retourRdv && (
-        <RetourTravauxSheet rdv={retourRdv} onClose={() => setRetourRdv(null)} />
+        <RetourTravauxSheet rdv={retourRdv} photosSeulement={Boolean((retourRdv as { termine_at?: string | null; statut?: string }).termine_at || ["termine", "realise"].includes((retourRdv as { statut?: string }).statut ?? ""))} onClose={() => setRetourRdv(null)} />
       )}
     </ProShell>
   );

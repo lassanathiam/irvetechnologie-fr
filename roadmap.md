@@ -75,3 +75,4 @@
 - [x] Recalibrer les noms et réponses du PV réel d’EON, vérifier les trois pages et la signature technicien ; aucune signature client enregistrée dans ce dossier.
 - [x] Ajouter la photo PV obligatoire pour les chantiers ENSIO concernés, hors Kizéo/Docusign ; règles et blocage testés. Affichage sur un chantier ENSIO concerné non vérifié : aucun dossier concerné déjà démarré accessible dans la sélection actuelle, sans changer les vrais dossiers.
 - [x] Remplacer « Parafoudre / coffret » par « Coffret » et ajouter le tore de mesure au retrait matériel ; checklist vérifiée en session réelle.
+- [x] Permettre la correction des photos des chantiers terminés et déjà envoyés, sans modifier validation, facturation ni renvoyer de mail ; ouverture, photos existantes et annulation de suppression vérifiées en session réelle, sans ajouter ni supprimer de vraies preuves.
