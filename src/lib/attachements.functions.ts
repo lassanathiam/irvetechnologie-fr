@@ -303,10 +303,8 @@ export const envoyerAttachement = createServerFn({ method: "POST" })
     return { ...result, lien: link };
   });
 
-export const convertirAttachementEnFacture = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
-  .handler(async ({ data, context }) => {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function convertirEnFacture(context: { supabase: any; userId: string }, data: { id: string }): Promise<{ id: string; existing: boolean }> {
     const { data: attachment, error } = await context.supabase.from("attachements_travaux").select("*").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!attachment) throw new Error("Attachement introuvable.");
@@ -363,6 +361,61 @@ export const convertirAttachementEnFacture = createServerFn({ method: "POST" })
     }
     await context.supabase.from("attachements_travaux").update({ facture_id: invoice.id, statut: "facture" }).eq("id", attachment.id);
     return { id: invoice.id, existing: false };
+}
+
+export const convertirAttachementEnFacture = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid() }).parse(data))
+  .handler(async ({ data, context }) => convertirEnFacture(context, data));
+
+/** Attachements correspondant aux numéros lus sur les bons de commande. */
+export const trouverAttachementsCommandes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ numeros: z.array(z.string().max(40)).max(200) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.from("attachements_travaux")
+      .select("id, numero, objet, client_nom, statut, total_ht, bon_commande, facture_id, date_emission")
+      .neq("statut", "annule").order("date_emission", { ascending: false }).limit(400);
+    if (error) throw new Error(error.message);
+    const ids = (rows ?? []).map((r) => r.id);
+    const { data: items } = ids.length ? await context.supabase.from("attachement_items").select("attachement_id, description, libelle").in("attachement_id", ids) : { data: [] as { attachement_id: string; description: string | null; libelle: string }[] };
+    const textes = new Map<string, string>();
+    for (const i of items ?? []) textes.set(i.attachement_id, `${textes.get(i.attachement_id) ?? ""} ${i.libelle} ${i.description ?? ""}`);
+    return (rows ?? []).map((r) => ({ ...r, total_ht: Number(r.total_ht), texte: `${r.objet ?? ""} ${textes.get(r.id) ?? ""}` }));
+  });
+
+/** Rattache un bon de commande, ajuste le montant si demandé, puis crée la facture. */
+export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({
+    id: z.string().uuid(),
+    bon_commande: z.string().trim().min(3).max(60),
+    montant_ht: z.number().min(0).max(1_000_000).nullable(),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, total_ht, autoliquidation").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!att) throw new Error("Attachement introuvable.");
+    if (att.facture_id) {
+      await context.supabase.from("attachements_travaux").update({ bon_commande: data.bon_commande }).eq("id", att.id);
+      await context.supabase.from("factures").update({ bon_commande: data.bon_commande }).eq("id", att.facture_id);
+      return { id: att.facture_id, existing: true };
+    }
+    const patch: Record<string, unknown> = { bon_commande: data.bon_commande };
+    if (data.montant_ht !== null) {
+      const ecart = Math.round((data.montant_ht - Number(att.total_ht)) * 100) / 100;
+      if (Math.abs(ecart) >= 0.01) {
+        const { data: last } = await context.supabase.from("attachement_items").select("ordre").eq("attachement_id", att.id).order("ordre", { ascending: false }).limit(1);
+        const ins = await context.supabase.from("attachement_items").insert({ attachement_id: att.id, libelle: `Ajustement selon bon de commande ${data.bon_commande}`, quantite: 1, prix_unitaire: ecart, ordre: (last?.[0]?.ordre ?? 0) + 1 });
+        if (ins.error) throw new Error(ins.error.message);
+        const ht = Math.round(data.montant_ht * 100) / 100;
+        const tva = att.autoliquidation ? 0 : Math.round(ht * 20) / 100;
+        Object.assign(patch, { total_ht: ht, total_tva: tva, total_ttc: Math.round((ht + tva) * 100) / 100 });
+      }
+    }
+    const up = await context.supabase.from("attachements_travaux").update(patch).eq("id", att.id);
+    if (up.error) throw new Error(up.error.message);
+    return convertirEnFacture(context, { id: att.id });
   });
 
 export const changerStatutAttachement = createServerFn({ method: "POST" })
