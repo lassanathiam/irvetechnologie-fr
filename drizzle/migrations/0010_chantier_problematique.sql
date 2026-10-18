@@ -1,0 +1,1 @@
+ALTER TABLE public.rendezvous ADD COLUMN IF NOT EXISTS probleme boolean NOT NULL DEFAULT false; ALTER TABLE public.rendezvous ADD COLUMN IF NOT EXISTS probleme_note text;

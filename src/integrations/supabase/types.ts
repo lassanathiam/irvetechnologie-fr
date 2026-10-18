@@ -1540,6 +1540,8 @@ export type Database = {
           paye_at: string | null
           phase_installation: string | null
           photos_zip_downloaded_at: string | null
+          probleme: boolean
+          probleme_note: string | null
           public_token: string
           puissance_borne: string | null
           rdv_client_message: string | null
@@ -1616,6 +1618,8 @@ export type Database = {
           paye_at?: string | null
           phase_installation?: string | null
           photos_zip_downloaded_at?: string | null
+          probleme?: boolean
+          probleme_note?: string | null
           public_token?: string
           puissance_borne?: string | null
           rdv_client_message?: string | null
@@ -1692,6 +1696,8 @@ export type Database = {
           paye_at?: string | null
           phase_installation?: string | null
           photos_zip_downloaded_at?: string | null
+          probleme?: boolean
+          probleme_note?: string | null
           public_token?: string
           puissance_borne?: string | null
           rdv_client_message?: string | null
