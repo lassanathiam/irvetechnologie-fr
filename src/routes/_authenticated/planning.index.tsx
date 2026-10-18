@@ -2153,6 +2153,11 @@ function PlanningPage() {
                               >
                                 {st.label}
                               </span>
+                              {Boolean((r as { probleme?: boolean | null }).probleme) && (
+                                <span className="text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-red-600/60 bg-red-600/15 text-red-700 dark:text-red-300">
+                                  Problématique
+                                </span>
+                              )}
                               {!r.date_a_confirmer && (
                                 <span className="text-mono text-[10px] font-bold px-2 py-0.5 rounded-full border border-primary/40 text-primary">
                                   {new Date(r.date_debut).toLocaleDateString("fr-FR", {
