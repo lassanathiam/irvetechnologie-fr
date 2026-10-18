@@ -9,6 +9,9 @@
 .photo-tableau { --photo-tone: oklch(0.78 0.12 230); --photo-soft: oklch(0.78 0.12 230 / 0.10); --photo-ink: oklch(0.22 0.02 230); }
 .photo-essai { --photo-tone: oklch(0.80 0.15 330); --photo-soft: oklch(0.80 0.15 330 / 0.10); --photo-ink: oklch(0.22 0.02 330); }
 .photo-autre { --photo-tone: oklch(0.76 0.02 250); --photo-soft: oklch(0.76 0.02 250 / 0.10); --photo-ink: oklch(0.22 0.02 250); }
+.photo-terre { --photo-tone: oklch(0.83 0.15 95); --photo-soft: oklch(0.83 0.15 95 / 0.10); --photo-ink: oklch(0.22 0.02 95); }
+.photo-avant { --photo-tone: oklch(0.78 0.12 185); --photo-soft: oklch(0.78 0.12 185 / 0.10); --photo-ink: oklch(0.22 0.02 185); }
+.photo-pv { --photo-tone: oklch(0.77 0.12 285); --photo-soft: oklch(0.77 0.12 285 / 0.10); --photo-ink: oklch(0.22 0.02 285); }
 
 @theme inline {
   --radius-sm: calc(var(--radius) - 4px);

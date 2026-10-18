@@ -34,8 +34,9 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Organiser les photos à prendre en huit étapes numérotées selon l’ordre demandé, sans perdre les preuves existantes.
-- [ ] Ajouter et vérifier les commentaires individuels sur les photos enregistrées.
+- [x] Organiser les photos à prendre en huit étapes numérotées selon l’ordre demandé, sans perdre les preuves existantes ; 13 tests réussis avec les règles PV.
+- [x] Ajouter les commentaires individuels sur les photos enregistrées, sans changer validation ni envoi.
+- [ ] Vérifier l’enregistrement et la relecture d’un commentaire dans Planning avec un compte connecté — bloqué : aucune session du demandeur disponible et plusieurs comptes présents.
 
 - [x] Afficher les réponses Oui/Non des PV à droite sur les lignes, sans toucher aux choix imprimés ; vérifié sur les PV réels LUNEAU (50FIVE) et WESTBURY (ENSIO).
 

@@ -2,13 +2,13 @@ export const ETAPES_PHOTOS = [
   {
     id: "terre", numero: 1,
     nom: "Vérification de la terre",
-    couleur: "photo-tableau",
+    couleur: "photo-terre",
     categories: ["verification_terre_avant"],
   },
   {
     id: "avant", numero: 2,
     nom: "Avant travaux",
-    couleur: "photo-autre",
+    couleur: "photo-avant",
     categories: ["ensio_av_tableau_ferme", "ensio_av_tableau_ouvert", "avant_tableau", "emplacement_tableau", "ensio_av_emplacement_borne", "avant_emplacement", "emplacement_borne", "etat_avant_maintenance", "avant_compteur", "avant_travaux"],
   },
   {
@@ -41,7 +41,7 @@ export const ETAPES_PHOTOS = [
   {
     id: "pv", numero: 6,
     nom: "PV de réception",
-    couleur: "photo-essai",
+    couleur: "photo-pv",
     categories: ["pv_signe"],
   },
   {
