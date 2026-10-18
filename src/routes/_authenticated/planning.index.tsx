@@ -606,6 +606,8 @@ function PlanningPage() {
   const vueArchives = vueListe === "clotures";
   /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
+  /** Filtre rapide : ne montrer que les chantiers signalés problématiques. */
+  const [filtreProbleme, setFiltreProbleme] = useState(false);
 
   const toutes = list.data ?? [];
   /** Clôturé = rangé à la main, facturé, ou terminé + rapport/retour complet + validé (automatique). */
@@ -629,6 +631,7 @@ function PlanningPage() {
       return toutes
         .filter((r) => ongletDe(r) === vueListe)
         .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut)
+        .filter((r) => !filtreProbleme || Boolean((r as { probleme?: boolean | null }).probleme))
         .filter((r) => {
           if (vueListe !== "clotures" || !q) return true;
           const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
@@ -637,7 +640,7 @@ function PlanningPage() {
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [list.data, vueListe, filtreStatut, rechercheArchives],
+    [list.data, vueListe, filtreStatut, filtreProbleme, rechercheArchives],
   );
   /** Chantiers en cours : toujours remontés en tête de page. */
   const enCours = useMemo(
