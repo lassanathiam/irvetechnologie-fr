@@ -1,13 +1,9 @@
+import { statutAttachement } from "@/lib/attachement-classement";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "@tanstack/react-router";
 import { ClipboardList, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-
-const STATUTS: Record<string, string> = {
-  brouillon: "Brouillon", envoye: "Envoyé", accepte: "Accepté",
-  refuse: "Refusé", facture: "Facturé", annule: "Annulé",
-};
 
 export function AttachementsChantier({ rendezvousId }: { rendezvousId: string }) {
   const query = useQuery({
@@ -21,7 +17,7 @@ export function AttachementsChantier({ rendezvousId }: { rendezvousId: string })
         ? `rendezvous_id.eq.${rendezvousId},id.in.(${ids.join(",")})`
         : `rendezvous_id.eq.${rendezvousId}`;
       const result = await supabase.from("attachements_travaux")
-        .select("id, numero, statut").or(filtre).order("created_at", { ascending: false });
+        .select("id, numero, statut, facture_id").or(filtre).order("created_at", { ascending: false });
       if (result.error) throw new Error(result.error.message);
       return result.data;
     },
@@ -34,7 +30,7 @@ export function AttachementsChantier({ rendezvousId }: { rendezvousId: string })
       : query.data.length ? <div className="flex flex-wrap gap-2">{query.data.map((attachement) => (
         <Button key={attachement.id} asChild variant="outline" size="sm" className="h-auto min-h-9 whitespace-normal">
           <Link to="/attachements/$id" params={{ id: attachement.id }}>
-            <ClipboardList className="h-4 w-4 shrink-0" /> {attachement.numero} · {STATUTS[attachement.statut] ?? attachement.statut}
+            <ClipboardList className="h-4 w-4 shrink-0" /> {attachement.numero} · {statutAttachement(attachement)}
           </Link>
         </Button>
       ))}</div>

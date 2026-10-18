@@ -1,3 +1,4 @@
+import { statutAttachement } from "@/lib/attachement-classement";
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { Loader2, Mail } from "lucide-react";
@@ -46,7 +47,7 @@ export function AttachementsPeriode({ attachements }: { attachements: any[] }) {
       <span className="text-sm text-muted-foreground">du {fr(debut)} au {fr(fin)}</span>
     </div>
     {liste.length === 0 ? <p className="text-sm text-muted-foreground">Aucun attachement sur cette période.</p> : <>
-      <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">{liste.map((a) => <li key={a.id}><label className="flex cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4" checked={!exclus.includes(a.id)} onChange={(e) => setExclus((x) => e.target.checked ? x.filter((i) => i !== a.id) : [...x, a.id])} /><span className="font-semibold">{a.numero}</span><span className="text-muted-foreground">{a.client_nom}</span><span className="ml-auto font-mono">{euro(Number(a.total_ht))}</span></label></li>)}</ul>
+      <ul className="max-h-64 space-y-1 overflow-y-auto text-sm">{liste.map((a) => <li key={a.id}><label className="flex flex-wrap cursor-pointer items-center gap-2"><input type="checkbox" className="h-4 w-4" checked={!exclus.includes(a.id)} onChange={(e) => setExclus((x) => e.target.checked ? x.filter((i) => i !== a.id) : [...x, a.id])} /><span className="font-semibold">{a.numero}</span><span className="text-muted-foreground">{a.client_nom}</span><span className="text-xs text-muted-foreground">{statutAttachement(a)}</span><span className="ml-auto font-mono">{euro(Number(a.total_ht))}</span></label></li>)}</ul>
       <p className="text-sm font-bold">{choisis.length} attachement(s) · {euro(choisis.reduce((s, a) => s + Number(a.total_ht), 0))} HT</p>
       {groupes.map(([cle, items]) => <div key={cle} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2">
         <span className="text-sm font-semibold">{items[0].client_nom} ({items.length})</span>
