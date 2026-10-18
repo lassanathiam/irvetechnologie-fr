@@ -1,3 +1,4 @@
+import { statutAttachement } from "@/lib/attachement-classement";
 import { titreAttachement } from "@/lib/attachement-titre";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
@@ -86,7 +87,7 @@ function AttachementDetail() {
   }
 
   return <ProShell><div className="print:hidden space-y-5">
-    <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{a.statut}</span>
+    <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{statutAttachement(a)}</span>
       <div className="ml-auto flex flex-wrap gap-2">
         {!a.facture_id && <Button variant={edit ? "secondary" : "outline"} onClick={() => setEdit((v) => !v)}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>}
         <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimer / PDF</Button>
