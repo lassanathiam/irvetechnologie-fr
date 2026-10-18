@@ -21,3 +21,4 @@
 - Completed chantier photo corrections reuse the authenticated photo handlers in a photo-only editor, without saving operational return fields or sending email, to preserve closure and billing state.
 - Per-photo comments reuse rendezvous_photos.legende through an authenticated, appointment-scoped update; this keeps existing sharing captions consistent without changing closure or billing state.
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
+- ENSIO purchase orders are parsed in the browser (src/lib/commandes-ensio.ts), matched to attachments by the AT number printed on the order, stamped with the official IRVE seal, then invoiced via the shared convertirEnFacture helper (why: one conversion path keeps billing consistent).
