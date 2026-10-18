@@ -79,7 +79,7 @@ import {
   MATERIEL_LABELS,
 } from "@/lib/partenaires.functions";
 import { ProShell } from "@/components/ProShell";
-import { InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
+import { COULEUR_PROBLEME, InterventionsMap, STATUT_COLORS, type MapMarker } from "@/components/InterventionsMap";
 import {
   comparerDeuxChantiers,
   itineraireDepuisBase,
@@ -1903,6 +1903,8 @@ function PlanningPage() {
               <Legende color={STATUT_COLORS.confirme!} label="Confirmé" />
               <Legende color={STATUT_COLORS.realise!} label="Réalisé / validé" />
               <Legende color={STATUT_COLORS.annule!} label="Annulé" />
+              <Legende color={STATUT_COLORS.en_pause!} label="En pause" />
+              <Legende color={COULEUR_PROBLEME} label="Problématique" />
             </div>
           </div>
           <div className="w-full min-w-0 max-w-full p-2.5 sm:p-4">
