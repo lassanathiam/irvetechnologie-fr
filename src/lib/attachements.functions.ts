@@ -348,7 +348,7 @@ async function convertirEnFacture(context: { supabase: any; userId: string }, da
     }).select("id").single();
     if (invoiceError) throw new Error(invoiceError.message);
     if ((items ?? []).length) {
-      const inserted = await context.supabase.from("facture_items").insert((items ?? []).map((item, index) => ({
+      const inserted = await context.supabase.from("facture_items").insert((items ?? []).map((item: any, index: number) => ({
         facture_id: invoice.id,
         libelle: item.libelle,
         description: item.description,
@@ -401,7 +401,7 @@ export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
       await context.supabase.from("factures").update({ bon_commande: data.bon_commande }).eq("id", att.facture_id);
       return { id: att.facture_id, existing: true };
     }
-    const patch: Record<string, unknown> = { bon_commande: data.bon_commande };
+    const patch: { bon_commande: string; total_ht?: number; total_tva?: number; total_ttc?: number } = { bon_commande: data.bon_commande };
     if (data.montant_ht !== null) {
       const ecart = Math.round((data.montant_ht - Number(att.total_ht)) * 100) / 100;
       if (Math.abs(ecart) >= 0.01) {
