@@ -1,47 +1,60 @@
 export const ETAPES_PHOTOS = [
   {
-    id: "cable",
-    nom: "Tirage de câble",
+    id: "terre", numero: 1,
+    nom: "Vérification de la terre",
+    couleur: "photo-tableau",
+    categories: ["verification_terre_avant"],
+  },
+  {
+    id: "avant", numero: 2,
+    nom: "Avant travaux",
+    couleur: "photo-autre",
+    categories: ["ensio_av_tableau_ferme", "ensio_av_tableau_ouvert", "avant_tableau", "emplacement_tableau", "ensio_av_emplacement_borne", "avant_emplacement", "emplacement_borne", "etat_avant_maintenance", "avant_compteur", "avant_travaux"],
+  },
+  {
+    id: "borne", numero: 3,
+    nom: "Installation et raccordement de la borne",
+    couleur: "photo-borne",
+    categories: [
+      "ensio_borne_ouverte_ensemble", "raccordement_borne", "ensio_borne_ouverte_alim", "ensio_borne_ouverte_cable_info",
+      "borne_posee", "vue_ensemble", "ensio_borne_fermee_face", "ensio_borne_fermee_droite", "ensio_borne_fermee_gauche",
+    ],
+  },
+  {
+    id: "tableau", numero: 4,
+    nom: "Raccordement dans le tableau électrique",
+    couleur: "photo-tableau",
+    categories: [
+      "tableau_electrique", "ensio_tableau_ouvert", "ensio_alim_protections", "ensio_liaison_pe", "ensio_protections_refs",
+      "compteur_linky", "ensio_tore_emplacement", "ensio_tore_connexions", "ensio_tension_sortie", "ensio_tableau_ferme_etiquette", "armoire",
+    ],
+  },
+  {
+    id: "essai", numero: 5,
+    nom: "Mise en service",
+    couleur: "photo-essai",
+    categories: [
+      "mise_en_service", "ensio_simulateur_charge", "ensio_resistance_pe", "ensio_parametrages",
+      "plaque_serie", "ensio_numero_serie", "ensio_etiquette_autel", "ensio_carte_sim", "ensio_badges", "ensio_appel_supervision", "ensio_sms_supervision",
+    ],
+  },
+  {
+    id: "pv", numero: 6,
+    nom: "PV de réception",
+    couleur: "photo-essai",
+    categories: ["pv_signe"],
+  },
+  {
+    id: "cable", numero: 7,
+    nom: "Cheminement du câble et traversée de gaine",
     couleur: "photo-cable",
     categories: ["cheminement_cable", "ensio_cheminement_cable", "ensio_gaine_traversee", "boite_derivation"],
   },
   {
-    id: "borne",
-    nom: "Pose et raccordement de la borne",
-    couleur: "photo-borne",
-    categories: [
-      "avant_emplacement", "emplacement_borne", "ensio_av_emplacement_borne", "etat_avant_maintenance",
-      "borne_posee", "ensio_borne_fermee_face", "ensio_borne_fermee_gauche", "ensio_borne_fermee_droite",
-      "vue_ensemble", "ensio_borne_ouverte_ensemble", "raccordement_borne", "ensio_borne_ouverte_alim",
-      "ensio_borne_ouverte_cable_info",
-    ],
-  },
-  {
-    id: "tableau",
-    nom: "Tableau, protections et délestage",
-    couleur: "photo-tableau",
-    categories: [
-      "avant_tableau", "emplacement_tableau", "ensio_av_tableau_ferme", "ensio_av_tableau_ouvert",
-      "avant_compteur", "tableau_electrique", "ensio_tableau_ouvert", "ensio_alim_protections",
-      "ensio_liaison_pe", "ensio_protections_refs", "compteur_linky", "ensio_tore_emplacement",
-      "ensio_tore_connexions", "ensio_tableau_ferme_etiquette", "armoire",
-    ],
-  },
-  {
-    id: "essai",
-    nom: "Mise en service et contrôles",
-    couleur: "photo-essai",
-    categories: [
-      "mise_en_service", "ensio_parametrages", "ensio_simulateur_charge", "ensio_tension_sortie",
-      "ensio_resistance_pe", "plaque_serie", "ensio_numero_serie", "ensio_etiquette_autel",
-      "ensio_carte_sim", "ensio_badges", "ensio_appel_supervision", "ensio_sms_supervision", "pv_signe",
-    ],
-  },
-  {
-    id: "autre",
-    nom: "Autres constats",
+    id: "autre", numero: 8,
+    nom: "État des lieux avant départ",
     couleur: "photo-autre",
-    categories: ["avant_travaux", "autre"],
+    categories: ["etat_lieux_depart", "autre"],
   },
 ] as const;
 
