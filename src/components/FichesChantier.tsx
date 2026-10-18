@@ -4,13 +4,30 @@ import { FileText, Loader2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { lienFicheTechnique, listFichesTechniques } from "@/lib/fiches-techniques.functions";
+import { Button } from "@/components/ui/button";
 
 /** Fiches techniques rangées sur un chantier. */
 export function FichesChantier({ rendezvousId }: { rendezvousId: string }) {
   const lister = useServerFn(listFichesTechniques);
   const lien = useServerFn(lienFicheTechnique);
   const [ouverture, setOuverture] = useState<string | null>(null);
-  const q = useQuery({ queryKey: ["fiches-techniques", rendezvousId], queryFn: () => lister({ data: { rendezvous_id: rendezvousId } }) });
+  const q = useQuery({
+    queryKey: ["fiches-techniques", rendezvousId],
+    queryFn: () => lister({ data: { rendezvous_id: rendezvousId } }),
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 2,
+    throwOnError: false,
+  });
+  if (q.isError && !q.data) return (
+    <div className="mt-3" role="status">
+      <p className="text-sm text-muted-foreground">Fiches techniques temporairement indisponibles.</p>
+      <Button type="button" variant="outline" size="sm" onClick={() => void q.refetch()} disabled={q.isFetching} className="mt-2">
+        {q.isFetching ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <FileText className="mr-2 h-4 w-4" />}
+        Réessayer
+      </Button>
+    </div>
+  );
   if (!q.data?.length) return null;
 
   async function ouvrir(id: string) {
