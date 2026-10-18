@@ -204,17 +204,41 @@ export function InterventionsMap({
     n?: number,
     etat?: string,
     rang?: number | null,
+    probleme?: boolean | null,
+    enPause?: boolean,
   ) {
     const coche = rang != null;
     const size = coche ? 48 : active ? 44 : 34;
     const anneau = coche
       ? `box-shadow:0 0 0 6px #2563eb;`
       : `box-shadow:0 0 0 ${active ? 8 : 5}px ${etat ?? color}55;`;
+    const texte = coche ? rang : (n ?? "");
+    // Triangle rouge = chantier signalé problématique / non conforme.
+    if (!coche && probleme) {
+      return L.current.divIcon({
+        className: "",
+        iconSize: [size, size],
+        iconAnchor: [size / 2, size / 2],
+        html: `<span style="position:relative;display:grid;place-items:center;width:${size}px;height:${size}px;filter:drop-shadow(0 0 ${active ? 6 : 3}px ${color}66)"><svg width="${size}" height="${size}" viewBox="0 0 34 34" style="display:block"><polygon points="17,2.5 32,31.5 2,31.5" fill="${color}" stroke="#fff" stroke-width="2.5" stroke-linejoin="round"/></svg><span style="position:absolute;top:calc(50% + 5px);left:50%;transform:translateX(-50%);color:#fff;font:800 ${active ? 13 : 11}px/1 system-ui">${texte ?? ""}</span></span>`,
+      });
+    }
+    // Rectangle à moitié rempli = chantier mis en pause.
+    if (!coche && enPause) {
+      const largeur = size;
+      const hauteur = Math.round(size * 0.78);
+      return L.current.divIcon({
+        className: "",
+        iconSize: [largeur, hauteur],
+        iconAnchor: [largeur / 2, hauteur / 2],
+        html: `<span style="display:grid;place-items:center;width:${largeur}px;height:${hauteur}px;border-radius:7px;background:linear-gradient(to top,${color} 0 50%,#fff 50% 100%);border:3px solid #fff;${anneau}color:#fff;text-shadow:0 1px 2px rgba(15,23,42,.55);font:800 ${active ? 15 : 12}px/1 system-ui">${texte ?? ""}</span>`,
+      });
+    }
+    // Cercle habituel pour le planning et les autres statuts.
     return L.current.divIcon({
       className: "",
       iconSize: [size, size],
       iconAnchor: [size / 2, size / 2],
-      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${coche ? rang : (n ?? "")}</span>`,
+      html: `<span style="display:grid;place-items:center;width:${size}px;height:${size}px;border-radius:9999px;background:${coche ? "#2563eb" : color};border:3px solid #fff;${anneau}color:#fff;font:800 ${coche ? 18 : active ? 16 : 13}px/1 system-ui">${texte}</span>`,
     });
   }
 
@@ -253,7 +277,9 @@ export function InterventionsMap({
               : m.couleur || etat;
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet
-        .marker([m.lat, m.lng], { icon: dot(color, activeId === m.id, i + 1, etat, rang) })
+        .marker([m.lat, m.lng], {
+          icon: dot(color, activeId === m.id, i + 1, etat, rang, m.probleme, m.statut === "en_pause"),
+        })
         .addTo(layer.current);
       mk.bindTooltip(
         `<strong>${escapeHtml(m.label)}</strong>${m.date ? `<br>${escapeHtml(m.date)}` : ""}`,
