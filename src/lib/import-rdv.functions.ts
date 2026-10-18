@@ -46,7 +46,8 @@ export const analyserDocumentRdv = createServerFn({ method: "POST" })
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("Service d'analyse non configuré.");
 
-    const content: unknown[] = [{ type: "input_text", text: PROMPT }];
+    const auj = new Date().toLocaleDateString("fr-FR", { timeZone: "Europe/Paris", weekday: "long", day: "numeric", month: "long", year: "numeric" });
+    const content: unknown[] = [{ type: "input_text", text: `${PROMPT}\nDate du jour : ${auj} (heure de Paris). Si l'année n'est pas écrite (ex. « lundi 19 octobre à 09h30 »), prends la prochaine date correspondante à partir d'aujourd'hui et remplis quand même date_debut.` }];
     if (data.texte) content.push({ type: "input_text", text: `Contenu du tableau :\n${data.texte}` });
     if (data.data_url) {
       if (/^data:image\/(jpeg|png|webp);base64,/.test(data.data_url)) {
