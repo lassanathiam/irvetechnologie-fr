@@ -1,11 +1,12 @@
 import { useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { Download, Loader2, Mail } from "lucide-react";
+import { Loader2, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { envoyerAttachementsGroupes } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { euro } from "@/lib/company";
+import { TelechargerAttachements } from "@/components/TelechargerAttachements";
 
 /** Bornes [début, fin] d'une semaine (lundi→dimanche) ou d'un mois. */
 export function bornesPeriode(mode: "semaine" | "mois", date: string): [string, string] {
@@ -49,10 +50,9 @@ export function AttachementsPeriode({ attachements }: { attachements: any[] }) {
       <p className="text-sm font-bold">{choisis.length} attachement(s) · {euro(choisis.reduce((s, a) => s + Number(a.total_ht), 0))} HT</p>
       {groupes.map(([cle, items]) => <div key={cle} className="flex flex-wrap items-center gap-2 rounded-md border border-border p-2">
         <span className="text-sm font-semibold">{items[0].client_nom} ({items.length})</span>
-        <Button size="sm" variant="outline" className="ml-auto" onClick={() => window.open(`/attachements-lot/${items.map((a) => a.public_token).join(".")}`, "_blank")}><Download /> Tout télécharger en un PDF</Button>
+        <TelechargerAttachements ids={items.map((a) => a.id)} label={`Télécharger la sélection (${items.length})`} />
         <Button size="sm" disabled={enCours !== null || cle.startsWith("sans:")} onClick={() => void envoyerGroupe(cle, items)}>{enCours === cle ? <Loader2 className="animate-spin" /> : <Mail />} Tout envoyer en un seul email</Button>
       </div>)}
-      <p className="text-xs text-muted-foreground">Le PDF s’ouvre avec tous les attachements à la suite : touchez « Télécharger tout en un PDF » puis « Enregistrer en PDF ».</p>
     </>}
     {info && <p className="rounded-md bg-primary/10 px-3 py-2 text-sm font-medium text-primary">{info}</p>}
   </section>;

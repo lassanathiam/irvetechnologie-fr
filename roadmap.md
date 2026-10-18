@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [x] Ajuster AXIANS sur une page PDF et proposer le téléchargement direct individuel et des attachements sélectionnés à côté de l’envoi ; AT-2026-0008 téléchargé et imprimé sur 1 page, lot de 2 attachements téléchargé sur 2 pages, sans erreur navigateur.
+
 - [x] Retirer « À facturer » du menu et relier Planning et attachements dans les deux sens, sans modifier les données de facturation ; vérifié connecté sur AT-2026-0037 / CANAVATE Audrey, aller-retour sans erreur.
 
 - [x] Diagnostiquer le 500 des fiches : appel temporairement non reconnu lors du rechargement de l’aperçu, puis appels réussis ; isoler les erreurs de fiches avec réessai sans interrompre Planning. Vérifié connecté : six appels réussis, PDF ALAGON reçu et reconnu, aucune erreur de page.
