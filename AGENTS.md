@@ -20,4 +20,4 @@
 - PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
 - Photo corrections on completed chantiers and per-photo comments (rendezvous_photos.legende) use authenticated appointment-scoped photo handlers only, never return fields or email (preserves closure/billing state).
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
-- ENSIO orders: parsed in browser, matched by printed AT number, IRVE-sealed, invoiced via shared convertirEnFacture (one billing path).
+- Orders use browser parsing and explicit ambiguous-match review; shared conversion stays unique. Discrepancy reports reread attachment lines under auth and derive recipients server-side to prevent cross-customer disclosure.
