@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Retirer « À facturer » du menu et relier Planning et attachements dans les deux sens, sans modifier les données de facturation.
+
 - [x] Diagnostiquer le 500 des fiches : appel temporairement non reconnu lors du rechargement de l’aperçu, puis appels réussis ; isoler les erreurs de fiches avec réessai sans interrompre Planning. Vérifié connecté : six appels réussis, PDF ALAGON reçu et reconnu, aucune erreur de page.
 
 - [x] Organiser les photos à prendre en huit étapes numérotées selon l’ordre demandé, sans perdre les preuves existantes ; 13 tests réussis avec les règles PV.
