@@ -98,6 +98,7 @@ import { ImportRdvDialog } from "@/components/ImportRdvDialog";
 import { DateAvecJour } from "@/components/DateAvecJour";
 import { FichesTechniquesDialog } from "@/components/FichesTechniquesDialog";
 import { FichesChantier } from "@/components/FichesChantier";
+import { AttachementsChantier } from "@/components/AttachementsChantier";
 import { DonneurOrdreField } from "@/components/DonneurOrdreField";
 import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -344,6 +345,11 @@ function PlanningPage() {
   const [dateGroupee, setDateGroupee] = useState("");
   const [planningComplet, setPlanningComplet] = useState(recherche.vue === "realises");
   const [detailsOuverts, setDetailsOuverts] = useState(false);
+  useEffect(() => {
+    if (!recherche.rdv) return;
+    setActive(recherche.rdv);
+    setDossier(recherche.rdv);
+  }, [recherche.rdv]);
   const modeIntervention = !planningComplet;
   const ouvrirPlanning = () => {
     setPlanningComplet(true);
@@ -710,7 +716,7 @@ function PlanningPage() {
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
   // Un chantier en pause ne reprend jamais la place tout seul : il faut l'ouvrir depuis « Chantiers en pause ».
   const missionTerrain =
-    toutes.find((r) => r.id === active && estPourMoi(r)) ??
+    toutes.find((r) => r.id === active && (r.id === recherche.rdv || estPourMoi(r))) ??
     enCours.filter((r) => estPourMoi(r) && r.statut !== "en_pause")[0] ??
     chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine" && r.statut !== "en_pause") ??
     chantiersDuJour.find((r) => r.statut !== "en_pause") ??
@@ -1171,6 +1177,7 @@ function PlanningPage() {
                     {missionTerrain.notes && !estNoteAutoDepuisDevis(missionTerrain.notes) && <div className="mt-3"><p className="text-xs text-muted-foreground">Notes</p><p className="whitespace-pre-wrap break-words text-sm">{missionTerrain.notes}</p></div>}
                   </>}
                   <FichesChantier rendezvousId={missionTerrain.id} />
+                  <AttachementsChantier rendezvousId={missionTerrain.id} />
                 </div>
 
                 {(() => {
@@ -2373,6 +2380,7 @@ function PlanningPage() {
 
                             {/* Documents du chantier toujours visibles : fiches techniques + PV */}
                             <FichesChantier rendezvousId={r.id} />
+                            <AttachementsChantier rendezvousId={r.id} />
                             {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
                               <Button variant="outline" className="mt-2 min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
                                 <Camera className="h-4 w-4" /> Corriger les photos

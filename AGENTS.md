@@ -20,3 +20,4 @@
 - PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
 - Completed chantier photo corrections reuse the authenticated photo handlers in a photo-only editor, without saving operational return fields or sending email, to preserve closure and billing state.
 - Per-photo comments reuse rendezvous_photos.legende through an authenticated, appointment-scoped update; this keeps existing sharing captions consistent without changing closure or billing state.
+- Planning and attachment detail link through existing appointment IDs on attachment headers and lines; browser reads remain RLS-scoped and do not change billing state.

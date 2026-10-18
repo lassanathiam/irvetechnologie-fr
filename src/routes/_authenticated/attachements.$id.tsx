@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Ban, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
+import { ArrowLeft, Ban, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { LignesAttachement } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
@@ -76,6 +76,13 @@ function AttachementDetail() {
   const setDelaiJours = (value: number) => { setDelai(value); setForm((f: any) => ({ ...f, date_echeance: addDays(f.date_emission, value) })); };
   const previewDoc = edit && form ? { ...a, ...form, total_ht: total, total_tva: form.autoliquidation ? 0 : total * 0.2, total_ttc: form.autoliquidation ? total : total * 1.2 } : a;
   const previewItems = edit ? lines.map((l) => ({ libelle: l.libelle, description: l.description, quantite: Number(l.quantite) || 0, prix_unitaire: Number(l.prix) || 0 })) : items;
+  const chantiers = new Map<string, string>();
+  if (a.rendezvous_id) chantiers.set(a.rendezvous_id, a.objet || "Chantier de l’attachement");
+  for (const item of items ?? []) {
+    if (item.rendezvous_id && !chantiers.has(item.rendezvous_id)) {
+      chantiers.set(item.rendezvous_id, item.description || item.libelle || "Chantier");
+    }
+  }
 
   return <ProShell><div className="print:hidden space-y-5">
     <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{a.statut}</span>
@@ -89,6 +96,14 @@ function AttachementDetail() {
         {!a.facture_id && <Button variant="destructive" disabled={remove.isPending} onClick={() => { if (window.confirm(`Supprimer définitivement l’attachement ${a.numero} ?`)) remove.mutate(); }}><Trash2 /> Supprimer</Button>}
       </div>
     </header>
+
+    <section className="space-y-2">
+      <h2 className="text-sm font-semibold">Chantiers dans le Planning</h2>
+      <div className="flex flex-wrap gap-2">
+        {[...chantiers].map(([rdv, label]) => <Button asChild key={rdv} variant="outline" className="h-auto min-h-10 max-w-full whitespace-normal text-left"><Link to="/planning" search={{ rdv }}><CalendarClock className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{label}</span></Link></Button>)}
+        {!chantiers.size && <p className="text-sm text-muted-foreground">Aucun chantier lié à cet attachement.</p>}
+      </div>
+    </section>
 
     {enAttente ? <section className="rounded-md border-2 border-primary bg-primary/5 p-5 space-y-4">
       <h2 className="text-sm font-bold uppercase text-primary">Valorisation proposée par le client</h2>
