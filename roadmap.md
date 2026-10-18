@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Généraliser les commandes à AXIANS et aux autres donneurs d’ordre, avec rapport d’écart détaillé téléchargeable et envoi confirmé.
+
 - [x] Distinguer les attachements facturés comme clôturés et les ranger dans Archives, sans modifier les factures ; 3 tests réussis, 4 archives réelles visibles et accès à leur facture vérifié connecté.
 
 - [x] Ajuster AXIANS sur une page PDF et proposer le téléchargement direct individuel et des attachements sélectionnés à côté de l’envoi ; AT-2026-0008 téléchargé et imprimé sur 1 page, lot de 2 attachements téléchargé sur 2 pages, sans erreur navigateur.
