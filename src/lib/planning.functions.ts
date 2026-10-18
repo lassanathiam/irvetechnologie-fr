@@ -1521,6 +1521,8 @@ export const RETOUR_CATEGORIES_ENSIO_OPTION = [
 ] as const;
 
 export const RETOUR_CATEGORIES = [
+  "verification_terre_avant",
+  "etat_lieux_depart",
   "pv_signe",
   ...RETOUR_CATEGORIES_OBLIGATOIRES,
   ...RETOUR_CATEGORIES_MAINTENANCE,
@@ -1536,6 +1538,8 @@ export const RETOUR_CATEGORIES = [
 export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
 
 export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
+  verification_terre_avant: "Vérification de la terre avant travaux",
+  etat_lieux_depart: "État des lieux avant départ",
   pv_signe: "PV à prendre en photo",
   borne_posee: "Borne posée / emplacement final",
   raccordement_borne: "Raccordement de la borne",
@@ -1604,7 +1608,7 @@ export function categoriesRetourOptionnelles(type?: string | null, partenaire?: 
     : estEnsio(partenaire)
       ? ["ensio_tore_emplacement", "ensio_tore_connexions", "ensio_gaine_traversee", "ensio_sms_supervision", "ensio_etiquette_autel"]
       : ["avant_emplacement", "avant_tableau", "cheminement_cable", "vue_ensemble", "plaque_serie"];
-  return [...ordre.filter((c) => !principales.has(c)), "autre"];
+  return [...(type === "maintenance" ? [] : ["verification_terre_avant"]), ...ordre.filter((c) => !principales.has(c)), "etat_lieux_depart", "autre"];
 }
 
 /** Groupe visuel d'une catégorie de photo (couleur dans le retour de travaux). */
@@ -1676,6 +1680,21 @@ export const uploadPhotoChantier = createServerFn({ method: "POST" })
     });
     if (error) throw new Error(error.message);
     return { ok: true as const, path };
+  });
+
+/** Modifie seulement le commentaire, sans toucher au chantier ni à sa validation. */
+export const modifierCommentairePhoto = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; rendezvous_id: string; legende: string }) =>
+    z.object({ id: z.string().uuid(), rendezvous_id: z.string().uuid(), legende: z.string().trim().max(160) }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: row, error } = await context.supabase.from("rendezvous_photos")
+      .update({ legende: data.legende || null })
+      .eq("id", data.id).eq("rendezvous_id", data.rendezvous_id).select("id, legende").maybeSingle();
+    if (error) throw new Error("Enregistrement du commentaire impossible.");
+    if (!row) throw new Error("Photo introuvable ou accès non autorisé.");
+    return row;
   });
 
 /** Supprime une photo de chantier (fichier + fiche). */

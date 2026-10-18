@@ -5,6 +5,7 @@ import { Camera, Check, Circle, Cable, Loader2, Trash2, WifiOff, Wrench, X } fro
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
+import PhotoCommentaire from "@/components/PhotoCommentaire";
 import { photosParEtape } from "@/lib/photos-etapes";
 import { photoPvObligatoire } from "@/lib/photo-pv";
 import {
@@ -224,7 +225,7 @@ export default function RetourTravauxSheet({
         {items.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-2">
             {items.map((p) => (
-              <div key={p.id} className="relative">
+              <div key={p.id} className="relative w-44 max-w-full">
                 {p.url ? (
                   <button
                     type="button"
@@ -234,7 +235,7 @@ export default function RetourTravauxSheet({
                     <img
                       src={p.url}
                       alt={RETOUR_CATEGORIES_LABELS[cat] ?? "Photo de chantier"}
-                      className="h-20 w-20 cursor-pointer rounded-md object-cover"
+                      className="h-28 w-44 max-w-full cursor-pointer rounded-md object-cover"
                       decoding="async"
                     />
                   </button>
@@ -254,6 +255,7 @@ export default function RetourTravauxSheet({
                 >
                   <Trash2 className="h-3.5 w-3.5" />
                 </Button>
+                <PhotoCommentaire id={p.id} rdvId={rdv.id} legende={p.legende} enLigne={enLigne} />
               </div>
             ))}
           </div>
@@ -372,7 +374,7 @@ export default function RetourTravauxSheet({
           <ol className="mt-2 grid gap-1.5 text-xs text-muted-foreground sm:grid-cols-2">
             {(maintenance
               ? ["Contrôle de la borne", "Diagnostic / maintenance", "Essai", "Remise en service"]
-              : ["Pose de la borne", "Raccordement de la borne", "Raccordement au tableau électrique", "Tableau de protection", "Compteur Linky", "Délestage", "Mise en service"]
+              : ["1. Vérification de la terre", "2. Avant travaux", "3. Installation de la borne", "4. Raccordement au tableau électrique", "5. Mise en service", "6. PV de réception (si concerné)", "7. Cheminement du câble et traversée de gaine", "8. État des lieux avant départ"]
             ).map((etape) => (
               <li key={etape} className="flex items-center gap-2"><Circle className="h-2.5 w-2.5 shrink-0 fill-primary text-primary" /> {etape}</li>
             ))}
@@ -381,10 +383,10 @@ export default function RetourTravauxSheet({
 
         <div className="grid gap-5">
           {pvManquant && <p role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-foreground">{photosSeulement ? "Photo du PV manquante dans ce dossier ENSIO." : "Photo du PV obligatoire avant de terminer ce chantier ENSIO."}</p>}
-          {etapes.map((etape, index) => (
+          {etapes.map((etape) => (
             <section key={etape.id} className={etape.couleur} aria-label={etape.nom}>
               <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
-                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--photo-tone)] text-[var(--photo-ink)]">{index + 1}</span>
+                <span className="grid h-7 w-7 shrink-0 place-items-center rounded-md bg-[var(--photo-tone)] text-[var(--photo-ink)]">{etape.numero}</span>
                 {etape.nom}
               </h3>
               <div className="grid gap-2">{etape.categories.map((cat) => ligne(cat))}</div>

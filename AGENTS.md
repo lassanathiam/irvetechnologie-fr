@@ -5,7 +5,7 @@
 - Les prix « À partir de » du site sont stockés dans `app_settings` sous `tarifs_site_public` et modifiés via l’espace pro (pourquoi : garder l’affichage public synchronisé sans redéploiement).
 - Planning opens on Mission terrain; management tools stay in a collapsible full-planning area and both views share the selected appointment so technicians can read client details without navigating away.
 - Map selection pins a single appointment above the grouped list without changing filters or persisted ordering; batch map selection never scrolls away, so route grouping remains usable.
-- Photo workflow grouping lives in a browser-safe presentation module; keep stored categories and closure requirements unchanged so reorganizing the checklist never invalidates existing evidence.
+- Photo workflow grouping lives in a browser-safe presentation module with stable step numbers; preserve existing category keys and closure requirements so reorganizing the checklist never invalidates existing evidence. New before/after evidence remains optional unless explicitly required.
 - Sur ordinateur, le Planning suit deux zones stables : rendez-vous et mission à gauche, carte et logistique à droite ; le trajet suit immédiatement la carte (pourquoi : réduire les espaces vides et rapprocher les outils liés).
 - Le retour terrain utilise le type du rendez-vous : installation = preuves complètes, maintenance = deux preuves essentielles et câble/métrage seulement si des travaux de câble ont réellement lieu (pourquoi : éviter des photos et champs inutiles en maintenance).
 - Les retours donneur d’ordre utilisent l’email principal et l’email de copie de la fiche partenaire, avec un envoi individuel et dédupliqué à chacun (pourquoi : le service d’email ne propose pas de champ CC natif).
@@ -19,3 +19,4 @@
 - PV reports are picked per chantier from rendezvous.reseau_client via pvPourReseau/modelePourReseau (rapport_modeles.reseaux holds the keys); CRM-only clients show a reminder instead of a PV (why: each end-client of the contractor imposes its own acceptance form).
 - PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
 - Completed chantier photo corrections reuse the authenticated photo handlers in a photo-only editor, without saving operational return fields or sending email, to preserve closure and billing state.
+- Per-photo comments reuse rendezvous_photos.legende through an authenticated, appointment-scoped update; this keeps existing sharing captions consistent without changing closure or billing state.
