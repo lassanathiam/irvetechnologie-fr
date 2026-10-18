@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Euro, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { LignesAttachement, nouvelleLigne, type LigneAtt } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
