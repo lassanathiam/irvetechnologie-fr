@@ -256,6 +256,24 @@ function AttachementsPage() {
   }, [list.data]);
 
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
+  <section className="rounded-md border border-border bg-card p-5 space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-lg font-semibold">Suivi du mois</h2>
+      <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={moisSuivi} onChange={(e) => setMoisSuivi(e.target.value)}>
+        {moisDispos.map((v) => <option key={v} value={v}>{new Date(`${v}-01T12:00:00`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</option>)}
+      </select>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {suiviMois.map((e) => (
+        <div key={e.cle} className={`rounded-md border p-4 ${e.cle === "facture" ? "border-primary/50 bg-primary/5" : "border-border"}`}>
+          <p className="text-xs text-muted-foreground">{e.label}</p>
+          <p className="mt-1 text-xl font-semibold">{e.nb}</p>
+          <p className="text-sm font-mono text-muted-foreground">{euro(e.ht)} HT</p>
+        </div>
+      ))}
+    </div>
+    <p className="text-xs text-muted-foreground">Pipeline du mois : attachement réalisé → envoyé en attente de validation → validé par le client → transformé en facture (clôturé).</p>
+  </section>
   {termines.length > 0 && <section className="rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
     <div><h2 className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-5 w-5 text-primary" /> Attachements ENSIO proposés ({termines.filter(estFini).length} terminé{termines.filter(estFini).length > 1 ? "s" : ""} · {termines.filter((r) => !estFini(r)).length} planifié{termines.filter((r) => !estFini(r)).length > 1 ? "s" : ""})</h2>
       <p className="text-sm text-muted-foreground">Chaque chantier ENSIO, terminé ou planifié, arrive ici, rangé par semaine. Chaque ligne précise « travaux terminés » ou « travaux planifiés ». Un clic prépare la feuille : une ligne par chantier avec l’adresse et le prix du bordereau. Vous ajoutez ensuite vos lignes en plus et les glissez où vous voulez.</p></div>
