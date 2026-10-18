@@ -4,7 +4,7 @@
 - Resolve attachment billing identity from donneurs_ordre and missing operational contacts from the matching active partenaires record; keep billing and delivery addresses independent to avoid invoicing the depot.
 - Les prix « À partir de » du site sont stockés dans `app_settings` sous `tarifs_site_public` et modifiés via l’espace pro (pourquoi : garder l’affichage public synchronisé sans redéploiement).
 - Planning opens on Mission terrain; management tools stay in a collapsible full-planning area and both views share the selected appointment so technicians can read client details without navigating away.
-- Map selection pins a single appointment above the grouped list without changing filters or persisted ordering; batch map selection never scrolls away, so route grouping remains usable.
+- Map selection pins one appointment above the list without changing filters/ordering; batch selection never scrolls (keeps route grouping usable).
 - Photo workflow grouping lives in a browser-safe presentation module with stable step numbers; preserve existing category keys and closure requirements so reorganizing the checklist never invalidates existing evidence. New before/after evidence remains optional unless explicitly required.
 - Sur ordinateur, le Planning suit deux zones stables : rendez-vous et mission à gauche, carte et logistique à droite ; le trajet suit immédiatement la carte (pourquoi : réduire les espaces vides et rapprocher les outils liés).
 - Le retour terrain utilise le type du rendez-vous : installation = preuves complètes, maintenance = deux preuves essentielles et câble/métrage seulement si des travaux de câble ont réellement lieu (pourquoi : éviter des photos et champs inutiles en maintenance).
@@ -18,7 +18,6 @@
 - Les chiffres « chantiers réalisés » du site = chiffre de départ dans `app_settings.compteurs_site_base` + chantiers terminés/réalisés ; seuls des totaux sont exposés publiquement (pourquoi : aucune donnée client sur le site).
 - PV reports are picked per chantier from rendezvous.reseau_client via pvPourReseau/modelePourReseau (rapport_modeles.reseaux holds the keys); CRM-only clients show a reminder instead of a PV (why: each end-client of the contractor imposes its own acceptance form).
 - PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
-- Completed chantier photo corrections reuse the authenticated photo handlers in a photo-only editor, without saving operational return fields or sending email, to preserve closure and billing state.
-- Per-photo comments reuse rendezvous_photos.legende through an authenticated, appointment-scoped update; this keeps existing sharing captions consistent without changing closure or billing state.
+- Photo corrections on completed chantiers and per-photo comments (rendezvous_photos.legende) use authenticated appointment-scoped photo handlers only, never return fields or email (preserves closure/billing state).
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
-- ENSIO purchase orders are parsed in the browser (src/lib/commandes-ensio.ts), matched to attachments by the AT number printed on the order, stamped with the official IRVE seal, then invoiced via the shared convertirEnFacture helper (why: one conversion path keeps billing consistent).
+- ENSIO orders: parsed in browser, matched by printed AT number, IRVE-sealed, invoiced via shared convertirEnFacture (one billing path).
