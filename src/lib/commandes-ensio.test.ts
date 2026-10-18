@@ -7,8 +7,8 @@ Devis n° AT-2026-0021 Nom et visa Maxime Henard VIREMENT SIMPLE SEPA 45 jours f
 
 describe("lecture bon de commande ENSIO", () => {
   const c = lireCommande(texte);
-  it("numéro de commande", () => expect(c.numero).toBe("CST 02048127"));
-  it("attachement lié", () => expect(c.attachement).toBe("AT-2026-0021"));
-  it("client", () => expect(c.client).toBe("ALAGON GEOFFREY"));
-  it("montant HT total avec milliers", () => expect(c.montantHt).toBe(1365));
+  it("numéro de commande", () => expect(c.numero).toEqual("CST 02048127"));
+  it("attachement lié", () => expect(c.attachement).toEqual("AT-2026-0021"));
+  it("client", () => expect(c.client).toEqual("ALAGON GEOFFREY"));
+  it("montant HT total avec milliers", () => expect(c.montantHt).toEqual(1365));
 });
