@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Euro, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { LignesAttachement, nouvelleLigne, type LigneAtt } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -255,7 +255,7 @@ function AttachementsPage() {
     return { lignes, global };
   }, [list.data]);
 
-  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
+  return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/commandes"><FileText /> Bons de commande</Link></Button><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
   <section className="rounded-md border border-border bg-card p-5 space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
       <h2 className="text-lg font-semibold">Suivi du mois</h2>
