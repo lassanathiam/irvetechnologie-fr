@@ -223,6 +223,24 @@ function AttachementsPage() {
   const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => vue === "tous" || (vue === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search, vue]);
 
+  // Suivi mensuel : pipeline de l'attachement, du brouillon à la facture.
+  const [moisSuivi, setMoisSuivi] = useState(() => new Date().toISOString().slice(0, 7));
+  const moisDispos = useMemo(() => {
+    const s = new Set<string>((list.data ?? []).map((a) => String(a.date_emission).slice(0, 7)));
+    s.add(new Date().toISOString().slice(0, 7));
+    return [...s].sort().reverse();
+  }, [list.data]);
+  const suiviMois = useMemo(() => {
+    const duMois = (list.data ?? []).filter((a) => String(a.date_emission).slice(0, 7) === moisSuivi && a.statut !== "annule");
+    const etapes = [
+      { cle: "realise", label: "Réalisés (brouillons)", test: (a: any) => (a.statut || "brouillon") === "brouillon" && !a.sent_at },
+      { cle: "attente", label: "En attente de validation", test: (a: any) => Boolean(a.sent_at) && !estAttachementCloture(a) && !["accepte", "refuse"].includes(a.statut) },
+      { cle: "valide", label: "Validés par le client", test: (a: any) => a.statut === "accepte" && !estAttachementCloture(a) },
+      { cle: "facture", label: "Facturés · Clôturés", test: (a: any) => estAttachementCloture(a) },
+    ];
+    return etapes.map((e) => { const sel = duMois.filter(e.test); return { ...e, nb: sel.length, ht: sel.reduce((s, a) => s + (Number(a.total_ht) || 0), 0) }; });
+  }, [list.data, moisSuivi]);
+
   const totaux = useMemo(() => {
     const parStatut = new Map<string, { nb: number; ht: number; tva: number; ttc: number }>();
     for (const a of list.data ?? []) {
@@ -238,6 +256,24 @@ function AttachementsPage() {
   }, [list.data]);
 
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
+  <section className="rounded-md border border-border bg-card p-5 space-y-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <h2 className="text-lg font-semibold">Suivi du mois</h2>
+      <select className="rounded-md border border-input bg-background px-3 py-2 text-sm" value={moisSuivi} onChange={(e) => setMoisSuivi(e.target.value)}>
+        {moisDispos.map((v) => <option key={v} value={v}>{new Date(`${v}-01T12:00:00`).toLocaleDateString("fr-FR", { month: "long", year: "numeric" })}</option>)}
+      </select>
+    </div>
+    <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+      {suiviMois.map((e) => (
+        <div key={e.cle} className={`rounded-md border p-4 ${e.cle === "facture" ? "border-primary/50 bg-primary/5" : "border-border"}`}>
+          <p className="text-xs text-muted-foreground">{e.label}</p>
+          <p className="mt-1 text-xl font-semibold">{e.nb}</p>
+          <p className="text-sm font-mono text-muted-foreground">{euro(e.ht)} HT</p>
+        </div>
+      ))}
+    </div>
+    <p className="text-xs text-muted-foreground">Pipeline du mois : attachement réalisé → envoyé en attente de validation → validé par le client → transformé en facture (clôturé).</p>
+  </section>
   {termines.length > 0 && <section className="rounded-md border-2 border-primary/50 bg-card p-5 space-y-4">
     <div><h2 className="flex items-center gap-2 text-lg font-semibold"><Sparkles className="h-5 w-5 text-primary" /> Attachements ENSIO proposés ({termines.filter(estFini).length} terminé{termines.filter(estFini).length > 1 ? "s" : ""} · {termines.filter((r) => !estFini(r)).length} planifié{termines.filter((r) => !estFini(r)).length > 1 ? "s" : ""})</h2>
       <p className="text-sm text-muted-foreground">Chaque chantier ENSIO, terminé ou planifié, arrive ici, rangé par semaine. Chaque ligne précise « travaux terminés » ou « travaux planifiés ». Un clic prépare la feuille : une ligne par chantier avec l’adresse et le prix du bordereau. Vous ajoutez ensuite vos lignes en plus et les glissez où vous voulez.</p></div>
