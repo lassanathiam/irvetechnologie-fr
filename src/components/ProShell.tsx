@@ -11,7 +11,6 @@ import {
   ClipboardCheck,
   ClipboardList,
   Download,
-  Euro,
   FileText,
   FolderLock,
   Handshake,
@@ -60,7 +59,6 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
     links: [
       { to: "/demandes", label: "Demandes", icon: Inbox },
       { to: "/devis", label: "Devis", icon: FileText },
-      { to: "/facturation", label: "À facturer", icon: Euro },
       { to: "/factures", label: "Mes factures", icon: Receipt },
       { to: "/signatures", label: "Signatures", icon: PenLine },
     ],
