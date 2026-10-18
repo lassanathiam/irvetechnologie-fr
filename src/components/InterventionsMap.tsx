@@ -240,7 +240,12 @@ export function InterventionsMap({
 
     markers.forEach((m, i) => {
       const etat = STATUT_COLORS[m.statut ?? "planifie"] ?? STATUT_COLORS.planifie;
-      const color = m.couleur || etat;
+      // Priorité : problématique (rouge) > en pause (orange) > couleur du partenaire > statut.
+      const color = m.probleme
+        ? COULEUR_PROBLEME
+        : m.statut === "en_pause"
+          ? STATUT_COLORS.en_pause
+          : m.couleur || etat;
       const idx = selectedIds.indexOf(m.id);
       const rang = idx >= 0 ? idx + 1 : null;
       const mk = leaflet

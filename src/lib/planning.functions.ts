@@ -2297,7 +2297,7 @@ export const affecterTechnicien = createServerFn({ method: "POST" })
 /** Bascule rapide des options chantier (répartiteur, métrage, donneur d'ordre) depuis la carte planning. */
 export const majOptionsChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean> }) =>
+  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
     z
       .object({
         id: z.string().uuid(),
@@ -2305,13 +2305,20 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
         metrage_m: z.number().min(0).max(10000).optional(),
         partenaire: z.string().max(160).nullable().optional(),
         checklist_materiel: z.record(z.string().max(40), z.boolean()).optional(),
+        probleme: z.boolean().optional(),
+        probleme_note: z.string().max(500).nullable().optional(),
       })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; checklist_materiel?: Record<string, boolean> } = {};
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null } = {};
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
     if (data.checklist_materiel !== undefined) patch.checklist_materiel = data.checklist_materiel;
+    if (data.probleme !== undefined) {
+      patch.probleme = data.probleme;
+      if (!data.probleme) patch.probleme_note = null;
+    }
+    if (data.probleme_note !== undefined) patch.probleme_note = data.probleme_note?.trim() ? data.probleme_note.trim() : null;
     if (data.metrage_m !== undefined) {
       patch.metrage_m = data.metrage_m;
       // Décocher « métrage > forfait » doit aussi plafonner le métrage réel, sinon le surplus reste facturé.
