@@ -18,6 +18,7 @@ import {
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
 import { ajouterFile, retirerFile, useFileAttente } from "@/lib/offline-photos";
+import { Button } from "@/components/ui/button";
 
 export type RetourTravauxRdv = {
   id: string;
@@ -39,9 +40,11 @@ export type RetourTravauxRdv = {
 export default function RetourTravauxSheet({
   rdv,
   onClose,
+  photosSeulement = false,
 }: {
   rdv: RetourTravauxRdv;
   onClose: () => void;
+  photosSeulement?: boolean;
 }) {
   const qc = useQueryClient();
   const listFn = useServerFn(listPhotosChantier);
@@ -238,14 +241,19 @@ export default function RetourTravauxSheet({
                 ) : (
                   <div className="h-20 w-20 rounded-md bg-secondary" />
                 )}
-                <button
+                <Button
                   type="button"
-                  onClick={() => supprimer.mutate(p.id)}
+                  size="icon"
+                  variant="destructive"
+                  disabled={supprimer.isPending || !enLigne}
+                  onClick={() => {
+                    if (window.confirm(`Supprimer cette photo du dossier de ${rdv.client_nom} ? Cette action est définitive.`)) supprimer.mutate(p.id);
+                  }}
                   className="absolute -right-1.5 -top-1.5 grid h-6 w-6 place-items-center rounded-full bg-destructive text-destructive-foreground"
                   aria-label="Supprimer la photo"
                 >
                   <Trash2 className="h-3.5 w-3.5" />
-                </button>
+                </Button>
               </div>
             ))}
           </div>
@@ -322,7 +330,7 @@ export default function RetourTravauxSheet({
       <div className="max-h-[92vh] w-full overflow-y-auto rounded-t-2xl bg-card p-4 md:max-w-2xl md:rounded-2xl">
         <div className="mb-3 flex items-start justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Retour de travaux</h2>
+            <h2 className="text-lg font-bold">{photosSeulement ? "Corriger les photos du chantier" : "Retour de travaux"}</h2>
             <p className="text-xs text-muted-foreground">
               {rdv.client_nom}
               {rdv.adresse ? ` · ${rdv.adresse}` : ""}
@@ -354,7 +362,9 @@ export default function RetourTravauxSheet({
           </div>
         )}
 
-        <div className="mb-3 rounded-lg border border-primary/30 bg-primary/10 p-3">
+        {photosSeulement && <p role="status" className="mb-3 border-l-2 border-primary pl-3 text-sm text-muted-foreground">Chantier terminé — validation conservée. Les emails et documents déjà reçus ne sont pas remplacés ; aucun nouvel email ne sera envoyé automatiquement.</p>}
+
+        {!photosSeulement && <div className="mb-3 rounded-lg border border-primary/30 bg-primary/10 p-3">
           <p className="flex items-center gap-2 text-sm font-bold">
             {maintenance ? <Wrench className="h-4 w-4" /> : <Check className="h-4 w-4" />}
             {maintenance ? "Ordre d’intervention · Maintenance" : "Ordre d’intervention · Installation"}
@@ -367,10 +377,10 @@ export default function RetourTravauxSheet({
               <li key={etape} className="flex items-center gap-2"><Circle className="h-2.5 w-2.5 shrink-0 fill-primary text-primary" /> {etape}</li>
             ))}
           </ol>
-        </div>
+        </div>}
 
         <div className="grid gap-5">
-          {pvManquant && <p role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-foreground">Photo du PV obligatoire avant de terminer ce chantier ENSIO.</p>}
+          {pvManquant && <p role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-foreground">{photosSeulement ? "Photo du PV manquante dans ce dossier ENSIO." : "Photo du PV obligatoire avant de terminer ce chantier ENSIO."}</p>}
           {etapes.map((etape, index) => (
             <section key={etape.id} className={etape.couleur} aria-label={etape.nom}>
               <h3 className="mb-2 flex items-center gap-2 text-sm font-bold">
@@ -382,7 +392,7 @@ export default function RetourTravauxSheet({
           ))}
         </div>
 
-        <div className="mt-4 rounded-lg border border-border p-3">
+        {!photosSeulement && <div className="mt-4 rounded-lg border border-border p-3">
           {maintenance && (
             <label className="flex min-h-11 items-center gap-3 text-sm font-semibold">
               <input
@@ -468,17 +478,17 @@ export default function RetourTravauxSheet({
               placeholder={maintenance ? (cablePose ? "Précisez le câble tiré ou remplacé, le cheminement et la raison…" : "Diagnostic, intervention réalisée, pièces remplacées…") : "Essais conformes, protections posées, réserves…"}
             />
           </label>
-        </div>
+        </div>}
 
         <div className="sticky bottom-0 mt-4 grid gap-2 bg-card pt-2">
-          <button
+          <Button
             type="button"
-            onClick={() => enregistrer.mutate()}
-            disabled={enregistrer.isPending}
+            onClick={() => photosSeulement ? onClose() : enregistrer.mutate()}
+            disabled={enregistrer.isPending || enCours !== null || supprimer.isPending}
             className="min-h-12 rounded-lg bg-primary px-4 text-sm font-bold text-primary-foreground disabled:opacity-50"
           >
-          {enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
-          </button>
+            {photosSeulement ? "Terminer les corrections" : enregistrer.isPending ? "Enregistrement…" : "Enregistrer le retour de travaux"}
+          </Button>
         </div>
       </div>
 
