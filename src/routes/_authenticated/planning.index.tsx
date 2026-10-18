@@ -38,6 +38,7 @@ import {
   ClipboardCheck,
   Clock3,
   Navigation,
+  TriangleAlert,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -846,6 +847,7 @@ function PlanningPage() {
           label: r.client_nom,
           sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           statut: r.statut,
+          probleme: (r as { probleme?: boolean | null }).probleme ?? false,
           couleur: couleurPartenaire(r.partenaire),
           date: `${dayKey(r.date_debut)} · ${creneauTexte(r.date_debut, r.creneau_fin, true)}`,
           technicien: r.technicien ?? null,
@@ -1297,6 +1299,8 @@ function PlanningPage() {
                     ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
                     : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
                   {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
+                  <Button variant="outline" className={`mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-3 py-3 text-center text-sm font-bold leading-tight ${(missionTerrain as { probleme?: boolean | null }).probleme ? "border-red-600 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "border-red-300 text-red-600 dark:text-red-400"}`} disabled={majOptions.isPending} onClick={() => { const actif = Boolean((missionTerrain as { probleme?: boolean | null }).probleme); if (actif) { if (window.confirm(`Retirer le signalement « problématique » du chantier de ${missionTerrain.client_nom} ?`)) majOptions.mutate({ id: missionTerrain.id, probleme: false }); } else { const note = window.prompt(`Signaler le chantier de ${missionTerrain.client_nom} comme problématique / non conforme.\n\nDécrivez le problème (facultatif) :`); if (note !== null) majOptions.mutate({ id: missionTerrain.id, probleme: true, probleme_note: note || null }); } }}><TriangleAlert className="shrink-0" /> <span className="min-w-0">{(missionTerrain as { probleme?: boolean | null }).probleme ? "Chantier problématique — retirer le signalement" : "Signaler un problème sur ce chantier"}</span></Button>
+                  {Boolean((missionTerrain as { probleme?: boolean | null }).probleme) && (missionTerrain as { probleme_note?: string | null }).probleme_note && <p className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{(missionTerrain as { probleme_note?: string | null }).probleme_note}</p>}
                 </EtapeMission>
               </div>
 
