@@ -17,6 +17,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { listerCommandesImportees, enregistrerCommandeImportee, modifierCommandeImportee, retirerCommandeImportee } from "@/lib/commandes-memoire.functions";
 import { saisieCommande, saisieCommandeSchema, type CommandeMemorisee } from "@/lib/commandes-memoire";
 import { commandesAValider, erreurValidationCommande } from "@/lib/commande-validation";
+import { cleCommande, rapprocherAttachement } from "@/lib/attachement-suivi";
+import { texteDuPdf } from "@/lib/pdf-texte";
+import { SuiviAttachementsCommandes } from "@/components/SuiviAttachementsCommandes";
 
 export const Route = createFileRoute("/_authenticated/attachements/commandes")({
   loader: async () => ({ commandes: await listerCommandesImportees(), atts: await trouverAttachementsCommandes({ data: { numeros: [] } }) }),
@@ -38,23 +41,10 @@ type Ligne = CommandeMemorisee;
 
 const euro = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
-async function texteDuPdf(bytes: Uint8Array): Promise<string> {
-  const pdfjs: any = await import("pdfjs-dist");
-  const worker: any = await import("pdfjs-dist/build/pdf.worker.min.mjs?url");
-  pdfjs.GlobalWorkerOptions.workerSrc = worker.default;
-  const doc = await pdfjs.getDocument({ data: bytes.slice() }).promise;
-  try {
-    const textes: string[] = [];
-    for (let index = 1; index <= doc.numPages; index++) {
-      const page = await doc.getPage(index);
-      const c = await page.getTextContent();
-      textes.push(c.items.map((i: any) => i.str).join(" "));
-    }
-    return textes.join(" ");
-  } finally { await doc.destroy(); }
-}
-
 function associer(lu: CommandeLue, atts: Att[]): string {
+  const connu = rapprocherAttachement(lu, atts);
+  if (connu) return connu.id;
+  if (lu.numero && atts.some((a) => cleCommande(a.bon_commande) === cleCommande(lu.numero))) return "";
   return choisirAttachementCommande(lu, atts, cleNom);
 }
 
@@ -84,7 +74,10 @@ function Page() {
       for (const commande of initial.commandes) {
         const original = await supabase.storage.from("documents").download(commande.original_path);
         if (original.error || !original.data) throw new Error("Une commande enregistrée ne peut pas être ouverte.");
-        resultat.push({ ...saisieCommandeSchema.parse(commande.saisie), ...commande, bytes: new Uint8Array(await original.data.arrayBuffer()) });
+        const saisie = saisieCommandeSchema.parse(commande.saisie);
+        const attId = saisie.attId || associer(saisie.lu, initial.atts);
+        const att = initial.atts.find((a) => a.id === attId);
+        resultat.push({ ...saisie, ...commande, attId, factureId: att?.facture_id ?? saisie.factureId, bytes: new Uint8Array(await original.data.arrayBuffer()) });
       }
       if (actif) { remplacer(resultat); setChargementErreur(false); }
     }
@@ -125,7 +118,8 @@ function Page() {
         try { lu = lireCommande(await texteDuPdf(bytes)); } catch { /* lecture impossible : saisie manuelle */ }
         const id = crypto.randomUUID(), original_path = `commandes/${id}/original.pdf`;
         const empreinte = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((n) => n.toString(16).padStart(2, "0")).join("");
-        const ligne: Ligne = { id, original_path, signe_path: null, nom: f.name, bytes, lu: { ...lu, numero: lu.numero ?? f.name.replace(/\.pdf$/i, "").replace(/^CST\s*/i, "CST ") }, attId: associer(lu, liste), choix: "" };
+        const attId = associer(lu, liste);
+        const ligne: Ligne = { id, original_path, signe_path: null, nom: f.name, bytes, lu: { ...lu, numero: lu.numero ?? f.name.replace(/\.pdf$/i, "").replace(/^CST\s*/i, "CST ") }, attId, factureId: liste.find((a) => a.id === attId)?.facture_id ?? undefined, choix: "" };
         const { error } = await supabase.storage.from("documents").upload(original_path, new Blob([bytes], { type: "application/pdf" }));
         if (error) throw new Error("Le PDF n’a pas pu être enregistré.");
         try { await enregistrer({ data: { id, nom: f.name, empreinte, original_path, saisie: saisieCommande(ligne) } }); }
@@ -155,6 +149,7 @@ function Page() {
       setBusy(`Validation et facture ${rang + 1}/${selection.length}…`);
       try {
         const r = await appliquer({ data: { id: l.attId, bon_commande: numero, montant_ht: ecart && l.choix === "commande" ? l.lu.montantHt : null } });
+        setAtts((actuels) => actuels.map((a) => a.id === l.attId ? { ...a, facture_id: r.id, statut: "facture", bon_commande: numero } : a));
         maj(i, { factureId: r.id, erreur: undefined });
         await sauvegardes.current;
         ok++;
@@ -204,6 +199,8 @@ function Page() {
           <h1 className="mt-2 text-3xl font-semibold">Bons de commande</h1>
           <p className="mt-1 text-sm text-muted-foreground">ENSIO · AXIANS · Autres donneurs d’ordre</p>
         </header>
+
+        <SuiviAttachementsCommandes atts={atts} />
 
         <div
           onDragOver={(e) => e.preventDefault()}

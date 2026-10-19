@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { computeTotals } from "@/lib/billing";
+import { cleCommande } from "@/lib/attachement-suivi";
 
 const lineSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
@@ -393,9 +394,13 @@ export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
     montant_ht: z.number().min(0).max(1_000_000).nullable(),
   }).parse(data))
   .handler(async ({ data, context }) => {
-    const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, total_ht, autoliquidation").eq("id", data.id).maybeSingle();
+    const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, total_ht, autoliquidation, client_nom, bon_commande").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!att) throw new Error("Attachement introuvable.");
+    const autres = await context.supabase.from("attachements_travaux").select("id, bon_commande").eq("client_nom", att.client_nom).neq("id", att.id).neq("statut", "annule");
+    if (autres.error) throw new Error(autres.error.message);
+    if (autres.data.some((a) => cleCommande(a.bon_commande) === cleCommande(data.bon_commande))) throw new Error("Ce numéro de commande est déjà rattaché à un autre attachement de ce donneur d’ordre.");
+    if (att.facture_id && att.bon_commande && cleCommande(att.bon_commande) !== cleCommande(data.bon_commande)) throw new Error("Cet attachement est déjà facturé avec un autre numéro de commande.");
     if (att.facture_id) {
       await context.supabase.from("attachements_travaux").update({ bon_commande: data.bon_commande }).eq("id", att.id);
       await context.supabase.from("factures").update({ bon_commande: data.bon_commande }).eq("id", att.facture_id);
