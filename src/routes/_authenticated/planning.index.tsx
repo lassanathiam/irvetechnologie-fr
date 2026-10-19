@@ -574,6 +574,21 @@ function PlanningPage() {
       toast.error(msg);
     },
   });
+  const renvoyerFn = useEnvoiConfirme(
+    renvoyerRetourTravaux,
+    "Renvoyer le dossier de ce chantier par email au donneur d'ordre et au client ? Utile après une correction de photos ou de métrage.",
+  );
+  const renvoyer = useMutation({
+    mutationFn: (id: string) => renvoyerFn({ data: { id } }),
+    onSuccess: (res) =>
+      toast.success(
+        res.envoyes.length
+          ? `Dossier renvoyé à : ${res.envoyes.join(", ")}.`
+          : "Aucun destinataire : vérifiez les emails du partenaire et du client.",
+      ),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Renvoi du dossier impossible."),
+  });
   const programmeFn = useServerFn(appliquerProgramme);
   const appliquer = useMutation({
     mutationFn: (items: Array<{ id: string; date_debut: string }>) =>
