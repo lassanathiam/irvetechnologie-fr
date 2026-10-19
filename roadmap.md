@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Remplacer la signature des commandes par validation unitaire ou globale et télécharger les originaux avec les factures.
+
 - [x] Conserver les commandes importées et leurs choix après navigation/rechargement, avec retrait manuel ; import réel, association, montant, sélection de rapport et retrait vérifiés connecté, sans facturer ni envoyer ; 8 tests réussis.
 
 - [x] Rapports de commandes en lot : sélection indépendante de la facturation, détail par chantier et totaux, PDF unique et copie email colorée ; vérifiés connecté sur trois attachements réels avec montants de test, sans envoyer ni facturer ; 13 tests réussis.

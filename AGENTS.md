@@ -20,4 +20,4 @@
 - PV-photo eligibility uses the same browser-safe rule in the photo workflow and server-side closure; preserve existing material-checklist keys when renaming labels to retain previously checked items.
 - Photo corrections on completed chantiers and per-photo comments (rendezvous_photos.legende) use authenticated appointment-scoped photo handlers only, never return fields or email (preserves closure/billing state).
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
-- Order drafts persist in staff-only commandes_importees and private documents files. Browser parsing; unique conversion. Reports reread lines under auth; server-derived recipients. Batch PDF/clipboard share content; selection never bills.
+- Order drafts persist in staff-only commandes_importees with private originals. Individual/batch validation shares eligibility; conversion stays unique. Reports reread under auth; server-derived recipients. Report selection never bills.
