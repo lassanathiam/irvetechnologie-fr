@@ -364,6 +364,42 @@ export type Database = {
         }
         Relationships: []
       }
+      commandes_importees: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          empreinte: string
+          id: string
+          nom: string
+          original_path: string
+          saisie: Json
+          signe_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          empreinte: string
+          id?: string
+          nom: string
+          original_path: string
+          saisie?: Json
+          signe_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          empreinte?: string
+          id?: string
+          nom?: string
+          original_path?: string
+          saisie?: Json
+          signe_path?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       demande_photos: {
         Row: {
           created_at: string
