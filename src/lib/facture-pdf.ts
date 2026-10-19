@@ -36,7 +36,7 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
       for (const value of lines) { ensure(size * 1.4); page.drawText(value, { x: 36, y, size, font }); y -= size * 1.4; }
     }
   };
-  const rule = () => { ensure(15); page.drawLine({ start: { x: 36, y: y - 3 }, end: { x: 559, y: y - 3 }, thickness: 0.5 }); y -= 15; };
+  const rule = () => { ensure(25); page.drawLine({ start: { x: 36, y: y - 3 }, end: { x: 559, y: y - 3 }, thickness: 0.5 }); y -= 25; };
   text(COMPANY.raisonSociale, 20, true);
   text("Borne de l'Ouest", 12, true);
   text(COMPANY.qualifications, 10, true);
