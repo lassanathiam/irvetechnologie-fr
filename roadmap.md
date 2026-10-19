@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [x] Factures PDF texte natives en individuel et dans les dossiers : 13 factures réelles téléchargées, texte extrait sans image, F-2026-0029 examinée et séparateurs éloignés des titres ; 6 tests réussis, aucune facture créée ni envoyée ; acceptation SY à vérifier lors du dépôt.
+
 - [x] Remplacer la signature des commandes par validation unitaire ou globale ; 13 tests réussis. Dossier réel téléchargé : 13 factures et 13 commandes originales, sans signature ajoutée ; aucune nouvelle facture créée pendant la vérification.
 
 - [x] Conserver les commandes importées et leurs choix après navigation/rechargement, avec retrait manuel ; import réel, association, montant, sélection de rapport et retrait vérifiés connecté, sans facturer ni envoyer ; 8 tests réussis.

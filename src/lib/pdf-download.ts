@@ -129,7 +129,7 @@ export async function downloadElementAsPdf(element: HTMLElement, fileName: strin
   await shareOrDownloadPdf(blob, safe);
 }
 
-async function shareOrDownloadPdf(blob: Blob, safe: string) {
+export async function shareOrDownloadPdf(blob: Blob, safe: string) {
   const file = new File([blob], safe, { type: "application/pdf" });
 
   const nav = navigator as Navigator & {
