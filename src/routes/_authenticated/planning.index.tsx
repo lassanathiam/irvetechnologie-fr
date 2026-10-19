@@ -54,6 +54,7 @@ import {
   listPhotosChantier,
   listRendezVous,
   programmerEnsemble,
+  renvoyerRetourTravaux,
   updateStatutRendezVous,
   updateAdresseRendezVous,
   updateDossierRendezVous,
@@ -572,6 +573,21 @@ function PlanningPage() {
       setError(msg);
       toast.error(msg);
     },
+  });
+  const renvoyerFn = useEnvoiConfirme(
+    renvoyerRetourTravaux,
+    "Renvoyer le dossier de ce chantier par email au donneur d'ordre et au client ? Utile après une correction de photos ou de métrage.",
+  );
+  const renvoyer = useMutation({
+    mutationFn: (id: string) => renvoyerFn({ data: { id } }),
+    onSuccess: (res) =>
+      toast.success(
+        res.envoyes.length
+          ? `Dossier renvoyé à : ${res.envoyes.join(", ")}.`
+          : "Aucun destinataire : vérifiez les emails du partenaire et du client.",
+      ),
+    onError: (e: unknown) =>
+      toast.error(e instanceof Error ? e.message : "Renvoi du dossier impossible."),
   });
   const programmeFn = useServerFn(appliquerProgramme);
   const appliquer = useMutation({
@@ -2430,9 +2446,19 @@ function PlanningPage() {
                             <FichesChantier rendezvousId={r.id} />
                             <AttachementsChantier rendezvousId={r.id} />
                             {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
-                              <Button variant="outline" className="mt-2 min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
-                                <Camera className="h-4 w-4" /> Corriger les photos
-                              </Button>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <Button variant="outline" className="min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
+                                  <Camera className="h-4 w-4" /> Corriger les photos
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="min-h-11"
+                                  disabled={renvoyer.isPending}
+                                  onClick={() => renvoyer.mutate(r.id)}
+                                >
+                                  <Mail className="h-4 w-4" /> {renvoyer.isPending ? "Envoi…" : "Renvoyer le dossier"}
+                                </Button>
+                              </div>
                             )}
                             {(() => {
                               const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
