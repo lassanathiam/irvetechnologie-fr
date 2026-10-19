@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useRef, useState } from "react";
-import { ArrowLeft, CheckCircle2, Download, FileUp, Loader2, PenLine, AlertTriangle } from "lucide-react";
+import { ArrowLeft, CheckCircle2, Download, FileUp, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -16,13 +16,14 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
 import { listerCommandesImportees, enregistrerCommandeImportee, modifierCommandeImportee, retirerCommandeImportee } from "@/lib/commandes-memoire.functions";
 import { saisieCommande, saisieCommandeSchema, type CommandeMemorisee } from "@/lib/commandes-memoire";
+import { commandesAValider, erreurValidationCommande } from "@/lib/commande-validation";
 
 export const Route = createFileRoute("/_authenticated/attachements/commandes")({
   loader: async () => ({ commandes: await listerCommandesImportees(), atts: await trouverAttachementsCommandes({ data: { numeros: [] } }) }),
   head: () => ({
     meta: [
       { title: "Commandes et rapports d’écart — IRVE Technologie" },
-      { name: "description", content: "Commandes ENSIO, AXIANS et autres donneurs d’ordre : rapports d’écart, signature et facturation." },
+      { name: "description", content: "Commandes ENSIO, AXIANS et autres donneurs d’ordre : rapports d’écart, validation unitaire ou globale sans signature et facturation." },
       { property: "og:title", content: "Commandes et rapports d’écart — IRVE Technologie" },
       { property: "og:description", content: "Vérification des commandes, rapports d’écart détaillés et factures." },
       { property: "og:type", content: "website" },
@@ -85,13 +86,7 @@ function Page() {
       for (const commande of initial.commandes) {
         const original = await supabase.storage.from("documents").download(commande.original_path);
         if (original.error || !original.data) throw new Error("Une commande enregistrée ne peut pas être ouverte.");
-        let signe: Uint8Array | undefined;
-        if (commande.signe_path) {
-          const fichier = await supabase.storage.from("documents").download(commande.signe_path);
-          if (fichier.error || !fichier.data) throw new Error("Une commande signée ne peut pas être ouverte.");
-          signe = new Uint8Array(await fichier.data.arrayBuffer());
-        }
-        resultat.push({ ...saisieCommandeSchema.parse(commande.saisie), ...commande, bytes: new Uint8Array(await original.data.arrayBuffer()), signe });
+        resultat.push({ ...saisieCommandeSchema.parse(commande.saisie), ...commande, bytes: new Uint8Array(await original.data.arrayBuffer()) });
       }
       if (actif) { remplacer(resultat); setChargementErreur(false); }
     }
@@ -143,41 +138,42 @@ function Page() {
     finally { setBusy(null); }
   }
 
-  async function toutTraiter() {
-    const { signerCommande } = await import("@/lib/commande-signature");
+  async function valider(id?: string) {
+    if (busy || chargementErreur || sauvegardeErreur) return;
+    setBusy("Préparation de la validation…");
+    await sauvegardes.current;
+    const commandes = lignesRef.current;
+    const selection = commandes.filter((l) => !l.factureId && (!id || l.id === id));
     let ok = 0;
-    for (const [i, l] of lignes.entries()) {
-      if (l.factureId || !l.attId) continue;
-      const att = atts.find((a) => a.id === l.attId);
+    for (const [rang, l] of selection.entries()) {
+      const i = lignesRef.current.findIndex((ligne) => ligne.id === l.id);
+      if (i < 0) continue;
       const numero = l.lu.numero?.trim();
-      if (!att || !numero || l.lu.montantHt === null) { maj(i, { erreur: "Vérifiez le numéro, le montant HT et l’attachement." }); continue; }
+      const erreur = erreurValidationCommande(l, commandes, atts);
+      if (erreur) { maj(i, { erreur }); continue; }
+      const att = atts.find((a) => a.id === l.attId);
+      if (!att || !numero || l.lu.montantHt === null) continue;
       const ecart = Math.abs(l.lu.montantHt - att.total_ht) >= 0.01;
-      if (ecart && !l.choix) { maj(i, { erreur: "Choisissez le montant à retenir pour cet écart avant de facturer." }); continue; }
-      if (lignes.some((autre, j) => j !== i && autre.attId === l.attId)) { maj(i, { erreur: "Deux commandes ciblent le même attachement : vérifiez l’association." }); continue; }
-      setBusy(`Signature et facture ${i + 1}/${lignes.length}…`);
+      setBusy(`Validation et facture ${rang + 1}/${selection.length}…`);
       try {
-        const signe = await signerCommande(l.bytes);
-        const signe_path = `commandes/${l.id}/signee.pdf`;
-        const { error: uploadError } = await supabase.storage.from("documents").upload(signe_path, new Blob([new Uint8Array(signe)], { type: "application/pdf" }), { upsert: true });
-        if (uploadError) throw new Error("La commande signée n’a pas pu être enregistrée.");
         const r = await appliquer({ data: { id: l.attId, bon_commande: numero, montant_ht: ecart && l.choix === "commande" ? l.lu.montantHt : null } });
-        maj(i, { signe, signe_path, factureId: r.id, erreur: undefined });
+        maj(i, { factureId: r.id, erreur: undefined });
         await sauvegardes.current;
         ok++;
       } catch (e) { maj(i, { erreur: e instanceof Error ? e.message : "Erreur" }); }
     }
     setBusy(null);
-    if (ok) toast.success(`${ok} commande(s) signée(s) et facture(s) créée(s).`);
+    if (ok) toast.success(`${ok} commande(s) validée(s) et facture(s) prête(s).`);
   }
 
   async function telecharger() {
-    const prets = lignes.filter((l) => l.signe && l.factureId);
+    const prets = lignes.filter((l) => l.factureId);
     if (!prets.length) return;
     const [{ default: JSZip }, { default: html2canvas }, { jsPDF }] = await Promise.all([import("jszip"), import("html2canvas-pro"), import("jspdf")]);
     const zip = new JSZip();
     try {
       for (const [i, l] of prets.entries()) {
-        if (!l.factureId || !l.signe || !l.lu.numero) continue;
+        if (!l.factureId || !l.lu.numero) continue;
         setBusy(`Préparation du dossier ${i + 1}/${prets.length}…`);
         const f = await lireFacture({ data: { id: l.factureId } });
         setRendu(f);
@@ -193,7 +189,7 @@ function Page() {
         pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 5 + (w - w * ratio) / 2, 5, w * ratio, h * ratio);
         const dossier = `${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}_${(l.lu.client ?? f.facture.client_nom).replace(/[^\p{L}\d]+/gu, "-")}`;
         zip.file(`${dossier}/Facture_${f.facture.numero}.pdf`, pdf.output("arraybuffer"));
-        zip.file(`${dossier}/Commande_${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}_signee.pdf`, l.signe);
+        zip.file(`${dossier}/Commande_${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}.pdf`, l.bytes);
       }
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
@@ -205,10 +201,7 @@ function Page() {
     finally { setBusy(null); setRendu(null); }
   }
 
-  const aTraiter = lignes.filter((l) => {
-    const att = atts.find((a) => a.id === l.attId);
-    return !l.factureId && att && l.lu.numero?.trim() && l.lu.montantHt !== null && (Math.abs(l.lu.montantHt - att.total_ht) < 0.01 || l.choix);
-  }).length;
+  const aTraiter = commandesAValider(lignes, atts).length;
   const prets = lignes.filter((l) => l.factureId).length;
   const eligibleRapport = (l: Ligne) => !!l.attId && !!l.lu.numero?.trim() && l.lu.numero.trim().length >= 3 && l.lu.montantHt !== null;
   const commandesSelectionnees: CommandePourRapport[] = lignes.flatMap((l) => l.rapportSelectionne && eligibleRapport(l) && l.lu.numero && l.lu.montantHt !== null ? [{ id: l.attId, numero: l.lu.numero, montantHt: l.lu.montantHt }] : []);
@@ -255,7 +248,7 @@ function Page() {
               return (
                   <div key={l.nom + i} className="flex min-w-0 flex-wrap items-center gap-3 p-4 text-sm">
                   <Checkbox aria-label={`Inclure la commande ${i + 1} dans le rapport groupé`} disabled={!!busy || !eligibleRapport(l)} checked={!!l.rapportSelectionne && eligibleRapport(l)} onCheckedChange={(checked) => maj(i, { rapportSelectionne: checked === true })} />
-                  {l.factureId ? <CheckCircle2 className="h-5 w-5 text-primary" /> : !l.attId ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <PenLine className="h-5 w-5 text-muted-foreground" />}
+                  {l.factureId ? <CheckCircle2 className="h-5 w-5 text-primary" /> : !l.attId ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <CheckCircle2 className="h-5 w-5 text-muted-foreground" />}
                   <div className="min-w-40">
                     <label className="block text-xs text-muted-foreground">Numéro de commande<input aria-label={`Numéro de commande ${i + 1}`} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground" maxLength={60} disabled={!!l.factureId} value={l.lu.numero ?? ""} onChange={(e) => maj(i, { lu: { ...l.lu, numero: e.target.value } })} /></label>
                     <div className="text-muted-foreground">{l.lu.client ?? l.nom} · {l.lu.montantHt !== null ? euro(l.lu.montantHt) : "montant ?"} HT</div>
@@ -273,7 +266,7 @@ function Page() {
                     </div>
                   )}
                   {ecart && att && !l.factureId && l.lu.montantHt !== null && l.lu.numero?.trim() && <RapportEcartCommande id={att.id} numero={l.lu.numero} montantHt={l.lu.montantHt} />}
-                  {l.factureId && <Link to="/factures/$id" params={{ id: l.factureId }} className="text-primary underline">Facture créée</Link>}
+                  {l.factureId ? <Link to="/factures/$id" params={{ id: l.factureId }} className="text-primary underline">Validée · Voir la facture</Link> : <Button type="button" size="sm" disabled={!!busy || chargementErreur || sauvegardeErreur || !!erreurValidationCommande(l, lignes, atts)} onClick={() => void valider(l.id)}><CheckCircle2 /> Valider et facturer</Button>}
                   {l.erreur && <span className="text-destructive">{l.erreur}</span>}
                   <Button type="button" variant="ghost" size="sm" disabled={!!busy} className="ml-auto" onClick={() => void retirerLigne(l)}>Retirer</Button>
                 </div>
@@ -284,7 +277,7 @@ function Page() {
 
         {lignes.length > 0 && (
           <div className="flex flex-wrap gap-2">
-            <Button disabled={!!busy || !aTraiter} onClick={() => void toutTraiter()}><PenLine /> Signer et facturer tout ({aTraiter})</Button>
+            <Button disabled={!!busy || chargementErreur || sauvegardeErreur || !aTraiter} onClick={() => void valider()}><CheckCircle2 /> Valider et facturer tout ({aTraiter})</Button>
             <Button variant="outline" disabled={!!busy || !prets} onClick={() => void telecharger()}><Download /> Télécharger le dossier ({prets})</Button>
           </div>
         )}
