@@ -128,6 +128,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "twitter:title", content: "Borne de l'Ouest — IRVE Technologie" },
       { name: "twitter:description", content: "Interventions IRVE autour de Nantes dans le Grand Ouest élargi, extension possible jusqu'à ~250 km selon la nature du projet." },
       { name: "theme-color", content: "#1f2a3d" },
+      { name: "google-site-verification", content: "GjobKfL3N-ClKGz9w-1NSj7ykWCpIeM3GKOuuEiLbUs" },
       { name: "apple-mobile-web-app-capable", content: "yes" },
       { name: "apple-mobile-web-app-status-bar-style", content: "black-translucent" },
       { name: "apple-mobile-web-app-title", content: "Borne Ouest" },
