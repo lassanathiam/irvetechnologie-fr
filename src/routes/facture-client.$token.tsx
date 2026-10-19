@@ -2,7 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Loader2, Printer, Download } from "lucide-react";
-import { downloadElementAsPdf } from "@/lib/pdf-download";
+import { telechargerFacturePdf } from "@/lib/facture-pdf";
+import { Button } from "@/components/ui/button";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { BrandLogo } from "@/components/BrandLogo";
 import { getFacturePublic } from "@/lib/factures-public.functions";
@@ -74,13 +75,13 @@ function FactureClientPage() {
               {COMPANY.raisonSociale} · Facture {facture.numero}
             </div>
           </div>
-          <button
+          <Button
             type="button"
-            onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Facture-${facture.numero}`); }}
+            onClick={() => { void telechargerFacturePdf({ ...facture, date_limite: facture.date_echeance }, items).catch(() => window.alert("Téléchargement impossible. Réessayez.")); }}
             className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
           >
             <Download className="h-3.5 w-3.5" /> Télécharger PDF
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => window.print()}

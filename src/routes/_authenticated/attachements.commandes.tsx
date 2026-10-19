@@ -5,7 +5,7 @@ import { ArrowLeft, CheckCircle2, Download, FileUp, Loader2, AlertTriangle } fro
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
-import { DocumentPrint } from "@/components/DocumentPrint";
+import { creerFacturePdf } from "@/lib/facture-pdf";
 import { appliquerCommandeAttachement, trouverAttachementsCommandes } from "@/lib/attachements.functions";
 import { getFacture } from "@/lib/factures.functions";
 import { cleNom, lireCommande, type CommandeLue } from "@/lib/commandes-ensio";
@@ -69,8 +69,6 @@ function Page() {
   const [atts, setAtts] = useState<Att[]>(initial.atts);
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
-  const [rendu, setRendu] = useState<Awaited<ReturnType<typeof getFacture>> | null>(null);
-  const stage = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
   const lignesRef = useRef<Ligne[]>([]);
   const sauvegardes = useRef<Promise<void>>(Promise.resolve());
@@ -169,26 +167,16 @@ function Page() {
   async function telecharger() {
     const prets = lignes.filter((l) => l.factureId);
     if (!prets.length) return;
-    const [{ default: JSZip }, { default: html2canvas }, { jsPDF }] = await Promise.all([import("jszip"), import("html2canvas-pro"), import("jspdf")]);
+    const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
     try {
       for (const [i, l] of prets.entries()) {
         if (!l.factureId || !l.lu.numero) continue;
         setBusy(`Préparation du dossier ${i + 1}/${prets.length}…`);
         const f = await lireFacture({ data: { id: l.factureId } });
-        setRendu(f);
-        await new Promise<void>((r) => requestAnimationFrame(() => requestAnimationFrame(() => r())));
-        await document.fonts.ready;
-        const el = stage.current?.firstElementChild;
-        if (!(el instanceof HTMLElement)) throw new Error("La facture n’est pas encore prête.");
-        await Promise.all(Array.from(el.querySelectorAll("img")).map((img) => img.decode().catch(() => undefined)));
-        const canvas = await html2canvas(el, { scale: 2, useCORS: true, backgroundColor: "#ffffff", windowWidth: 1280, onclone: (_d, c) => { c.classList.add("pdf-render"); c.style.width = "800px"; } });
-        const pdf = new jsPDF({ unit: "mm", format: "a4" });
-        const w = 200, h = (canvas.height * w) / canvas.width;
-        const ratio = h > 287 ? 287 / h : 1;
-        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", 5 + (w - w * ratio) / 2, 5, w * ratio, h * ratio);
+        const pdf = await creerFacturePdf({ ...f.facture, date_limite: f.facture.date_echeance }, f.items);
         const dossier = `${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}_${(l.lu.client ?? f.facture.client_nom).replace(/[^\p{L}\d]+/gu, "-")}`;
-        zip.file(`${dossier}/Facture_${f.facture.numero}.pdf`, pdf.output("arraybuffer"));
+        zip.file(`${dossier}/Facture_${f.facture.numero}.pdf`, pdf);
         zip.file(`${dossier}/Commande_${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}.pdf`, l.bytes);
       }
       const blob = await zip.generateAsync({ type: "blob" });
@@ -198,7 +186,7 @@ function Page() {
       document.body.appendChild(a); a.click(); a.remove();
       setTimeout(() => URL.revokeObjectURL(url), 30_000);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Téléchargement impossible."); }
-    finally { setBusy(null); setRendu(null); }
+    finally { setBusy(null); }
   }
 
   const aTraiter = commandesAValider(lignes, atts).length;
@@ -279,13 +267,6 @@ function Page() {
           <div className="flex flex-wrap gap-2">
             <Button disabled={!!busy || chargementErreur || sauvegardeErreur || !aTraiter} onClick={() => void valider()}><CheckCircle2 /> Valider et facturer tout ({aTraiter})</Button>
             <Button variant="outline" disabled={!!busy || !prets} onClick={() => void telecharger()}><Download /> Télécharger le dossier ({prets})</Button>
-          </div>
-        )}
-      </div>
-      <div ref={stage} className="attachment-export-stage" aria-hidden="true">
-        {rendu && (
-          <div className="bg-white">
-            <DocumentPrint type="facture" doc={{ ...rendu.facture, date_limite: rendu.facture.date_echeance, acompte_pct: 0 }} items={rendu.items} />
           </div>
         )}
       </div>

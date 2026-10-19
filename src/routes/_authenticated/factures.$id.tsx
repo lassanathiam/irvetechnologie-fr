@@ -6,7 +6,8 @@ import { useEffect, useState } from "react";
 import { messageFacture } from "@/lib/messages-documents";
 import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
-import { downloadElementAsPdf } from "@/lib/pdf-download";
+import { telechargerFacturePdf } from "@/lib/facture-pdf";
+import { Button } from "@/components/ui/button";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
 import { FactureEditor } from "@/components/FactureEditor";
@@ -24,6 +25,10 @@ export const Route = createFileRoute("/_authenticated/factures/$id")({
       { title: "Facture — Espace pro Borne de l'Ouest" },
       { name: "description", content: "Aperçu, envoi et suivi de paiement de la facture." },
       { name: "robots", content: "noindex" },
+      { property: "og:title", content: "Facture — Espace pro Borne de l'Ouest" },
+      { property: "og:description", content: "Aperçu, téléchargement et suivi de paiement de la facture." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
   component: FactureDetail,
@@ -164,13 +169,13 @@ function FactureDetail() {
               Validation impossible : {statut.error instanceof Error ? statut.error.message : "erreur"}
             </span>
           )}
-          <button
+          <Button
             type="button"
-            onClick={() => { const el = document.querySelector<HTMLElement>(".print-doc"); if (el) void downloadElementAsPdf(el, `Facture-${facture.numero}`); }}
+            onClick={() => { void telechargerFacturePdf({ ...facture, date_limite: facture.date_echeance }, items).catch(() => setError("Téléchargement impossible. Réessayez.")); }}
             className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
           >
             <Download className="h-3.5 w-3.5" /> Télécharger PDF
-          </button>
+          </Button>
           <button
             type="button"
             onClick={() => window.print()}
