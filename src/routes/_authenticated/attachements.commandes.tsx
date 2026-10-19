@@ -158,7 +158,7 @@ function Page() {
       try {
         const signe = await signerCommande(l.bytes);
         const signe_path = `commandes/${l.id}/signee.pdf`;
-        const { error: uploadError } = await supabase.storage.from("documents").upload(signe_path, new Blob([signe], { type: "application/pdf" }), { upsert: true });
+        const { error: uploadError } = await supabase.storage.from("documents").upload(signe_path, new Blob([new Uint8Array(signe)], { type: "application/pdf" }), { upsert: true });
         if (uploadError) throw new Error("La commande signée n’a pas pu être enregistrée.");
         const r = await appliquer({ data: { id: l.attId, bon_commande: numero, montant_ht: ecart && l.choix === "commande" ? l.lu.montantHt : null } });
         maj(i, { signe, signe_path, factureId: r.id, erreur: undefined });
