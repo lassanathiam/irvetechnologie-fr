@@ -54,6 +54,7 @@ import {
   listPhotosChantier,
   listRendezVous,
   programmerEnsemble,
+  renvoyerRetourTravaux,
   updateStatutRendezVous,
   updateAdresseRendezVous,
   updateDossierRendezVous,

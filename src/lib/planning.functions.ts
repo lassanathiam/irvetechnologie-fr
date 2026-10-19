@@ -1323,7 +1323,9 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
           delestage: rdv.retour_delestage,
           zip_url: zipUrl,
         },
-        idempotencyKey: `chantier-termine-${data.id}-${destinataire.toLowerCase()}`,
+        // Renvoi explicite après correction (photos, métrage…) : clé unique à chaque
+        // renvoi pour que l'email reparte réellement, sans toucher à la clôture.
+        idempotencyKey: `chantier-termine-renvoi-${data.id}-${destinataire.toLowerCase()}-${Date.now()}`,
       });
       if (res.sent) envoyes.push(destinataire);
     }
