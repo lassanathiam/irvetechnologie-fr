@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://www.irvetechnologie.fr/sitemap.xml
+Sitemap: https://irvetechnologie.fr/sitemap.xml
