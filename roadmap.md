@@ -34,7 +34,7 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Rapports de commandes en lot : sélection, détail par chantier et totaux, PDF et copie email avec déplacements en couleur ; vérifier sans envoyer ni facturer.
+- [x] Rapports de commandes en lot : sélection indépendante de la facturation, détail par chantier et totaux, PDF unique et copie email colorée ; vérifiés connecté sur trois attachements réels avec montants de test, sans envoyer ni facturer ; 13 tests réussis.
 
 - [x] Commandes multi-donneurs d’ordre et rapport d’écart détaillé : lecture, PDF et confirmation annulée vérifiés sur une vraie commande ; aucun email ni facture créé pendant les essais.
 

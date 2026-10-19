@@ -11,8 +11,10 @@ export async function telechargerRapportEcartLot(rapports: RapportEcart[], comme
     pdf.setFont("helvetica", bloc.gras ? "bold" : "normal");
     pdf.setFontSize(bloc.titre ? 12 : 10);
     pdf.setTextColor(couleurs[bloc.couleur ?? "texte"]);
-    const morceaux = pdf.splitTextToSize(bloc.texte, 176) as string[];
-    if (bloc.titre && y + 18 > 275) { pdf.addPage(); y = 18; }
+    const texte = bloc.texte.replace(/[\u00a0\u202f]/g, " ").replace(/−/g, "-");
+    const morceaux = pdf.splitTextToSize(texte, 176) as string[];
+    const hauteur = morceaux.length * (bloc.titre ? 6 : 5) + (bloc.titre ? 4 : 2);
+    if (y + (bloc.titre ? Math.max(hauteur, 18) : hauteur) > 275 && hauteur < 240) { pdf.addPage(); y = 18; }
     for (const morceau of morceaux) {
       if (y > 275) { pdf.addPage(); y = 18; }
       pdf.text(morceau, 17, y); y += bloc.titre ? 6 : 5;
