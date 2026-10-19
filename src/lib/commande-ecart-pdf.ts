@@ -1,6 +1,26 @@
 import type { RapportEcart } from "./commande-ecart";
 import { COMPANY, euro } from "./company";
 import { enregistrerPdfAttachements } from "./pdf-attachements";
+import { blocsRapportLot, type CouleursRapport } from "./commande-ecart-lot";
+
+export async function telechargerRapportEcartLot(rapports: RapportEcart[], commentaire: string, couleurs: CouleursRapport) {
+  const { jsPDF } = await import("jspdf");
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  let y = 18;
+  for (const bloc of blocsRapportLot(rapports, commentaire)) {
+    pdf.setFont("helvetica", bloc.gras ? "bold" : "normal");
+    pdf.setFontSize(bloc.titre ? 12 : 10);
+    pdf.setTextColor(couleurs[bloc.couleur ?? "texte"]);
+    const morceaux = pdf.splitTextToSize(bloc.texte, 176) as string[];
+    if (bloc.titre && y + 18 > 275) { pdf.addPage(); y = 18; }
+    for (const morceau of morceaux) {
+      if (y > 275) { pdf.addPage(); y = 18; }
+      pdf.text(morceau, 17, y); y += bloc.titre ? 6 : 5;
+    }
+    y += bloc.titre ? 4 : 2;
+  }
+  enregistrerPdfAttachements(pdf.output("blob"), `Rapport-ecart-groupe_${rapports.length}-commandes.pdf`);
+}
 
 export async function telechargerRapportEcart(rapport: RapportEcart) {
   const { jsPDF } = await import("jspdf");

@@ -11,6 +11,8 @@ import { getFacture } from "@/lib/factures.functions";
 import { cleNom, lireCommande, type CommandeLue } from "@/lib/commandes-ensio";
 import { choisirAttachementCommande } from "@/lib/commande-ecart";
 import { RapportEcartCommande } from "@/components/RapportEcartCommande";
+import { RapportEcartLot, type CommandePourRapport } from "@/components/RapportEcartLot";
+import { Checkbox } from "@/components/ui/checkbox";
 
 export const Route = createFileRoute("/_authenticated/attachements/commandes")({
   head: () => ({
@@ -27,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/attachements/commandes")({
 });
 
 type Att = Awaited<ReturnType<typeof trouverAttachementsCommandes>>[number];
-type Ligne = { nom: string; bytes: Uint8Array; lu: CommandeLue; attId: string; choix: "" | "commande" | "attachement"; signe?: Uint8Array; factureId?: string; erreur?: string };
+type Ligne = { nom: string; bytes: Uint8Array; lu: CommandeLue; attId: string; choix: "" | "commande" | "attachement"; rapportSelectionne?: boolean; signe?: Uint8Array; factureId?: string; erreur?: string };
 
 const euro = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -146,6 +148,10 @@ function Page() {
     return !l.factureId && att && l.lu.numero?.trim() && l.lu.montantHt !== null && (Math.abs(l.lu.montantHt - att.total_ht) < 0.01 || l.choix);
   }).length;
   const prets = lignes.filter((l) => l.factureId).length;
+  const eligibleRapport = (l: Ligne) => !!l.attId && !!l.lu.numero?.trim() && l.lu.numero.trim().length >= 3 && l.lu.montantHt !== null;
+  const commandesSelectionnees: CommandePourRapport[] = lignes.flatMap((l) => l.rapportSelectionne && eligibleRapport(l) && l.lu.numero && l.lu.montantHt !== null ? [{ id: l.attId, numero: l.lu.numero, montantHt: l.lu.montantHt }] : []);
+  const eligibles = lignes.filter(eligibleRapport);
+  const tousSelectionnes = eligibles.length > 0 && eligibles.every((l) => l.rapportSelectionne);
 
   return (
     <ProShell>
@@ -171,12 +177,20 @@ function Page() {
         {busy && <p className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> {busy}</p>}
 
         {lignes.length > 0 && (
+          <div className="flex flex-wrap items-center gap-3">
+            <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner toutes les commandes pour le rapport" disabled={!!busy || !eligibles.length} checked={tousSelectionnes} onCheckedChange={(checked) => setLignes((ls) => ls.map((l) => ({ ...l, rapportSelectionne: eligibleRapport(l) && checked === true })))} /> Tout sélectionner pour le rapport</label>
+            <RapportEcartLot commandes={commandesSelectionnees} disabled={!!busy} />
+          </div>
+        )}
+
+        {lignes.length > 0 && (
           <section className="divide-y divide-border rounded-md border border-border bg-card">
             {lignes.map((l, i) => {
               const att = atts.find((a) => a.id === l.attId);
               const ecart = att && l.lu.montantHt !== null && Math.abs(l.lu.montantHt - att.total_ht) >= 0.01;
               return (
                   <div key={l.nom + i} className="flex min-w-0 flex-wrap items-center gap-3 p-4 text-sm">
+                  <Checkbox aria-label={`Inclure la commande ${i + 1} dans le rapport groupé`} disabled={!!busy || !eligibleRapport(l)} checked={!!l.rapportSelectionne && eligibleRapport(l)} onCheckedChange={(checked) => maj(i, { rapportSelectionne: checked === true })} />
                   {l.factureId ? <CheckCircle2 className="h-5 w-5 text-primary" /> : !l.attId ? <AlertTriangle className="h-5 w-5 text-destructive" /> : <PenLine className="h-5 w-5 text-muted-foreground" />}
                   <div className="min-w-40">
                     <label className="block text-xs text-muted-foreground">Numéro de commande<input aria-label={`Numéro de commande ${i + 1}`} className="mt-1 block w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm text-foreground" maxLength={60} disabled={!!l.factureId} value={l.lu.numero ?? ""} onChange={(e) => maj(i, { lu: { ...l.lu, numero: e.target.value } })} /></label>
