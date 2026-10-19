@@ -646,6 +646,7 @@ function CheminementGallery({
                 key={src}
                 type="button"
                 onClick={() => setActive(i)}
+                aria-label={`Voir la photo ${i + 1}`}
                 className={`relative shrink-0 h-16 w-20 rounded-sm overflow-hidden border-2 transition ${i === safeActive ? "border-primary" : "border-border hover:border-muted-foreground"}`}
               >
                 <img src={src} alt="" className="absolute inset-0 w-full h-full object-cover" />

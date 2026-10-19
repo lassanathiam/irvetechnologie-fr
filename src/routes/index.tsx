@@ -380,16 +380,18 @@ function Index() {
               </button>
             </div>
             <div className="mt-3 flex flex-wrap items-center gap-3">
-              <label className="text-sm text-muted-foreground">Nombre de bornes</label>
+              <label htmlFor="aide-bornes" className="text-sm text-muted-foreground">Nombre de bornes</label>
               <input
+                id="aide-bornes"
                 type="number"
                 min={0}
                 value={aideBornes}
                 onChange={(e) => setAideBornes(Math.max(0, Number(e.target.value) || 0))}
                 className="w-20 rounded-md border border-border bg-background px-2 py-1.5 text-sm"
               />
-              <label className="text-sm text-muted-foreground">Coût HT / borne</label>
+              <label htmlFor="aide-montant-ht" className="text-sm text-muted-foreground">Coût HT / borne</label>
               <input
+                id="aide-montant-ht"
                 type="number"
                 min={0}
                 step={50}
