@@ -59,7 +59,7 @@ export function RapportEcartLot({ commandes, disabled }: { commandes: CommandePo
         {new Set(rapports.map((r) => r.donneur)).size > 1 && <p className="text-sm text-destructive">Plusieurs donneurs d’ordre sont inclus : ne transmettez ce rapport qu’aux personnes autorisées à voir tous ces dossiers.</p>}
         <div className="flex flex-wrap gap-2"><Button variant="outline" disabled={busy} onClick={() => void telecharger()}><Download /> Télécharger PDF</Button><Button disabled={busy} onClick={() => void copier()}><Copy /> Copier pour email</Button></div>
         {copieManuelle && <textarea aria-label="Rapport à copier" readOnly value={contenu?.texte ?? ""} onFocus={(e) => e.target.select()} className="min-h-48 w-full rounded-md border border-input bg-background p-3 text-sm" />}
-        {contenu && <div className="rapport-commande-preview min-w-0 break-words rounded-md border border-border p-4" dangerouslySetInnerHTML={{ __html: contenu.html }} />}
+        {contenu && <div className="rapport-commande-preview min-w-0 break-words rounded-md border border-border bg-[var(--rapport-fond)] p-4" dangerouslySetInnerHTML={{ __html: contenu.html }} />}
       </DialogContent>
     </Dialog>
   </>;
