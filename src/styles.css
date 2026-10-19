@@ -95,6 +95,11 @@
 }
 
 :root {
+  --rapport-texte: #202a35;
+  --rapport-fond: #ffffff;
+  --rapport-deplacement: #a34b00;
+  --rapport-supplement: #126594;
+  --rapport-ecart: #b42318;
   --radius: 0.5rem;
   --background: oklch(0.968 0.01 238);
   --foreground: oklch(0.235 0.03 255);
