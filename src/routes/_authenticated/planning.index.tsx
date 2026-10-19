@@ -2446,9 +2446,19 @@ function PlanningPage() {
                             <FichesChantier rendezvousId={r.id} />
                             <AttachementsChantier rendezvousId={r.id} />
                             {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
-                              <Button variant="outline" className="mt-2 min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
-                                <Camera className="h-4 w-4" /> Corriger les photos
-                              </Button>
+                              <div className="mt-2 flex flex-wrap items-center gap-2">
+                                <Button variant="outline" className="min-h-11" onClick={() => setRetourRdv(r as unknown as RetourTravauxRdv)}>
+                                  <Camera className="h-4 w-4" /> Corriger les photos
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  className="min-h-11"
+                                  disabled={renvoyer.isPending}
+                                  onClick={() => renvoyer.mutate(r.id)}
+                                >
+                                  <Mail className="h-4 w-4" /> {renvoyer.isPending ? "Envoi…" : "Renvoyer le dossier"}
+                                </Button>
+                              </div>
                             )}
                             {(() => {
                               const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
