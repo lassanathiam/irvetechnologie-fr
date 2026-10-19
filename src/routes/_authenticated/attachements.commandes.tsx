@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, CheckCircle2, Download, FileUp, Loader2, PenLine, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
@@ -13,8 +13,12 @@ import { choisirAttachementCommande } from "@/lib/commande-ecart";
 import { RapportEcartCommande } from "@/components/RapportEcartCommande";
 import { RapportEcartLot, type CommandePourRapport } from "@/components/RapportEcartLot";
 import { Checkbox } from "@/components/ui/checkbox";
+import { supabase } from "@/integrations/supabase/client";
+import { listerCommandesImportees, enregistrerCommandeImportee, modifierCommandeImportee, retirerCommandeImportee } from "@/lib/commandes-memoire.functions";
+import { saisieCommande, saisieCommandeSchema, type CommandeMemorisee } from "@/lib/commandes-memoire";
 
 export const Route = createFileRoute("/_authenticated/attachements/commandes")({
+  loader: async () => ({ commandes: await listerCommandesImportees(), atts: await trouverAttachementsCommandes({ data: { numeros: [] } }) }),
   head: () => ({
     meta: [
       { title: "Commandes et rapports d’écart — IRVE Technologie" },
@@ -29,7 +33,7 @@ export const Route = createFileRoute("/_authenticated/attachements/commandes")({
 });
 
 type Att = Awaited<ReturnType<typeof trouverAttachementsCommandes>>[number];
-type Ligne = { nom: string; bytes: Uint8Array; lu: CommandeLue; attId: string; choix: "" | "commande" | "attachement"; rapportSelectionne?: boolean; signe?: Uint8Array; factureId?: string; erreur?: string };
+type Ligne = CommandeMemorisee;
 
 const euro = (n: number) => n.toLocaleString("fr-FR", { style: "currency", currency: "EUR" });
 
@@ -54,36 +58,90 @@ function associer(lu: CommandeLue, atts: Att[]): string {
 }
 
 function Page() {
+  const initial = Route.useLoaderData();
+  const enregistrer = useServerFn(enregistrerCommandeImportee);
+  const modifier = useServerFn(modifierCommandeImportee);
+  const retirer = useServerFn(retirerCommandeImportee);
   const trouver = useServerFn(trouverAttachementsCommandes);
   const appliquer = useServerFn(appliquerCommandeAttachement);
   const lireFacture = useServerFn(getFacture);
-  const [atts, setAtts] = useState<Att[]>([]);
+  const [atts, setAtts] = useState<Att[]>(initial.atts);
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [busy, setBusy] = useState<string | null>(null);
   const [rendu, setRendu] = useState<Awaited<ReturnType<typeof getFacture>> | null>(null);
   const stage = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLInputElement>(null);
+  const lignesRef = useRef<Ligne[]>([]);
+  const sauvegardes = useRef<Promise<void>>(Promise.resolve());
+  const [sauvegardeErreur, setSauvegardeErreur] = useState(false);
+  const [chargementErreur, setChargementErreur] = useState(false);
+  const [reessai, setReessai] = useState(0);
+  const remplacer = (valeur: Ligne[]) => { lignesRef.current = valeur; setLignes(valeur); };
+  useEffect(() => {
+    let actif = true;
+    setBusy("Ouverture des commandes enregistrées…");
+    async function charger() {
+      const resultat: Ligne[] = [];
+      for (const commande of initial.commandes) {
+        const original = await supabase.storage.from("documents").download(commande.original_path);
+        if (original.error || !original.data) throw new Error("Une commande enregistrée ne peut pas être ouverte.");
+        let signe: Uint8Array | undefined;
+        if (commande.signe_path) {
+          const fichier = await supabase.storage.from("documents").download(commande.signe_path);
+          if (fichier.error || !fichier.data) throw new Error("Une commande signée ne peut pas être ouverte.");
+          signe = new Uint8Array(await fichier.data.arrayBuffer());
+        }
+        resultat.push({ ...saisieCommandeSchema.parse(commande.saisie), ...commande, bytes: new Uint8Array(await original.data.arrayBuffer()), signe });
+      }
+      if (actif) { remplacer(resultat); setChargementErreur(false); }
+    }
+    void charger().catch((e) => { if (actif) { setChargementErreur(true); toast.error(e instanceof Error ? e.message : "Ouverture impossible."); } }).finally(() => { if (actif) setBusy(null); });
+    return () => { actif = false; };
+  }, [initial, reessai]);
+  async function sauvegarder(ligne: Ligne) {
+    await modifier({ data: { id: ligne.id, saisie: saisieCommande(ligne), signe_path: ligne.signe_path } });
+  }
+  const maj = (i: number, p: Partial<Ligne>) => {
+    const ligne = lignesRef.current[i];
+    if (!ligne) return;
+    const suivante = { ...ligne, ...p };
+    remplacer(lignesRef.current.map((x, j) => j === i ? suivante : x));
+    const attente = sauvegardes.current.then(() => sauvegarder(suivante));
+    sauvegardes.current = attente.catch(() => { setSauvegardeErreur(true); toast.error("Modification non enregistrée : réessayez avant de quitter."); });
+  };
+  async function retirerLigne(ligne: Ligne) {
+    if (!window.confirm("Retirer cette commande de la liste ? La facture et l’attachement seront conservés.")) return;
+    setBusy("Retrait de la commande…");
+    try { await sauvegardes.current; await retirer({ data: { id: ligne.id } }); remplacer(lignesRef.current.filter((x) => x.id !== ligne.id)); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Retrait impossible."); }
+    finally { setBusy(null); }
+  }
 
   async function importer(files: FileList | File[]) {
     const pdfs = Array.from(files).filter((f) => /pdf$/i.test(f.type) || /\.pdf$/i.test(f.name));
     if (!pdfs.length) return;
+    if (busy || chargementErreur) return;
     setBusy("Lecture des commandes…");
     try {
       const liste = atts.length ? atts : await trouver({ data: { numeros: [] } });
       setAtts(liste);
-      const nouvelles: Ligne[] = [];
       for (const f of pdfs) {
+        if (lignesRef.current.some((l) => l.nom === f.name)) continue;
         const bytes = new Uint8Array(await f.arrayBuffer());
         let lu: CommandeLue = { numero: null, attachement: null, client: null, montantHt: null };
         try { lu = lireCommande(await texteDuPdf(bytes)); } catch { /* lecture impossible : saisie manuelle */ }
-        nouvelles.push({ nom: f.name, bytes, lu: { ...lu, numero: lu.numero ?? f.name.replace(/\.pdf$/i, "").replace(/^CST\s*/i, "CST ") }, attId: associer(lu, liste), choix: "" });
+        const id = crypto.randomUUID(), original_path = `commandes/${id}/original.pdf`;
+        const empreinte = Array.from(new Uint8Array(await crypto.subtle.digest("SHA-256", bytes))).map((n) => n.toString(16).padStart(2, "0")).join("");
+        const ligne: Ligne = { id, original_path, signe_path: null, nom: f.name, bytes, lu: { ...lu, numero: lu.numero ?? f.name.replace(/\.pdf$/i, "").replace(/^CST\s*/i, "CST ") }, attId: associer(lu, liste), choix: "" };
+        const { error } = await supabase.storage.from("documents").upload(original_path, new Blob([bytes], { type: "application/pdf" }));
+        if (error) throw new Error("Le PDF n’a pas pu être enregistré.");
+        try { await enregistrer({ data: { id, nom: f.name, empreinte, original_path, saisie: saisieCommande(ligne) } }); }
+        catch (e) { await supabase.storage.from("documents").remove([original_path]); throw e; }
+        remplacer([...lignesRef.current, ligne]);
       }
-      setLignes((l) => [...l, ...nouvelles.filter((n) => !l.some((x) => x.nom === n.nom))]);
     } catch (e) { toast.error(e instanceof Error ? e.message : "Lecture impossible."); }
     finally { setBusy(null); }
   }
-
-  const maj = (i: number, p: Partial<Ligne>) => setLignes((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
 
   async function toutTraiter() {
     const { signerCommande } = await import("@/lib/commande-signature");
@@ -99,8 +157,12 @@ function Page() {
       setBusy(`Signature et facture ${i + 1}/${lignes.length}…`);
       try {
         const signe = await signerCommande(l.bytes);
+        const signe_path = `commandes/${l.id}/signee.pdf`;
+        const { error: uploadError } = await supabase.storage.from("documents").upload(signe_path, new Blob([signe], { type: "application/pdf" }), { upsert: true });
+        if (uploadError) throw new Error("La commande signée n’a pas pu être enregistrée.");
         const r = await appliquer({ data: { id: l.attId, bon_commande: numero, montant_ht: ecart && l.choix === "commande" ? l.lu.montantHt : null } });
-        maj(i, { signe, factureId: r.id, erreur: undefined });
+        maj(i, { signe, signe_path, factureId: r.id, erreur: undefined });
+        await sauvegardes.current;
         ok++;
       } catch (e) { maj(i, { erreur: e instanceof Error ? e.message : "Erreur" }); }
     }
@@ -175,10 +237,12 @@ function Page() {
         </div>
 
         {busy && <p className="flex items-center gap-2 text-sm"><Loader2 className="h-4 w-4 animate-spin" /> {busy}</p>}
+        {chargementErreur && <Button variant="outline" onClick={() => setReessai((n) => n + 1)}>Réessayer l’ouverture des commandes</Button>}
+        {sauvegardeErreur && <Button variant="outline" onClick={() => { void sauvegardes.current.then(async () => { try { for (const l of lignesRef.current) await sauvegarder(l); setSauvegardeErreur(false); toast.success("Modifications enregistrées."); } catch { toast.error("Enregistrement impossible. Ne quittez pas cette page."); } }); }}>Réessayer l’enregistrement</Button>}
 
         {lignes.length > 0 && (
           <div className="flex flex-wrap items-center gap-3">
-            <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner toutes les commandes pour le rapport" disabled={!!busy || !eligibles.length} checked={tousSelectionnes} onCheckedChange={(checked) => setLignes((ls) => ls.map((l) => ({ ...l, rapportSelectionne: eligibleRapport(l) && checked === true })))} /> Tout sélectionner pour le rapport</label>
+            <label className="flex items-center gap-2 text-sm"><Checkbox aria-label="Sélectionner toutes les commandes pour le rapport" disabled={!!busy || !eligibles.length} checked={tousSelectionnes} onCheckedChange={(checked) => lignesRef.current.forEach((l, i) => maj(i, { rapportSelectionne: eligibleRapport(l) && checked === true }))} /> Tout sélectionner pour le rapport</label>
             <RapportEcartLot commandes={commandesSelectionnees} disabled={!!busy} />
           </div>
         )}
@@ -211,7 +275,7 @@ function Page() {
                   {ecart && att && !l.factureId && l.lu.montantHt !== null && l.lu.numero?.trim() && <RapportEcartCommande id={att.id} numero={l.lu.numero} montantHt={l.lu.montantHt} />}
                   {l.factureId && <Link to="/factures/$id" params={{ id: l.factureId }} className="text-primary underline">Facture créée</Link>}
                   {l.erreur && <span className="text-destructive">{l.erreur}</span>}
-                  {!l.factureId && <Button type="button" variant="ghost" size="sm" className="ml-auto" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))}>Retirer</Button>}
+                  <Button type="button" variant="ghost" size="sm" disabled={!!busy} className="ml-auto" onClick={() => void retirerLigne(l)}>Retirer</Button>
                 </div>
               );
             })}
