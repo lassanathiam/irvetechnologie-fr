@@ -20,7 +20,7 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
   };
   const text = (value: string, size = 10, strong = false) => {
     const font = strong ? bold : normal;
-    const cleaned = value.replace(/[\u00a0\u202f]/g, " ").replace(/[\u2011\u2212]/g, "-");
+    const cleaned = nettoyer(value);
     for (const paragraph of cleaned.split(/\r?\n/)) {
       const lines: string[] = []; let line = "";
       for (const word of paragraph.split(/\s+/)) {
