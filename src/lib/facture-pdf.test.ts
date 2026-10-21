@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
-import { creerFacturePdf } from "./facture-pdf";
+import { creerFacturePdf, nettoyer } from "./facture-pdf";
 
 describe("Factures pour SY by Cegedim", () => {
   it("produit des instructions texte natives plutôt qu'une image scannée", async () => {
