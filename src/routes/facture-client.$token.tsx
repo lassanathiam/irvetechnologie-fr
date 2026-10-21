@@ -77,7 +77,7 @@ function FactureClientPage() {
           </div>
           <Button
             type="button"
-            onClick={() => { void telechargerFacturePdf({ ...facture, date_limite: facture.date_echeance }, items).catch(() => window.alert("Téléchargement impossible. Réessayez.")); }}
+            onClick={() => { void telechargerFacturePdf({ ...facture, date_limite: facture.date_echeance }, items).catch((err) => { console.error("[facture] téléchargement PDF impossible:", err); window.alert("Téléchargement impossible. Réessayez."); }); }}
             className="border border-primary bg-primary text-primary-foreground rounded-sm px-4 py-2 text-mono text-xs inline-flex items-center gap-2"
           >
             <Download className="h-3.5 w-3.5" /> Télécharger PDF
