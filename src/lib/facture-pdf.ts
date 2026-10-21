@@ -4,6 +4,38 @@ import { COMPANY, dateFr, euro } from "./company";
 import { computeTotals, MENTIONS_FACTURE } from "./billing";
 import { formatQuantite } from "./unites";
 
+/**
+ * Remplace les séquences mojibake fréquentes et retire tout caractère que la
+ * police WinAnsi ne sait pas encoder : la génération du PDF ne doit jamais
+ * échouer à cause d'un caractère issu d'un import.
+ */
+const MOJIBAKE: [RegExp, string][] = [
+  [/√©/g, "é"], [/√®/g, "è"], [/√†/g, "à"], [/√¢/g, "â"], [/√ß/g, "ç"],
+  [/√π/g, "ê"], [/√¥/g, "ô"], [/√Æ/g, "î"], [/√Ø/g, "ï"], [/√ª/g, "û"],
+  [/√´/g, "ë"], [/√º/g, "ü"], [/√â/g, "É"], [/√à/g, "À"],
+  [/‚Ç¨/g, "€"], [/‚Äô/g, "’"], [/‚Äò/g, "‘"], [/‚Äú|‚Äù/g, "« »".slice(0, 1)],
+  [/‚Äì/g, "–"], [/‚Äî/g, "—"], [/‚Ä¶/g, "…"], [/¬∑/g, "·"],
+];
+
+/** Caractères CP1252 (0x80–0x9F) encodables par WinAnsi, hors Latin-1. */
+const WINANSI_EXTRA = new Set("€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ");
+
+export function nettoyer(value: string): string {
+  let out = String(value ?? "");
+  for (const [pattern, remplacement] of MOJIBAKE) out = out.replace(pattern, remplacement);
+  out = out.normalize("NFC").replace(/[  ]/g, " ").replace(/[‑−]/g, "-");
+  let resultat = "";
+  for (const char of out) {
+    const code = char.codePointAt(0)!;
+    if (char === "\n" || char === "\r" || (code >= 0x20 && code <= 0x7e) || (code >= 0xa0 && code <= 0xff) || WINANSI_EXTRA.has(char)) {
+      resultat += char;
+    } else {
+      resultat += char.normalize("NFKD").replace(/[^\x20-\x7e]/g, "");
+    }
+  }
+  return resultat;
+}
+
 /** PDF contenant du texte natif sélectionnable, sans capture d'écran. */
 export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
   const pdf = await PDFDocument.create();
