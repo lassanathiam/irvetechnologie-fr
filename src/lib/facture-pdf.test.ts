@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
-import { creerFacturePdf } from "./facture-pdf";
+import { creerFacturePdf, nettoyer } from "./facture-pdf";
 
 describe("Factures pour SY by Cegedim", () => {
   it("produit des instructions texte natives plutôt qu'une image scannée", async () => {
@@ -11,5 +11,18 @@ describe("Factures pour SY by Cegedim", () => {
     expect(resources?.has(pdf.context.obj("Font"))).toEqual(true);
     const images = resources?.lookup(PDFName.of("XObject"), PDFDict);
     expect(images?.keys().length ?? 0).toEqual(0);
+  });
+
+  it("génère le PDF même avec des caractères non encodables WinAnsi", async () => {
+    const bytes = await creerFacturePdf(
+      { numero: "F-2026-0017", date_emission: "2026-10-13", date_limite: "2026-11-13", client_nom: "CHARGE EXPERT", remise_pct: 0 },
+      [{ libelle: "Déplacement / Anthony Mac√© ⚡ ✅ ①", quantite: 1, prix_unitaire: 60, tva: 20 }],
+    );
+    expect(bytes.length > 0).toEqual(true);
+  });
+
+  it("corrige le mojibake courant et remplace les caractères hors WinAnsi", () => {
+    expect(nettoyer("Déplacement / Anthony Mac√©")).toEqual("Déplacement / Anthony Macé");
+    expect(nettoyer("Mac√© ⚡ ✅ ①")).toEqual("Macé   1");
   });
 });
