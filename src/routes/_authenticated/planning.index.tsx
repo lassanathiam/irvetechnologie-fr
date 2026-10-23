@@ -1348,28 +1348,6 @@ function PlanningPage() {
           ) : <div className="rounded-xl border border-dashed border-border bg-card p-6 text-center"><CalendarClock className="mx-auto h-8 w-8 text-muted-foreground" /><p className="mt-3 font-bold">Aucun chantier à venir</p><p className="mt-1 text-sm text-muted-foreground">Consultez « Voir tout le planning » pour les autres rendez-vous.</p></div>
         )}
 
-        {chantiersEnPause.length > 0 && (
-          <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-amber-500/60 bg-amber-50 p-4 dark:bg-amber-500/10" aria-label="Chantiers en pause">
-            <p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-300">
-              <Pause className="mr-1 inline h-3.5 w-3.5" /> Chantiers en pause ({chantiersEnPause.length})
-            </p>
-            <ul className="mt-2 grid gap-2">
-              {chantiersEnPause.map((r) => (
-                <li key={r.id}>
-                  <button
-                    type="button"
-                    onClick={() => choisirMission(r.id)}
-                    className={`flex w-full min-w-0 items-center gap-2 rounded-lg border bg-card px-3 py-2.5 text-left text-sm ${r.id === missionTerrain?.id ? "border-amber-500" : "border-border hover:border-amber-500"}`}
-                  >
-                    {departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-xs font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}
-                    <span className="min-w-0 flex-1 truncate font-bold">{r.client_nom}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{r.id === missionTerrain?.id ? "Affiché" : "Ouvrir"}</span>
-                  </button>
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
 
         {listeMission.length > 0 && (
           <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
