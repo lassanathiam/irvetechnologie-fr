@@ -745,8 +745,28 @@ function PlanningPage() {
   const chantiersEnPause = toutes
     .filter((r) => r.statut === "en_pause" && !r.termine_at && !estArchiveLogique(r) && estPourMoi(r))
     .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  /** Chantiers non réalisés dont la date est passée : ils ne disparaissent jamais de Mission terrain. */
+  const chantiersEnRetard = toutes
+    .filter((r) => {
+      const debutJour = new Date();
+      debutJour.setHours(0, 0, 0, 0);
+      return (
+        !estArchiveLogique(r) &&
+        !r.termine_at &&
+        !["annule", "termine", "realise", "en_pause"].includes(r.statut ?? "") &&
+        estPourMoi(r) &&
+        new Date(r.date_debut).getTime() < debutJour.getTime()
+      );
+    })
+    .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
   /** Liste « à venir » sans le chantier déjà affiché ni ceux en pause (rangés à part). */
   const listeAVenir = chantiersAVenir.filter((r) => r.id !== missionTerrain?.id && r.statut !== "en_pause");
+  /** Liste complète Mission terrain : pause et retards d'abord (jamais masqués), puis à venir. */
+  const listeMission = [
+    ...chantiersEnPause.filter((r) => r.id !== missionTerrain?.id),
+    ...chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id),
+    ...listeAVenir,
+  ];
   /** Tous les chantiers à venir non terminés (toutes affectations), pour suggérer les regroupements. */
   const aVenirTous = useMemo(() => {
     const debutJour = new Date();
