@@ -1371,19 +1371,31 @@ function PlanningPage() {
           </div>
         )}
 
-        {listeAVenir.length > 0 && (
+        {listeMission.length > 0 && (
           <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground">
-              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers à venir"} ({listeAVenir.length})
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers"} ({listeMission.length})
             </p>
+            {chantiersEnRetard.length > 0 && (
+              <p className="mt-2 rounded-lg border border-red-500/60 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                {chantiersEnRetard.length} chantier{chantiersEnRetard.length > 1 ? "s" : ""} non réalisé{chantiersEnRetard.length > 1 ? "s" : ""} : la date est passée. Reprenez rendez-vous avec le client.
+              </p>
+            )}
             <ul className="mt-2 grid gap-2">
-              {listeAVenir.map((r) => {
+              {listeMission.map((r) => {
                 const d = new Date(r.date_debut);
                 const aujourdhui = new Date();
+                const debutJour = new Date();
+                debutJour.setHours(0, 0, 0, 0);
                 const estAujourdhui =
                   d.getFullYear() === aujourdhui.getFullYear() &&
                   d.getMonth() === aujourdhui.getMonth() &&
                   d.getDate() === aujourdhui.getDate();
+                const estEnRetard =
+                  !r.termine_at &&
+                  !["annule", "termine", "realise", "en_pause"].includes(r.statut ?? "") &&
+                  d.getTime() < debutJour.getTime();
+                const estEnPause = r.statut === "en_pause";
                 return (
                   <li key={r.id}>
                     <button
@@ -1391,7 +1403,7 @@ function PlanningPage() {
                       onClick={() => {
                         choisirMission(r.id);
                       }}
-                      className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/30 px-3 py-2 text-left transition hover:border-primary/50"
+                      className={`flex w-full min-w-0 items-center gap-3 rounded-lg border px-3 py-2 text-left transition hover:border-primary/50 ${estEnRetard ? "border-red-500/60 bg-red-50 dark:bg-red-500/10" : estEnPause ? "border-amber-500/60 bg-amber-50 dark:bg-amber-500/10" : "border-border bg-muted/30"}`}
                     >
                       <span className={`flex w-16 shrink-0 flex-col items-center rounded-lg px-1 py-1.5 text-center leading-tight ${estAujourdhui ? "bg-blue-600 text-slate-50" : "bg-slate-900 text-slate-50 dark:bg-slate-700"}`}>
                         <span className="text-[11px] font-bold uppercase">{estAujourdhui ? "Auj." : d.toLocaleDateString("fr-FR", { weekday: "short" })}</span>
