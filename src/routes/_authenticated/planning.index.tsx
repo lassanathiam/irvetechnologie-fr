@@ -1419,6 +1419,16 @@ function PlanningPage() {
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
                     </button>
+                    {estEnRetard && (
+                      <p className="mt-1 rounded-lg border border-red-500/60 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
+                        Chantier non réalisé : la date est passée. Reprenez rendez-vous avec le client.
+                      </p>
+                    )}
+                    {estEnPause && (
+                      <p className="mt-1 rounded-lg border border-amber-500/60 bg-amber-50 px-3 py-2 text-xs font-bold text-amber-700 dark:bg-amber-500/10 dark:text-amber-300">
+                        Chantier en pause : ouvrez-le pour reprendre les travaux.
+                      </p>
+                    )}
                     {telLien(r.client_telephone) && (
                       <a href={telLien(r.client_telephone) ?? undefined} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700">
                         <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
