@@ -28,7 +28,7 @@ export function AttachementsPeriode({ attachements }: { attachements: any[] }) {
   const [enCours, setEnCours] = useState<string | null>(null); const [info, setInfo] = useState<string | null>(null);
   const envoyer = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer en UN SEUL email tous les attachements cochés de ce donneur d’ordre (un lien = un PDF avec tout), copie à vous ?");
   const [debut, fin] = bornesPeriode(mode, date);
-  const liste = useMemo(() => attachements.filter((a) => a.statut !== "annule" && String(a.date_emission) >= debut && String(a.date_emission) <= fin).sort((a, b) => String(a.numero).localeCompare(String(b.numero))), [attachements, debut, fin]);
+  const liste = useMemo(() => attachements.filter((a) => a.statut !== "annule" && !a.facture_id && String(a.date_emission) >= debut && String(a.date_emission) <= fin).sort((a, b) => String(a.numero).localeCompare(String(b.numero))), [attachements, debut, fin]);
   const choisis = liste.filter((a) => !exclus.includes(a.id));
   const groupes = useMemo(() => { const m = new Map<string, any[]>(); for (const a of choisis) { const k = String(a.client_email ?? "").trim().toLowerCase() || `sans:${a.client_nom}`; m.set(k, [...(m.get(k) ?? []), a]); } return [...m.entries()]; }, [choisis]);
   const fr = (s: string) => new Date(`${s}T12:00:00`).toLocaleDateString("fr-FR");
