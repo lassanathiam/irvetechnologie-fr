@@ -244,12 +244,7 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
     // une référence par ligne, valeur tronquée pour ne jamais déborder
     const labelTxt = `${label} : `;
     const off = normal.widthOfTextAtSize(labelTxt, 8.5);
-    let valTxt = nettoyer(String(value)).replace(/\s+/g, " ").trim();
-    const maxW = LARGEUR - off;
-    while (valTxt.length > 1 && bold.widthOfTextAtSize(valTxt, 8.5) > maxW) {
-      valTxt = valTxt.slice(0, -2);
-    }
-    if (valTxt !== nettoyer(String(value)).replace(/\s+/g, " ").trim()) valTxt = `${valTxt.trimEnd()}…`;
+    const valTxt = couperALaLargeur(String(value), (t) => bold.widthOfTextAtSize(t, 8.5), LARGEUR - off);
     ctx.page.drawText(labelTxt, { x: MARGE, y: ctx.y, size: 8.5, font: normal, color: GRIS });
     ctx.page.drawText(valTxt, { x: MARGE + off, y: ctx.y, size: 8.5, font: bold, color: NOIR });
     ctx.y -= 12;
