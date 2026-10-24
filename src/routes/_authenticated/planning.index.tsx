@@ -55,6 +55,7 @@ import {
   listRendezVous,
   programmerEnsemble,
   renvoyerRetourTravaux,
+  remettreAPlanifier,
   updateStatutRendezVous,
   updateAdresseRendezVous,
   updateDossierRendezVous,
@@ -92,6 +93,8 @@ import { AdresseFields } from "@/components/AdresseFields";
 import { telLien, whatsappLien, wazeLien } from "@/lib/contact-client";
 import { estNoteAutoDepuisDevis } from "@/lib/devis-to-planning";
 import { dureeFr, TECHNICIENS, technicienByNom } from "@/lib/geo";
+import { EchecChantierDialog } from "@/components/EchecChantierDialog";
+import { estEnRetardNonRealise } from "@/lib/echec-chantier";
 import { chantiersVoisins, RAYON_VOISIN_KM, RAYON_VOISIN_ELARGI_KM } from "@/lib/voisins";
 import { economieCarburant, groupesProximite, optimiserTournee, planifierCampagne } from "@/lib/tournee";
 import { useIsMobile } from "@/hooks/use-mobile";
