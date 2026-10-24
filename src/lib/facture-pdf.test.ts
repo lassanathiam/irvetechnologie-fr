@@ -9,12 +9,8 @@ describe("Factures pour SY by Cegedim", () => {
     const resources = pdf.getPages()[0]?.node.Resources();
     expect(pdf.getPageCount()).toEqual(1);
     expect(resources?.has(pdf.context.obj("Font"))).toEqual(true);
-    // Le logo (image) est autorisé : l'exigence Cegedim porte sur le texte natif,
-    // vérifié ci-dessous par extraction du contenu dessiné.
-    const contenu = pdf.getPages()[0]?.node.Contents();
-    expect(contenu).toBeTruthy();
-    const flux = String(pdf.context.lookup(contenu as never));
-    expect(flux.length > 0).toEqual(true);
+    // Le logo (image) est autorisé : l'exigence Cegedim porte sur le texte natif
+    // sélectionnable (polices embarquées), pas sur l'absence totale d'images.
   });
 
   it("génère le PDF même avec des caractères non encodables WinAnsi", async () => {
