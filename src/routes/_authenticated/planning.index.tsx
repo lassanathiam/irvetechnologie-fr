@@ -760,13 +760,7 @@ function PlanningPage() {
     .filter((r) => {
       const debutJour = new Date();
       debutJour.setHours(0, 0, 0, 0);
-      return (
-        !estArchiveLogique(r) &&
-        !r.termine_at &&
-        !["annule", "termine", "realise", "en_pause"].includes(r.statut ?? "") &&
-        estPourMoi(r) &&
-        new Date(r.date_debut).getTime() < debutJour.getTime()
-      );
+      return !estArchiveLogique(r) && estPourMoi(r) && estEnRetardNonRealise(r, debutJour);
     })
     .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
   /** Liste « à venir » sans le chantier déjà affiché ni ceux en pause (rangés à part). */
@@ -1385,10 +1379,7 @@ function PlanningPage() {
                   d.getFullYear() === aujourdhui.getFullYear() &&
                   d.getMonth() === aujourdhui.getMonth() &&
                   d.getDate() === aujourdhui.getDate();
-                const estEnRetard =
-                  !r.termine_at &&
-                  !["annule", "termine", "realise", "en_pause"].includes(r.statut ?? "") &&
-                  d.getTime() < debutJour.getTime();
+                const estEnRetard = estEnRetardNonRealise(r, debutJour);
                 const estEnPause = r.statut === "en_pause";
                 return (
                   <li key={r.id}>
@@ -1533,6 +1524,7 @@ function PlanningPage() {
           {fichesOpen && (
             <FichesTechniquesDialog chantiers={(list.data ?? []).filter((r) => !r.archive)} onClose={() => setFichesOpen(false)} onDone={refresh} />
           )}
+          {echecRdv && <EchecChantierDialog rdv={echecRdv} onClose={() => setEchecRdv(null)} onSent={refresh} />}
           {importOpen && (
             <ImportRdvDialog
               partenaires={(partenaires.data ?? []).map((p) => p.nom)}
