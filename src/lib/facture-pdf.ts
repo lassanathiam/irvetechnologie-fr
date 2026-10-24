@@ -228,15 +228,21 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
     ["Affaire", doc.numero_affaire],
   ];
   const refsVisibles = refs.filter(([, v]) => v);
-  if (refsVisibles.length) {
-    const colW = LARGEUR / Math.max(refsVisibles.length, 1);
-    refsVisibles.forEach(([label, value], i) => {
-      const x = MARGE + i * colW;
-      ctx.page.drawText(nettoyer(`${label} : `), { x, y: ctx.y, size: 8.5, font: normal, color: GRIS });
-      ctx.page.drawText(nettoyer(String(value)), { x: x + normal.widthOfTextAtSize(`${label} : `, 8.5), y: ctx.y, size: 8.5, font: bold, color: NOIR });
-    });
-    ctx.y -= 16;
+  for (const [label, value] of refsVisibles) {
+    // une référence par ligne, valeur tronquée pour ne jamais déborder
+    const labelTxt = `${label} : `;
+    const off = normal.widthOfTextAtSize(labelTxt, 8.5);
+    let valTxt = nettoyer(String(value)).replace(/\s+/g, " ").trim();
+    const maxW = LARGEUR - off;
+    while (valTxt.length > 1 && bold.widthOfTextAtSize(valTxt, 8.5) > maxW) {
+      valTxt = valTxt.slice(0, -2);
+    }
+    if (valTxt !== nettoyer(String(value)).replace(/\s+/g, " ").trim()) valTxt = `${valTxt.trimEnd()}…`;
+    ctx.page.drawText(labelTxt, { x: MARGE, y: ctx.y, size: 8.5, font: normal, color: GRIS });
+    ctx.page.drawText(valTxt, { x: MARGE + off, y: ctx.y, size: 8.5, font: bold, color: NOIR });
+    ctx.y -= 12;
   }
+  if (refsVisibles.length) ctx.y -= 4;
   ctx.y -= 4;
 
   // ---- Tableau des prestations ----
