@@ -255,6 +255,19 @@ function AttachementsPage() {
     return { lignes, global };
   }, [list.data]);
 
+  /** Montant total par client (destinataire de l'attachement), hors annulés. */
+  const parClient = useMemo(() => {
+    const m = new Map<string, { nb: number; ht: number; ttc: number }>();
+    for (const a of list.data ?? []) {
+      if (a.statut === "annule") continue;
+      const k = String(a.client_nom || "Client non renseigné").trim();
+      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0 };
+      cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.ttc += Number(a.total_ttc) || 0;
+      m.set(k, cur);
+    }
+    return [...m.entries()].sort((x, y) => y[1].ht - x[1].ht);
+  }, [list.data]);
+
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/commandes"><FileText /> Bons de commande</Link></Button><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
   <section className="rounded-md border border-border bg-card p-5 space-y-4">
     <div className="flex flex-wrap items-center justify-between gap-2">
