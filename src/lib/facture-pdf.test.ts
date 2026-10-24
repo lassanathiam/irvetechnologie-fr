@@ -26,3 +26,22 @@ describe("Factures pour SY by Cegedim", () => {
     expect(nettoyer("Mac√© ⚡ ✅ ①")).toEqual("Macé   1");
   });
 });
+
+describe("Références de la facture (ticket, bon de commande)", () => {
+  const mesure = (t: string) => t.length;
+
+  it("conserve une valeur courte sans la modifier", () => {
+    expect(couperALaLargeur("1036325 / TI00000005595304", mesure, 100)).toEqual("1036325 / TI00000005595304");
+  });
+
+  it("tronque avec une ellipse une valeur trop longue pour ne jamais chevaucher la suite", () => {
+    const long = "Ticket N°Ticket : 1036325 TI00000005595304 et encore beaucoup de texte";
+    const out = couperALaLargeur(long, mesure, 40);
+    expect(mesure(out) <= 40).toEqual(true);
+    expect(out.endsWith("…")).toEqual(true);
+  });
+
+  it("normalise les espaces multiples dans la référence", () => {
+    expect(couperALaLargeur("Tiket  1031230", mesure, 100)).toEqual("Tiket 1031230");
+  });
+});
