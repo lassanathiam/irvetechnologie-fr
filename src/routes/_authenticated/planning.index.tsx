@@ -68,6 +68,8 @@ import {
 import { RETOUR_CATEGORIES_LABELS, metrageInclusDefaut } from "@/lib/planning.functions";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
+import { TriphaseBadge, TriphasePreparation } from "@/components/TriphaseBadge";
+import { estChantierTriphase } from "@/lib/chantier-phase";
 
 import {
   deleteVoirie,
@@ -771,6 +773,10 @@ function PlanningPage() {
     ...chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id),
     ...listeAVenir,
   ];
+  const triphasesAPreparer = toutes.filter((r) =>
+    estPourMoi(r) && !estArchiveLogique(r) && !r.termine_at &&
+    !["annule", "termine", "realise"].includes(r.statut) && estChantierTriphase(r),
+  ).sort((a, b) => a.date_debut.localeCompare(b.date_debut));
   /** Tous les chantiers à venir non terminés (toutes affectations), pour suggérer les regroupements. */
   const aVenirTous = useMemo(() => {
     const debutJour = new Date();
@@ -1170,6 +1176,12 @@ function PlanningPage() {
           </div>
         )}
 
+        {triphasesAPreparer.length > 0 && <div className="mx-auto mb-4 max-w-3xl border-l-4 border-neon-yellow bg-card p-4" aria-label="Chantiers triphasés à préparer">
+          <p className="flex items-center gap-2 font-bold"><TriangleAlert className="h-5 w-5 shrink-0 text-neon-yellow" />{triphasesAPreparer.length} chantier{triphasesAPreparer.length > 1 ? "s" : ""} triphasé{triphasesAPreparer.length > 1 ? "s" : ""} à préparer</p>
+          <p className="mt-1 text-sm text-muted-foreground">Vérifiez le matériel triphasé avant le déplacement.</p>
+          <ul className="mt-2 grid gap-2">{triphasesAPreparer.map((r) => <li key={r.id}><Button variant="outline" className="h-auto min-h-11 w-full justify-start whitespace-normal text-left" onClick={() => choisirMission(r.id)}><span className="min-w-0 break-words">{r.client_nom} · {new Date(r.date_debut).toLocaleDateString("fr-FR", { day: "numeric", month: "long" })}{r.technicien ? ` · ${r.technicien.split(" ")[0]}` : ""}</span></Button></li>)}</ul>
+        </div>}
+
         {(
           missionTerrain ? (
             <div className="mx-auto max-w-3xl overflow-hidden rounded-xl border border-border bg-card shadow-lg">
@@ -1177,6 +1189,7 @@ function PlanningPage() {
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
+                    <div className="mt-2"><TriphaseBadge phase={missionTerrain.phase_installation} /></div>
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin, true)}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
@@ -1192,6 +1205,7 @@ function PlanningPage() {
               </div>
 
               <div className="space-y-0 p-5 sm:p-6">
+                {estChantierTriphase(missionTerrain) && <div className="mb-5"><TriphasePreparation phase={missionTerrain.phase_installation} /></div>}
 
                 <div className="mb-5 border-b border-border pb-4" aria-label="Détails du client">
                   <button type="button" className="flex w-full items-center justify-between gap-2 rounded-lg text-left font-bold" aria-expanded={detailsOuverts} onClick={() => setDetailsOuverts((v) => !v)}>
@@ -1273,6 +1287,7 @@ function PlanningPage() {
                       <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
                         Matériel récupéré — {faits}/{CHECKLIST_MATERIEL.length}
                       </p>
+                      {estChantierTriphase(missionTerrain) && <p className="mt-2 text-sm font-bold">Vérifier que le matériel récupéré est adapté au triphasé.</p>}
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         {CHECKLIST_MATERIEL.map(([k, label]) => (
                           <button
@@ -1400,6 +1415,7 @@ function PlanningPage() {
                         <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
                         <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
                         <ReseauClientBadge nom={r.reseau_client} />
+                        <TriphaseBadge phase={r.phase_installation} />
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
@@ -1456,6 +1472,7 @@ function PlanningPage() {
                     </div>
                     <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {creneauTexte(r.date_debut, r.creneau_fin)}</p>
                     <ReseauClientBadge nom={r.reseau_client} />
+                    <TriphaseBadge phase={r.phase_installation} />
                     <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {TECHNICIENS.map((t) => (
@@ -2229,6 +2246,7 @@ function PlanningPage() {
                               >
                                 {st.label}
                               </span>
+                              <TriphaseBadge phase={r.phase_installation} />
                               {Boolean((r as { probleme?: boolean | null }).probleme) && (
                                 <span className="text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-red-600/60 bg-red-600/15 text-red-700 dark:text-red-300">
                                   Problématique
@@ -3535,6 +3553,7 @@ function PlanningPage() {
                 cp_ville: r.cp_ville,
                 statut: r.statut,
                 distance_km: r.distance_km,
+                phase_installation: r.phase_installation,
               }))}
               activeId={active}
               onSelectEvent={setActive}
