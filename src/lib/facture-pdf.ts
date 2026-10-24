@@ -38,6 +38,18 @@ export function nettoyer(value: string): string {
   return resultat;
 }
 
+/**
+ * Tronque un texte pour qu'il tienne dans `maxW` selon la mesure fournie :
+ * une référence (ticket, bon de commande) ne doit jamais déborder sur la suite.
+ */
+export function couperALaLargeur(texte: string, mesure: (t: string) => number, maxW: number): string {
+  const propre = nettoyer(texte).replace(/\s+/g, " ").trim();
+  if (mesure(propre) <= maxW) return propre;
+  let out = propre;
+  while (out.length > 0 && mesure(`${out}…`) > maxW) out = out.slice(0, -1);
+  return `${out.trimEnd()}…`;
+}
+
 const ACCENT = rgb(0.078, 0.349, 0.851); // #1459d9, accent des documents imprimés
 const NOIR = rgb(0.1, 0.1, 0.12);
 const GRIS = rgb(0.42, 0.45, 0.5);
@@ -228,15 +240,16 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
     ["Affaire", doc.numero_affaire],
   ];
   const refsVisibles = refs.filter(([, v]) => v);
-  if (refsVisibles.length) {
-    const colW = LARGEUR / Math.max(refsVisibles.length, 1);
-    refsVisibles.forEach(([label, value], i) => {
-      const x = MARGE + i * colW;
-      ctx.page.drawText(nettoyer(`${label} : `), { x, y: ctx.y, size: 8.5, font: normal, color: GRIS });
-      ctx.page.drawText(nettoyer(String(value)), { x: x + normal.widthOfTextAtSize(`${label} : `, 8.5), y: ctx.y, size: 8.5, font: bold, color: NOIR });
-    });
-    ctx.y -= 16;
+  for (const [label, value] of refsVisibles) {
+    // une référence par ligne, valeur tronquée pour ne jamais déborder
+    const labelTxt = `${label} : `;
+    const off = normal.widthOfTextAtSize(labelTxt, 8.5);
+    const valTxt = couperALaLargeur(String(value), (t) => bold.widthOfTextAtSize(t, 8.5), LARGEUR - off);
+    ctx.page.drawText(labelTxt, { x: MARGE, y: ctx.y, size: 8.5, font: normal, color: GRIS });
+    ctx.page.drawText(valTxt, { x: MARGE + off, y: ctx.y, size: 8.5, font: bold, color: NOIR });
+    ctx.y -= 12;
   }
+  if (refsVisibles.length) ctx.y -= 4;
   ctx.y -= 4;
 
   // ---- Tableau des prestations ----

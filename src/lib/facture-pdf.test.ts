@@ -1,6 +1,6 @@
 import { describe, expect, it } from "bun:test";
 import { PDFDocument } from "pdf-lib";
-import { creerFacturePdf, nettoyer } from "./facture-pdf";
+import { couperALaLargeur, creerFacturePdf, nettoyer } from "./facture-pdf";
 
 describe("Factures pour SY by Cegedim", () => {
   it("produit des instructions texte natives plutôt qu'une image scannée", async () => {
@@ -24,5 +24,24 @@ describe("Factures pour SY by Cegedim", () => {
   it("corrige le mojibake courant et remplace les caractères hors WinAnsi", () => {
     expect(nettoyer("Déplacement / Anthony Mac√©")).toEqual("Déplacement / Anthony Macé");
     expect(nettoyer("Mac√© ⚡ ✅ ①")).toEqual("Macé   1");
+  });
+});
+
+describe("Références de la facture (ticket, bon de commande)", () => {
+  const mesure = (t: string) => t.length;
+
+  it("conserve une valeur courte sans la modifier", () => {
+    expect(couperALaLargeur("1036325 / TI00000005595304", mesure, 100)).toEqual("1036325 / TI00000005595304");
+  });
+
+  it("tronque avec une ellipse une valeur trop longue pour ne jamais chevaucher la suite", () => {
+    const long = "Ticket N°Ticket : 1036325 TI00000005595304 et encore beaucoup de texte";
+    const out = couperALaLargeur(long, mesure, 40);
+    expect(mesure(out) <= 40).toEqual(true);
+    expect(out.endsWith("…")).toEqual(true);
+  });
+
+  it("normalise les espaces multiples dans la référence", () => {
+    expect(couperALaLargeur("Tiket  1031230", mesure, 100)).toEqual("Tiket 1031230");
   });
 });
