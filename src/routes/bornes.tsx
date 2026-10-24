@@ -8,7 +8,9 @@ import { borneImage, surErreurImageBorne, bornesStatiquesEnSecours, listBornesPu
 
 export const Route = createFileRoute("/bornes")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/bornes" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/bornes" },
       { title: "Nos bornes de recharge — modèles et puissances | Borne de l'Ouest" },
       {
         name: "description",

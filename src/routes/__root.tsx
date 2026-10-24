@@ -158,7 +158,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "Organization",
           name: "IRVE Technologie",
           alternateName: "Borne de l'Ouest",
-          url: "https://www.irvetechnologie.fr",
+          url: "https://irvetechnologie.fr",
           telephone: "+33768084367",
           vatID: "FR89989533724",
           taxID: "98953372400013",
@@ -200,7 +200,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "WebSite",
           name: "Borne de l'Ouest",
           alternateName: "IRVE Technologie",
-          url: "https://www.irvetechnologie.fr",
+          url: "https://irvetechnologie.fr",
           inLanguage: "fr-FR",
           publisher: {
             "@type": "Organization",

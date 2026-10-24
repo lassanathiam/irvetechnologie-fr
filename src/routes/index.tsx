@@ -16,7 +16,9 @@ import { getCompteursPublics } from "@/lib/compteurs-site.functions";
 
 export const Route = createFileRoute("/")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/" },
       { title: "Borne de l'Ouest — Installation bornes de recharge VE | Nantes & Grand Ouest élargi" },
       { name: "description", content: "Borne de l'Ouest intervient principalement dans le Grand Ouest et dans les régions voisines, jusqu'à environ 250 km autour de Nantes, avec étude au cas par cas selon la rentabilité du chantier." },
       { property: "og:title", content: "Borne de l'Ouest — Bornes de recharge VE autour de Nantes (Grand Ouest élargi)" },
@@ -35,7 +37,7 @@ export const Route = createFileRoute("/")({
               "@type": "ListItem",
               position: 1,
               name: "Accueil",
-              item: "https://www.irvetechnologie.fr/",
+              item: "https://irvetechnologie.fr/",
             },
           ],
         }),
