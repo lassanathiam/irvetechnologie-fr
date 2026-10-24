@@ -1,0 +1,1 @@
+ALTER TABLE public.rendezvous ADD COLUMN IF NOT EXISTS echec_at timestamptz, ADD COLUMN IF NOT EXISTS echec_motif text;
