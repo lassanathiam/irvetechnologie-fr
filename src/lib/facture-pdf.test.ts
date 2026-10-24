@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { creerFacturePdf, nettoyer } from "./facture-pdf";
 
 describe("Factures pour SY by Cegedim", () => {
