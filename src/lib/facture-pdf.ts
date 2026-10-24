@@ -157,8 +157,18 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
     `${COMPANY.email} · ${COMPANY.telephone} · ${COMPANY.telephone2}`,
     `SIRET ${COMPANY.siret} · TVA ${COMPANY.tva} · ${COMPANY.site}`,
   ]) {
-    ctx.page.drawText(nettoyer(ligne), { x: xSociete, y: yG, size: 8.5, font: normal, color: GRIS });
-    yG -= 11.5;
+    // Découpe pour ne jamais passer sous le bloc client.
+    let restant = nettoyer(ligne);
+    while (restant) {
+      let bout = restant;
+      while (bout && normal.widthOfTextAtSize(bout, 8.5) > largeurSociete) {
+        const coupure = bout.lastIndexOf(" ", Math.max(1, Math.floor(bout.length * (largeurSociete / normal.widthOfTextAtSize(bout, 8.5)))));
+        bout = coupure > 0 ? bout.slice(0, coupure) : bout.slice(0, -1);
+      }
+      ctx.page.drawText(bout, { x: xSociete, y: yG, size: 8.5, font: normal, color: GRIS });
+      yG -= 11.5;
+      restant = restant.slice(bout.length).trimStart();
+    }
   }
 
   // Bloc client encadré
