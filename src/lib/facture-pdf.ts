@@ -38,6 +38,18 @@ export function nettoyer(value: string): string {
   return resultat;
 }
 
+/**
+ * Tronque un texte pour qu'il tienne dans `maxW` selon la mesure fournie :
+ * une référence (ticket, bon de commande) ne doit jamais déborder sur la suite.
+ */
+export function couperALaLargeur(texte: string, mesure: (t: string) => number, maxW: number): string {
+  const propre = nettoyer(texte).replace(/\s+/g, " ").trim();
+  if (mesure(propre) <= maxW) return propre;
+  let out = propre;
+  while (out.length > 0 && mesure(`${out}…`) > maxW) out = out.slice(0, -1);
+  return `${out.trimEnd()}…`;
+}
+
 const ACCENT = rgb(0.078, 0.349, 0.851); // #1459d9, accent des documents imprimés
 const NOIR = rgb(0.1, 0.1, 0.12);
 const GRIS = rgb(0.42, 0.45, 0.5);
