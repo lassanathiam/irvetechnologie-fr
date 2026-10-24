@@ -12,7 +12,9 @@ const DESC = "Estimez rapidement la puissance, le câble et les protections néc
 
 export const Route = createFileRoute("/calculateur-irve")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/calculateur-irve" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/calculateur-irve" },
       { title: TITLE },
       { name: "description", content: DESC },
       { property: "og:title", content: TITLE },

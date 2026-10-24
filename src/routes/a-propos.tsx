@@ -5,7 +5,9 @@ import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/a-propos")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/a-propos" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/a-propos" },
       { title: "À propos | Borne de l'Ouest" },
       {
         name: "description",

@@ -5,7 +5,9 @@ import { SiteFooter } from "@/components/SiteFooter";
 
 export const Route = createFileRoute("/installer")({
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/installer" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/installer" },
       { title: "Installer l'application — Borne de l'Ouest" },
       {
         name: "description",

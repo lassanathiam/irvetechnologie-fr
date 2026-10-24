@@ -42,7 +42,9 @@ export const Route = createFileRoute("/demande")({
     return out;
   },
   head: () => ({
+    links: [{ rel: "canonical", href: "https://irvetechnologie.fr/demande" }],
     meta: [
+      { property: "og:url", content: "https://irvetechnologie.fr/demande" },
       { title: "Demande de raccordement — Borne de l'Ouest" },
       { name: "description", content: "Décrivez votre projet et joignez les photos du tableau électrique, du cheminement de câble et de l'emplacement de la borne." },
       { property: "og:title", content: "Demande de raccordement — Borne de l'Ouest" },
@@ -61,13 +63,13 @@ export const Route = createFileRoute("/demande")({
               "@type": "ListItem",
               position: 1,
               name: "Accueil",
-              item: "https://www.irvetechnologie.fr/",
+              item: "https://irvetechnologie.fr/",
             },
             {
               "@type": "ListItem",
               position: 2,
               name: "Demande de raccordement",
-              item: "https://www.irvetechnologie.fr/demande",
+              item: "https://irvetechnologie.fr/demande",
             },
           ],
         }),
