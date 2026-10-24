@@ -4,43 +4,19 @@ import { DateAvecJour } from "@/components/DateAvecJour";
 import { useServerFn } from "@tanstack/react-start";
 import { FileUp, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { analyserDocumentRdv, type RdvExtrait } from "@/lib/import-rdv.functions";
+import { type RdvExtrait } from "@/lib/import-rdv.functions";
 import { createRendezVous } from "@/lib/planning.functions";
+import { Button } from "@/components/ui/button";
+import { lireRdvSansIA } from "@/lib/import-chantier-local";
+import { texteFichierSansIA } from "@/lib/fichier-chantier-local";
 
 type Ligne = RdvExtrait & { garder: boolean };
-
-function lireDataUrl(f: File) {
-  return new Promise<string>((ok, ko) => {
-    const r = new FileReader();
-    r.onload = () => ok(String(r.result));
-    r.onerror = () => ko(new Error("Lecture du fichier impossible."));
-    r.readAsDataURL(f);
-  });
-}
-
-async function compresserImage(f: File): Promise<string> {
-  const url = await lireDataUrl(f);
-  const img = new Image();
-  await new Promise((ok, ko) => {
-    img.onload = ok;
-    img.onerror = ko;
-    img.src = url;
-  });
-  const max = 2000;
-  const k = Math.min(1, max / Math.max(img.width, img.height));
-  const c = document.createElement("canvas");
-  c.width = Math.round(img.width * k);
-  c.height = Math.round(img.height * k);
-  c.getContext("2d")!.drawImage(img, 0, 0, c.width, c.height);
-  return c.toDataURL("image/jpeg", 0.85);
-}
 
 export function ImportRdvDialog({ partenaires, onClose, onDone }: {
   partenaires: string[];
   onClose: () => void;
   onDone: () => void;
 }) {
-  const analyser = useServerFn(analyserDocumentRdv);
   const creer = useServerFn(createRendezVous);
   const [busy, setBusy] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
@@ -54,7 +30,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
     setErreur(null);
     setBusy("Lecture du texte…");
     try {
-      const res = await analyser({ data: { texte: t.slice(0, 190_000) } });
+      const res = lireRdvSansIA(t.slice(0, 190_000));
       setLignes((l) => [...l, ...res.map((r) => ({ ...r, garder: true }))]);
       setTexte("");
     } catch (e) {
@@ -68,20 +44,9 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
     setErreur(null);
     setBusy(`Lecture de « ${f.name} »…`);
     try {
-      const nom = f.name.toLowerCase();
-      let payload: { data_url?: string; filename?: string; texte?: string };
-      if (/\.(xlsx|xls|csv|ods)$/.test(nom)) {
-        const XLSX = await import("xlsx");
-        const wb = XLSX.read(await f.arrayBuffer());
-        const texte = wb.SheetNames.map((n) => `# ${n}\n${XLSX.utils.sheet_to_csv(wb.Sheets[n]!)}`).join("\n\n");
-        payload = { texte: texte.slice(0, 190_000) };
-      } else if (f.type === "application/pdf" || nom.endsWith(".pdf")) {
-        if (f.size > 10_000_000) throw new Error("PDF trop lourd (10 Mo maximum).");
-        payload = { data_url: (await lireDataUrl(f)).replace(/^data:[^;]*;/, "data:application/pdf;"), filename: f.name };
-      } else if (f.type.startsWith("image/")) {
-        payload = { data_url: await compresserImage(f) };
-      } else throw new Error("Format non supporté : photo, capture, PDF ou Excel.");
-      const res = await analyser({ data: payload });
+      const texteLu = await texteFichierSansIA(f);
+      if (!texteLu.trim()) throw new Error("Aucun texte lisible : collez le texte ou ajoutez une intervention à compléter.");
+      const res = lireRdvSansIA(texteLu.slice(0, 190_000));
       setLignes((l) => [...l, ...res.map((r) => ({ ...r, garder: true }))]);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Analyse impossible.");
@@ -146,10 +111,10 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
           <div>
             <h2 className="text-lg font-bold">Importer des rendez-vous</h2>
             <p className="text-sm text-muted-foreground">
-              Photo, capture d'écran, PDF ou fichier Excel envoyé par un partenaire. Les informations sont lues automatiquement ; vérifiez-les avant de créer.
+              Import sans IA · 0 crédit d’analyse
             </p>
           </div>
-          <button type="button" onClick={onClose} aria-label="Fermer" className="p-1 hover:text-primary"><X className="h-5 w-5" /></button>
+          <Button type="button" onClick={onClose} aria-label="Fermer" className="p-1 hover:text-primary"><X className="h-5 w-5" /></Button>
         </div>
 
         <div className="grid sm:grid-cols-2 gap-3 mb-4">
@@ -159,7 +124,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
               type="file"
               multiple
               className="hidden"
-              accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.ods"
+              accept="image/*,application/pdf,.pdf,.xlsx,.xls,.csv,.ods,.txt,.md"
               disabled={!!busy}
               onChange={async (e) => {
                 const files = Array.from(e.target.files ?? []);
@@ -185,11 +150,12 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
             onChange={(e) => setTexte(e.target.value)}
             placeholder={"Ex. : Lundi 27 octobre 9h — Mme Dupont, 12 rue des Lilas, 44100 Nantes — installation borne BUMP…"}
           />
-          <div className="flex justify-end mt-2">
-            <button type="button" onClick={onTexte} disabled={!!busy || texte.trim().length < 10}
+          <div className="flex flex-wrap justify-end gap-2 mt-2">
+            <Button type="button" variant="outline" disabled={!!busy} onClick={() => setLignes((l) => [...l, { ...lireRdvSansIA("Client : Client à préciser")[0], client_nom: "Client à préciser", adresse: "", reseau_client: null, client_telephone: null, client_email: null, cp_ville: null, date_debut: null, creneau_fin: null, type: "installation", designation: null, numero_dossier: null, notes: null, garder: true }])}>Ajouter à compléter</Button>
+            <Button type="button" onClick={onTexte} disabled={!!busy || texte.trim().length < 10}
               className="hero-grad text-primary-foreground text-mono text-xs font-bold rounded-sm px-4 py-2 disabled:opacity-50">
-              Lire le texte
-            </button>
+              Lire sans IA
+            </Button>
           </div>
         </div>
 
@@ -205,17 +171,17 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
                   <input type="checkbox" checked={l.garder} onChange={(e) => maj(i, { garder: e.target.checked })} />
                   Intervention {i + 1}{l.numero_dossier ? ` · ${l.numero_dossier}` : ""}
                 </label>
-                <button type="button" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))} aria-label="Retirer" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></button>
+                <Button type="button" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))} aria-label="Retirer" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
               </div>
               <div className="grid sm:grid-cols-3 gap-2">
                 <label className="sm:col-span-3 text-sm font-semibold text-primary">Client (BUMP, 50FIVE, AMARA, DKV…)
                   <input aria-label="Client (BUMP, 50FIVE, AMARA, DKV…)" className={`${champ} mt-1`} value={l.reseau_client ?? ""} onChange={(e) => maj(i, { reseau_client: e.target.value || null })} placeholder="Nom figurant sur la planification" />
                 </label>
-                <input className={champ} value={l.client_nom} onChange={(e) => maj(i, { client_nom: e.target.value })} placeholder="Client" />
-                <input className={champ} value={l.client_telephone ?? ""} onChange={(e) => maj(i, { client_telephone: e.target.value || null })} placeholder="Téléphone" />
-                <input className={champ} value={l.client_email ?? ""} onChange={(e) => maj(i, { client_email: e.target.value || null })} placeholder="Email" />
-                <input className={champ} value={l.adresse} onChange={(e) => maj(i, { adresse: e.target.value })} placeholder="Adresse" />
-                <input className={champ} value={l.cp_ville ?? ""} onChange={(e) => maj(i, { cp_ville: e.target.value || null })} placeholder="CP / ville" />
+                <input aria-label="Nom du client" className={champ} value={l.client_nom} onChange={(e) => maj(i, { client_nom: e.target.value })} placeholder="Client" />
+                <input aria-label="Téléphone" className={champ} value={l.client_telephone ?? ""} onChange={(e) => maj(i, { client_telephone: e.target.value || null })} placeholder="Téléphone" />
+                <input aria-label="Email" className={champ} value={l.client_email ?? ""} onChange={(e) => maj(i, { client_email: e.target.value || null })} placeholder="Email" />
+                <input aria-label="Adresse" className={champ} value={l.adresse} onChange={(e) => maj(i, { adresse: e.target.value })} placeholder="Adresse" />
+                <input aria-label="CP / ville" className={champ} value={l.cp_ville ?? ""} onChange={(e) => maj(i, { cp_ville: e.target.value || null })} placeholder="CP / ville" />
                 <DateAvecJour type="datetime-local" className={champ} value={l.date_debut ?? ""} onChange={(e) => maj(i, { date_debut: e.target.value || null })} />
                 <label className="mt-1 flex items-center gap-2 text-xs">Jusqu'à <input type="time" className={champ} value={l.creneau_fin ?? ""} onChange={(e) => maj(i, { creneau_fin: e.target.value || null })} /></label>
                 <select className={champ} value={l.type} onChange={(e) => maj(i, { type: e.target.value as Ligne["type"] })}>
@@ -235,10 +201,10 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
 
         {lignes.length > 0 && (
           <div className="flex justify-end mt-4">
-            <button type="button" disabled={!!busy || !lignes.some((l) => l.garder)} onClick={valider}
+            <Button type="button" disabled={!!busy || !lignes.some((l) => l.garder)} onClick={valider}
               className="hero-grad text-primary-foreground text-mono text-xs font-bold rounded-sm px-5 py-2.5 disabled:opacity-50">
               Créer {lignes.filter((l) => l.garder).length} rendez-vous
-            </button>
+            </Button>
           </div>
         )}
       </div>

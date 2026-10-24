@@ -21,3 +21,5 @@
 - Photo corrections on completed chantiers and per-photo comments (rendezvous_photos.legende) use authenticated appointment-scoped photo handlers only, never return fields or email (preserves closure/billing state).
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
 - Orders persist privately in staff-only commandes_importees. Shared reference matching reconciles invoices and blocks conflicts. Reports reread under auth; recipients are server-derived; selection never bills. Invoice PDFs use text.
+
+- Chantier imports use shared browser-only deterministic parsing and local OCR; never automatically call AI, so unreadable documents remain manually assignable without model charges.
