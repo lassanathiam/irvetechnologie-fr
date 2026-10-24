@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
 import { CalendarDays, ChevronLeft, ChevronRight, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { TriphaseBadge } from "@/components/TriphaseBadge";
+import { estChantierTriphase } from "@/lib/chantier-phase";
+import { Zap } from "lucide-react";
 
 export type AgendaEvent = {
   id: string;
@@ -11,6 +14,7 @@ export type AgendaEvent = {
   cp_ville?: string | null;
   statut?: string | null;
   distance_km?: number | string | null;
+  phase_installation?: string | null;
 };
 
 const DOTS: Record<string, string> = {
@@ -145,6 +149,7 @@ export function AgendaMois({
             const isSel = k === selected;
             const load = charge(list);
             const plein = load >= 420;
+            const triphases = list.filter(estChantierTriphase).length;
             return (
               <Button
                 key={k}
@@ -155,8 +160,8 @@ export function AgendaMois({
                   setDetailsOuverts(true);
                 }}
                 onDoubleClick={() => onPickDay?.(k)}
-                title={list.length ? `${list.length} rendez-vous` : "Journée libre"}
-                aria-label={`${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(d)} : ${list.length} rendez-vous`}
+                title={list.length ? `${list.length} rendez-vous${triphases ? ` dont ${triphases} triphasé(s)` : ""}` : "Journée libre"}
+                aria-label={`${new Intl.DateTimeFormat("fr-FR", { day: "numeric", month: "long", year: "numeric" }).format(d)} : ${list.length} rendez-vous${triphases ? ` dont ${triphases} triphasé(s)` : ""}`}
                 aria-pressed={isSel}
                 className={`group relative block w-full text-left h-[54px] sm:h-[62px] rounded-lg border px-1 pt-1 pb-0 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md ${
                   isSel
@@ -177,6 +182,7 @@ export function AgendaMois({
                 >
                   {d.getDate()}
                 </span>
+                {triphases > 0 && <span className="absolute bottom-1.5 left-1 inline-flex h-5 items-center rounded bg-neon-yellow px-0.5 text-premium-night"><Zap className="h-3 w-3" aria-hidden="true" /><span className="text-[10px] font-bold">3φ</span></span>}
                 {list.length > 0 && <span className="absolute bottom-1.5 right-1.5 grid h-5 min-w-5 place-items-center rounded-md bg-primary px-1 text-[11px] font-bold leading-none text-primary-foreground">{list.length}</span>}
               </Button>
             );
@@ -184,6 +190,7 @@ export function AgendaMois({
         </div>
 
         {/* Jour sélectionné */}
+        <p className="mt-2 flex items-center gap-1.5 text-xs text-muted-foreground"><Zap className="h-4 w-4 text-neon-yellow" aria-hidden="true" />3φ : chantier triphasé, matériel à préparer</p>
         <div className="mt-5 pt-4 border-t border-border">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="text-mono text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
@@ -248,7 +255,7 @@ export function AgendaMois({
                     <span className="text-mono text-[11px] font-bold shrink-0">
                       {heureFr(e.date_debut)}
                     </span>
-                    <span className="font-bold truncate">{e.client_nom}</span>
+                    <span className="min-w-0 flex-1"><span className="block truncate font-bold">{e.client_nom}</span><TriphaseBadge phase={e.phase_installation} /></span>
                     <span className="ml-auto hidden text-mono text-[11px] text-muted-foreground shrink-0 sm:inline">
                       {e.cp_ville ?? ""}
                     </span>
