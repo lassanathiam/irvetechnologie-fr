@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it as test } from "bun:test";
 import { estEnRetardNonRealise, motifEchec } from "./echec-chantier";
 
 const jour = new Date("2026-10-24T00:00:00");
