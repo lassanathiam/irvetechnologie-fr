@@ -541,6 +541,13 @@ function PlanningPage() {
       toast.error(msg);
     },
   });
+  const [echecRdv, setEchecRdv] = useState<{ id: string; client_nom: string; partenaire?: string | null } | null>(null);
+  const remettreFn = useServerFn(remettreAPlanifier);
+  const remettre = useMutation({
+    mutationFn: (id: string) => remettreFn({ data: { id } }),
+    onSuccess: () => { setActive(null); setDossier(null); refresh(); toast.success("Chantier remis à planifier : fixez la nouvelle date dans le planning."); },
+    onError: (e: unknown) => toast.error(e instanceof Error ? e.message : "Action impossible."),
+  });
   const affecterFn = useServerFn(affecterTechnicien);
   const affecter = useMutation({
     mutationFn: (p: { id: string; technicien: string | null }) => affecterFn({ data: p }),
@@ -1340,6 +1347,12 @@ function PlanningPage() {
                   {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
                   <Button variant="outline" className={`mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-3 py-3 text-center text-sm font-bold leading-tight ${(missionTerrain as { probleme?: boolean | null }).probleme ? "border-red-600 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "border-red-300 text-red-600 dark:text-red-400"}`} disabled={majOptions.isPending} onClick={() => { const actif = Boolean((missionTerrain as { probleme?: boolean | null }).probleme); if (actif) { if (window.confirm(`Retirer le signalement « problématique » du chantier de ${missionTerrain.client_nom} ?`)) majOptions.mutate({ id: missionTerrain.id, probleme: false }); } else { const note = window.prompt(`Signaler le chantier de ${missionTerrain.client_nom} comme problématique / non conforme.\n\nDécrivez le problème (facultatif) :`); if (note !== null) majOptions.mutate({ id: missionTerrain.id, probleme: true, probleme_note: note || null }); } }}><TriangleAlert className="shrink-0" /> <span className="min-w-0">{(missionTerrain as { probleme?: boolean | null }).probleme ? "Chantier problématique — retirer le signalement" : "Signaler un problème sur ce chantier"}</span></Button>
                   {Boolean((missionTerrain as { probleme?: boolean | null }).probleme) && (missionTerrain as { probleme_note?: string | null }).probleme_note && <p className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{(missionTerrain as { probleme_note?: string | null }).probleme_note}</p>}
+                  {!missionTerrain.termine_at && (
+                    <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                      <Button className="min-h-12 h-auto whitespace-normal bg-red-600 font-bold text-slate-50 hover:bg-red-700" onClick={() => setEchecRdv(missionTerrain)}><TriangleAlert /> Chantier non réalisé — envoyer le rapport</Button>
+                      <Button variant="outline" className="min-h-12 h-auto whitespace-normal font-bold" disabled={remettre.isPending} onClick={() => { if (window.confirm(`Remettre le chantier de ${missionTerrain.client_nom} à planifier (date à fixer) ?`)) remettre.mutate(missionTerrain.id); }}>Remettre à planifier</Button>
+                    </div>
+                  )}
                 </EtapeMission>
               </div>
 
@@ -1411,6 +1424,21 @@ function PlanningPage() {
                       <a href={telLien(r.client_telephone) ?? undefined} className="mt-1 flex h-11 w-full items-center justify-center gap-2 rounded-lg bg-emerald-600 text-base font-bold text-slate-50 hover:bg-emerald-700">
                         <Phone className="h-5 w-5" /> Appeler {r.client_telephone}
                       </a>
+                    )}
+                    {(estEnRetard || estEnPause || Boolean((r as { probleme?: boolean | null }).probleme)) && (
+                      <div className="mt-1 grid grid-cols-2 gap-2">
+                        <Button size="sm" variant="outline" className="h-10 border-red-400 text-red-600" onClick={() => setEchecRdv(r)}>
+                          <TriangleAlert className="h-4 w-4" /> Rapport d'échec
+                        </Button>
+                        <Button size="sm" variant="outline" className="h-10" disabled={remettre.isPending} onClick={() => { if (window.confirm(`Remettre le chantier de ${r.client_nom} à planifier (date à fixer) ?`)) remettre.mutate(r.id); }}>
+                          Remettre à planifier
+                        </Button>
+                        {TECHNICIENS.map((t) => (
+                          <Button key={t.id} size="sm" variant={r.technicien === t.nom ? "default" : "secondary"} className="h-10" disabled={affecter.isPending} onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}>
+                            Affecter à {t.nom.split(" ")[0]}
+                          </Button>
+                        ))}
+                      </div>
                     )}
                   </li>
                 );
