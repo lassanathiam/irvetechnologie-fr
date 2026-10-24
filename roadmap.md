@@ -104,6 +104,7 @@
 - [x] Permettre la correction des photos des chantiers terminés et déjà envoyés, sans modifier validation, facturation ni renvoyer de mail ; ouverture, photos existantes et annulation de suppression vérifiées en session réelle, sans ajouter ni supprimer de vraies preuves.
 
 ## Fait — chantiers problématiques et carte (18/10)
+- [ ] Rendre les chantiers triphasés visibles dans Mission terrain, les listes et l’agenda, avec rappel du matériel avant départ ; vérifier sur un dossier réel sans modifier ses données.
 - [x] Harmoniser les adresses de référence publiques et le plan du site sur https://irvetechnologie.fr : six pages vérifiées, cinq pages commerciales dans le XML, robots cohérent, aucun dossier privé ; publication encore nécessaire.
 - [x] Corriger le clic sans réaction sur « Rapport d'échec » : fenêtre sortie de la zone masquée ; ouverture depuis la liste et Mission terrain, motif et commentaire vérifiés connecté sur téléphone et ordinateur, sans envoyer d'email ; 3 tests réussis.
 - [x] Chantiers en pause en orange sur la carte (avant : couleur du partenaire)

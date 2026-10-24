@@ -25,3 +25,4 @@
 
 - Chantier imports use shared browser-only deterministic parsing and local OCR; never automatically call AI, so unreadable documents remain manually assignable without model charges.
 - Public discovery pages self-reference https://irvetechnologie.fr in leaf canonical and og:url tags; the sitemap lists only public commercial pages, never authenticated or token-based dossiers.
+- Planning and agenda share a browser-safe explicit appointment-phase predicate and triphase indicators; never infer supply phase from charger power or commercial context, to avoid misleading material preparation.
