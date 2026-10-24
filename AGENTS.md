@@ -24,3 +24,4 @@
 - Orders persist privately in staff-only commandes_importees. Shared reference matching reconciles invoices and blocks conflicts. Reports reread under auth; recipients are server-derived; selection never bills. Invoice PDFs use text.
 
 - Chantier imports use shared browser-only deterministic parsing and local OCR; never automatically call AI, so unreadable documents remain manually assignable without model charges.
+- Public discovery pages self-reference https://irvetechnologie.fr in leaf canonical and og:url tags; the sitemap lists only public commercial pages, never authenticated or token-based dossiers.
