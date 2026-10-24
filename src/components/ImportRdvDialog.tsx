@@ -105,7 +105,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
   const champ = "w-full bg-background border border-border rounded-sm px-2 py-1.5 text-sm";
 
   return (
-    <div className="fixed inset-0 z-50 bg-background/80 backdrop-blur-sm flex items-start justify-center p-3 overflow-y-auto">
+    <div role="dialog" aria-modal="true" aria-label="Importer des rendez-vous" className="fixed inset-0 z-[2000] bg-background/80 backdrop-blur-sm flex items-start justify-center p-3 overflow-y-auto">
       <div className="bg-card border border-border rounded-lg w-full max-w-4xl p-5 my-6">
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
