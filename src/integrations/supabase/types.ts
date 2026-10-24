@@ -1548,6 +1548,8 @@ export type Database = {
           duree_min: number
           duree_trajet_min: number | null
           echeance_paiement: string | null
+          echec_at: string | null
+          echec_motif: string | null
           etiquettes: string[]
           facture_envoyee_at: string | null
           id: string
@@ -1626,6 +1628,8 @@ export type Database = {
           duree_min?: number
           duree_trajet_min?: number | null
           echeance_paiement?: string | null
+          echec_at?: string | null
+          echec_motif?: string | null
           etiquettes?: string[]
           facture_envoyee_at?: string | null
           id?: string
@@ -1704,6 +1708,8 @@ export type Database = {
           duree_min?: number
           duree_trajet_min?: number | null
           echeance_paiement?: string | null
+          echec_at?: string | null
+          echec_motif?: string | null
           etiquettes?: string[]
           facture_envoyee_at?: string | null
           id?: string
