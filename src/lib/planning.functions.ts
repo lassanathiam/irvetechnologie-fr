@@ -1332,6 +1332,75 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
     return { ok: true, envoyes };
   });
 
+/** Rapport d'échec chantier : signale le chantier et envoie motif + photos au donneur d'ordre (copie équipe). */
+export const envoyerEchecChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; motif: string; message: string }) =>
+    z.object({ id: z.string().uuid(), motif: z.string().trim().min(1).max(120), message: z.string().trim().min(1).max(3000) }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: rdv, error } = await context.supabase
+      .from("rendezvous")
+      .select("id, public_token, client_nom, adresse, cp_ville, partenaire, partenaire_id")
+      .eq("id", data.id)
+      .single();
+    if (error) throw new Error(error.message);
+    const maintenant = new Date().toISOString();
+    const { error: upErr } = await context.supabase
+      .from("rendezvous")
+      .update({ probleme: true, probleme_note: `${data.motif} — ${data.message}`.slice(0, 500), echec_at: maintenant, echec_motif: data.motif })
+      .eq("id", data.id);
+    if (upErr) throw new Error(upErr.message);
+
+    const { count } = await context.supabase.from("rendezvous_photos").select("id", { count: "exact", head: true }).eq("rendezvous_id", data.id);
+    let part: { email: string | null; email_copie: string | null } | null = null;
+    if (rdv.partenaire_id) {
+      const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").eq("id", rdv.partenaire_id).maybeSingle();
+      part = p;
+    } else if (rdv.partenaire?.trim()) {
+      const { data: p } = await context.supabase.from("partenaires").select("email, email_copie").ilike("nom", rdv.partenaire.trim()).limit(1).maybeSingle();
+      part = p;
+    }
+    const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
+    const { COMPANY } = await import("@/lib/company");
+    const vus = new Set<string>();
+    const destinataires = [part?.email, part?.email_copie, COMPANY.email]
+      .map((e) => e?.trim())
+      .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
+    const envoyes: string[] = [];
+    for (const destinataire of destinataires) {
+      const res = await sendTemplateEmail("chantier-echec", destinataire, {
+        templateData: {
+          client_nom: rdv.client_nom,
+          adresse: [rdv.adresse, rdv.cp_ville].filter(Boolean).join(", "),
+          partenaire: rdv.partenaire,
+          motif: data.motif,
+          message: data.message,
+          date: maintenant,
+          nb_photos: count ?? 0,
+          zip_url: count ? lienDossierPhotos(rdv.public_token) : null,
+        },
+        idempotencyKey: `chantier-echec-${data.id}-${destinataire.toLowerCase()}-${Date.now()}`,
+      });
+      if (res.sent) envoyes.push(destinataire);
+    }
+    return { ok: true, envoyes, sansDonneur: !part?.email };
+  });
+
+/** Remet un chantier (échec, pause, date passée) à planifier : il revient dans le planning sans date fixée. */
+export const remettreAPlanifier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("rendezvous")
+      .update({ statut: "planifie", date_a_confirmer: true, probleme: false, probleme_note: null, demarre_at: null, termine_at: null, chantier_valide: false })
+      .eq("id", data.id)
+      .is("termine_at", null);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
 /** Applique un programme de tournées : enregistre les nouvelles dates de passage. */
 export const appliquerProgramme = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
