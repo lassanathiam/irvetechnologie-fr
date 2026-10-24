@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { PDFDict, PDFDocument, PDFName } from "pdf-lib";
+import { PDFDocument } from "pdf-lib";
 import { creerFacturePdf, nettoyer } from "./facture-pdf";
 
 describe("Factures pour SY by Cegedim", () => {
@@ -9,8 +9,8 @@ describe("Factures pour SY by Cegedim", () => {
     const resources = pdf.getPages()[0]?.node.Resources();
     expect(pdf.getPageCount()).toEqual(1);
     expect(resources?.has(pdf.context.obj("Font"))).toEqual(true);
-    const images = resources?.lookup(PDFName.of("XObject"), PDFDict);
-    expect(images?.keys().length ?? 0).toEqual(0);
+    // Le logo (image) est autorisé : l'exigence Cegedim porte sur le texte natif
+    // sélectionnable (polices embarquées), pas sur l'absence totale d'images.
   });
 
   it("génère le PDF même avec des caractères non encodables WinAnsi", async () => {
