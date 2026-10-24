@@ -1472,6 +1472,8 @@ function PlanningPage() {
         )}
       </section>
 
+      {echecRdv && <EchecChantierDialog rdv={echecRdv} onClose={() => setEchecRdv(null)} onSent={refresh} />}
+
       <div id="planning-complet" hidden={!planningComplet}>
         <Button variant="outline" className="mb-4 h-auto min-h-10 whitespace-normal" onClick={revenirMission}><Smartphone /> Revenir à Mission terrain</Button>
       <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
@@ -1524,7 +1526,6 @@ function PlanningPage() {
           {fichesOpen && (
             <FichesTechniquesDialog chantiers={(list.data ?? []).filter((r) => !r.archive)} onClose={() => setFichesOpen(false)} onDone={refresh} />
           )}
-          {echecRdv && <EchecChantierDialog rdv={echecRdv} onClose={() => setEchecRdv(null)} onSent={refresh} />}
           {importOpen && (
             <ImportRdvDialog
               partenaires={(partenaires.data ?? []).map((p) => p.nom)}

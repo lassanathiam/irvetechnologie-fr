@@ -4,6 +4,7 @@
 - Resolve attachment billing identity from donneurs_ordre and missing operational contacts from the matching active partenaires record; keep billing and delivery addresses independent to avoid invoicing the depot.
 - Les prix « À partir de » du site sont stockés dans `app_settings` sous `tarifs_site_public` et modifiés via l’espace pro (pourquoi : garder l’affichage public synchronisé sans redéploiement).
 - Planning opens on Mission terrain; management tools stay in a collapsible full-planning area and both views share the selected appointment so technicians can read client details without navigating away.
+- Dialogs triggered from Mission terrain must render outside the hidden full-planning area so they remain visible in both planning views.
 - Map selection pins one appointment above the list without changing filters/ordering; batch selection never scrolls (keeps route grouping usable).
 - Photo workflow grouping lives in a browser-safe presentation module with stable step numbers; preserve existing category keys and closure requirements so reorganizing the checklist never invalidates existing evidence. New before/after evidence remains optional unless explicitly required.
 - Sur ordinateur, le Planning suit deux zones stables : rendez-vous et mission à gauche, carte et logistique à droite ; le trajet suit immédiatement la carte (pourquoi : réduire les espaces vides et rapprocher les outils liés).
