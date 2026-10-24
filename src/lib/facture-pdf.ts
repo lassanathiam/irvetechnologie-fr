@@ -154,8 +154,10 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
   yG -= 18;
   for (const ligne of [
     `${COMPANY.adresse} — ${COMPANY.cpVille}`,
-    `${COMPANY.email} · ${COMPANY.telephone} · ${COMPANY.telephone2}`,
-    `SIRET ${COMPANY.siret} · TVA ${COMPANY.tva} · ${COMPANY.site}`,
+    COMPANY.email,
+    `${COMPANY.telephone} · ${COMPANY.telephone2}`,
+    `SIRET ${COMPANY.siret} · TVA ${COMPANY.tva}`,
+    COMPANY.site,
   ]) {
     // Découpe pour ne jamais passer sous le bloc client.
     let restant = nettoyer(ligne);
