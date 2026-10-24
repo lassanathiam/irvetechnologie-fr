@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Importer textes, tableaux, PDF et photos de chantier sans crédits IA ; vérifier lecture et rangement sans appel IA.
+
 - [x] Rapprocher les imports des attachements et commandes déjà facturés : suivi par référence/commande, recherche, comparaison PDF ; ENSIO 13 facturés et 7 restants vérifiés connecté avec une commande originale, 12 tests réussis, aucun envoi ni facture créé.
 
 - [x] Factures PDF texte natives en individuel et dans les dossiers : 13 factures réelles téléchargées, texte extrait sans image, F-2026-0029 examinée et séparateurs éloignés des titres ; 6 tests réussis, aucune facture créée ni envoyée ; acceptation SY à vérifier lors du dépôt.
