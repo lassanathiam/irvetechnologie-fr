@@ -46,6 +46,23 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
   const [erreur, setErreur] = useState<string | null>(null);
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [partenaire, setPartenaire] = useState("");
+  const [texte, setTexte] = useState("");
+
+  const onTexte = async () => {
+    const t = texte.trim();
+    if (t.length < 10) return setErreur("Collez d'abord le texte de la planification.");
+    setErreur(null);
+    setBusy("Lecture du texte…");
+    try {
+      const res = await analyser({ data: { texte: t.slice(0, 190_000) } });
+      setLignes((l) => [...l, ...res.map((r) => ({ ...r, garder: true }))]);
+      setTexte("");
+    } catch (e) {
+      setErreur(e instanceof Error ? e.message : "Analyse impossible.");
+    } finally {
+      setBusy(null);
+    }
+  };
 
   const onFile = async (f: File) => {
     setErreur(null);
@@ -156,6 +173,26 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
             <DonneurOrdreField value={partenaire} onChange={setPartenaire} className={champ} />
           </label>
         </div>
+
+        <div className="mb-4">
+          <label className="text-xs text-muted-foreground" htmlFor="import-texte">Ou collez directement le texte de la planification (mail, message, tableau copié…)</label>
+          <textarea
+            id="import-texte"
+            className={`${champ} mt-1`}
+            rows={4}
+            value={texte}
+            disabled={!!busy}
+            onChange={(e) => setTexte(e.target.value)}
+            placeholder={"Ex. : Lundi 27 octobre 9h — Mme Dupont, 12 rue des Lilas, 44100 Nantes — installation borne BUMP…"}
+          />
+          <div className="flex justify-end mt-2">
+            <button type="button" onClick={onTexte} disabled={!!busy || texte.trim().length < 10}
+              className="hero-grad text-primary-foreground text-mono text-xs font-bold rounded-sm px-4 py-2 disabled:opacity-50">
+              Lire le texte
+            </button>
+          </div>
+        </div>
+
 
         {busy && <p className="text-sm text-primary flex items-center gap-2 mb-3"><Loader2 className="h-4 w-4 animate-spin" /> {busy}</p>}
         {erreur && <p className="text-sm text-destructive mb-3">{erreur}</p>}
