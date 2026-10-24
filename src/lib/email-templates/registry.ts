@@ -12,6 +12,7 @@ import { template as documentASignerTemplate } from './document-a-signer'
 import { template as rappelRdvTemplate } from './rappel-rdv'
 import { template as ensioDocumentInfoTemplate } from './ensio-document-info'
 import { template as rapportEcartTemplate } from './rapport-ecart-commande'
+import { template as chantierEchecTemplate } from './chantier-echec'
 
 
 
@@ -37,6 +38,7 @@ export const TEMPLATES: Record<string, TemplateEntry> = {
   'devis-client': devisClientTemplate,
   'devis-signe': devisSigneTemplate,
   'chantier-termine': chantierTermineTemplate,
+  'chantier-echec': chantierEchecTemplate,
   'chantier-archive': chantierArchiveTemplate,
   'rdv-confirme': rdvConfirmeTemplate,
   'rdv-proposition': rdvPropositionTemplate,
