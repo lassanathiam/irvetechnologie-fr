@@ -113,3 +113,5 @@
 ## En cours (25/10)
 - [x] Attachement envoyé : ajout d’une confirmation avant de fermer la modification sans enregistrer et d’une explication visible quand Enregistrer est bloqué (aucun appel d’enregistrement n’atteignait le serveur) ; parcours de modification vérifié sur aperçu et site publié
 - [ ] Attachements maintenance ENSIO : repérage + nouveaux tarifs (questions en attente de réponse utilisateur)
+
+- [fait 25/10] Suivi TES (travaux en supplément) : marquage par ligne dans les attachements, encart "Écarts à faire valider", repère sur le PDF et le lien client
