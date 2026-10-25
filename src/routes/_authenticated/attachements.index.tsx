@@ -193,10 +193,7 @@ function AttachementsPage() {
           nb++;
         } catch { restants.push(g); }
       }
-      // Les anciens attachements (non facturés) de ces chantiers sont remplacés : on les annule.
-      const refaits = new Set(prep.groupes.filter((g) => !restants.includes(g)).map((g) => g.r.id));
-      const aAnnuler = new Set<string>(); for (const r of termines) if (refaits.has(r.id)) for (const a of r.anciens_attachements ?? []) aAnnuler.add(a.id);
-      for (const id of aAnnuler) { try { await statutFn({ data: { id, action: "annuler" } }); } catch { /* facturé entre-temps */ } }
+      // Jamais d'annulation automatique : les anciens attachements restent modifiables, on n'écrase rien.
       setPrep(restants.length ? { lundi, groupes: restants } : null);
       void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
       setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
