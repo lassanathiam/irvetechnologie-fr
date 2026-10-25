@@ -111,5 +111,5 @@
 - [x] Marquage « chantier problématique » : bouton dans Mission terrain (avec note facultative), pastille rouge « Problématique » sur les fiches, point rouge sur la carte ; fonctionne aussi après validation
 
 ## En cours (25/10)
-- [ ] Corriger : les modifications de lignes/prix sur un attachement déjà envoyé ne sont pas prises en compte
+- [x] Attachement envoyé : ajout d’une confirmation avant de fermer la modification sans enregistrer et d’une explication visible quand Enregistrer est bloqué (aucun appel d’enregistrement n’atteignait le serveur) ; parcours de modification vérifié sur aperçu et site publié
 - [ ] Attachements maintenance ENSIO : repérage + nouveaux tarifs (questions en attente de réponse utilisateur)
