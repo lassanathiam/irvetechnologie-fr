@@ -222,6 +222,9 @@ function AttachementsPage() {
 
   const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => vue === "tous" || (vue === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).filter((a) => [a.numero, a.client_nom, a.numero_ticket, a.numero_affaire, a.bon_commande].some((v) => v?.toLowerCase().includes(search.toLowerCase()))), [list.data, search, vue]);
+  // Écarts de chantier (TES) : attachements contenant des travaux en supplément, tant qu'ils ne sont pas clôturés.
+  const tesAValider = useMemo(() => (list.data ?? []).filter((a: any) => Number(a.tes_nb) > 0 && !estAttachementCloture(a) && a.statut !== "annule"), [list.data]);
+  const tesTotal = useMemo(() => tesAValider.reduce((s, a: any) => s + (Number(a.tes_ht) || 0), 0), [tesAValider]);
 
   // Suivi mensuel : pipeline de l'attachement, du brouillon à la facture.
   const [moisSuivi, setMoisSuivi] = useState(() => new Date().toISOString().slice(0, 7));
