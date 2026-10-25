@@ -19,6 +19,8 @@ export type MapMarker = {
   probleme?: boolean | null;
   /** Intervenant affecté. */
   technicien?: string | null;
+  /** Chantier triphasé : étiquette jaune « TRI » sur le repère. */
+  triphase?: boolean | null;
 };
 
 /** Bases de départ : une par intervenant (domicile de chacun). */
