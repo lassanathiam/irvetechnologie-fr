@@ -773,6 +773,26 @@ function PlanningPage() {
     ...chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id),
     ...listeAVenir,
   ];
+  const [ongletMission, setOngletMission] = useState<"jour" | "planifier" | "bloques" | "termines">("jour");
+  const [rechercheMission, setRechercheMission] = useState("");
+  const chantiersBloques = [
+    ...chantiersEnPause,
+    ...toutes.filter((r) => Boolean((r as { probleme?: boolean | null }).probleme) && r.statut !== "en_pause" && !r.termine_at && !estArchiveLogique(r) && r.statut !== "annule" && estPourMoi(r)),
+  ].filter((r) => r.id !== missionTerrain?.id);
+  const chantiersTermines = toutes
+    .filter((r) => estPourMoi(r) && r.statut !== "annule" && (Boolean(r.termine_at) || ["termine", "realise"].includes(r.statut)))
+    .sort((a, b) => b.date_debut.localeCompare(a.date_debut));
+  const ongletsMission = [
+    { v: "jour" as const, label: "À venir", liste: listeAVenir },
+    { v: "planifier" as const, label: "À replanifier", liste: chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id) },
+    { v: "bloques" as const, label: "Pause / Problèmes", liste: chantiersBloques },
+    { v: "termines" as const, label: "Terminés", liste: chantiersTermines },
+  ];
+  const qMission = rechercheMission.trim().toLowerCase();
+  const listeOnglet = (qMission
+    ? [...listeMission, ...chantiersBloques, ...chantiersTermines].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
+    : ongletsMission.find((o) => o.v === ongletMission)!.liste
+  ).filter((r) => !qMission || [r.client_nom, r.cp_ville, r.adresse, r.reseau_client, departement(r.cp_ville)].some((v) => String(v ?? "").toLowerCase().includes(qMission))).slice(0, ongletMission === "termines" || qMission ? 40 : 200);
   const triphasesAPreparer = toutes.filter((r) =>
     estPourMoi(r) && !estArchiveLogique(r) && !r.termine_at &&
     !["annule", "termine", "realise"].includes(r.statut) && estChantierTriphase(r),
@@ -1375,18 +1395,27 @@ function PlanningPage() {
         )}
 
 
-        {listeMission.length > 0 && (
+        {(
           <div className="mx-auto mt-3 max-w-3xl rounded-xl border border-border bg-card p-4">
             <p className="text-xs font-semibold text-muted-foreground">
-              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers"} ({listeMission.length})
+              {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers"}
             </p>
-            {chantiersEnRetard.length > 0 && (
+            <Input value={rechercheMission} onChange={(e) => setRechercheMission(e.target.value)} placeholder="Rechercher un client, une ville, un département, un réseau…" aria-label="Rechercher un chantier" className="mt-2 h-11" />
+            <div role="tablist" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
+              {ongletsMission.map((o) => {
+                const on = !qMission && ongletMission === o.v;
+                const alerte = (o.v === "planifier" || o.v === "bloques") && o.liste.length > 0;
+                return <button key={o.v} type="button" role="tab" aria-selected={on} onClick={() => { setOngletMission(o.v); setRechercheMission(""); }} className={`min-h-11 rounded-lg border px-2 py-2 text-sm font-bold transition ${on ? "border-primary bg-primary text-primary-foreground" : alerte ? "border-red-500/60 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "border-border bg-muted/30"}`}>{o.label} ({o.liste.length})</button>;
+              })}
+            </div>
+            {listeOnglet.length === 0 && <p className="mt-3 text-center text-sm text-muted-foreground">{qMission ? "Aucun chantier trouvé." : "Rien dans cette rubrique."}</p>}
+            {ongletMission === "planifier" && !qMission && chantiersEnRetard.length > 0 && (
               <p className="mt-2 rounded-lg border border-red-500/60 bg-red-50 px-3 py-2 text-xs font-bold text-red-700 dark:bg-red-500/10 dark:text-red-300">
                 {chantiersEnRetard.length} chantier{chantiersEnRetard.length > 1 ? "s" : ""} non réalisé{chantiersEnRetard.length > 1 ? "s" : ""} : la date est passée. Reprenez rendez-vous avec le client.
               </p>
             )}
             <ul className="mt-2 grid gap-2">
-              {listeMission.map((r) => {
+              {listeOnglet.map((r) => {
                 const d = new Date(r.date_debut);
                 const aujourdhui = new Date();
                 const debutJour = new Date();
