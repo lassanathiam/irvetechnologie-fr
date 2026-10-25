@@ -10,7 +10,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { copieEquipeAttachements, createAttachement, modifierMontantTes, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -350,7 +350,8 @@ function AttachementsPage() {
     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-amber-600 dark:text-amber-400">Écarts de chantier (TES) à faire valider ({tesAValider.length})</h2><strong className="font-mono">{euro(tesTotal)} HT de suppléments</strong></div>
     {tesAValider.length === 0 ? <p className="text-sm text-muted-foreground">Aucun écart TES pour l’instant. Pour en ajouter : ouvrez un attachement, cliquez sur « Modifier », puis sur le bouton orange « TES · supplément » sous la ligne concernée (déplacement, câble en plus, répartiteur…). Enregistrez : l’attachement apparaîtra ici.</p> : <>
     <p className="text-sm text-muted-foreground">Ces attachements contiennent des travaux en supplément (métrage, répartiteur, ajustements…). Vérifiez-les et faites-les valider par le donneur d’ordre avant facturation pour ne rien perdre.</p>
-    <ul className="divide-y divide-amber-500/20 rounded-md border border-amber-500/30">{tesAValider.map((a: any) => <li key={a.id}><Link to="/attachements/$id" params={{ id: a.id }} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm hover:bg-amber-500/10"><strong>{titreAttachement(a)}</strong><span className="text-muted-foreground">{a.numero_ticket}</span><span className="ml-auto font-mono text-amber-600 dark:text-amber-400">+{euro(Number(a.tes_ht))} HT TES</span><span className="rounded-full border border-border px-2 py-0.5 text-xs">{statutAttachement(a)}</span></Link></li>)}</ul></>}
+    <ul className="divide-y divide-amber-500/20 rounded-md border border-amber-500/30">{tesAValider.map((a: any) => <li key={a.id} className="px-3 py-2 text-sm"><Link to="/attachements/$id" params={{ id: a.id }} className="flex flex-wrap items-center gap-3 hover:underline"><strong>{titreAttachement(a)}</strong><span className="text-muted-foreground">{a.numero_ticket}</span><span className="ml-auto font-mono text-amber-600 dark:text-amber-400">+{euro(Number(a.tes_ht))} HT TES</span><span className="rounded-full border border-border px-2 py-0.5 text-xs">{statutAttachement(a)}</span></Link>
+      <ul className="mt-1 space-y-1 pl-3">{(a.tes_lignes ?? []).map((l: any) => <LigneTes key={l.id} ligne={l} factureId={a.facture_id} />)}</ul></li>)}</ul></>}
   </section>
   <AttachementsPeriode attachements={list.data ?? []} />
   <div className="flex flex-wrap gap-2" role="group" aria-label="Classement des attachements">{(["actifs", "archives", "tous"] as const).map((v) => <Button key={v} variant={vue === v ? "default" : "outline"} aria-pressed={vue === v} onClick={() => setVue(v)}>{v === "actifs" ? "En cours" : v === "archives" ? "Archives · Facturés / clôturés" : "Tous"} ({(list.data ?? []).filter((a) => v === "tous" || (v === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).length})</Button>)}</div>
@@ -359,3 +360,14 @@ function AttachementsPage() {
 }
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
+
+/** Ligne TES modifiable en un clic : on saisit le montant HT, l'attachement est recalculé. */
+function LigneTes({ ligne, factureId }: { ligne: { id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }; factureId: string | null }) {
+  const qc = useQueryClient(); const fn = useServerFn(modifierMontantTes);
+  const montant = Math.round(ligne.quantite * ligne.prix_unitaire * 100) / 100;
+  const [edit, setEdit] = useState(false); const [val, setVal] = useState(String(montant)); const [err, setErr] = useState<string | null>(null);
+  const save = useMutation({ mutationFn: () => fn({ data: { ligne_id: ligne.id, montant: Number(val.replace(",", ".")) } }), onSuccess: () => { setEdit(false); setErr(null); void qc.invalidateQueries({ queryKey: ["attachements"] }); }, onError: (e) => setErr(e instanceof Error ? e.message : "Enregistrement impossible.") });
+  const valide = val.trim() !== "" && Number.isFinite(Number(val.replace(",", "."))) && Number(val.replace(",", ".")) >= 0;
+  if (!edit) return <li><button type="button" disabled={Boolean(factureId)} title={factureId ? "Déjà facturé" : "Cliquer pour modifier le montant"} onClick={() => { setVal(String(montant)); setEdit(true); }} className="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left hover:bg-amber-500/15 disabled:opacity-60"><span>{ligne.libelle}</span>{ligne.description && <span className="text-xs text-muted-foreground">{ligne.description}</span>}<span className="ml-auto font-mono">{euro(montant)}</span><span className="text-xs text-amber-600 dark:text-amber-400">Modifier</span></button></li>;
+  return <li className="flex flex-wrap items-center gap-2 rounded bg-amber-500/10 px-2 py-1"><span>{ligne.libelle}</span>{ligne.quantite !== 1 && <span className="text-xs text-muted-foreground">({ligne.quantite} unités, prix recalculé)</span>}<Input autoFocus inputMode="decimal" aria-label="Montant HT de la ligne TES" className="ml-auto h-8 w-28" value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && valide) save.mutate(); if (e.key === "Escape") setEdit(false); }} /><span className="text-xs">€ HT</span><Button size="sm" disabled={!valide || save.isPending} onClick={() => save.mutate()}>{save.isPending && <Loader2 className="animate-spin" />}Enregistrer</Button><Button size="sm" variant="ghost" onClick={() => setEdit(false)}>Annuler</Button>{err && <p className="w-full text-xs text-destructive">{err}</p>}</li>;
+}
