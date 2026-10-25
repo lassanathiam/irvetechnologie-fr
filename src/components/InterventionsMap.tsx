@@ -283,6 +283,20 @@ export function InterventionsMap({
           icon: dot(color, activeId === m.id, i + 1, etat, rang, m.probleme, m.statut === "en_pause"),
         })
         .addTo(layer.current);
+      if (m.triphase) {
+        leaflet
+          .marker([m.lat, m.lng], {
+            interactive: false,
+            zIndexOffset: 1000,
+            icon: leaflet.divIcon({
+              className: "",
+              iconSize: [40, 18],
+              iconAnchor: [-6, 30],
+              html: `<span style="display:inline-block;padding:2px 6px;border-radius:6px;background:#facc15;color:#0f172a;border:2px solid #0f172a;font:900 11px/1 system-ui;white-space:nowrap">⚡ TRI</span>`,
+            }),
+          })
+          .addTo(layer.current);
+      }
       mk.bindTooltip(
         `<strong>${escapeHtml(m.label)}</strong>${m.date ? `<br>${escapeHtml(m.date)}` : ""}`,
         { direction: "top", offset: [0, -18], className: "rdv-map-date-tooltip" },
