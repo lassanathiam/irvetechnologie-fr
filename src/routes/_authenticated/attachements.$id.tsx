@@ -22,7 +22,7 @@ export const Route = createFileRoute("/_authenticated/attachements/$id")({
   component: AttachementDetail,
 });
 
-type Line = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null };
+type Line = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null; tes?: boolean };
 const newLine = (): Line => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "" });
 const addDays = (date: string, days: number) => { const d = new Date(`${date}T00:00:00`); if (Number.isNaN(d.getTime())) return date; d.setDate(d.getDate() + days); return d.toISOString().slice(0, 10); };
 const diffDays = (from: string, to: string) => { const a = new Date(`${from}T00:00:00`).getTime(); const b = new Date(`${to}T00:00:00`).getTime(); const n = Math.round((b - a) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
@@ -51,7 +51,7 @@ function AttachementDetail() {
       validation_requise: Boolean(a.validation_requise), proposition_autorisee: a.proposition_autorisee !== false, notes: a.notes ?? "",
     });
     setDelai(diffDays(a.date_emission, a.date_echeance));
-    setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)), rendezvous_id: item.rendezvous_id ?? null })));
+    setLines((data.items ?? []).map((item: any) => ({ key: crypto.randomUUID(), libelle: item.libelle ?? "", description: item.description ?? "", quantite: String(Number(item.quantite)), prix: String(Number(item.prix_unitaire)), rendezvous_id: item.rendezvous_id ?? null, tes: Boolean(item.tes) })));
     setMessage((m) => m || data.message_suggestion || "");
   }, [query.data]);
 
@@ -59,7 +59,7 @@ function AttachementDetail() {
   const send = useMutation({ mutationFn: () => sendFn({ data: { id, message: message || null } }), onSuccess: (r) => { setError(null); setFeedback(r.sent ? "Attachement envoyé par e-mail." : "E-mail non envoyé."); refresh(); }, onError: (e) => setError(e instanceof Error ? e.message : "Envoi impossible.") });
   const convert = useMutation({ mutationFn: () => convertFn({ data: { id } }), onSuccess: (r) => { refresh(); navigate({ to: "/factures/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Conversion impossible.") });
   const save = useMutation({
-    mutationFn: () => updateFn({ data: { id, ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, objet: form.objet || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l: any) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix) })) } }),
+    mutationFn: () => updateFn({ data: { id, ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, objet: form.objet || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l: any) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } }),
     onSuccess: () => { setError(null); setFeedback("Modifications enregistrées."); setEdit(false); refresh(); },
     onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
@@ -77,7 +77,8 @@ function AttachementDetail() {
   const setDate = (value: string) => setForm((f: any) => ({ ...f, date_emission: value, date_echeance: addDays(value, delai) }));
   const setDelaiJours = (value: number) => { setDelai(value); setForm((f: any) => ({ ...f, date_echeance: addDays(f.date_emission, value) })); };
   const previewDoc = edit && form ? { ...a, ...form, total_ht: total, total_tva: form.autoliquidation ? 0 : total * 0.2, total_ttc: form.autoliquidation ? total : total * 1.2 } : a;
-  const previewItems = edit ? lines.map((l) => ({ libelle: l.libelle, description: l.description, quantite: Number(l.quantite) || 0, prix_unitaire: Number(l.prix) || 0 })) : items;
+  const previewItems = edit ? lines.map((l) => ({ libelle: l.libelle, description: l.description, quantite: Number(l.quantite) || 0, prix_unitaire: Number(l.prix) || 0, tes: Boolean(l.tes) })) : items;
+  const tesHt = totalTes(previewItems);
   const chantiers = new Map<string, string>();
   if (a.rendezvous_id) chantiers.set(a.rendezvous_id, a.objet || "Chantier de l’attachement");
   for (const item of items ?? []) {
