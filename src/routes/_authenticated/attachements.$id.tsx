@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
+import { totalTes } from "@/lib/attachement-tes";
 import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
@@ -109,6 +110,11 @@ function AttachementDetail() {
         {!chantiers.size && <p className="text-sm text-muted-foreground">Aucun chantier lié à cet attachement.</p>}
       </div>
     </section>
+
+    {tesHt > 0 ? <section className="rounded-md border-2 border-amber-500/60 bg-amber-500/10 p-4">
+      <strong className="text-amber-600 dark:text-amber-400">Travaux en supplément (TES) : {euro(tesHt)} HT</strong>
+      <p className="text-sm text-muted-foreground">Ces lignes sont des écarts de chantier à faire valider par le donneur d’ordre avant facturation. Elles sont repérées « TES » sur le document et le lien client.</p>
+    </section> : null}
 
     {enAttente ? <section className="rounded-md border-2 border-primary bg-primary/5 p-5 space-y-4">
       <h2 className="text-sm font-bold uppercase text-primary">Valorisation proposée par le client</h2>
