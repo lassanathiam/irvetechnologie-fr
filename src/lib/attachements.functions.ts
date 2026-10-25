@@ -118,15 +118,41 @@ export const listAttachements = createServerFn({ method: "GET" })
     const ids = (data ?? []).map((a) => a.id);
     // Suivi TES : nombre de lignes en supplément et leur montant HT, par attachement.
     const { data: lignesTes } = ids.length
-      ? await context.supabase.from("attachement_items").select("attachement_id, quantite, prix_unitaire").eq("tes", true).in("attachement_id", ids)
-      : { data: [] as { attachement_id: string; quantite: number; prix_unitaire: number }[] };
-    const parAtt = new Map<string, { nb: number; ht: number }>();
+      ? await context.supabase.from("attachement_items").select("id, attachement_id, libelle, description, quantite, prix_unitaire").eq("tes", true).in("attachement_id", ids).order("ordre")
+      : { data: [] as { id: string; attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }[] };
+    const parAtt = new Map<string, { nb: number; ht: number; lignes: { id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }[] }>();
     for (const l of lignesTes ?? []) {
-      const cur = parAtt.get(l.attachement_id) ?? { nb: 0, ht: 0 };
+      const cur = parAtt.get(l.attachement_id) ?? { nb: 0, ht: 0, lignes: [] };
       cur.nb += 1; cur.ht += (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
+      cur.lignes.push({ id: l.id, libelle: l.libelle, description: l.description, quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire) });
       parAtt.set(l.attachement_id, cur);
     }
-    return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100 }));
+    return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [] }));
+  });
+
+/** Modifie le montant d'une ligne TES puis recalcule les totaux de l'attachement (refusé si déjà facturé). */
+export const modifierMontantTes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ ligne_id: z.string().uuid(), montant: z.number().min(0).max(1_000_000) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const ligne = await context.supabase.from("attachement_items").select("id, attachement_id, quantite").eq("id", data.ligne_id).maybeSingle();
+    if (ligne.error) throw new Error(ligne.error.message);
+    if (!ligne.data) throw new Error("Ligne introuvable.");
+    const att = await context.supabase.from("attachements_travaux").select("id, facture_id, autoliquidation").eq("id", ligne.data.attachement_id).maybeSingle();
+    if (att.error) throw new Error(att.error.message);
+    if (!att.data) throw new Error("Attachement introuvable.");
+    if (att.data.facture_id) throw new Error("Cet attachement est déjà facturé : modifiez la facture.");
+    const qte = Number(ligne.data.quantite) || 1;
+    const prix = Math.round((data.montant / qte) * 10000) / 10000;
+    const up = await context.supabase.from("attachement_items").update({ prix_unitaire: prix }).eq("id", data.ligne_id);
+    if (up.error) throw new Error(up.error.message);
+    const toutes = await context.supabase.from("attachement_items").select("quantite, prix_unitaire").eq("attachement_id", att.data.id);
+    if (toutes.error) throw new Error(toutes.error.message);
+    const tva = att.data.autoliquidation ? 0 : 20;
+    const totals = computeTotals((toutes.data ?? []).map((l: any) => ({ libelle: "", quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire), tva })) as any, 0);
+    const maj = await context.supabase.from("attachements_travaux").update({ total_ht: totals.total_ht, total_tva: totals.total_tva, total_ttc: totals.total_ttc }).eq("id", att.data.id);
+    if (maj.error) throw new Error(maj.error.message);
+    return { ok: true };
   });
 
 export const getAttachement = createServerFn({ method: "GET" })
