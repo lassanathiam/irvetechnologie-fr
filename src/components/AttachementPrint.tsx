@@ -1,7 +1,8 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY, dateFr, euro } from "@/lib/company";
+import { totalTes } from "@/lib/attachement-tes";
 
-type Line = { libelle: string; description?: string | null; quantite: number | string; prix_unitaire: number | string };
+type Line = { libelle: string; description?: string | null; quantite: number | string; prix_unitaire: number | string; tes?: boolean | null };
 type Attachment = {
   numero: string; numero_ticket: string; numero_affaire?: string | null; bon_commande?: string | null;
   client_nom: string; client_email?: string | null; client_telephone?: string | null; client_adresse?: string | null; client_cp_ville?: string | null;
@@ -20,8 +21,8 @@ export function AttachementPrint({ doc, items }: { doc: Attachment; items: Line[
     </div>
     <div className="mt-4 grid gap-2 sm:grid-cols-2"><Ref label="Attachement" value={doc.numero} /><Ref label="Ticket intervention" value={doc.numero_ticket} important /><Ref label="Numéro d’affaire" value={doc.numero_affaire} /><Ref label="Bon de commande" value={doc.bon_commande} /><Ref label="Date" value={dateFr(doc.date_emission)} /><Ref label="Échéance" value={dateFr(doc.date_echeance)} /></div>
     <div className="mt-5 font-extrabold">Objet : {objet}</div>
-    <table className="mt-4 w-full border-collapse"><thead><tr className="bg-muted text-[10px] font-bold uppercase"><th className="p-3 text-left">Travaux réalisés</th><th className="p-3 text-right">Qté</th><th className="p-3 text-right">Prix HT</th><th className="p-3 text-right">Total HT</th></tr></thead><tbody>{items.map((item, index) => <tr key={index} className="border-b border-border"><td className="p-3"><strong>{item.libelle}</strong>{item.description ? <div className="text-muted-foreground">{item.description}</div> : null}</td><td className="p-3 text-right">{Number(item.quantite)}</td><td className="p-3 text-right">{euro(Number(item.prix_unitaire))}</td><td className="p-3 text-right font-bold">{euro(Number(item.quantite) * Number(item.prix_unitaire))}</td></tr>)}</tbody></table>
-    <div className="mt-5 ml-auto w-full space-y-2 sm:w-80"><Total label="Total HT" value={Number(doc.total_ht)} /><Total label={doc.autoliquidation ? "TVA autoliquidée" : "TVA"} value={Number(doc.total_tva)} /><Total label="Total TTC" value={Number(doc.total_ttc)} strong /></div>
+    <table className="mt-4 w-full border-collapse"><thead><tr className="bg-muted text-[10px] font-bold uppercase"><th className="p-3 text-left">Travaux réalisés</th><th className="p-3 text-right">Qté</th><th className="p-3 text-right">Prix HT</th><th className="p-3 text-right">Total HT</th></tr></thead><tbody>{items.map((item, index) => <tr key={index} className="border-b border-border"><td className="p-3"><strong>{item.libelle}</strong>{item.tes ? <span className="ml-2 rounded-sm border border-amber-600 px-1 py-0.5 align-middle text-[9px] font-bold uppercase text-amber-700">TES · supplément</span> : null}{item.description ? <div className="text-muted-foreground">{item.description}</div> : null}</td><td className="p-3 text-right">{Number(item.quantite)}</td><td className="p-3 text-right">{euro(Number(item.prix_unitaire))}</td><td className="p-3 text-right font-bold">{euro(Number(item.quantite) * Number(item.prix_unitaire))}</td></tr>)}</tbody></table>
+    <div className="mt-5 ml-auto w-full space-y-2 sm:w-80"><Total label="Total HT" value={Number(doc.total_ht)} />{totalTes(items) > 0 ? <Total label="dont travaux en supplément (TES)" value={totalTes(items)} /> : null}<Total label={doc.autoliquidation ? "TVA autoliquidée" : "TVA"} value={Number(doc.total_tva)} /><Total label="Total TTC" value={Number(doc.total_ttc)} strong /></div>
     {doc.autoliquidation ? <div className="mt-5 rounded-sm border-2 border-primary p-4 font-bold">Autoliquidation — TVA due par le preneur. Autoliquidation de la TVA en application de l’article 283-2 nonies du CGI.</div> : null}
     {doc.notes ? <div className="mt-5 whitespace-pre-line text-[12px]"><strong>Notes : </strong>{doc.notes}</div> : null}
   </div>;

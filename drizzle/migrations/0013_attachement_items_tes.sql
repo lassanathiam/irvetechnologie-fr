@@ -1,0 +1,2 @@
+ALTER TABLE public.attachement_items ADD COLUMN tes boolean NOT NULL DEFAULT false;
+COMMENT ON COLUMN public.attachement_items.tes IS 'Travail en supplément (TES) : écart de chantier à faire valider par le donneur d''ordre';

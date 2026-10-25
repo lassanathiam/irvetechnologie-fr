@@ -10,6 +10,7 @@ const lineSchema = z.object({
   quantite: z.number().positive().max(100000),
   prix_unitaire: z.number().min(0).max(1_000_000),
   rendezvous_id: z.string().uuid().optional().nullable(),
+  tes: z.boolean().optional().default(false),
 });
 
 const attachmentSchema = z.object({
@@ -113,7 +114,18 @@ export const listAttachements = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(250);
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const ids = (data ?? []).map((a) => a.id);
+    // Suivi TES : nombre de lignes en supplément et leur montant HT, par attachement.
+    const { data: lignesTes } = ids.length
+      ? await context.supabase.from("attachement_items").select("attachement_id, quantite, prix_unitaire").eq("tes", true).in("attachement_id", ids)
+      : { data: [] as { attachement_id: string; quantite: number; prix_unitaire: number }[] };
+    const parAtt = new Map<string, { nb: number; ht: number }>();
+    for (const l of lignesTes ?? []) {
+      const cur = parAtt.get(l.attachement_id) ?? { nb: 0, ht: 0 };
+      cur.nb += 1; cur.ht += (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
+      parAtt.set(l.attachement_id, cur);
+    }
+    return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100 }));
   });
 
 export const getAttachement = createServerFn({ method: "GET" })
@@ -212,6 +224,7 @@ export const createAttachement = createServerFn({ method: "POST" })
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
       rendezvous_id: item.rendezvous_id ?? null,
+      tes: Boolean(item.tes),
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);
@@ -247,6 +260,7 @@ export const updateAttachement = createServerFn({ method: "POST" })
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
       rendezvous_id: item.rendezvous_id ?? liens.get(`${item.libelle}|${item.description ?? ""}`) ?? null,
+      tes: Boolean(item.tes),
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);
@@ -411,7 +425,7 @@ export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
       const ecart = Math.round((data.montant_ht - Number(att.total_ht)) * 100) / 100;
       if (Math.abs(ecart) >= 0.01) {
         const { data: last } = await context.supabase.from("attachement_items").select("ordre").eq("attachement_id", att.id).order("ordre", { ascending: false }).limit(1);
-        const ins = await context.supabase.from("attachement_items").insert({ attachement_id: att.id, libelle: `Ajustement selon bon de commande ${data.bon_commande}`, quantite: 1, prix_unitaire: ecart, ordre: (last?.[0]?.ordre ?? 0) + 1 });
+        const ins = await context.supabase.from("attachement_items").insert({ attachement_id: att.id, libelle: `Ajustement selon bon de commande ${data.bon_commande}`, quantite: 1, prix_unitaire: ecart, tes: true, ordre: (last?.[0]?.ordre ?? 0) + 1 });
         if (ins.error) throw new Error(ins.error.message);
         const ht = Math.round(data.montant_ht * 100) / 100;
         const tva = att.autoliquidation ? 0 : Math.round(ht * 20) / 100;

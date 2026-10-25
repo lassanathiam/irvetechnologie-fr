@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { deplacer, deplacerVers } from "@/lib/reorder";
 
-export type LigneAtt = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null };
+export type LigneAtt = { key: string; libelle: string; description: string; quantite: string; prix: string; rendezvous_id?: string | null; tes?: boolean };
 export const nouvelleLigne = (init?: Partial<LigneAtt>): LigneAtt => ({ key: crypto.randomUUID(), libelle: "", description: "", quantite: "1", prix: "", ...init });
 
 /** Éditeur de lignes : glisser-déposer (poignée), flèches, et « + » pour insérer une ligne juste en dessous. */
@@ -39,6 +39,7 @@ export function LignesAttachement({ lines, setLines, catalogue = [] }: { lines: 
       </div>
       <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
         <button type="button" onClick={() => inserer(idx)} className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"><Plus className="h-3 w-3" /> Insérer une ligne en dessous</button>
+        <button type="button" aria-pressed={Boolean(line.tes)} title="Travail en supplément (TES) : écart de chantier à faire valider par le donneur d’ordre" onClick={() => maj(line.key, { tes: !line.tes })} className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-xs font-medium ${line.tes ? "border-amber-500 bg-amber-500/20 text-amber-600 dark:text-amber-400" : "border-border text-muted-foreground hover:border-amber-500/60 hover:text-amber-600"}`}>TES · supplément{line.tes ? " ✓" : ""}</button>
         {tableau ? <button type="button" onClick={() => insererBpu(idx, tableau.id)} className="inline-flex items-center gap-1 rounded-full border border-primary/40 px-2 py-0.5 text-xs font-medium text-primary hover:bg-primary/10"><Plus className="h-3 w-3" /> Tableau secondaire / coffret ({Number(tableau.prix_unitaire)} €)</button> : null}
         {catalogue.length ? <select aria-label="Ajouter une prestation du bordereau sous cette ligne" className="max-w-full rounded-md border border-input bg-background px-2 py-1 text-xs sm:max-w-xs" value="" onChange={(e) => insererBpu(idx, e.target.value)}><option value="">+ Prestation du bordereau en dessous…</option>{catalogue.map((p) => <option key={p.id} value={p.id}>{`${p.reference ?? ""} ${p.libelle.split(" — ")[0]} — ${Number(p.prix_unitaire)} € / ${p.unite}`}</option>)}</select> : null}
       </div>
