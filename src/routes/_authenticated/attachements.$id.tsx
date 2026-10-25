@@ -37,7 +37,7 @@ function AttachementDetail() {
   const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
-  const [edit, setEdit] = useState(false); const [delai, setDelai] = useState(60);
+  const [edit, setEdit] = useState(false); const [confirmFermer, setConfirmFermer] = useState(false); const [delai, setDelai] = useState(60);
   const [form, setForm] = useState<any>(null); const [lines, setLines] = useState<Line[]>([newLine()]);
 
   useEffect(() => {
@@ -89,7 +89,9 @@ function AttachementDetail() {
   return <ProShell><div className="print:hidden space-y-5">
     <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{statutAttachement(a)}</span>
       <div className="ml-auto flex flex-wrap gap-2">
-        {!a.facture_id && <Button variant={edit ? "secondary" : "outline"} onClick={() => setEdit((v) => !v)}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>}
+        {!a.facture_id && (edit && confirmFermer
+          ? <span className="inline-flex flex-wrap items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-sm"><span>Fermer sans enregistrer ? Les modifications seront perdues.</span><Button size="sm" variant="outline" onClick={() => setConfirmFermer(false)}>Continuer la modification</Button><Button size="sm" variant="destructive" onClick={() => { setConfirmFermer(false); setEdit(false); }}>Fermer sans enregistrer</Button></span>
+          : <Button variant={edit ? "secondary" : "outline"} onClick={() => (edit ? setConfirmFermer(true) : setEdit(true))}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>)}
         <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimer / PDF</Button>
         {a.facture_id ? <Button asChild><Link to="/factures/$id" params={{ id: a.facture_id }}><CheckCircle2 /> Voir la facture</Link></Button> : <Button onClick={() => convert.mutate()} disabled={convert.isPending}><Receipt /> Convertir en facture</Button>}
         {!a.facture_id && (a.statut === "annule"
@@ -147,7 +149,7 @@ function AttachementDetail() {
       </div>
       <LignesAttachement lines={lines} setLines={setLines} catalogue={(bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(`${form?.client_nom ?? ""} ${a.client_nom ?? ""}`) ? "ensio" : "axians"))} />
       <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-      <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button></div>
+      <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><div className="flex flex-col items-end gap-1"><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button>{(!form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)) && <p className="text-xs text-destructive">Enregistrement bloqué : le ticket est obligatoire et chaque ligne doit avoir un nom de travaux et une quantité supérieure à 0.</p>}</div></div>
     </section> : <section className="grid gap-4 sm:grid-cols-3"><Stat label="Ticket obligatoire" value={a.numero_ticket} /><Stat label="Numéro d’affaire" value={a.numero_affaire || "Non renseigné"} /><Stat label="Bon de commande" value={a.bon_commande || "Non renseigné"} /></section>}
 
     <section className="rounded-md border border-border bg-card p-5 space-y-3"><h2 className="text-sm font-bold uppercase text-primary">Envoyer sous IRVE Technologie</h2><p className="text-sm text-muted-foreground">Objet : IRVE Technologie — Attachement de travaux — Ticket {a.numero_ticket}</p><Textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message personnalisé (facultatif)" /><div className="flex flex-wrap items-center gap-3"><TelechargerAttachements ids={[id]} /><Button onClick={() => send.mutate()} disabled={!a.client_email || send.isPending}><Mail /> {a.sent_at ? "Renvoyer l’attachement" : "Envoyer l’attachement"}</Button><span className="text-xs text-muted-foreground">{a.validation_requise ? "Validation en ligne demandée" : "Consultation seule"}</span></div><div className="flex gap-2"><input readOnly value={link} className="min-w-0 flex-1 rounded-md border border-input bg-background px-3 text-xs" /><Button variant="outline" onClick={() => { void navigator.clipboard?.writeText(link); setFeedback("Lien copié."); }}><Copy /> Copier</Button></div>{feedback && <p className="text-sm text-primary">{feedback}</p>}{error && <p className="text-sm text-destructive">{error}</p>}</section>
