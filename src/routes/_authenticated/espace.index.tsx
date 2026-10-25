@@ -10,7 +10,6 @@ import {
   CircleDollarSign,
   Clock3,
   Euro,
-  FileCheck2,
   FilePlus2,
   FileText,
   HeartPulse,
@@ -122,7 +121,7 @@ function EspacePage() {
           ) : (
             <>
               <DashboardHeader />
-              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+              <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                 <MetricCard
                   tone="green"
                   icon={Euro}
@@ -130,14 +129,6 @@ function EspacePage() {
                   value={euro(q.data?.stats.caEncaisse ?? 0)}
                   detail={`${euro(q.data?.stats.caMois ?? 0)} encaissé ce mois`}
                   to="/factures"
-                />
-                <MetricCard
-                  tone="blue"
-                  icon={FileCheck2}
-                  label="Chantiers à facturer"
-                  value={String(q.data?.stats.chantiersTerminesAFacturer ?? 0)}
-                  detail="Terminés et prêts à facturer"
-                  to="/facturation"
                 />
                 <MetricCard
                   tone="violet"
@@ -159,7 +150,7 @@ function EspacePage() {
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
                 <ActivityChart data={activite} />
-                <QuickOverview aFacturer={q.data?.stats.chantiersTerminesAFacturer ?? 0} factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
+                <QuickOverview factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
                   <PromoCard />
                   <NextAppointments rendezvous={aVenir.slice(0, 1)} />
@@ -244,9 +235,8 @@ function ActivityChart({ data }: { data: Array<{ jour: string; interventions: nu
   );
 }
 
-function QuickOverview({ aFacturer, factures, rendezvous, termines }: { aFacturer: number; factures: number; rendezvous: number; termines: number }) {
+function QuickOverview({ factures, rendezvous, termines }: { factures: number; rendezvous: number; termines: number }) {
   const items = [
-    { icon: FileCheck2, label: "À facturer", value: aFacturer, tone: "text-dashboard-blue bg-dashboard-blue-soft" },
     { icon: CircleDollarSign, label: "À encaisser", value: factures, tone: "text-dashboard-purple bg-dashboard-purple-soft" },
     { icon: CalendarDays, label: "À venir", value: rendezvous, tone: "text-dashboard-orange bg-dashboard-orange-soft" },
     { icon: CheckCircle2, label: "Chantiers validés", value: termines, tone: "text-dashboard-green bg-dashboard-green-soft" },
