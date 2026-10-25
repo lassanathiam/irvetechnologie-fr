@@ -43,7 +43,7 @@ const etatChantier = (r: any) => (estFini(r) ? "Travaux terminés, retour travau
 
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
-  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement); const statutFn = useServerFn(changerStatutAttachement);
+  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement);
   const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersAAttacher);
   const [cle, setCle] = useState<"axians" | "ensio">("axians"); const [finMois, setFinMois] = useState(false); const [semaineDu, setSemaineDu] = useState(today()); const [importEnCours, setImportEnCours] = useState(false);
   const list = useQuery({ queryKey: ["attachements"], queryFn: () => listFn() });
