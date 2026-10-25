@@ -115,3 +115,5 @@
 - [ ] Attachements maintenance ENSIO : repérage + nouveaux tarifs (questions en attente de réponse utilisateur)
 
 - [fait 25/10] Suivi TES (travaux en supplément) : marquage par ligne dans les attachements, encart "Écarts à faire valider", repère sur le PDF et le lien client
+
+- [fait 25/10] Attachements : plus d'annulation automatique à la recréation, blocage de l'annulation d'un attachement envoyé/facturé (il reste modifiable), totaux par client avec colonnes "Facturés" et "Montant facturé HT/TTC" ; tests passés, build OK ; publication nécessaire
