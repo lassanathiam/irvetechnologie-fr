@@ -49,6 +49,7 @@ export type Database = {
           prix_unitaire: number
           quantite: number
           rendezvous_id: string | null
+          tes: boolean
         }
         Insert: {
           attachement_id: string
@@ -60,6 +61,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           rendezvous_id?: string | null
+          tes?: boolean
         }
         Update: {
           attachement_id?: string
@@ -71,6 +73,7 @@ export type Database = {
           prix_unitaire?: number
           quantite?: number
           rendezvous_id?: string | null
+          tes?: boolean
         }
         Relationships: [
           {
