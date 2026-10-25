@@ -114,7 +114,18 @@ export const listAttachements = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false })
       .limit(250);
     if (error) throw new Error(error.message);
-    return data ?? [];
+    const ids = (data ?? []).map((a) => a.id);
+    // Suivi TES : nombre de lignes en supplément et leur montant HT, par attachement.
+    const { data: lignesTes } = ids.length
+      ? await context.supabase.from("attachement_items").select("attachement_id, quantite, prix_unitaire").eq("tes", true).in("attachement_id", ids)
+      : { data: [] as { attachement_id: string; quantite: number; prix_unitaire: number }[] };
+    const parAtt = new Map<string, { nb: number; ht: number }>();
+    for (const l of lignesTes ?? []) {
+      const cur = parAtt.get(l.attachement_id) ?? { nb: 0, ht: 0 };
+      cur.nb += 1; cur.ht += (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
+      parAtt.set(l.attachement_id, cur);
+    }
+    return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100 }));
   });
 
 export const getAttachement = createServerFn({ method: "GET" })
