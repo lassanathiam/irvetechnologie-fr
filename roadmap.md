@@ -109,3 +109,7 @@
 - [x] Corriger le clic sans réaction sur « Rapport d'échec » : fenêtre sortie de la zone masquée ; ouverture depuis la liste et Mission terrain, motif et commentaire vérifiés connecté sur téléphone et ordinateur, sans envoyer d'email ; 3 tests réussis.
 - [x] Chantiers en pause en orange sur la carte (avant : couleur du partenaire)
 - [x] Marquage « chantier problématique » : bouton dans Mission terrain (avec note facultative), pastille rouge « Problématique » sur les fiches, point rouge sur la carte ; fonctionne aussi après validation
+
+## En cours (25/10)
+- [ ] Corriger : les modifications de lignes/prix sur un attachement déjà envoyé ne sont pas prises en compte
+- [ ] Attachements maintenance ENSIO : repérage + nouveaux tarifs (questions en attente de réponse utilisateur)
