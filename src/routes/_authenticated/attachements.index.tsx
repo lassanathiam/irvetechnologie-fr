@@ -129,9 +129,9 @@ function AttachementsPage() {
     const inclusM = Number(r.metrage_inclus_m ?? 0) || 15;
     const sup = Math.max(0, Math.max(Number(r.metrage_m ?? 0), Number(r.metrage_reel_m ?? 0)) - inclusM);
     const c = cable(r.puissance_borne);
-    if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)) }));
+    if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)), tes: true }));
     const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
-    if (rep) out.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)) }));
+    if (rep) out.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)), tes: true }));
       
     return out;
   }
