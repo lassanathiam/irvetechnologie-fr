@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { computeTotals } from "@/lib/billing";
 import { cleCommande } from "@/lib/attachement-suivi";
+import { blocageAnnulation } from "@/lib/attachement-statut";
 
 const lineSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
@@ -444,7 +445,10 @@ export const changerStatutAttachement = createServerFn({ method: "POST" })
     const existing = await context.supabase.from("attachements_travaux").select("id, facture_id, sent_at").eq("id", data.id).maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) throw new Error("Attachement introuvable.");
-    if (existing.data.facture_id) throw new Error("Cet attachement est déjà facturé : annulez plutôt la facture.");
+    if (data.action === "annuler") {
+      const blocage = blocageAnnulation(existing.data);
+      if (blocage) throw new Error(blocage);
+    }
     const statut = data.action === "annuler" ? "annule" : (existing.data.sent_at ? "envoye" : "brouillon");
     const { error } = await context.supabase.from("attachements_travaux").update({ statut }).eq("id", data.id);
     if (error) throw new Error(error.message);

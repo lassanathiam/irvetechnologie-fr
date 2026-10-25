@@ -10,7 +10,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { changerStatutAttachement, copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -43,7 +43,7 @@ const etatChantier = (r: any) => (estFini(r) ? "Travaux terminés, retour travau
 
 function AttachementsPage() {
   const navigate = useNavigate(); const qc = useQueryClient();
-  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement); const statutFn = useServerFn(changerStatutAttachement);
+  const listFn = useServerFn(listAttachements); const createFn = useServerFn(createAttachement);
   const donneursFn = useServerFn(listDonneurs); const bordereauFn = useServerFn(listBordereau); const chantiersFn = useServerFn(listChantiersAAttacher);
   const [cle, setCle] = useState<"axians" | "ensio">("axians"); const [finMois, setFinMois] = useState(false); const [semaineDu, setSemaineDu] = useState(today()); const [importEnCours, setImportEnCours] = useState(false);
   const list = useQuery({ queryKey: ["attachements"], queryFn: () => listFn() });
@@ -193,10 +193,7 @@ function AttachementsPage() {
           nb++;
         } catch { restants.push(g); }
       }
-      // Les anciens attachements (non facturés) de ces chantiers sont remplacés : on les annule.
-      const refaits = new Set(prep.groupes.filter((g) => !restants.includes(g)).map((g) => g.r.id));
-      const aAnnuler = new Set<string>(); for (const r of termines) if (refaits.has(r.id)) for (const a of r.anciens_attachements ?? []) aAnnuler.add(a.id);
-      for (const id of aAnnuler) { try { await statutFn({ data: { id, action: "annuler" } }); } catch { /* facturé entre-temps */ } }
+      // Jamais d'annulation automatique : les anciens attachements restent modifiables, on n'écrase rien.
       setPrep(restants.length ? { lundi, groupes: restants } : null);
       void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
       setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
@@ -260,12 +257,13 @@ function AttachementsPage() {
 
   /** Montant total par client (destinataire de l'attachement), hors annulés. */
   const parClient = useMemo(() => {
-    const m = new Map<string, { nb: number; ht: number; ttc: number }>();
+    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number }>();
     for (const a of list.data ?? []) {
       if (a.statut === "annule") continue;
       const k = String(a.client_nom || "Client non renseigné").trim();
-      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0 };
+      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0 };
       cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.ttc += Number(a.total_ttc) || 0;
+      if (estAttachementCloture(a)) { cur.facNb += 1; cur.facHt += Number(a.total_ht) || 0; cur.facTtc += Number(a.total_ttc) || 0; }
       m.set(k, cur);
     }
     return [...m.entries()].sort((x, y) => y[1].ht - x[1].ht);
@@ -347,7 +345,7 @@ function AttachementsPage() {
     <LignesAttachement lines={lines} setLines={setLines} catalogue={catalogueOptions} />
     <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /><div className="flex items-center justify-between"><strong>Total HT : {euro(total)}</strong><Button disabled={create.isPending || !form.numero_ticket.trim() || !form.client_nom.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => create.mutate()}>{create.isPending && <Loader2 className="animate-spin" />} Créer l’attachement</Button></div>{error && <p className="text-sm text-destructive">{error}</p>}</section>}
   {totaux.lignes.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Totaux des attachements</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Statut</th><th className="p-3 text-right">Nombre</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">TVA</th><th className="p-3 text-right">Total TTC</th></tr></thead><tbody className="divide-y divide-border">{totaux.lignes.map(([statut, t]) => <tr key={statut}><td className="p-3 capitalize">{({ envoye: "Envoyé", propose: "Valorisation proposée", accepte: "Accepté", refuse: "Refusé", facture: "Facturé · Clôturé", annule: "Annulé" } as Record<string, string>)[statut] ?? "Brouillon"}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.tva)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{totaux.global.nb}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ht)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.tva)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ttc)}</td></tr></tfoot></table></div></section>}
-  {parClient.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Montant total par client</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Client</th><th className="p-3 text-right">Attachements</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">Total TTC</th></tr></thead><tbody className="divide-y divide-border">{parClient.map(([nom, t]) => <tr key={nom}><td className="p-3 font-medium">{nom}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{parClient.reduce((s, [, t]) => s + t.nb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ht, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ttc, 0))}</td></tr></tfoot></table></div></section>}
+  {parClient.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Montant total par client</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Client</th><th className="p-3 text-right">Attachements</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">Total TTC</th><th className="p-3 text-right">Facturés</th><th className="p-3 text-right">Montant facturé HT</th><th className="p-3 text-right">Montant facturé TTC</th></tr></thead><tbody className="divide-y divide-border">{parClient.map(([nom, t]) => <tr key={nom}><td className="p-3 font-medium">{nom}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td><td className="p-3 text-right font-semibold text-primary">{t.facNb}</td><td className="p-3 text-right font-mono">{euro(t.facHt)}</td><td className="p-3 text-right font-mono font-semibold">{euro(t.facTtc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{parClient.reduce((s, [, t]) => s + t.nb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ht, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ttc, 0))}</td><td className="p-3 text-right text-primary">{parClient.reduce((s, [, t]) => s + t.facNb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facHt, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facTtc, 0))}</td></tr></tfoot></table></div><p className="border-t border-border p-3 text-xs text-muted-foreground">« Facturés » = attachements transformés en facture (clôturés). Les attachements annulés ne sont jamais comptés.</p></section>}
   {tesAValider.length > 0 && <section className="rounded-md border-2 border-amber-500/60 bg-amber-500/10 p-5 space-y-3">
     <div className="flex flex-wrap items-center justify-between gap-2"><h2 className="text-lg font-semibold text-amber-600 dark:text-amber-400">Écarts de chantier (TES) à faire valider ({tesAValider.length})</h2><strong className="font-mono">{euro(tesTotal)} HT de suppléments</strong></div>
     <p className="text-sm text-muted-foreground">Ces attachements contiennent des travaux en supplément (métrage, répartiteur, ajustements…). Vérifiez-les et faites-les valider par le donneur d’ordre avant facturation pour ne rien perdre.</p>
