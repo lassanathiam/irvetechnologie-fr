@@ -37,7 +37,7 @@ function AttachementDetail() {
   const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
-  const [edit, setEdit] = useState(false); const [delai, setDelai] = useState(60);
+  const [edit, setEdit] = useState(false); const [confirmFermer, setConfirmFermer] = useState(false); const [delai, setDelai] = useState(60);
   const [form, setForm] = useState<any>(null); const [lines, setLines] = useState<Line[]>([newLine()]);
 
   useEffect(() => {
@@ -89,7 +89,9 @@ function AttachementDetail() {
   return <ProShell><div className="print:hidden space-y-5">
     <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{statutAttachement(a)}</span>
       <div className="ml-auto flex flex-wrap gap-2">
-        {!a.facture_id && <Button variant={edit ? "secondary" : "outline"} onClick={() => { if (edit && !window.confirm("Fermer sans enregistrer ? Les modifications non enregistrées seront perdues.")) return; setEdit((v) => !v); }}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>}
+        {!a.facture_id && (edit && confirmFermer
+          ? <span className="inline-flex flex-wrap items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-sm"><span>Fermer sans enregistrer ? Les modifications seront perdues.</span><Button size="sm" variant="outline" onClick={() => setConfirmFermer(false)}>Continuer la modification</Button><Button size="sm" variant="destructive" onClick={() => { setConfirmFermer(false); setEdit(false); }}>Fermer sans enregistrer</Button></span>
+          : <Button variant={edit ? "secondary" : "outline"} onClick={() => (edit ? setConfirmFermer(true) : setEdit(true))}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>)}
         <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimer / PDF</Button>
         {a.facture_id ? <Button asChild><Link to="/factures/$id" params={{ id: a.facture_id }}><CheckCircle2 /> Voir la facture</Link></Button> : <Button onClick={() => convert.mutate()} disabled={convert.isPending}><Receipt /> Convertir en facture</Button>}
         {!a.facture_id && (a.statut === "annule"
