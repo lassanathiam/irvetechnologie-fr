@@ -3,6 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { computeTotals } from "@/lib/billing";
 import { cleCommande } from "@/lib/attachement-suivi";
+import { blocageAnnulation } from "@/lib/attachement-statut";
 
 const lineSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
