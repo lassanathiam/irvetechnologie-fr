@@ -1,7 +1,8 @@
 import { BrandLogo } from "@/components/BrandLogo";
 import { COMPANY, dateFr, euro } from "@/lib/company";
+import { totalTes } from "@/lib/attachement-tes";
 
-type Line = { libelle: string; description?: string | null; quantite: number | string; prix_unitaire: number | string };
+type Line = { libelle: string; description?: string | null; quantite: number | string; prix_unitaire: number | string; tes?: boolean | null };
 type Attachment = {
   numero: string; numero_ticket: string; numero_affaire?: string | null; bon_commande?: string | null;
   client_nom: string; client_email?: string | null; client_telephone?: string | null; client_adresse?: string | null; client_cp_ville?: string | null;
