@@ -897,6 +897,7 @@ function PlanningPage() {
           sub: [r.adresse, r.cp_ville].filter(Boolean).join(", "),
           statut: r.statut,
           probleme: (r as { probleme?: boolean | null }).probleme ?? false,
+          triphase: estChantierTriphase(r as { phase_installation?: string | null }),
           couleur: couleurPartenaire(r.partenaire),
           date: `${dayKey(r.date_debut)} · ${creneauTexte(r.date_debut, r.creneau_fin, true)}`,
           technicien: r.technicien ?? null,
