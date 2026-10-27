@@ -4,6 +4,7 @@ import { z } from "zod";
 import { technicienByNom } from "@/lib/geo";
 import { photoPvObligatoire, verifierPhotoPv } from "@/lib/photo-pv";
 import { NATURES_INTERVENTION, type NatureIntervention } from "@/lib/chantier-intervention";
+import { repriseApresNouvelleDate } from "@/lib/reprogrammation-chantier";
 
 /** Trajet routier réel (réseau OSRM, autoroutes/péages compris). Jamais à vol d'oiseau. */
 async function trajetDepuisBase(
@@ -569,7 +570,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: avant, error: readErr } = await context.supabase
       .from("rendezvous")
-      .select("id, statut")
+      .select("id, statut, date_debut, termine_at, probleme")
       .eq("id", data.id)
       .single();
     if (readErr) throw new Error(readErr.message);
@@ -628,6 +629,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       distance_km: trajet?.distance_km ?? null,
       duree_trajet_min: trajet?.duree_trajet_min ?? null,
       date_a_confirmer: false,
+      ...repriseApresNouvelleDate(avant, d.toISOString(), data.statut),
     };
 
     const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
@@ -635,7 +637,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
 
     let sms: SmsOutcome | null = null;
     let email: EmailOutcome | null = null;
-    const passeEnConfirme = data.statut === "confirme" && avant?.statut !== "confirme";
+    const passeEnConfirme = patch.statut === "confirme" && avant?.statut !== "confirme";
     if (passeEnConfirme) {
       email = await envoyerEmailRendezVousConfirmation({
         id: data.id,
@@ -1421,9 +1423,12 @@ export const appliquerProgramme = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     for (const item of data.items) {
+      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme").eq("id", item.id).single();
+      if (lecture) throw new Error(lecture.message);
+      const date = new Date(item.date_debut).toISOString();
       const { error } = await context.supabase
         .from("rendezvous")
-        .update({ date_debut: new Date(item.date_debut).toISOString(), date_a_confirmer: false })
+        .update({ date_debut: date, date_a_confirmer: false, ...repriseApresNouvelleDate(avant, date) })
         .eq("id", item.id);
       if (error) throw new Error(error.message);
     }
@@ -1519,7 +1524,7 @@ export const programmerEnsemble = createServerFn({ method: "POST" })
       }
       const { error } = await context.supabase
         .from("rendezvous")
-        .update({ date_debut: d.toISOString(), date_a_confirmer: false, statut: "confirme" })
+        .update({ date_debut: d.toISOString(), date_a_confirmer: false, statut: "confirme", probleme: false, demarre_at: null })
         .eq("id", data.ids[i]!);
       if (error) throw new Error(error.message);
     }

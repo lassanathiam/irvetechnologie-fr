@@ -28,3 +28,4 @@
 - Planning and agenda share a browser-safe explicit appointment-phase predicate and triphase indicators; never infer supply phase from charger power or commercial context, to avoid misleading material preparation.
 - Planning stores the explicit operation in nature_dossier independently of the workflow category type and physical mounting type_pose; shared browser-safe helpers preserve material checklist keys and distinguish false from unanswered to avoid losing historical collection confirmations.
 - ENSIO cable supplement preparation uses the browser-safe supplements-ensio helper and the stored price catalogue; existing documents remain unchanged when rates change, to preserve historical billing.
+- Rescheduling blocked appointments uses the shared browser-safe rescheduling rule to restore operational visibility without reopening completed jobs or changing their billing.
