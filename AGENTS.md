@@ -27,3 +27,4 @@
 - Public discovery pages self-reference https://irvetechnologie.fr in leaf canonical and og:url tags; the sitemap lists only public commercial pages, never authenticated or token-based dossiers.
 - Planning and agenda share a browser-safe explicit appointment-phase predicate and triphase indicators; never infer supply phase from charger power or commercial context, to avoid misleading material preparation.
 - Planning stores the explicit operation in nature_dossier independently of the workflow category type and physical mounting type_pose; shared browser-safe helpers preserve material checklist keys and distinguish false from unanswered to avoid losing historical collection confirmations.
+- ENSIO cable supplement preparation uses the browser-safe supplements-ensio helper and the stored price catalogue; existing documents remain unchanged when rates change, to preserve historical billing.
