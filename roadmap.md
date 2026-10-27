@@ -34,9 +34,9 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Faire ressortir et enrichir les types d’intervention dans le planning.
-- [ ] Clarifier le matériel récupéré par chantier avec réponses explicites, en conservant les saisies existantes.
-- [ ] Vérifier l’enregistrement et la relecture sur un chantier réel sans envoyer de dossier.
+- [x] Faire ressortir et enrichir les types d’intervention dans le planning : pose, remplacement, MES, dépose, maintenance, câblage, dépannage, contrôle, autre.
+- [x] Clarifier le matériel récupéré par chantier avec Oui / Non / À vérifier, en conservant les saisies existantes.
+- [x] Vérifier l’enregistrement et la relecture sur LE PODER : nature et trois réponses testées, valeurs initiales restaurées, aucun envoi ; 18 tests réussis, pas de débordement mobile.
 
 - [x] Importer textes, tableaux, PDF et photos de chantier sans crédits IA : lecture locale et OCR, aucune bascule payante ; texte/photo/PDF scanné vérifiés sans appel IA, tableau créé puis relu, fiche rangée ; données de test supprimées, 12 tests réussis.
 

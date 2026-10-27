@@ -1079,7 +1079,7 @@ function PlanningPage() {
     create.mutate({
       titre: get("titre") || "Intervention",
       type: get("type") as RendezVousInput["type"],
-      nature_dossier: optionValue(get("nature_dossier"), NATURES_INTERVENTION, "autre"),
+      nature_dossier: get("nature_dossier") === "a_preciser" ? null : optionValue(get("nature_dossier"), NATURES_INTERVENTION, "autre"),
       statut: "planifie",
       client_nom: get("client_nom"),
       reseau_client: get("reseau_client") || null,
