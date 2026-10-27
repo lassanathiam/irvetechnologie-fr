@@ -742,7 +742,7 @@ function PlanningPage() {
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
   // Un chantier en pause ne reprend jamais la place tout seul : il faut l'ouvrir depuis « Chantiers en pause ».
   const missionTerrain =
-    toutes.find((r) => r.id === active && (r.id === recherche.rdv || estPourMoi(r))) ??
+    toutes.find((r) => r.id === active) ??
     enCours.filter((r) => estPourMoi(r) && r.statut !== "en_pause")[0] ??
     chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine" && r.statut !== "en_pause") ??
     chantiersDuJour.find((r) => r.statut !== "en_pause") ??
@@ -784,9 +784,26 @@ function PlanningPage() {
     { v: "bloques" as const, label: "Pause / Problèmes", liste: chantiersBloques },
     { v: "termines" as const, label: "Terminés", liste: chantiersTermines },
   ];
+  /** Chantiers encore à faire des autres intervenants : jamais cachés par le choix de l'intervenant. */
+  const chantiersAutresIntervenants = (() => {
+    if (!moi) return [];
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes
+      .filter((r) => {
+        if (estPourMoi(r) || estArchiveLogique(r) || r.termine_at || ["annule", "termine", "realise"].includes(r.statut)) return false;
+        return (
+          new Date(r.date_debut).getTime() >= debutJour.getTime() ||
+          r.statut === "en_pause" ||
+          Boolean((r as { probleme?: boolean | null }).probleme) ||
+          estEnRetardNonRealise({ ...r, date_a_confirmer: false }, debutJour)
+        );
+      })
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  })();
   const qMission = rechercheMission.trim().toLowerCase();
   const listeOnglet = (qMission
-    ? [...listeMission, ...chantiersBloques, ...chantiersTermines].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
+    ? [...listeMission, ...chantiersBloques, ...chantiersTermines, ...chantiersAutresIntervenants, ...toutes.filter((r) => !estArchiveLogique(r) && r.statut !== "annule")].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
     : (ongletsMission.find((o) => o.v === ongletMission)?.liste ?? [])
   ).filter((r) => !qMission || [r.client_nom, r.cp_ville, r.adresse, r.reseau_client, interventionLibelle(r), departement(r.cp_ville)].some((v) => String(v ?? "").toLowerCase().includes(qMission))).slice(0, ongletMission === "termines" || qMission ? 40 : 200);
   const triphasesAPreparer = toutes.filter((r) =>
