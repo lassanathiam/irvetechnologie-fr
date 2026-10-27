@@ -1489,6 +1489,31 @@ function PlanningPage() {
                 );
               })}
             </ul>
+            {moi && !qMission && ongletMission !== "termines" && chantiersAutresIntervenants.length > 0 && (
+              <div className="mt-4 border-t border-border pt-3">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Chantiers des autres intervenants ({chantiersAutresIntervenants.length})
+                </p>
+                <ul className="mt-2 grid gap-2">
+                  {chantiersAutresIntervenants.map((r) => {
+                    const d = new Date(r.date_debut);
+                    return (
+                      <li key={r.id}>
+                        <button type="button" onClick={() => choisirMission(r.id)} className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2 text-left transition hover:border-primary/50">
+                          <span className="w-24 shrink-0 text-xs font-bold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}<br />{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                            <span className="block truncate text-xs font-semibold text-primary">Affecté à {r.technicien?.split(" ")[0]}</span>
+                            <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         )}
         {planningComplet && chantiersNonAffectes.length > 0 && (
