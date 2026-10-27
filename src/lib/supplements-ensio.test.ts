@@ -7,8 +7,9 @@ describe("suppléments ENSIO", () => {
     expect(supplementsEnsio({ metrage_m: 14 }, "5G10")).toEqual([]);
     expect(supplementsEnsio({ metrage_m: 16 }, "3G10")[0]?.quantite).toEqual(1);
   });
-  it("facture le câble supplémentaire à 2 euros par mètre", () => {
-    expect(supplementsEnsio({ metrage_m: 20 }, "3G10")[0]).toEqual({ libelle: "3G10", quantite: 5, prix_unitaire: 2, tes: true });
+  it("facture le 3G10 monophasé à 2,50 euros par mètre supplémentaire", () => {
+    expect(supplementsEnsio({ metrage_m: 20 }, "3G10")[0]).toEqual({ libelle: "3G10", quantite: 5, prix_unitaire: 2.5, tes: true });
+    expect(supplementsEnsio({ metrage_m: 20 }, "Câble 3 G 10 mm²")[0]?.prix_unitaire).toEqual(2.5);
   });
   it("facture le 5G10 à 3 euros par mètre", () => {
     expect(supplementsEnsio({ metrage_reel_m: 20 }, "Câble 5G10 mm²")[0]).toEqual({ libelle: "Câble 5G10 mm²", quantite: 5, prix_unitaire: 3, tes: true });
