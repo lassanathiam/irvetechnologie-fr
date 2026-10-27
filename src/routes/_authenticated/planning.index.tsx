@@ -69,6 +69,7 @@ import { RETOUR_CATEGORIES_LABELS, metrageInclusDefaut } from "@/lib/planning.fu
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 import { InterventionBadge, NatureInterventionField } from "@/components/InterventionChantier";
+import { RubriqueChantier } from "@/components/RubriqueChantier";
 import { NATURES_INTERVENTION, interventionLibelle, MATERIEL_RECUPERE, modifierReponseMateriel, reponseMateriel, type NatureIntervention } from "@/lib/chantier-intervention";
 import { TriphaseBadge, TriphasePreparation } from "@/components/TriphaseBadge";
 import { estChantierTriphase } from "@/lib/chantier-phase";
@@ -1264,8 +1265,7 @@ function PlanningPage() {
                   const metrage = Math.max(Number(missionTerrain.metrage_m ?? 0), Number(missionTerrain.metrage_reel_m ?? 0));
                   const depasse = metrage > inclus;
                   return (
-                    <div className="mb-5 rounded-xl border border-border bg-muted/30 p-4" aria-label="Facturation chantier">
-                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">À facturer — à cocher sur place</p>
+                    <RubriqueChantier key={`facturation-${missionTerrain.id}`} titre="À facturer — à cocher sur place" resume={`Forfait ${inclus} m${depasse ? ` · ${metrage - inclus} m supplémentaires` : ""}${missionTerrain.retour_repartiteur ? " · Répartiteur posé" : ""}`}>
                       <div className="mt-3 grid gap-2 sm:grid-cols-2">
                         <button
                           type="button"
@@ -1294,8 +1294,8 @@ function PlanningPage() {
                           Métrage &gt; forfait ({inclus} m){metrage > 0 ? ` · ${metrage} m tirés` : ""}
                         </button>
                       </div>
-                      <p className="mt-2 text-xs text-muted-foreground">Ces cases alimentent automatiquement les lignes de l’attachement. Vous pouvez décocher si finalement non posé.</p>
-                    </div>
+                      {/ensio/i.test(missionTerrain.partenaire ?? "") && <p className="mt-3 text-sm font-semibold">Au-delà de 15 m : câble 2 €/m (5G10 : 3 €/m) + câble info 2 €/m.</p>}
+                    </RubriqueChantier>
                   );
                 })()}
 
@@ -1303,9 +1303,7 @@ function PlanningPage() {
                   const coche = (missionTerrain.checklist_materiel ?? {}) as Record<string, boolean>;
                   const oui = MATERIEL_RECUPERE.filter(([k]) => reponseMateriel(coche, k) === "oui").length;
                   const non = MATERIEL_RECUPERE.filter(([k]) => reponseMateriel(coche, k) === "non").length;
-                  return <section className="mb-5 border-b border-border pb-4" aria-label="Matériel récupéré">
-                    <h2 className="font-bold">Matériel récupéré au dépôt / fournisseur</h2>
-                    <p className="mt-1 text-xs text-muted-foreground">{oui} récupéré(s) · {non} non récupéré(s) · {MATERIEL_RECUPERE.length - oui - non} à vérifier</p>
+                  return <RubriqueChantier key={`materiel-${missionTerrain.id}`} titre="Matériel récupéré au dépôt / fournisseur" resume={`${oui} récupéré(s) · ${non} non récupéré(s) · ${MATERIEL_RECUPERE.length - oui - non} à vérifier`}>
                     {estChantierTriphase(missionTerrain) && <p className="mt-2 text-sm font-bold">Matériel adapté au triphasé à vérifier.</p>}
                     {Array.isArray(missionTerrain.materiel_fourni) && missionTerrain.materiel_fourni.length > 0 && <p className="mt-2 text-sm text-muted-foreground">Prévu par le donneur d’ordre : {missionTerrain.materiel_fourni.map((m) => { const item = m as { libelle?: string; quantite?: number }; return `${item.quantite ?? 1} × ${item.libelle ?? "matériel"}`; }).join(" · ")}</p>}
                     <div className="mt-3 divide-y divide-border">
@@ -1316,7 +1314,7 @@ function PlanningPage() {
                         </div>
                       </div>)}
                     </div>
-                  </section>;
+                  </RubriqueChantier>;
                 })()}
 
 
