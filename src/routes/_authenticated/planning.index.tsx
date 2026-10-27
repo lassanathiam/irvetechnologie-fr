@@ -1503,7 +1503,7 @@ function PlanningPage() {
                           <span className="w-24 shrink-0 text-xs font-bold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}<br />{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
                           <span className="min-w-0 flex-1">
                             <span className="block truncate text-sm font-bold">{r.client_nom}</span>
-                            <span className="block truncate text-xs font-semibold text-primary">Affecté à {r.technicien?.split(" ")[0]}</span>
+                            <span className="block truncate text-xs font-semibold text-primary">Affecté à {technicienByNom(r.technicien)?.nom.split(" ")[0] ?? r.technicien}</span>
                             <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
                           </span>
                           <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>

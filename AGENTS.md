@@ -29,3 +29,4 @@
 - Planning stores the explicit operation in nature_dossier independently of the workflow category type and physical mounting type_pose; shared browser-safe helpers preserve material checklist keys and distinguish false from unanswered to avoid losing historical collection confirmations.
 - ENSIO cable supplement preparation uses the browser-safe supplements-ensio helper and the stored price catalogue; existing documents remain unchanged when rates change, to preserve historical billing.
 - Rescheduling blocked appointments uses the shared browser-safe rescheduling rule to restore operational visibility without reopening completed jobs or changing their billing.
+- Planning intervenant selection filters the main lists only; other technicians' unfinished appointments stay listed separately and search covers all appointments, so rescheduled jobs are never hidden by the device's technician choice.
