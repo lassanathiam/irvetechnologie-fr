@@ -34,6 +34,10 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Faire ressortir et enrichir les types d’intervention dans le planning.
+- [ ] Clarifier le matériel récupéré par chantier avec réponses explicites, en conservant les saisies existantes.
+- [ ] Vérifier l’enregistrement et la relecture sur un chantier réel sans envoyer de dossier.
+
 - [x] Importer textes, tableaux, PDF et photos de chantier sans crédits IA : lecture locale et OCR, aucune bascule payante ; texte/photo/PDF scanné vérifiés sans appel IA, tableau créé puis relu, fiche rangée ; données de test supprimées, 12 tests réussis.
 
 - [x] Rapprocher les imports des attachements et commandes déjà facturés : suivi par référence/commande, recherche, comparaison PDF ; ENSIO 13 facturés et 7 restants vérifiés connecté avec une commande originale, 12 tests réussis, aucun envoi ni facture créé.
