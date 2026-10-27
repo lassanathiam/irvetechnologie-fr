@@ -34,7 +34,7 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
-- [ ] Corriger le retour des chantiers bloqués reprogrammés dans Mission terrain et vérifier BOISSE à sa nouvelle date.
+- [x] Corriger le retour des chantiers bloqués reprogrammés dans Mission terrain : BOISSE retrouvé dans À venir et interventions du jour au 27 octobre 15 h, aucune photo/facturation modifiée ; tests de reprise et clôture réussis.
 
 - [x] Rendre Matériel récupéré et À facturer repliables dans tous les dossiers ; ouverture et fermeture vérifiées sur un dossier réel.
 - [x] Appliquer les suppléments ENSIO au-delà de 15 m : câble et info 2 €/m, 5G10 3 €/m ; 12 tests réussis, préparation FONTENEAU 22 m vérifiée (deux lignes de 7 m à 2 €), sans enregistrer ni envoyer ; anciens documents inchangés.

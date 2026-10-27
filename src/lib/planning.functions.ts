@@ -1053,7 +1053,7 @@ export const envoyerPropositionRdv = createServerFn({ method: "POST" })
     const { data: rdv, error: readErr } = await context.supabase
       .from("rendezvous")
       .select(
-        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, date_debut, duree_min",
+        "id, public_token, client_nom, client_email, adresse, cp_ville, titre, designation, date_debut, duree_min, statut, termine_at, probleme",
       )
       .eq("id", data.id)
       .single();
@@ -1074,6 +1074,7 @@ export const envoyerPropositionRdv = createServerFn({ method: "POST" })
         rdv_refuse_at: null,
         rdv_client_message: null,
         date_a_confirmer: true,
+        ...repriseApresNouvelleDate(rdv, dateProposee),
       })
       .eq("id", data.id);
     if (upErr) throw new Error(upErr.message);
@@ -1522,10 +1523,14 @@ export const programmerEnsemble = createServerFn({ method: "POST" })
           d.setHours(d.getHours() + i * 3);
         }
       }
+      const id = data.ids[i];
+      if (!id) continue;
+      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme").eq("id", id).single();
+      if (lecture) throw new Error(lecture.message);
       const { error } = await context.supabase
         .from("rendezvous")
-        .update({ date_debut: d.toISOString(), date_a_confirmer: false, statut: "confirme", probleme: false, demarre_at: null })
-        .eq("id", data.ids[i]!);
+        .update({ date_debut: d.toISOString(), date_a_confirmer: false, statut: "confirme", ...repriseApresNouvelleDate(avant, d.toISOString(), "confirme") })
+        .eq("id", id);
       if (error) throw new Error(error.message);
     }
     return { ok: true, nb: data.ids.length, nuitee: data.nuitee };
