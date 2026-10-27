@@ -15,6 +15,7 @@ import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
 import { precisionReseauClient } from "@/lib/reseau-client";
+import { supplementsEnsio } from "@/lib/supplements-ensio";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 import { AttachementsPeriode } from "@/components/AttachementsPeriode";
 import { TelechargerAttachements } from "@/components/TelechargerAttachements";
@@ -126,10 +127,14 @@ function AttachementsPage() {
     const jour = new Date(r.date_debut).toLocaleDateString("fr-FR");
     out.push(newLine({ libelle: f ? f.libelle.split(" — ")[0] : "Installation borne", rendezvous_id: r.id, description: `${jour} · ${lieu} — ${etatChantier(r)}`, prix: String(f ? Number(f.prix_unitaire) : Number(r.montant_ht) || 0) }));
     // Planning = référence : on retient le plus grand métrage (planning ou réel) au-delà du forfait du chantier.
-    const inclusM = Number(r.metrage_inclus_m ?? 0) || 15;
-    const sup = Math.max(0, Math.max(Number(r.metrage_m ?? 0), Number(r.metrage_reel_m ?? 0)) - inclusM);
     const c = cable(r.puissance_borne);
-    if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)), tes: true }));
+    if (k === "ensio") {
+      for (const s of supplementsEnsio(r, c?.libelle ?? "Câble supplémentaire")) out.push(newLine({ libelle: s.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des 15 m inclus`, quantite: String(s.quantite), prix: String(s.prix_unitaire), tes: s.tes }));
+    } else {
+      const inclusM = Number(r.metrage_inclus_m ?? 0) || 15;
+      const sup = Math.max(0, Math.max(Number(r.metrage_m ?? 0), Number(r.metrage_reel_m ?? 0)) - inclusM);
+      if (sup > 0 && c) out.push(newLine({ libelle: c.libelle, rendezvous_id: r.id, description: `${lieu} — au-delà des ${inclusM} m inclus`, quantite: String(sup), prix: String(Number(c.prix_unitaire)), tes: true }));
+    }
     const rep = r.retour_repartiteur ? base.find((l: any) => l.reference === "2.1") : null;
     if (rep) out.push(newLine({ libelle: rep.libelle, rendezvous_id: r.id, description: `${lieu} — répartiteur / tableau secondaire installé`, prix: String(Number(rep.prix_unitaire)), tes: true }));
       
