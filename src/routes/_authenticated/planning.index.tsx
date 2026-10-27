@@ -755,7 +755,9 @@ function PlanningPage() {
     .filter((r) => {
       const debutJour = new Date();
       debutJour.setHours(0, 0, 0, 0);
-      return !estArchiveLogique(r) && estPourMoi(r) && estEnRetardNonRealise(r, debutJour);
+      if (estArchiveLogique(r) || !estPourMoi(r)) return false;
+      // Un chantier remis à planifier (date passée, date à confirmer) reste visible ici.
+      return estEnRetardNonRealise({ ...r, date_a_confirmer: false }, debutJour);
     })
     .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
   /** Liste « à venir » sans le chantier déjà affiché ni ceux en pause (rangés à part). */
