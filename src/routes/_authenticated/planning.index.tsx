@@ -742,7 +742,7 @@ function PlanningPage() {
   /** Mission : chantier choisi, sinon en cours, sinon le prochain non terminé de l'intervenant (même dans plusieurs jours). */
   // Un chantier en pause ne reprend jamais la place tout seul : il faut l'ouvrir depuis « Chantiers en pause ».
   const missionTerrain =
-    toutes.find((r) => r.id === active && (r.id === recherche.rdv || estPourMoi(r))) ??
+    toutes.find((r) => r.id === active) ??
     enCours.filter((r) => estPourMoi(r) && r.statut !== "en_pause")[0] ??
     chantiersAVenir.find((r) => !r.termine_at && r.statut !== "termine" && r.statut !== "en_pause") ??
     chantiersDuJour.find((r) => r.statut !== "en_pause") ??
@@ -784,9 +784,26 @@ function PlanningPage() {
     { v: "bloques" as const, label: "Pause / Problèmes", liste: chantiersBloques },
     { v: "termines" as const, label: "Terminés", liste: chantiersTermines },
   ];
+  /** Chantiers encore à faire des autres intervenants : jamais cachés par le choix de l'intervenant. */
+  const chantiersAutresIntervenants = (() => {
+    if (!moi) return [];
+    const debutJour = new Date();
+    debutJour.setHours(0, 0, 0, 0);
+    return toutes
+      .filter((r) => {
+        if (estPourMoi(r) || estArchiveLogique(r) || r.termine_at || ["annule", "termine", "realise"].includes(r.statut)) return false;
+        return (
+          new Date(r.date_debut).getTime() >= debutJour.getTime() ||
+          r.statut === "en_pause" ||
+          Boolean((r as { probleme?: boolean | null }).probleme) ||
+          estEnRetardNonRealise({ ...r, date_a_confirmer: false }, debutJour)
+        );
+      })
+      .sort((a, b) => new Date(a.date_debut).getTime() - new Date(b.date_debut).getTime());
+  })();
   const qMission = rechercheMission.trim().toLowerCase();
   const listeOnglet = (qMission
-    ? [...listeMission, ...chantiersBloques, ...chantiersTermines].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
+    ? [...listeMission, ...chantiersBloques, ...chantiersTermines, ...chantiersAutresIntervenants, ...toutes.filter((r) => !estArchiveLogique(r) && r.statut !== "annule")].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
     : (ongletsMission.find((o) => o.v === ongletMission)?.liste ?? [])
   ).filter((r) => !qMission || [r.client_nom, r.cp_ville, r.adresse, r.reseau_client, interventionLibelle(r), departement(r.cp_ville)].some((v) => String(v ?? "").toLowerCase().includes(qMission))).slice(0, ongletMission === "termines" || qMission ? 40 : 200);
   const triphasesAPreparer = toutes.filter((r) =>
@@ -1472,6 +1489,31 @@ function PlanningPage() {
                 );
               })}
             </ul>
+            {moi && !qMission && ongletMission !== "termines" && chantiersAutresIntervenants.length > 0 && (
+              <div className="mt-4 border-t border-border pt-3">
+                <p className="text-xs font-semibold text-muted-foreground">
+                  Chantiers des autres intervenants ({chantiersAutresIntervenants.length})
+                </p>
+                <ul className="mt-2 grid gap-2">
+                  {chantiersAutresIntervenants.map((r) => {
+                    const d = new Date(r.date_debut);
+                    return (
+                      <li key={r.id}>
+                        <button type="button" onClick={() => choisirMission(r.id)} className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2 text-left transition hover:border-primary/50">
+                          <span className="w-24 shrink-0 text-xs font-bold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}<br />{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
+                          <span className="min-w-0 flex-1">
+                            <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                            <span className="block truncate text-xs font-semibold text-primary">Affecté à {technicienByNom(r.technicien)?.nom.split(" ")[0] ?? r.technicien}</span>
+                            <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
+                          </span>
+                          <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
+                        </button>
+                      </li>
+                    );
+                  })}
+                </ul>
+              </div>
+            )}
           </div>
         )}
         {planningComplet && chantiersNonAffectes.length > 0 && (
