@@ -34,6 +34,9 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [ ] Rendre Matériel récupéré et À facturer repliables dans tous les dossiers.
+- [ ] Appliquer les suppléments ENSIO au-delà de 15 m : câble et info 2 €/m, 5G10 3 €/m ; vérifier calculs et ouverture/fermeture.
+
 - [x] Faire ressortir et enrichir les types d’intervention dans le planning : pose, remplacement, MES, dépose, maintenance, câblage, dépannage, contrôle, autre.
 - [x] Clarifier le matériel récupéré par chantier avec Oui / Non / À vérifier, en conservant les saisies existantes.
 - [x] Vérifier l’enregistrement et la relecture sur LE PODER : nature et trois réponses testées, valeurs initiales restaurées, aucun envoi ; 18 tests réussis, pas de débordement mobile.
