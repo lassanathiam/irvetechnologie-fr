@@ -1294,7 +1294,7 @@ function PlanningPage() {
                           Métrage &gt; forfait ({inclus} m){metrage > 0 ? ` · ${metrage} m tirés` : ""}
                         </button>
                       </div>
-                      {/ensio/i.test(missionTerrain.partenaire ?? "") && <p className="mt-3 text-sm font-semibold">Au-delà de 15 m : câble 2 €/m (5G10 : 3 €/m) + câble info 2 €/m.</p>}
+                      {/ensio/i.test(missionTerrain.partenaire ?? "") && <p className="mt-3 text-sm font-semibold">Au-delà de 15 m : monophasé 3G10 à 2,50 €/m · triphasé 5G10 à 3 €/m + câble info RJ45 à 2 €/m systématiquement.</p>}
                     </RubriqueChantier>
                   );
                 })()}
