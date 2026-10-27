@@ -68,6 +68,8 @@ import {
 import { RETOUR_CATEGORIES_LABELS, metrageInclusDefaut } from "@/lib/planning.functions";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
+import { InterventionBadge, NatureInterventionField } from "@/components/InterventionChantier";
+import { NATURES_INTERVENTION, interventionLibelle, MATERIEL_RECUPERE, modifierReponseMateriel, reponseMateriel, type NatureIntervention } from "@/lib/chantier-intervention";
 import { TriphaseBadge, TriphasePreparation } from "@/components/TriphaseBadge";
 import { estChantierTriphase } from "@/lib/chantier-phase";
 
@@ -249,16 +251,6 @@ const ORIGINES_DOSSIER = ["direct", "sous_traitance"] as const;
 const STATUTS_FACTURATION = ["a_facturer", "facture", "paye"] as const;
 
 /** Département à partir du code postal (« 44330 Le Pallet » → « 44 »). */
-/** Checklist de retrait du matériel (dépôt / fournisseur), cochée par le technicien. */
-const CHECKLIST_MATERIEL: [string, string][] = [
-  ["borne", "Borne complète (borne + support)"],
-  ["badges", "Badge(s) RFID / carte"],
-  ["protections", "Protections (disjoncteur, différentiel)"],
-  ["parafoudre", "Coffret"],
-  ["tore_mesure", "Tore de mesure"],
-  ["cable", "Câble"],
-  ["accessoires", "Visserie, notice, accessoires"],
-];
 
 function departement(cpVille?: string | null): string | null {
   const m = (cpVille ?? "").match(/\b(\d{5})\b/);
@@ -429,7 +421,7 @@ function PlanningPage() {
     onSuccess: refresh,
   });
   const majOptions = useMutation({
-    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
       majOptionsChantier({ data: p }),
     onSuccess: refresh,
     onError: (e: unknown) =>
@@ -792,8 +784,8 @@ function PlanningPage() {
   const qMission = rechercheMission.trim().toLowerCase();
   const listeOnglet = (qMission
     ? [...listeMission, ...chantiersBloques, ...chantiersTermines].filter((r, i, arr) => arr.findIndex((x) => x.id === r.id) === i)
-    : ongletsMission.find((o) => o.v === ongletMission)!.liste
-  ).filter((r) => !qMission || [r.client_nom, r.cp_ville, r.adresse, r.reseau_client, departement(r.cp_ville)].some((v) => String(v ?? "").toLowerCase().includes(qMission))).slice(0, ongletMission === "termines" || qMission ? 40 : 200);
+    : (ongletsMission.find((o) => o.v === ongletMission)?.liste ?? [])
+  ).filter((r) => !qMission || [r.client_nom, r.cp_ville, r.adresse, r.reseau_client, interventionLibelle(r), departement(r.cp_ville)].some((v) => String(v ?? "").toLowerCase().includes(qMission))).slice(0, ongletMission === "termines" || qMission ? 40 : 200);
   const triphasesAPreparer = toutes.filter((r) =>
     estPourMoi(r) && !estArchiveLogique(r) && !r.termine_at &&
     !["annule", "termine", "realise"].includes(r.statut) && estChantierTriphase(r),
@@ -1087,6 +1079,7 @@ function PlanningPage() {
     create.mutate({
       titre: get("titre") || "Intervention",
       type: get("type") as RendezVousInput["type"],
+      nature_dossier: optionValue(get("nature_dossier"), NATURES_INTERVENTION, "autre"),
       statut: "planifie",
       client_nom: get("client_nom"),
       reseau_client: get("reseau_client") || null,
@@ -1211,6 +1204,7 @@ function PlanningPage() {
                 <div className="grid grid-cols-[minmax(0,1fr)_auto] gap-4">
                   <div className="min-w-0">
                     <span className="inline-flex rounded-md bg-blue-500/20 px-2 py-1 text-xs font-semibold text-blue-200">{styleStatut(missionTerrain.statut).label}</span>
+                    <InterventionBadge rdv={missionTerrain} />
                     <div className="mt-2"><TriphaseBadge phase={missionTerrain.phase_installation} /></div>
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin, true)}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
@@ -1239,7 +1233,7 @@ function PlanningPage() {
                   {detailsOuverts && <>
                     <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2">
                       {[
-                        ["Intervention", TYPES.find((t) => t.v === missionTerrain.type)?.l ?? missionTerrain.type],
+                        ["Intervention", interventionLibelle(missionTerrain)],
                         ["Affecté à", missionTerrain.technicien ?? "Non affecté"],
                         ["Adresse", [missionTerrain.adresse, missionTerrain.cp_ville].filter(Boolean).join(", ")],
                         ["Téléphone", missionTerrain.client_telephone],
@@ -1260,6 +1254,8 @@ function PlanningPage() {
                   <FichesChantier rendezvousId={missionTerrain.id} />
                   <AttachementsChantier rendezvousId={missionTerrain.id} />
                 </div>
+
+                <div className="mb-5 border-b border-border pb-4"><NatureInterventionField value={missionTerrain.nature_dossier} disabled={majOptions.isPending} onChange={(v) => majOptions.mutate({ id: missionTerrain.id, nature_dossier: v ? optionValue(v, NATURES_INTERVENTION, "autre") : null })} /></div>
 
                 {(() => {
                   const inclus = Number(missionTerrain.metrage_inclus_m ?? 0) || metrageInclusDefaut(missionTerrain.partenaire);
@@ -1303,31 +1299,22 @@ function PlanningPage() {
 
                 {(() => {
                   const coche = (missionTerrain.checklist_materiel ?? {}) as Record<string, boolean>;
-                  const faits = CHECKLIST_MATERIEL.filter(([k]) => coche[k]).length;
-                  return (
-                    <div className="mb-5 rounded-xl border border-border bg-muted/30 p-4" aria-label="Matériel récupéré">
-                      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">
-                        Matériel récupéré — {faits}/{CHECKLIST_MATERIEL.length}
-                      </p>
-                      {estChantierTriphase(missionTerrain) && <p className="mt-2 text-sm font-bold">Vérifier que le matériel récupéré est adapté au triphasé.</p>}
-                      <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                        {CHECKLIST_MATERIEL.map(([k, label]) => (
-                          <button
-                            key={k}
-                            type="button"
-                            disabled={majOptions.isPending}
-                            onClick={() => majOptions.mutate({ id: missionTerrain.id, checklist_materiel: { ...coche, [k]: !coche[k] } })}
-                            className={`flex min-h-[48px] items-center gap-2 rounded-lg border px-3 py-2 text-left text-sm font-bold ${
-                              coche[k] ? "border-primary bg-primary/10 text-primary" : "border-border text-muted-foreground hover:border-primary"
-                            }`}
-                          >
-                            <span className="text-lg">{coche[k] ? "☑" : "☐"}</span>
-                            {label}
-                          </button>
-                        ))}
-                      </div>
+                  const oui = MATERIEL_RECUPERE.filter(([k]) => reponseMateriel(coche, k) === "oui").length;
+                  const non = MATERIEL_RECUPERE.filter(([k]) => reponseMateriel(coche, k) === "non").length;
+                  return <section className="mb-5 border-b border-border pb-4" aria-label="Matériel récupéré">
+                    <h2 className="font-bold">Matériel récupéré au dépôt / fournisseur</h2>
+                    <p className="mt-1 text-xs text-muted-foreground">{oui} récupéré(s) · {non} non récupéré(s) · {MATERIEL_RECUPERE.length - oui - non} à vérifier</p>
+                    {estChantierTriphase(missionTerrain) && <p className="mt-2 text-sm font-bold">Matériel adapté au triphasé à vérifier.</p>}
+                    {Array.isArray(missionTerrain.materiel_fourni) && missionTerrain.materiel_fourni.length > 0 && <p className="mt-2 text-sm text-muted-foreground">Prévu par le donneur d’ordre : {missionTerrain.materiel_fourni.map((m) => { const item = m as { libelle?: string; quantite?: number }; return `${item.quantite ?? 1} × ${item.libelle ?? "matériel"}`; }).join(" · ")}</p>}
+                    <div className="mt-3 divide-y divide-border">
+                      {MATERIEL_RECUPERE.map(([k, label]) => <div key={k} role="group" aria-label={`${label} récupéré ?`} className="flex flex-wrap items-center justify-between gap-2 py-3">
+                        <span className="min-w-0 text-sm font-semibold">{label}</span>
+                        <div className="flex shrink-0 gap-1">
+                          {([['oui', 'Oui'], ['non', 'Non'], ['inconnu', 'À vérifier']] as const).map(([v, texte]) => <Button key={v} size="sm" variant={reponseMateriel(coche, k) === v ? "default" : "outline"} aria-pressed={reponseMateriel(coche, k) === v} disabled={majOptions.isPending} onClick={() => majOptions.mutate({ id: missionTerrain.id, checklist_materiel: modifierReponseMateriel(coche, k, v) })}>{texte}</Button>)}
+                        </div>
+                      </div>)}
                     </div>
-                  );
+                  </section>;
                 })()}
 
 
@@ -1401,7 +1388,7 @@ function PlanningPage() {
             <p className="text-xs font-semibold text-muted-foreground">
               {moi ? `Chantiers affectés à ${moi.nom.split(" ")[0]}` : "Tous les chantiers"}
             </p>
-            <Input value={rechercheMission} onChange={(e) => setRechercheMission(e.target.value)} placeholder="Rechercher un client, une ville, un département, un réseau…" aria-label="Rechercher un chantier" className="mt-2 h-11" />
+            <Input value={rechercheMission} onChange={(e) => setRechercheMission(e.target.value)} placeholder="Client, ville, réseau, type d’intervention…" aria-label="Rechercher un chantier" className="mt-2 h-11" />
             <div role="tablist" className="mt-2 grid grid-cols-2 gap-2 sm:grid-cols-4">
               {ongletsMission.map((o) => {
                 const on = !qMission && ongletMission === o.v;
@@ -1446,7 +1433,7 @@ function PlanningPage() {
                         <span className="flex min-w-0 items-center gap-1.5">{departement(r.cp_ville) && <span className="shrink-0 rounded bg-amber-400 px-1.5 py-0.5 text-sm font-extrabold text-slate-900">{departement(r.cp_ville)}</span>}<span className="truncate text-sm font-bold">{r.client_nom}</span></span>
                         <span className="block truncate text-xs font-semibold text-primary">{r.technicien ? `Affecté à ${r.technicien.split(" ")[0]}` : "Non affecté"}</span>
                         <ReseauClientBadge nom={r.reseau_client} />
-                        <TriphaseBadge phase={r.phase_installation} />
+                        <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
                         <span className="block truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</span>
                       </span>
                       <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
@@ -1503,7 +1490,7 @@ function PlanningPage() {
                     </div>
                     <p className="mt-1 text-sm font-semibold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })} · {creneauTexte(r.date_debut, r.creneau_fin)}</p>
                     <ReseauClientBadge nom={r.reseau_client} />
-                    <TriphaseBadge phase={r.phase_installation} />
+                    <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
                     <p className="truncate text-xs text-muted-foreground">{r.adresse}{r.cp_ville ? `, ${r.cp_ville}` : ""}</p>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       {TECHNICIENS.map((t) => (
@@ -1886,6 +1873,7 @@ function PlanningPage() {
               ))}
             </select>
           </label>
+          <NatureInterventionField value="installation" />
           <Field
             key={prefillDate}
             label="Date & heure"
@@ -1948,7 +1936,7 @@ function PlanningPage() {
             </select>
           </label>
           <label className="block">
-            <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+            <span className="text-mono text-xs text-muted-foreground">Implantation de la borne</span>
             <select name="type_pose" defaultValue="À définir" className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
               <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
             </select>
@@ -2277,7 +2265,7 @@ function PlanningPage() {
                               >
                                 {st.label}
                               </span>
-                              <TriphaseBadge phase={r.phase_installation} />
+                              <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
                               {Boolean((r as { probleme?: boolean | null }).probleme) && (
                                 <span className="text-mono text-[10px] font-bold uppercase tracking-wide px-2 py-0.5 rounded-full border border-red-600/60 bg-red-600/15 text-red-700 dark:text-red-300">
                                   Problématique
@@ -2994,6 +2982,7 @@ function PlanningPage() {
                                 id: r.id,
                                 titre: g("titre"),
                                 type: optionValue(g("type"), TYPES_INTERVENTION, "installation"),
+                                nature_dossier: g("nature_dossier") === "a_preciser" ? null : optionValue(g("nature_dossier"), NATURES_INTERVENTION, "autre"),
                                 statut: optionValue(g("statut"), STATUTS_DOSSIER, "planifie"),
                                 client_nom: g("client_nom"),
                                 reseau_client: g("reseau_client") || null,
@@ -3031,6 +3020,7 @@ function PlanningPage() {
                             <Field label="Téléphone" name="client_telephone" defaultValue={r.client_telephone ?? ""} />
                             <Field label="Email" name="client_email" type="email" defaultValue={r.client_email ?? ""} />
                             <Field label="Objet" name="titre" defaultValue={r.titre ?? ""} />
+                            <NatureInterventionField value={r.nature_dossier} />
                             <label className="block">
                               <span className="text-mono text-xs text-muted-foreground">Type d&apos;intervention</span>
                               <select
@@ -3147,7 +3137,7 @@ function PlanningPage() {
                               </select>
                             </label>
                             <label className="block">
-                              <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+                              <span className="text-mono text-xs text-muted-foreground">Implantation de la borne</span>
                               <select name="type_pose" defaultValue={r.type_pose ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
                                 <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
                               </select>
@@ -3411,7 +3401,7 @@ function PlanningPage() {
                               </select>
                             </label>
                             <label className="block">
-                              <span className="text-mono text-xs text-muted-foreground">Type de pose</span>
+                              <span className="text-mono text-xs text-muted-foreground">Implantation de la borne</span>
                               <select name="type_pose" defaultValue={r.type_pose ?? "À définir"} className="mt-2 w-full bg-input border border-border rounded-sm px-3 py-2.5 text-sm">
                                 <option>Intérieure</option><option>Extérieure</option><option>Sur pied</option><option>À définir</option>
                               </select>

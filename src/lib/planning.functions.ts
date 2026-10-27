@@ -3,6 +3,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { technicienByNom } from "@/lib/geo";
 import { photoPvObligatoire, verifierPhotoPv } from "@/lib/photo-pv";
+import { NATURES_INTERVENTION, type NatureIntervention } from "@/lib/chantier-intervention";
 
 /** Trajet routier réel (réseau OSRM, autoroutes/péages compris). Jamais à vol d'oiseau. */
 async function trajetDepuisBase(
@@ -90,6 +91,7 @@ export const STATUTS_CHANTIER = [
 const rdvSchema = z.object({
   titre: z.string().trim().min(1).max(160),
   type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
+  nature_dossier: z.enum(NATURES_INTERVENTION).optional().nullable(),
   statut: z.enum(STATUTS_CHANTIER).default("planifie"),
 
   client_nom: z.string().trim().min(1).max(160),
@@ -126,6 +128,7 @@ export type DossierRendezVousInput = {
   id: string;
   titre: string;
   type: "visite" | "installation" | "maintenance" | "sav" | "controle";
+  nature_dossier?: NatureIntervention | null;
   statut: (typeof STATUTS_CHANTIER)[number];
   client_nom: string;
   client_telephone?: string | null;
@@ -531,6 +534,7 @@ const dossierSchema = z.object({
   id: z.string().uuid(),
   titre: z.string().trim().min(1).max(160),
   type: z.enum(["visite", "installation", "maintenance", "sav", "controle"]),
+  nature_dossier: z.enum(NATURES_INTERVENTION).optional().nullable(),
   statut: z.enum(STATUTS_CHANTIER),
   client_nom: z.string().trim().min(1).max(160),
   client_telephone: z.string().trim().max(40).optional().nullable(),
@@ -594,6 +598,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
       montant_sous_traitant_ht: data.montant_sous_traitant_ht ?? null,
       titre: data.titre,
       type: data.type,
+      ...(data.nature_dossier !== undefined ? { nature_dossier: data.nature_dossier } : {}),
       statut: data.statut,
       client_nom: data.client_nom,
       client_telephone: data.client_telephone ?? null,
@@ -2368,13 +2373,14 @@ export const affecterTechnicien = createServerFn({ method: "POST" })
 /** Bascule rapide des options chantier (répartiteur, métrage, donneur d'ordre) depuis la carte planning. */
 export const majOptionsChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
+  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
     z
       .object({
         id: z.string().uuid(),
         retour_repartiteur: z.boolean().optional(),
         metrage_m: z.number().min(0).max(10000).optional(),
         partenaire: z.string().max(160).nullable().optional(),
+        nature_dossier: z.enum(NATURES_INTERVENTION).optional().nullable(),
         checklist_materiel: z.record(z.string().max(40), z.boolean()).optional(),
         probleme: z.boolean().optional(),
         probleme_note: z.string().max(500).nullable().optional(),
@@ -2382,8 +2388,9 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null } = {};
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null } = {};
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
+    if (data.nature_dossier !== undefined) patch.nature_dossier = data.nature_dossier;
     if (data.checklist_materiel !== undefined) patch.checklist_materiel = data.checklist_materiel;
     if (data.probleme !== undefined) {
       patch.probleme = data.probleme;
