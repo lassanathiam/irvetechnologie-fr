@@ -777,7 +777,8 @@ function PlanningPage() {
   ].filter((r) => r.id !== missionTerrain?.id);
   const chantiersTermines = toutes
     .filter((r) => estPourMoi(r) && r.statut !== "annule" && (Boolean(r.termine_at) || ["termine", "realise"].includes(r.statut)))
-    .sort((a, b) => b.date_debut.localeCompare(a.date_debut));
+    // Le plus récemment terminé toujours en haut.
+    .sort((a, b) => String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut)));
   const ongletsMission = [
     { v: "jour" as const, label: "À venir", liste: listeAVenir },
     { v: "planifier" as const, label: "À replanifier", liste: chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id) },
@@ -1228,6 +1229,14 @@ function PlanningPage() {
                     <div className="mt-2"><TriphaseBadge phase={missionTerrain.phase_installation} /></div>
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin, true)}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <span className="text-xs font-semibold text-slate-300">Affectation :</span>
+                      {TECHNICIENS.map((t) => (
+                        <Button key={t.id} size="sm" variant={missionTerrain.technicien === t.nom ? "default" : "secondary"} className="h-9" disabled={affecter.isPending || missionTerrain.technicien === t.nom} onClick={() => affecter.mutate({ id: missionTerrain.id, technicien: t.nom })}>
+                          {t.nom.split(" ")[0]}
+                        </Button>
+                      ))}
+                    </div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <ReseauClientBadge nom={missionTerrain.reseau_client} />
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
