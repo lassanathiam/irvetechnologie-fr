@@ -1694,7 +1694,9 @@ export function categoriesRetourOptionnelles(type?: string | null, partenaire?: 
     : estEnsio(partenaire)
       ? ["ensio_tore_emplacement", "ensio_tore_connexions", "ensio_gaine_traversee", "ensio_sms_supervision", "ensio_etiquette_autel"]
       : ["avant_emplacement", "avant_tableau", "cheminement_cable", "vue_ensemble", "plaque_serie"];
-  return [...(type === "maintenance" ? [] : ["verification_terre_avant"]), ...ordre.filter((c) => !principales.has(c)), "etat_lieux_depart", "autre"];
+  // L'emplacement PV est toujours proposé (installation et maintenance), facultatif hors règle ENSIO.
+  const pv = principales.has("pv_signe") ? [] : ["pv_signe"];
+  return [...(type === "maintenance" ? [] : ["verification_terre_avant"]), ...ordre.filter((c) => !principales.has(c)), ...pv, "etat_lieux_depart", "autre"];
 }
 
 /** Groupe visuel d'une catégorie de photo (couleur dans le retour de travaux). */
