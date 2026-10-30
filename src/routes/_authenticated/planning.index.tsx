@@ -659,6 +659,11 @@ function PlanningPage() {
           const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
             .filter(Boolean).join(" ").toLowerCase();
           return q.split(/\s+/).every((m) => (/^\d{2}$/.test(m) ? departement(r.cp_ville) === m : texte.includes(m)));
+        })
+        .sort((a, b) => {
+          // Chantiers terminés / clôturés : le plus récent toujours en haut.
+          if (vueListe !== "clotures" && !["termine", "realise"].includes(filtreStatut)) return 0;
+          return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -898,7 +903,7 @@ function PlanningPage() {
       map.set(k, [...(map.get(k) ?? []), r]);
     }
     let groupes = [...map.entries()];
-    if (parPartenaire) groupes = groupes.sort(([a], [b]) => a.localeCompare(b, "fr"));
+    // Groupes dans l'ordre des chantiers (le plus récent en premier).
     return choisi ? [[`${parPartenaire ? (choisi.partenaire?.trim() || "Sans partenaire") : dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
   }, [rows, toutes, dossierCarte, vueListe]);
 
