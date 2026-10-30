@@ -777,7 +777,8 @@ function PlanningPage() {
   ].filter((r) => r.id !== missionTerrain?.id);
   const chantiersTermines = toutes
     .filter((r) => estPourMoi(r) && r.statut !== "annule" && (Boolean(r.termine_at) || ["termine", "realise"].includes(r.statut)))
-    .sort((a, b) => b.date_debut.localeCompare(a.date_debut));
+    // Le plus récemment terminé toujours en haut.
+    .sort((a, b) => String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut)));
   const ongletsMission = [
     { v: "jour" as const, label: "À venir", liste: listeAVenir },
     { v: "planifier" as const, label: "À replanifier", liste: chantiersEnRetard.filter((r) => r.id !== missionTerrain?.id) },
