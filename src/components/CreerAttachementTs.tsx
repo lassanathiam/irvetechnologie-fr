@@ -18,7 +18,7 @@ import { euro } from "@/lib/company";
  */
 export function CreerAttachementTs({ id, numero, chantiers, catalogue, disabled, lignesInitiales = [], label = "Créer un TS séparé", variant = "outline", size = "default", className }: {
   id: string; numero: string; chantiers: Map<string, string>; catalogue: PrestationBpu[]; disabled?: boolean;
-  lignesInitiales?: LigneTesBase[]; label?: string; variant?: "outline" | "secondary" | "ghost"; size?: "default" | "sm" | "inline"; className?: string;
+  lignesInitiales?: LigneTesBase[]; label?: string; variant?: "outline" | "secondary" | "ghost"; size?: "default" | "sm"; className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const [documentId, setDocumentId] = useState("");
