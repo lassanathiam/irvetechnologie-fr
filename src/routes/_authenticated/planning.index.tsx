@@ -1633,6 +1633,7 @@ function PlanningPage() {
           {importOpen && (
             <ImportRdvDialog
               partenaires={(partenaires.data ?? []).map((p) => p.nom)}
+              existants={list.data ?? []}
               onClose={() => setImportOpen(false)}
               onDone={() => {
                 setSuggestionDepuis(Date.now() - 10 * 60_000);

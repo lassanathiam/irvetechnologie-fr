@@ -9,11 +9,13 @@ import { createRendezVous } from "@/lib/planning.functions";
 import { Button } from "@/components/ui/button";
 import { lireRdvSansIA } from "@/lib/import-chantier-local";
 import { texteFichierSansIA } from "@/lib/fichier-chantier-local";
+import { reperesDoublons, type ChantierComparable } from "@/lib/doublons-import";
 
-type Ligne = RdvExtrait & { garder: boolean };
+type Ligne = RdvExtrait & { garder: boolean; doublon?: string | null };
 
-export function ImportRdvDialog({ partenaires, onClose, onDone }: {
+export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }: {
   partenaires: string[];
+  existants?: (ChantierComparable & { statut?: string | null })[];
   onClose: () => void;
   onDone: () => void;
 }) {
@@ -31,7 +33,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
     setBusy("Lecture du texte…");
     try {
       const res = lireRdvSansIA(t.slice(0, 190_000));
-      setLignes((l) => [...l, ...res.map((r) => ({ ...r, garder: true }))]);
+      ajouter(res);
       setTexte("");
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Analyse impossible.");
@@ -47,13 +49,22 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
       const texteLu = await texteFichierSansIA(f);
       if (!texteLu.trim()) throw new Error("Aucun texte lisible : collez le texte ou ajoutez une intervention à compléter.");
       const res = lireRdvSansIA(texteLu.slice(0, 190_000));
-      setLignes((l) => [...l, ...res.map((r) => ({ ...r, garder: true }))]);
+      ajouter(res);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Analyse impossible.");
     } finally {
       setBusy(null);
     }
   };
+
+  // Les doublons (planning existant ou même import) sont retirés d'office ; on peut les recocher.
+  const ajouter = (res: RdvExtrait[]) => setLignes((l) => {
+    const toutes = [...l, ...res.map((r) => ({ ...r, garder: true }) as Ligne)];
+    const raisons = reperesDoublons(toutes, existants);
+    const n = raisons.slice(l.length).filter(Boolean).length;
+    if (n) toast.info(`${n} doublon(s) retiré(s) de l'import.`);
+    return toutes.map((x, i) => (i < l.length ? x : { ...x, doublon: raisons[i], garder: !raisons[i] }));
+  });
 
   const maj = (i: number, p: Partial<Ligne>) => setLignes((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
 
@@ -170,6 +181,7 @@ export function ImportRdvDialog({ partenaires, onClose, onDone }: {
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <input type="checkbox" checked={l.garder} onChange={(e) => maj(i, { garder: e.target.checked })} />
                   Intervention {i + 1}{l.numero_dossier ? ` · ${l.numero_dossier}` : ""}
+                  {l.doublon && <span className="rounded-sm bg-destructive/15 text-destructive px-1.5 py-0.5 text-[11px] font-bold">Doublon, retiré · {l.doublon}</span>}
                 </label>
                 <Button type="button" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))} aria-label="Retirer" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
               </div>

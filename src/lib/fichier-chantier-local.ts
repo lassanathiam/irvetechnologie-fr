@@ -31,16 +31,21 @@ export async function texteFichierSansIA(f: File): Promise<string> {
       for (let i = 1; i <= doc.numPages; i++) {
         const page = await doc.getPage(i);
         const content = await page.getTextContent();
-        let text = "", y: number | undefined;
+        let text = "", y: number | undefined, finX: number | undefined;
         for (const item of content.items) {
           if (!("str" in item)) continue;
           const nextY = item.transform[5];
-          text += (y !== undefined && Math.abs((nextY ?? y) - y) > 3 ? "\n" : " ") + item.str;
+          const x = item.transform[4] ?? 0;
+          const taille = Math.abs(item.transform[0] ?? 10) || 10;
+          const nouvelleLigne = y !== undefined && Math.abs((nextY ?? y) - y) > 3;
+          // Les PDF qui découpent chaque lettre : pas d'espace quand le morceau suit immédiatement le précédent.
+          const colle = !nouvelleLigne && finX !== undefined && x - finX < taille * 0.15 && !/\s$/.test(text) && !/^\s/.test(item.str);
+          text += (nouvelleLigne ? "\n" : colle || text === "" ? "" : " ") + item.str;
           if (item.hasEOL) text += "\n";
-          y = nextY;
+          y = nextY; finX = x + (item.width ?? 0);
         }
         if (text.trim().length < 15) {
-          const viewport = page.getViewport({ scale: Math.min(2, 2000 / page.getViewport({ scale: 1 }).width) });
+          const viewport = page.getViewport({ scale: Math.min(3, 2800 / page.getViewport({ scale: 1 }).width) });
           const canvas = document.createElement("canvas");
           canvas.width = Math.ceil(viewport.width); canvas.height = Math.ceil(viewport.height);
           const context = canvas.getContext("2d");
