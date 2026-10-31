@@ -625,7 +625,7 @@ function PlanningPage() {
   const [montantsVisibles, setMontantsVisibles] = useState(true);
 
   /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
-  const [vueListe, setVueListe] = useState<"encours" | "annules" | "clotures">("encours");
+  const [vueListe, setVueListe] = useState<"encours" | "annules" | "clotures" | "recherche">("encours");
   const vueArchives = vueListe === "clotures";
   /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
