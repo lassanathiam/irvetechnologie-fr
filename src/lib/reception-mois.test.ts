@@ -22,7 +22,7 @@ it("clé le mois de réception", () => {
 });
 
 it("écrit le mois en français", () => {
-  expect(libelleMoisReception("2026-08")).toEqual("août 2026");
+  expect(libelleMoisReception("2026-08")).toEqual("Août 2026");
 });
 
 it("affiche août même sans chantier réceptionné ce mois-là", () => {
