@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { preparerLignesTs } from "./attachement-ts";
+import { lignesTsDepuisTes, preparerLignesTs } from "./attachement-ts";
 
 describe("document TS séparé", () => {
   it("ne reprend pas les lignes initiales et ne modifie pas les lignes saisies", () => {
@@ -17,5 +17,24 @@ describe("document TS séparé", () => {
     let message = "";
     try { preparerLignesTs([]); } catch (error) { message = error instanceof Error ? error.message : ""; }
     expect(message).toEqual("Ajoutez une ligne de travaux supplémentaires.");
+  });
+});
+
+describe("préremplissage du TS depuis l'attachement initial", () => {
+  it("reprend les lignes TES avec leur quantité, leur prix et leur chantier", () => {
+    const tes = [
+      { libelle: "Câble supplémentaire", description: "Au-delà des 15 m inclus", quantite: 7, prix_unitaire: 2.5, rendezvous_id: "chantier-a" },
+      { libelle: "Répartiteur", description: null, quantite: 1, prix_unitaire: 65, rendezvous_id: null },
+    ];
+    expect(lignesTsDepuisTes(tes)).toEqual([
+      { libelle: "Câble supplémentaire", description: "Au-delà des 15 m inclus", quantite: "7", prix: "2.5", rendezvous_id: "chantier-a", tes: true },
+      { libelle: "Répartiteur", description: "", quantite: "1", prix: "65", rendezvous_id: null, tes: true },
+    ]);
+    expect(tes[0].quantite).toEqual(7);
+  });
+  it("ignore une ligne TES sans intitulé et démarre sur une liste vide sans écart", () => {
+    expect(lignesTsDepuisTes([{ libelle: "   ", quantite: 1, prix_unitaire: 10 }])).toEqual([]);
+    expect(lignesTsDepuisTes([])).toEqual([]);
+    expect(lignesTsDepuisTes(null)).toEqual([]);
   });
 });

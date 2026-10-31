@@ -128,3 +128,4 @@
 - [fait 25/10] Suivi TES (travaux en supplément) : marquage par ligne dans les attachements, encart "Écarts à faire valider", repère sur le PDF et le lien client
 
 - [fait 25/10] Attachements : plus d'annulation automatique à la recréation, blocage de l'annulation d'un attachement envoyé/facturé (il reste modifiable), totaux par client avec colonnes "Facturés" et "Montant facturé HT/TTC" ; tests passés, build OK ; publication nécessaire
+- [x] Créer un document TS depuis l’attachement initial : bouton dans la liste des attachements et dans le panneau « Écarts de chantier (TES) », fenêtres préremplies avec les écarts déjà marqués ; 5 tests réussis, boutons et préremplissage vérifiés à l’écran, aucun document créé par le test
