@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, Camera, Download, Loader2, Save, Trash2 } from "lucide-react";
+import { ArrowLeft, Camera, Download, FolderOpen, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -151,7 +151,7 @@ function CriTotalPage() {
                     </div>
                   ))}
                   <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded border border-dashed text-xs">
-                    {envoi === slot.categorie ? <Loader2 className="animate-spin" /> : <><Camera /> Ajouter</>}
+                    {envoi === slot.categorie ? <Loader2 className="animate-spin" /> : <><Camera /> Prendre la photo</>}
                     <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { ajouter(slot.categorie, e.target.files); e.target.value = ""; }} />
                   </label>
                   <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded border border-dashed text-center text-xs">
@@ -170,7 +170,7 @@ function CriTotalPage() {
                     <p className="mb-2 text-xs font-semibold">Touchez une photo déjà prise sur ce chantier pour l'appliquer à « {slot.label} » :</p>
                     <div className="flex flex-wrap gap-2">
                       {data.dossier.map((p) => {
-                        const deja = photos.some((x) => x.url && x.id === p.id);
+                        const deja = false;
                         return (
                           <button key={p.id} type="button" disabled={deja} onClick={() => placer(slot.categorie, p.id)}
                             className="relative rounded ring-primary hover:ring-2 disabled:opacity-40">
