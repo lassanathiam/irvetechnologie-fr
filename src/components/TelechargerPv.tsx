@@ -126,45 +126,96 @@ async function attendreRendu(racine: HTMLElement) {
 }
 
 /**
- * Capture fidèle des pages du PV original : dimensions en pixels fixées
- * (sans aspect-ratio, mal géré par la capture) et une page A4 pleine par feuille.
+ * Assemblage direct des pages du PV original, sans capture d'écran :
+ * la feuille rendue (pixels du PDF ou de l'image importée) est recopiée en
+ * entier, puis chaque réponse et chaque signature est redessinée à sa place
+ * mesurée. Aucune partie ne peut être rognée, quelle que soit la taille de
+ * l'écran ou le défilement, et chaque page tient centrée sur une feuille A4.
  */
 async function capturerPagesOriginal(pages: HTMLElement[]): Promise<Blob> {
-  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas-pro"), import("jspdf")]);
+  const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
   const pageH = pdf.internal.pageSize.getHeight();
   for (const [index, page] of pages.entries()) {
-    const source = page.querySelector("canvas");
-    const ratio = source && source.width ? source.height / source.width : 1.414;
-    const width = 760;
-    const height = Math.round(width * ratio);
-    const ancien = { w: page.style.width, h: page.style.height, a: page.style.aspectRatio };
-    page.style.width = `${width}px`;
-    page.style.height = `${height}px`;
-    page.style.aspectRatio = "auto";
-    try {
-      const image = await html2canvas(page, {
-        scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff",
-        width, height, windowWidth: 1280, windowHeight: Math.max(height, 1200),
-        scrollX: 0, scrollY: 0,
-        onclone: (_doc, clone) => {
-          clone.style.width = `${width}px`;
-          clone.style.height = `${height}px`;
-          clone.style.aspectRatio = "auto";
-          const c = clone.querySelector("canvas");
-          if (c && source) c.getContext("2d")?.drawImage(source, 0, 0);
-        },
-      });
-      if (index > 0) pdf.addPage();
-      let w = pageW, h = pageW * ratio;
-      if (h > pageH) { h = pageH; w = pageH / ratio; }
-      pdf.addImage(image.toDataURL("image/jpeg", 0.95), "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h);
-    } finally {
-      page.style.width = ancien.w;
-      page.style.height = ancien.h;
-      page.style.aspectRatio = ancien.a;
-    }
+    const image = await composerPage(page);
+    const ratio = image.height / image.width;
+    if (index > 0) pdf.addPage();
+    let w = pageW, h = pageW * ratio;
+    if (h > pageH) { h = pageH; w = pageH / ratio; }
+    pdf.addImage(image.toDataURL("image/jpeg", 0.95), "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h);
   }
   return pdf.output("blob");
+}
+
+async function composerPage(page: HTMLElement): Promise<HTMLCanvasElement> {
+  const zone = page.getBoundingClientRect();
+  const canvasSource = page.querySelector<HTMLCanvasElement>(":scope > canvas");
+  const imgSource = canvasSource ? null : page.querySelector<HTMLImageElement>(":scope > img");
+  const sw = canvasSource?.width || imgSource?.naturalWidth || 1600;
+  const sh = canvasSource?.height || imgSource?.naturalHeight || Math.round(1600 * 1.414);
+  const largeurCss = zone.width || 760;
+  // La hauteur suit les proportions de la feuille originale, pas celle de l'écran.
+  const hauteurCss = largeurCss * (sh / sw);
+  const k = Math.max(2, 1600 / largeurCss);
+  const out = document.createElement("canvas");
+  out.width = Math.round(largeurCss * k);
+  out.height = Math.round(hauteurCss * k);
+  const ctx = out.getContext("2d");
+  if (!ctx) throw new Error("Préparation du PDF impossible sur cet appareil.");
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(0, 0, out.width, out.height);
+  if (canvasSource) ctx.drawImage(canvasSource, 0, 0, out.width, out.height);
+  else if (imgSource) ctx.drawImage(imgSource, 0, 0, out.width, out.height);
+  const sy = hauteurCss / (zone.height || hauteurCss);
+
+  // Signatures (images contenues dans leur zone, proportions conservées).
+  for (const img of Array.from(page.querySelectorAll<HTMLImageElement>("img"))) {
+    if (img === imgSource || !img.naturalWidth) continue;
+    const r = img.getBoundingClientRect();
+    const scale = Math.min(r.width / img.naturalWidth, r.height / img.naturalHeight);
+    const w = img.naturalWidth * scale, h = img.naturalHeight * scale;
+    const x = r.left - zone.left + (r.width - w) / 2;
+    const y = (r.top - zone.top) * sy + (r.height - h) / 2;
+    try { ctx.drawImage(img, x * k, y * k, w * k, h * k); } catch { /* image inaccessible */ }
+  }
+
+  // Réponses : chaque ligne de texte est redessinée à sa position mesurée.
+  const marcheur = document.createTreeWalker(page, NodeFilter.SHOW_TEXT);
+  for (let noeud = marcheur.nextNode(); noeud; noeud = marcheur.nextNode()) {
+    const texte = noeud.textContent ?? "";
+    if (!texte.trim()) continue;
+    const parent = noeud.parentElement;
+    if (!parent) continue;
+    const st = getComputedStyle(parent);
+    if (st.visibility === "hidden" || st.display === "none") continue;
+    const taille = parseFloat(st.fontSize) || 13;
+    ctx.font = `${st.fontStyle} ${st.fontWeight} ${taille * k}px ${st.fontFamily}`;
+    ctx.fillStyle = st.color || "#000000";
+    ctx.textBaseline = "middle";
+    const range = document.createRange();
+    let ligne = "";
+    let gauche = 0, haut = 0, bas = 0;
+    const dessiner = () => {
+      if (!ligne.trim()) return;
+      const y = ((haut + bas) / 2 - zone.top) * sy;
+      ctx.fillText(ligne, (gauche - zone.left) * k, y * k);
+    };
+    for (let i = 0; i < texte.length; i++) {
+      range.setStart(noeud, i);
+      range.setEnd(noeud, i + 1);
+      const r = range.getBoundingClientRect();
+      if (!r.width && !r.height) { ligne += texte[i]; continue; }
+      if (!ligne || Math.abs(r.top - haut) > taille * 0.5) {
+        dessiner();
+        ligne = texte[i] === " " ? "" : texte[i];
+        gauche = r.left; haut = r.top; bas = r.bottom;
+        if (texte[i] === " ") gauche = r.right;
+      } else {
+        ligne += texte[i];
+      }
+    }
+    dessiner();
+  }
+  return out;
 }
