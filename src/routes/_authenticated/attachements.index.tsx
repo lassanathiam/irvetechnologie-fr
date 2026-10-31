@@ -267,12 +267,17 @@ function AttachementsPage() {
 
   /** Montant total par client (destinataire de l'attachement), hors annulés. */
   const parClient = useMemo(() => {
-    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number }>();
+    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number; chs: Map<string, ChantierLigne> }>();
     for (const a of list.data ?? []) {
       if (a.statut === "annule") continue;
       const k = String(a.client_nom || "Client non renseigné").trim();
-      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0 };
+      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0, chs: new Map<string, ChantierLigne>() };
       cur.fait += Number(a.ht_fait) || 0; cur.aFaire += Number(a.ht_a_faire) || 0; cur.sans += Number(a.ht_sans_chantier) || 0;
+      for (const c of (a.chantiers ?? []) as ChantierLigne[]) {
+        const x = cur.chs.get(c.id) ?? { ...c, montant_ht: 0 };
+        x.montant_ht = Math.round((x.montant_ht + (Number(c.montant_ht) || 0)) * 100) / 100;
+        cur.chs.set(c.id, x);
+      }
       cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.ttc += Number(a.total_ttc) || 0;
       if (estAttachementCloture(a)) { cur.facNb += 1; cur.facHt += Number(a.total_ht) || 0; cur.facTtc += Number(a.total_ttc) || 0; }
       m.set(k, cur);
@@ -364,3 +369,26 @@ function AttachementsPage() {
 }
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
+/** Détail des chantiers derrière les montants d'un client (tableau « Montant total par client »). */
+function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: number } }) {
+  const chs = [...t.chs.values()];
+  const fait = chs.filter((c) => c.etat === "fait").sort((x, y) => y.montant_ht - x.montant_ht);
+  const aFaire = chs.filter((c) => c.etat === "a_faire").sort((x, y) => y.montant_ht - x.montant_ht);
+  const date = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR") : "date non renseignée");
+  return <div className="space-y-3 p-4">
+    <p className="text-xs text-muted-foreground">Un « chantier » = un rendez-vous d'intervention du Planning : un client, une adresse et une date. Touchez une ligne pour l'ouvrir dans le Planning.</p>
+    {[{ rs: fait, label: "Chantiers faits", cls: "text-primary" }, { rs: aFaire, label: "Chantiers à faire", cls: "text-destructive" }].map(({ rs, label, cls }) => rs.length > 0 && <div key={label}>
+      <p className={`text-xs font-bold uppercase tracking-wide ${cls}`}>{label} · {rs.length} · {euro(rs.reduce((s, c) => s + c.montant_ht, 0))} HT</p>
+      <ul className="mt-1 divide-y divide-border rounded-md border border-border bg-card">
+        {rs.map((c) => <li key={c.id}><Link to="/planning" search={{ rdv: c.id }} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2 text-sm hover:bg-muted/40">
+          <strong className="min-w-0 break-words">{c.client_nom || "Chantier sans nom"}</strong>
+          <span className="text-muted-foreground">{[c.adresse, c.cp_ville].filter(Boolean).join(", ") || "adresse non renseignée"}</span>
+          {c.reseau_client ? <ReseauClientBadge nom={c.reseau_client} /> : null}
+          <span className="text-muted-foreground">{c.etat === "fait" ? `terminé le ${date(c.termine_at ?? c.date_debut)}` : `prévu le ${date(c.date_debut)}`}</span>
+          <span className="ml-auto font-mono">{euro(c.montant_ht)} HT</span>
+        </Link></li>)}</ul>
+    </div>)}
+    {chs.length === 0 && <p className="text-sm text-muted-foreground">Aucun chantier du Planning n'est relié à ces attachements.</p>}
+    {t.sans > 0 && <p className="text-xs text-muted-foreground">+ {euro(t.sans)} HT non reliés à un chantier du Planning (attachements saisis sans rendez-vous).</p>}
+  </div>;
+}
