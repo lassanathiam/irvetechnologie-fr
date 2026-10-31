@@ -76,7 +76,8 @@ const num = (min: number, max: number, def: number) =>
 /** États possibles d'un chantier, du programmé au terminé. */
 /** Métrage de câble inclus dans le forfait selon le donneur d'ordre (bordereau ENSIO : 15 m). */
 export function metrageInclusDefaut(partenaire?: string | null): number {
-  return partenaire && /ensio/i.test(partenaire) ? 15 : 5;
+  void partenaire;
+  return 15; // forfait câble de 15 m pour tous les donneurs d’ordre
 }
 
 export const STATUTS_CHANTIER = [
@@ -1818,7 +1819,7 @@ export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
       z
         .object({
           id: z.string().uuid(),
-          metrage_inclus_m: num(0, 10000, 5),
+          metrage_inclus_m: num(0, 10000, 15),
           metrage_reel_m: num(0, 10000, 0),
           retour_observations: z.string().trim().max(4000).optional().nullable(),
           retour_delestage: z.boolean().default(false),

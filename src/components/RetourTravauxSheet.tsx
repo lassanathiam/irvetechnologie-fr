@@ -53,7 +53,7 @@ export default function RetourTravauxSheet({
   const deleteFn = useServerFn(supprimerPhotoChantier);
   const saveFn = useServerFn(enregistrerRetourTravaux);
 
-  const [inclus, setInclus] = useState(String(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire)));
+  const [inclus] = useState(String(metrageInclusDefaut(rdv.partenaire)));
   const [reel, setReel] = useState(
     rdv.metrage_reel_m == null ? "" : String(rdv.metrage_reel_m),
   );
@@ -412,22 +412,9 @@ export default function RetourTravauxSheet({
           )}
           {(!maintenance || cablePose) && <>
           <p className={`${maintenance ? "mt-3" : ""} text-sm font-bold`}>Métrage de câble</p>
-          <div className={`mt-2 grid gap-3 ${maintenance ? "grid-cols-1" : "grid-cols-2"}`}>
-            {!maintenance && (
+          <div className={`mt-2 grid gap-3 grid-cols-1`}>
             <label className="text-xs text-muted-foreground">
-              Inclus (m)
-              <input
-                type="number"
-                inputMode="decimal"
-                min={0}
-                value={inclus}
-                onChange={(e) => setInclus(e.target.value)}
-                className="mt-1 min-h-11 w-full rounded-lg border border-border bg-background px-3 text-base"
-              />
-            </label>
-            )}
-            <label className="text-xs text-muted-foreground">
-              Réellement posé (m)
+              Métrage réel posé (m){!maintenance ? " · forfait 15 m inclus" : ""}
               <input
                 type="number"
                 inputMode="decimal"

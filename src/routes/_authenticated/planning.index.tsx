@@ -1546,37 +1546,6 @@ function PlanningPage() {
                                 </span>
                                 <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
                               </button>
-                              <span className="mt-1 flex flex-wrap items-center gap-1.5">
-                                <span className="text-mono text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Affectation</span>
-                                {TECHNICIENS.map((t) => (
-                                  <button
-                                    key={t.id}
-                                    type="button"
-                                    disabled={affecter.isPending || r.technicien === t.nom}
-                                    onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}
-                                    className={`text-mono text-[11px] px-2.5 py-1 rounded-full border transition disabled:opacity-60 ${
-                                      r.technicien === t.nom
-                                        ? "border-primary bg-primary text-primary-foreground"
-                                        : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-                                    }`}
-                                  >
-                                    {t.nom.split(" ")[0]}
-                                  </button>
-                                ))}
-                                {r.technicien && (
-                                  <button
-                                    type="button"
-                                    disabled={affecter.isPending}
-                                    onClick={() => {
-                                      if (window.confirm(`Retirer l'affectation du chantier de ${r.client_nom} ?`))
-                                        affecter.mutate({ id: r.id, technicien: null });
-                                    }}
-                                    className="text-mono text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground transition hover:border-red-400 hover:text-red-600 disabled:opacity-60"
-                                  >
-                                    Retirer
-                                  </button>
-                                )}
-                              </span>
                             </li>
                           );
                         })}
