@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
 import {
   Archive,
+  Search,
   ArchiveRestore,
   CalendarClock,
   ChevronDown,
@@ -2250,17 +2251,17 @@ function PlanningPage() {
           </div>
           </div>
 
-          {vueArchives && (
+          {(vueArchives || vueListe === "recherche") && (
             <div className="space-y-2">
               <input
                 type="search"
                 value={rechercheArchives}
                 onChange={(e) => setRechercheArchives(e.target.value)}
-                placeholder="Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"
+                placeholder={vueListe === "recherche" ? "Point client : nom du client, ville, donneur d'ordre (ENSIO, BUMP…), type d'intervention…" : "Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"}
                 className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm"
               />
               <div className="flex flex-wrap gap-2">
-                {[...new Set(toutes.filter((r) => ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
+                {[...new Set(toutes.filter((r) => vueListe === "recherche" || ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
                   .sort((a, b) => a.localeCompare(b, "fr"))
                   .map((n) => (
                     <button
