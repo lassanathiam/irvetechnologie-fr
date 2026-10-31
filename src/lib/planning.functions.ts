@@ -1351,6 +1351,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
     const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
     const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
+    const pvUrl = await lienPvSigne(context.supabase, data.id);
     const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
     const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
 
