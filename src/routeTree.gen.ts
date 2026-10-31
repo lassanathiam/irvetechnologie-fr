@@ -33,6 +33,7 @@ import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_au
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
 import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
 import { Route as AuthenticatedAttachementsCommandesRouteImport } from './routes/_authenticated/attachements.commandes'
+import { Route as AuthenticatedChantierCriTotalRdvIdRouteImport } from './routes/_authenticated/chantier-cri-total.$rdvId'
 import { Route as AuthenticatedChantierRapportRdvIdRouteImport } from './routes/_authenticated/chantier-rapport.$rdvId'
 import { Route as AuthenticatedDemandesIndexRouteImport } from './routes/_authenticated/demandes.index'
 import { Route as AuthenticatedDevisIndexRouteImport } from './routes/_authenticated/devis.index'
@@ -184,6 +185,12 @@ const AuthenticatedAttachementsCommandesRoute =
   AuthenticatedAttachementsCommandesRouteImport.update({
     id: '/attachements/commandes',
     path: '/attachements/commandes',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedChantierCriTotalRdvIdRoute =
+  AuthenticatedChantierCriTotalRdvIdRouteImport.update({
+    id: '/chantier-cri-total/$rdvId',
+    path: '/chantier-cri-total/$rdvId',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedChantierRapportRdvIdRoute =
@@ -369,6 +376,7 @@ export interface FileRoutesByFullPath {
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
+  '/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
   '/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -422,6 +430,7 @@ export interface FileRoutesByTo {
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
+  '/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
   '/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/devis/$id': typeof AuthenticatedDevisIdRoute
   '/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -477,6 +486,7 @@ export interface FileRoutesById {
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/_authenticated/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
+  '/_authenticated/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
   '/_authenticated/chantier-rapport/$rdvId': typeof AuthenticatedChantierRapportRdvIdRoute
   '/_authenticated/devis/$id': typeof AuthenticatedDevisIdRoute
   '/_authenticated/documents/$id': typeof AuthenticatedDocumentsIdRoute
@@ -532,6 +542,7 @@ export interface FileRouteTypes {
     | '/attachements/$id'
     | '/attachements/bordereau'
     | '/attachements/commandes'
+    | '/chantier-cri-total/$rdvId'
     | '/chantier-rapport/$rdvId'
     | '/devis/$id'
     | '/documents/$id'
@@ -585,6 +596,7 @@ export interface FileRouteTypes {
     | '/attachements/$id'
     | '/attachements/bordereau'
     | '/attachements/commandes'
+    | '/chantier-cri-total/$rdvId'
     | '/chantier-rapport/$rdvId'
     | '/devis/$id'
     | '/documents/$id'
@@ -639,6 +651,7 @@ export interface FileRouteTypes {
     | '/_authenticated/attachements/$id'
     | '/_authenticated/attachements/bordereau'
     | '/_authenticated/attachements/commandes'
+    | '/_authenticated/chantier-cri-total/$rdvId'
     | '/_authenticated/chantier-rapport/$rdvId'
     | '/_authenticated/devis/$id'
     | '/_authenticated/documents/$id'
@@ -868,6 +881,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttachementsCommandesRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/chantier-cri-total/$rdvId': {
+      id: '/_authenticated/chantier-cri-total/$rdvId'
+      path: '/chantier-cri-total/$rdvId'
+      fullPath: '/chantier-cri-total/$rdvId'
+      preLoaderRoute: typeof AuthenticatedChantierCriTotalRdvIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/chantier-rapport/$rdvId': {
       id: '/_authenticated/chantier-rapport/$rdvId'
       path: '/chantier-rapport/$rdvId'
@@ -1073,6 +1093,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
   AuthenticatedAttachementsCommandesRoute: typeof AuthenticatedAttachementsCommandesRoute
+  AuthenticatedChantierCriTotalRdvIdRoute: typeof AuthenticatedChantierCriTotalRdvIdRoute
   AuthenticatedChantierRapportRdvIdRoute: typeof AuthenticatedChantierRapportRdvIdRoute
   AuthenticatedDevisIdRoute: typeof AuthenticatedDevisIdRoute
   AuthenticatedDocumentsIdRoute: typeof AuthenticatedDocumentsIdRoute
@@ -1105,6 +1126,8 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
     AuthenticatedAttachementsBordereauRoute,
   AuthenticatedAttachementsCommandesRoute:
     AuthenticatedAttachementsCommandesRoute,
+  AuthenticatedChantierCriTotalRdvIdRoute:
+    AuthenticatedChantierCriTotalRdvIdRoute,
   AuthenticatedChantierRapportRdvIdRoute:
     AuthenticatedChantierRapportRdvIdRoute,
   AuthenticatedDevisIdRoute: AuthenticatedDevisIdRoute,
