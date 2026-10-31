@@ -1371,6 +1371,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
           observations: rdv.retour_observations,
           delestage: rdv.retour_delestage,
           zip_url: zipUrl,
+          pv_url: pvUrl,
         },
         // Renvoi explicite après correction (photos, métrage…) : clé unique à chaque
         // renvoi pour que l'email reparte réellement, sans toucher à la clôture.
