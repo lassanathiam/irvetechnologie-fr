@@ -4,7 +4,7 @@ import { DateAvecJour } from "@/components/DateAvecJour";
 import { useServerFn } from "@tanstack/react-start";
 import { FileUp, Loader2, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { type RdvExtrait } from "@/lib/import-rdv.functions";
+import { analyserDocumentRdv, type RdvExtrait } from "@/lib/import-rdv.functions";
 import { createRendezVous } from "@/lib/planning.functions";
 import { Button } from "@/components/ui/button";
 import { lireRdvSansIA } from "@/lib/import-chantier-local";
@@ -20,6 +20,9 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
   onDone: () => void;
 }) {
   const creer = useServerFn(createRendezVous);
+  const analyserIA = useServerFn(analyserDocumentRdv);
+  // Choix de l'utilisateur : la lecture IA n'est jamais déclenchée sans qu'il l'ait activée.
+  const [avecIA, setAvecIA] = useState(false);
   const [busy, setBusy] = useState<string | null>(null);
   const [erreur, setErreur] = useState<string | null>(null);
   const [lignes, setLignes] = useState<Ligne[]>([]);
@@ -32,7 +35,7 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
     setErreur(null);
     setBusy("Lecture du texte…");
     try {
-      const res = lireRdvSansIA(t.slice(0, 190_000));
+      const res = avecIA ? await analyserIA({ data: { texte: t.slice(0, 190_000) } }) : lireRdvSansIA(t.slice(0, 190_000));
       ajouter(res);
       setTexte("");
     } catch (e) {
@@ -46,9 +49,17 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
     setErreur(null);
     setBusy(`Lecture de « ${f.name} »…`);
     try {
-      const texteLu = await texteFichierSansIA(f);
-      if (!texteLu.trim()) throw new Error("Aucun texte lisible : collez le texte ou ajoutez une intervention à compléter.");
-      const res = lireRdvSansIA(texteLu.slice(0, 190_000));
+      let res: RdvExtrait[];
+      const nom = f.name.toLowerCase();
+      if (avecIA && (f.type.startsWith("image/") || f.type === "application/pdf" || nom.endsWith(".pdf"))) {
+        setBusy(`Lecture IA de « ${f.name} »…`);
+        const data_url = await new Promise<string>((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => ko(new Error("Fichier illisible.")); r.readAsDataURL(f); });
+        res = await analyserIA({ data: { data_url: data_url.replace(/^data:image\/jpg;/, "data:image/jpeg;"), filename: f.name } });
+      } else {
+        const texteLu = await texteFichierSansIA(f);
+        if (!texteLu.trim()) throw new Error("Aucun texte lisible : activez la lecture IA, collez le texte ou ajoutez une intervention à compléter.");
+        res = avecIA ? await analyserIA({ data: { texte: texteLu.slice(0, 190_000) } }) : lireRdvSansIA(texteLu.slice(0, 190_000));
+      }
       ajouter(res);
     } catch (e) {
       setErreur(e instanceof Error ? e.message : "Analyse impossible.");
@@ -121,9 +132,11 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
         <div className="flex items-start justify-between gap-3 mb-4">
           <div>
             <h2 className="text-lg font-bold">Importer des rendez-vous</h2>
-            <p className="text-sm text-muted-foreground">
-              Import sans IA · 0 crédit d’analyse
-            </p>
+            <div className="mt-2 inline-flex rounded-md border border-border p-0.5 text-xs" role="group" aria-label="Mode de lecture">
+              <button type="button" onClick={() => setAvecIA(false)} className={`px-3 py-1.5 rounded ${!avecIA ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground"}`}>Lecture normale · gratuite</button>
+              <button type="button" onClick={() => setAvecIA(true)} className={`px-3 py-1.5 rounded ${avecIA ? "bg-primary text-primary-foreground font-bold" : "text-muted-foreground"}`}>Lecture IA · utilise des crédits</button>
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-1">{avecIA ? "L'IA lit toutes les interventions, heures et adresses des photos et PDF de planification." : "Aucun crédit utilisé. Pour une photo de planning avec plusieurs rendez-vous, préférez la lecture IA."}</p>
           </div>
           <Button type="button" onClick={onClose} aria-label="Fermer" className="p-1 hover:text-primary"><X className="h-5 w-5" /></Button>
         </div>
@@ -165,7 +178,7 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
             <Button type="button" variant="outline" disabled={!!busy} onClick={() => setLignes((l) => [...l, { ...lireRdvSansIA("Client : Client à préciser")[0], client_nom: "Client à préciser", adresse: "", reseau_client: null, client_telephone: null, client_email: null, cp_ville: null, date_debut: null, creneau_fin: null, type: "installation", designation: null, numero_dossier: null, notes: null, garder: true }])}>Ajouter à compléter</Button>
             <Button type="button" onClick={onTexte} disabled={!!busy || texte.trim().length < 10}
               className="hero-grad text-primary-foreground text-mono text-xs font-bold rounded-sm px-4 py-2 disabled:opacity-50">
-              Lire sans IA
+              {avecIA ? "Lire avec l'IA" : "Lire sans IA"}
             </Button>
           </div>
         </div>
