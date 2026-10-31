@@ -1819,7 +1819,7 @@ export const enregistrerRetourTravaux = createServerFn({ method: "POST" })
       z
         .object({
           id: z.string().uuid(),
-          metrage_inclus_m: num(0, 10000, 5),
+          metrage_inclus_m: num(0, 10000, 15),
           metrage_reel_m: num(0, 10000, 0),
           retour_observations: z.string().trim().max(4000).optional().nullable(),
           retour_delestage: z.boolean().default(false),

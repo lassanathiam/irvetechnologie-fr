@@ -53,7 +53,7 @@ export default function RetourTravauxSheet({
   const deleteFn = useServerFn(supprimerPhotoChantier);
   const saveFn = useServerFn(enregistrerRetourTravaux);
 
-  const [inclus, setInclus] = useState(String(metrageInclusDefaut(rdv.partenaire)));
+  const [inclus] = useState(String(metrageInclusDefaut(rdv.partenaire)));
   const [reel, setReel] = useState(
     rdv.metrage_reel_m == null ? "" : String(rdv.metrage_reel_m),
   );
