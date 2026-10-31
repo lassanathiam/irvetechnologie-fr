@@ -650,20 +650,22 @@ function PlanningPage() {
   const rows = useMemo(
     () => {
       const q = rechercheArchives.trim().toLowerCase();
+      const rechercheGlobale = vueListe === "recherche";
       return toutes
-        .filter((r) => ongletDe(r) === vueListe)
-        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut)
+        .filter((r) => rechercheGlobale || ongletDe(r) === vueListe)
+        .filter((r) => rechercheGlobale || filtreStatut === "tous" || r.statut === filtreStatut)
         .filter((r) => !filtreProbleme || Boolean((r as { probleme?: boolean | null }).probleme))
         .filter((r) => {
-          if (vueListe !== "clotures" || !q) return true;
+          if (!(rechercheGlobale || vueListe === "clotures") || !q) return true;
           const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
             .filter(Boolean).join(" ").toLowerCase();
           return q.split(/\s+/).every((m) => (/^\d{2}$/.test(m) ? departement(r.cp_ville) === m : texte.includes(m)));
         })
         .sort((a, b) => {
-          // Chantiers terminés / clôturés : le plus récent toujours en haut.
-          if (vueListe !== "clotures" && !["termine", "realise"].includes(filtreStatut)) return 0;
-          return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
+          // Point client et chantiers terminés / clôturés : le plus récent toujours en haut.
+          if (rechercheGlobale || vueListe === "clotures" || ["termine", "realise"].includes(filtreStatut))
+            return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
+          return 0;
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -897,14 +899,24 @@ function PlanningPage() {
     const choisi = toutes.find((r) => r.id === dossierCarte);
     /** Chantiers terminés/clôturés : regroupés par partenaire pour retrouver vite chaque donneur d'ordre. */
     const parPartenaire = vueListe === "clotures";
+    /** Point client : regroupé par état du chantier pour répondre vite au donneur d'ordre. */
+    const parEtat = vueListe === "recherche";
+    const etiquetteEtat = (r: (typeof rows)[number]) =>
+      r.statut === "annule" ? "Annulés" : estArchiveLogique(r) ? "Clôturés / facturés" : r.termine_at || r.statut === "termine" || r.statut === "realise" ? "Terminés" : "En cours / à venir";
+    const cleDe = (r: (typeof rows)[number]) =>
+      parEtat ? etiquetteEtat(r) : parPartenaire ? (r.partenaire?.trim() || "Sans partenaire") : dayKey(r.date_debut);
     for (const r of rows) {
       if (r.id === choisi?.id) continue;
-      const k = parPartenaire ? (r.partenaire?.trim() || "Sans partenaire") : dayKey(r.date_debut);
+      const k = cleDe(r);
       map.set(k, [...(map.get(k) ?? []), r]);
     }
     let groupes = [...map.entries()];
+    if (parEtat) {
+      const ordre = ["En cours / à venir", "Terminés", "Clôturés / facturés", "Annulés"];
+      groupes.sort((a, b) => ordre.indexOf(a[0]) - ordre.indexOf(b[0]));
+    }
     // Groupes dans l'ordre des chantiers (le plus récent en premier).
-    return choisi ? [[`${parPartenaire ? (choisi.partenaire?.trim() || "Sans partenaire") : dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
+    return choisi ? [[`${cleDe(choisi)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
   }, [rows, toutes, dossierCarte, vueListe]);
 
   const choisirDepuisCarte = (id: string) => {
