@@ -1,4 +1,4 @@
-import { expect, test } from "bun:test";
+import { expect, it as test } from "bun:test";
 import { estTotal, photosManquantes, CATEGORIES_TOTAL_OBLIGATOIRES } from "./cri-total";
 import { categoriesRetourObligatoires } from "./planning.functions";
 
