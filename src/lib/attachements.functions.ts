@@ -130,11 +130,24 @@ export const listAttachements = createServerFn({ method: "GET" })
     }
     // Texte de recherche : noms des résidents, adresses et villes présents dans les lignes.
     const { data: toutesLignes } = ids.length
-      ? await context.supabase.from("attachement_items").select("attachement_id, libelle, description").in("attachement_id", ids)
-      : { data: [] as { attachement_id: string; libelle: string; description: string | null }[] };
+      ? await context.supabase.from("attachement_items").select("attachement_id, libelle, description, quantite, prix_unitaire, rendezvous_id").in("attachement_id", ids)
+      : { data: [] as { attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number; rendezvous_id: string | null }[] };
+    // Avancement réel : montant HT des lignes selon l'état du chantier lié (fait / à faire / sans chantier).
+    const rdvIds = [...new Set([...(toutesLignes ?? []).map((l) => l.rendezvous_id), ...(data ?? []).map((a) => a.rendezvous_id)].filter((v): v is string => !!v))];
+    const { data: rdvs } = rdvIds.length ? await context.supabase.from("rendezvous").select("id, statut").in("id", rdvIds) : { data: [] as { id: string; statut: string }[] };
+    const statutRdv = new Map((rdvs ?? []).map((r) => [r.id, r.statut]));
+    const attRdv = new Map((data ?? []).map((a) => [a.id, a.rendezvous_id as string | null]));
+    const avancement = new Map<string, { fait: number; a_faire: number; sans: number }>();
+    for (const l of toutesLignes ?? []) {
+      const cur = avancement.get(l.attachement_id) ?? { fait: 0, a_faire: 0, sans: 0 };
+      const montant = (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
+      const st = statutRdv.get(l.rendezvous_id ?? attRdv.get(l.attachement_id) ?? "");
+      if (!st) cur.sans += montant; else if (st === "termine" || st === "realise") cur.fait += montant; else cur.a_faire += montant;
+      avancement.set(l.attachement_id, cur);
+    }
     const texte = new Map<string, string>();
     for (const l of toutesLignes ?? []) texte.set(l.attachement_id, `${texte.get(l.attachement_id) ?? ""} ${l.libelle ?? ""} ${l.description ?? ""}`);
-    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [] }));
+    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [], ht_fait: Math.round((avancement.get(a.id)?.fait ?? 0) * 100) / 100, ht_a_faire: Math.round((avancement.get(a.id)?.a_faire ?? 0) * 100) / 100, ht_sans_chantier: Math.round((avancement.get(a.id)?.sans ?? 0) * 100) / 100 }));
   });
 
 /** Modifie le montant d'une ligne TES puis recalcule les totaux de l'attachement (refusé si déjà facturé). */

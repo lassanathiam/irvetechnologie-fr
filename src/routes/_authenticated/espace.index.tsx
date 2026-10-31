@@ -85,7 +85,6 @@ function EspacePage() {
     .filter((rdv) => new Date(rdv.date_debut).getTime() >= Date.now() - 36e5 && rdv.statut !== "annule")
     .slice(0, 4);
   const devis = q.data?.devis ?? [];
-  const devisActifs = devis.filter((document) => document.statut !== "annule");
   const facturesEnAttente = q.data?.aEncaisser ?? [];
 
   const activite = useMemo(() => {
@@ -150,7 +149,7 @@ function EspacePage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
-                <ActivityChart data={activite} />
+                <ReceptionTracking rendezvous={rendezvous} />
                 <QuickOverview factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
                   <PromoCard />
@@ -158,8 +157,7 @@ function EspacePage() {
                   <HealthCard />
                 </div>
               </div>
-              <ReceptionTracking rendezvous={rendezvous} />
-              <RecentQuotes devis={devisActifs.slice(0, 4)} />
+              <ActivityChart data={activite} />
 
             </>
           )}
