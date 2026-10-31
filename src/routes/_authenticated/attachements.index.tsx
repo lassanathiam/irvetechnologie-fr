@@ -10,7 +10,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { copieEquipeAttachements, createAttachement, modifierMontantTes, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -362,14 +362,3 @@ function AttachementsPage() {
 }
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
-
-/** Ligne TES modifiable en un clic : on saisit le montant HT, l'attachement est recalculé. */
-function LigneTes({ ligne, factureId }: { ligne: { id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }; factureId: string | null }) {
-  const qc = useQueryClient(); const fn = useServerFn(modifierMontantTes);
-  const montant = Math.round(ligne.quantite * ligne.prix_unitaire * 100) / 100;
-  const [edit, setEdit] = useState(false); const [val, setVal] = useState(String(montant)); const [err, setErr] = useState<string | null>(null);
-  const save = useMutation({ mutationFn: () => fn({ data: { ligne_id: ligne.id, montant: Number(val.replace(",", ".")) } }), onSuccess: () => { setEdit(false); setErr(null); void qc.invalidateQueries({ queryKey: ["attachements"] }); }, onError: (e) => setErr(e instanceof Error ? e.message : "Enregistrement impossible.") });
-  const valide = val.trim() !== "" && Number.isFinite(Number(val.replace(",", "."))) && Number(val.replace(",", ".")) >= 0;
-  if (!edit) return <li><button type="button" disabled={Boolean(factureId)} title={factureId ? "Déjà facturé" : "Cliquer pour modifier le montant"} onClick={() => { setVal(String(montant)); setEdit(true); }} className="flex w-full flex-wrap items-center gap-2 rounded px-2 py-1 text-left hover:bg-amber-500/15 disabled:opacity-60"><span>{ligne.libelle}</span>{ligne.description && <span className="text-xs text-muted-foreground">{ligne.description}</span>}<span className="ml-auto font-mono">{euro(montant)}</span><span className="text-xs text-amber-600 dark:text-amber-400">Modifier</span></button></li>;
-  return <li className="flex flex-wrap items-center gap-2 rounded bg-amber-500/10 px-2 py-1"><span>{ligne.libelle}</span>{ligne.quantite !== 1 && <span className="text-xs text-muted-foreground">({ligne.quantite} unités, prix recalculé)</span>}<Input autoFocus inputMode="decimal" aria-label="Montant HT de la ligne TES" className="ml-auto h-8 w-28" value={val} onChange={(e) => setVal(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter" && valide) save.mutate(); if (e.key === "Escape") setEdit(false); }} /><span className="text-xs">€ HT</span><Button size="sm" disabled={!valide || save.isPending} onClick={() => save.mutate()}>{save.isPending && <Loader2 className="animate-spin" />}Enregistrer</Button><Button size="sm" variant="ghost" onClick={() => setEdit(false)}>Annuler</Button>{err && <p className="w-full text-xs text-destructive">{err}</p>}</li>;
-}
