@@ -107,6 +107,11 @@ async function messageAdaptif(supabase: any, attachment: any) {
   return `Bonjour, merci de trouver sur le lien ci-dessus l'attachement des travaux ${etat} pour la semaine S${semaineIso(lundi)} (du ${fr(lundi)} au ${fr(dimanche)}).`;
 }
 
+/** Chantier du Planning tel qu'affiché dans le détail d'un attachement. */
+export type ChantierRdv = { id: string; statut: string; client_nom: string | null; adresse: string | null; cp_ville: string | null; date_debut: string | null; termine_at: string | null; reseau_client: string | null };
+/** Chantier avec le montant HT qui lui est rattaché dans un attachement. */
+export type ChantierLigne = ChantierRdv & { etat: "fait" | "a_faire"; montant_ht: number };
+
 export const listAttachements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
@@ -134,20 +139,29 @@ export const listAttachements = createServerFn({ method: "GET" })
       : { data: [] as { attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number; rendezvous_id: string | null }[] };
     // Avancement réel : montant HT des lignes selon l'état du chantier lié (fait / à faire / sans chantier).
     const rdvIds = [...new Set([...(toutesLignes ?? []).map((l) => l.rendezvous_id), ...(data ?? []).map((a) => a.rendezvous_id)].filter((v): v is string => !!v))];
-    const { data: rdvs } = rdvIds.length ? await context.supabase.from("rendezvous").select("id, statut").in("id", rdvIds) : { data: [] as { id: string; statut: string }[] };
-    const statutRdv = new Map((rdvs ?? []).map((r) => [r.id, r.statut]));
+    const { data: rdvs } = rdvIds.length ? await context.supabase.from("rendezvous").select("id, statut, client_nom, adresse, cp_ville, date_debut, termine_at, reseau_client").in("id", rdvIds) : { data: [] as ChantierRdv[] };
+    const rdv = new Map((rdvs ?? []).map((r) => [r.id, r]));
     const attRdv = new Map((data ?? []).map((a) => [a.id, a.rendezvous_id as string | null]));
-    const avancement = new Map<string, { fait: number; a_faire: number; sans: number }>();
+    const avancement = new Map<string, { fait: number; a_faire: number; sans: number; parRdv: Map<string, ChantierLigne> }>();
     for (const l of toutesLignes ?? []) {
-      const cur = avancement.get(l.attachement_id) ?? { fait: 0, a_faire: 0, sans: 0 };
+      const cur = avancement.get(l.attachement_id) ?? { fait: 0, a_faire: 0, sans: 0, parRdv: new Map<string, ChantierLigne>() };
       const montant = (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
-      const st = statutRdv.get(l.rendezvous_id ?? attRdv.get(l.attachement_id) ?? "");
-      if (!st) cur.sans += montant; else if (st === "termine" || st === "realise") cur.fait += montant; else cur.a_faire += montant;
+      const cle = l.rendezvous_id ?? attRdv.get(l.attachement_id) ?? "";
+      const r = rdv.get(cle);
+      const st = r?.statut;
+      if (!st) cur.sans += montant;
+      else {
+        const fini = st === "termine" || st === "realise";
+        if (fini) cur.fait += montant; else cur.a_faire += montant;
+        const c: ChantierLigne = cur.parRdv.get(cle) ?? { ...r, etat: fini ? "fait" : "a_faire", montant_ht: 0 };
+        c.montant_ht = Math.round((c.montant_ht + montant) * 100) / 100;
+        cur.parRdv.set(cle, c);
+      }
       avancement.set(l.attachement_id, cur);
     }
     const texte = new Map<string, string>();
     for (const l of toutesLignes ?? []) texte.set(l.attachement_id, `${texte.get(l.attachement_id) ?? ""} ${l.libelle ?? ""} ${l.description ?? ""}`);
-    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [], ht_fait: Math.round((avancement.get(a.id)?.fait ?? 0) * 100) / 100, ht_a_faire: Math.round((avancement.get(a.id)?.a_faire ?? 0) * 100) / 100, ht_sans_chantier: Math.round((avancement.get(a.id)?.sans ?? 0) * 100) / 100 }));
+    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [], ht_fait: Math.round((avancement.get(a.id)?.fait ?? 0) * 100) / 100, ht_a_faire: Math.round((avancement.get(a.id)?.a_faire ?? 0) * 100) / 100, ht_sans_chantier: Math.round((avancement.get(a.id)?.sans ?? 0) * 100) / 100, chantiers: [...(avancement.get(a.id)?.parRdv.values() ?? [])].sort((x, y) => String(y.date_debut ?? "").localeCompare(String(x.date_debut ?? ""))) }));
   });
 
 /** Modifie le montant d'une ligne TES puis recalcule les totaux de l'attachement (refusé si déjà facturé). */

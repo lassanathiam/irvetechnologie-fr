@@ -3,14 +3,14 @@ import { titreAttachement } from "@/lib/attachement-titre";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { Fragment, useEffect, useMemo, useRef, useState } from "react";
+import { ChevronDown, ChevronRight, ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { LignesAttachement, nouvelleLigne, type LigneAtt } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements } from "@/lib/attachements.functions";
+import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements, type ChantierLigne } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -52,6 +52,7 @@ function AttachementsPage() {
   const donneurs = useQuery({ queryKey: ["donneurs-ordre"], queryFn: () => donneursFn() });
   const bordereau = useQuery({ queryKey: ["bordereau"], queryFn: () => bordereauFn() });
   const [vue, setVue] = useState<"actifs" | "archives" | "tous">("actifs");
+  const [clientOuvert, setClientOuvert] = useState<string | null>(null);
   const [search, setSearch] = useState(""); const [open, setOpen] = useState(false); const [error, setError] = useState<string | null>(null);
   const [catalogue, setCatalogue] = useState("");
   const [donneurId, setDonneurId] = useState("");
@@ -266,18 +267,25 @@ function AttachementsPage() {
 
   /** Montant total par client (destinataire de l'attachement), hors annulés. */
   const parClient = useMemo(() => {
-    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number }>();
+    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number; chs: Map<string, ChantierLigne> }>();
     for (const a of list.data ?? []) {
       if (a.statut === "annule") continue;
       const k = String(a.client_nom || "Client non renseigné").trim();
-      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0 };
+      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0, chs: new Map<string, ChantierLigne>() };
       cur.fait += Number(a.ht_fait) || 0; cur.aFaire += Number(a.ht_a_faire) || 0; cur.sans += Number(a.ht_sans_chantier) || 0;
+      for (const c of (a.chantiers ?? []) as ChantierLigne[]) {
+        const x = cur.chs.get(c.id) ?? { ...c, montant_ht: 0 };
+        x.montant_ht = Math.round((x.montant_ht + (Number(c.montant_ht) || 0)) * 100) / 100;
+        cur.chs.set(c.id, x);
+      }
       cur.nb += 1; cur.ht += Number(a.total_ht) || 0; cur.ttc += Number(a.total_ttc) || 0;
       if (estAttachementCloture(a)) { cur.facNb += 1; cur.facHt += Number(a.total_ht) || 0; cur.facTtc += Number(a.total_ttc) || 0; }
       m.set(k, cur);
     }
     return [...m.entries()].sort((x, y) => y[1].ht - x[1].ht);
   }, [list.data]);
+
+  const clientDetail = parClient.find(([n]) => n === clientOuvert)?.[1];
 
   return <ProShell><div className="space-y-6"><header className="flex flex-wrap items-end justify-between gap-4"><div><p className="text-xs font-bold uppercase text-primary">Pose de bornes · ENSIO / NCO</p><h1 className="mt-2 text-3xl font-semibold">Attachements travaux</h1><p className="mt-1 text-sm text-muted-foreground">Valorisez les travaux au bordereau, envoyez-les au chargé d’affaires et transformez-les en facture.</p></div><div className="flex flex-wrap gap-2"><Button variant="outline" asChild><Link to="/attachements/commandes"><FileText /> Bons de commande</Link></Button><Button variant="outline" asChild><Link to="/attachements/bordereau"><Euro /> Bordereau &amp; donneurs d’ordre</Link></Button><Button onClick={() => { if (!open) { const ensio = donneurs.data?.find((d) => /ensio/i.test(d.nom)); if (ensio) appliquerDonneur(ensio.id); } setOpen((v) => !v); }}><Plus /> Nouvel attachement</Button></div></header>
   <section className="rounded-md border border-border bg-card p-5 space-y-4">
@@ -355,7 +363,7 @@ function AttachementsPage() {
     <LignesAttachement lines={lines} setLines={setLines} catalogue={catalogueOptions} />
     <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /><div className="flex items-center justify-between"><strong>Total HT : {euro(total)}</strong><Button disabled={create.isPending || !form.numero_ticket.trim() || !form.client_nom.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => create.mutate()}>{create.isPending && <Loader2 className="animate-spin" />} Créer l’attachement</Button></div>{error && <p className="text-sm text-destructive">{error}</p>}</section>}
   {totaux.lignes.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Totaux des attachements</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Statut</th><th className="p-3 text-right">Nombre</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">TVA</th><th className="p-3 text-right">Total TTC</th></tr></thead><tbody className="divide-y divide-border">{totaux.lignes.map(([statut, t]) => <tr key={statut}><td className="p-3 capitalize">{({ envoye: "Envoyé", propose: "Valorisation proposée", accepte: "Accepté", refuse: "Refusé", facture: "Facturé · Clôturé", annule: "Annulé" } as Record<string, string>)[statut] ?? "Brouillon"}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.tva)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{totaux.global.nb}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ht)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.tva)}</td><td className="p-3 text-right font-mono">{euro(totaux.global.ttc)}</td></tr></tfoot></table></div></section>}
-  {parClient.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Montant total par client</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Client</th><th className="p-3 text-right">Attachements</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">Total TTC</th><th className="p-3 text-right">Chantiers faits HT</th><th className="p-3 text-right">Chantiers à faire HT</th><th className="p-3 text-right">Sans chantier HT</th><th className="p-3 text-right">Facturés</th><th className="p-3 text-right">Montant facturé HT</th><th className="p-3 text-right">Montant facturé TTC</th></tr></thead><tbody className="divide-y divide-border">{parClient.map(([nom, t]) => <tr key={nom}><td className="p-3 font-medium">{nom}</td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td><td className="p-3 text-right font-mono font-semibold text-primary">{euro(t.fait)}</td><td className="p-3 text-right font-mono text-destructive">{euro(t.aFaire)}</td><td className="p-3 text-right font-mono text-muted-foreground">{euro(t.sans)}</td><td className="p-3 text-right font-semibold text-primary">{t.facNb}</td><td className="p-3 text-right font-mono">{euro(t.facHt)}</td><td className="p-3 text-right font-mono font-semibold">{euro(t.facTtc)}</td></tr>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{parClient.reduce((s, [, t]) => s + t.nb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ht, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ttc, 0))}</td><td className="p-3 text-right font-mono text-primary">{euro(parClient.reduce((s, [, t]) => s + t.fait, 0))}</td><td className="p-3 text-right font-mono text-destructive">{euro(parClient.reduce((s, [, t]) => s + t.aFaire, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.sans, 0))}</td><td className="p-3 text-right text-primary">{parClient.reduce((s, [, t]) => s + t.facNb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facHt, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facTtc, 0))}</td></tr></tfoot></table></div><p className="border-t border-border p-3 text-xs text-muted-foreground">« Chantiers faits » = lignes dont le chantier est terminé ou réalisé (gagné réellement). « Chantiers à faire » = chantier planifié, en cours ou en pause. « Sans chantier » = lignes non reliées à un chantier du Planning. « Facturés » = attachements transformés en facture (clôturés). Les attachements annulés ne sont jamais comptés.</p></section>}
+  {parClient.length > 0 && <section className="overflow-hidden rounded-md border border-border bg-card"><h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">Montant total par client</h2><div className="overflow-x-auto"><table className="w-full text-sm"><thead><tr className="border-b border-border text-left text-xs text-muted-foreground"><th className="p-3">Client</th><th className="p-3 text-right">Attachements</th><th className="p-3 text-right">Total HT</th><th className="p-3 text-right">Total TTC</th><th className="p-3 text-right">Chantiers faits HT</th><th className="p-3 text-right">Chantiers à faire HT</th><th className="p-3 text-right">Sans chantier HT</th><th className="p-3 text-right">Facturés</th><th className="p-3 text-right">Montant facturé HT</th><th className="p-3 text-right">Montant facturé TTC</th></tr></thead><tbody className="divide-y divide-border">{parClient.map(([nom, t]) => <Fragment key={nom}><tr><td className="p-3 font-medium"><button type="button" onClick={() => setClientOuvert((v) => (v === nom ? null : nom))} aria-expanded={clientOuvert === nom} className="flex min-w-0 items-center gap-1.5 text-left hover:underline">{clientOuvert === nom ? <ChevronDown className="h-4 w-4 shrink-0 text-primary" /> : <ChevronRight className="h-4 w-4 shrink-0 text-primary" />}<span className="min-w-0 break-words">{nom}</span>{t.chs.size > 0 && <span className="shrink-0 whitespace-nowrap rounded-full border border-border px-1.5 py-0.5 text-xs font-normal text-muted-foreground">{t.chs.size} chantier{t.chs.size > 1 ? "s" : ""}</span>}</button></td><td className="p-3 text-right">{t.nb}</td><td className="p-3 text-right font-mono">{euro(t.ht)}</td><td className="p-3 text-right font-mono">{euro(t.ttc)}</td><td className="p-3 text-right font-mono font-semibold text-primary">{euro(t.fait)}</td><td className="p-3 text-right font-mono text-destructive">{euro(t.aFaire)}</td><td className="p-3 text-right font-mono text-muted-foreground">{euro(t.sans)}</td><td className="p-3 text-right font-semibold text-primary">{t.facNb}</td><td className="p-3 text-right font-mono">{euro(t.facHt)}</td><td className="p-3 text-right font-mono font-semibold">{euro(t.facTtc)}</td></tr></Fragment>)}</tbody><tfoot><tr className="border-t-2 border-border font-bold"><td className="p-3">Total général</td><td className="p-3 text-right">{parClient.reduce((s, [, t]) => s + t.nb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ht, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.ttc, 0))}</td><td className="p-3 text-right font-mono text-primary">{euro(parClient.reduce((s, [, t]) => s + t.fait, 0))}</td><td className="p-3 text-right font-mono text-destructive">{euro(parClient.reduce((s, [, t]) => s + t.aFaire, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.sans, 0))}</td><td className="p-3 text-right text-primary">{parClient.reduce((s, [, t]) => s + t.facNb, 0)}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facHt, 0))}</td><td className="p-3 text-right font-mono">{euro(parClient.reduce((s, [, t]) => s + t.facTtc, 0))}</td></tr></tfoot></table></div>{clientDetail && <DetailClient t={clientDetail} />}<p className="border-t border-border p-3 text-xs text-muted-foreground">Un « chantier » = un rendez-vous d’intervention du Planning : un client, une adresse, une date. Touchez le nom d’un client pour lister ses chantiers et les ouvrir. « Chantiers faits » = lignes dont le chantier est terminé ou réalisé (gagné réellement). « Chantiers à faire » = chantier planifié, en cours ou en pause. « Sans chantier » = lignes non reliées à un chantier du Planning. « Facturés » = attachements transformés en facture (clôturés). Les attachements annulés ne sont jamais comptés.</p></section>}
   <AttachementsPeriode attachements={list.data ?? []} />
   <div className="flex flex-wrap gap-2" role="group" aria-label="Classement des attachements">{(["actifs", "archives", "tous"] as const).map((v) => <Button key={v} variant={vue === v ? "default" : "outline"} aria-pressed={vue === v} onClick={() => setVue(v)}>{v === "actifs" ? "En cours" : v === "archives" ? "Archives · Facturés / clôturés" : "Tous"} ({(list.data ?? []).filter((a) => v === "tous" || (v === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).length})</Button>)}</div>
   <div className="relative max-w-xl"><Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" /><Input className="pl-9" placeholder="Rechercher client, ticket, affaire ou commande" value={search} onChange={(e) => setSearch(e.target.value)} /></div>
@@ -363,3 +371,30 @@ function AttachementsPage() {
 }
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
+/** Détail des chantiers derrière les montants d'un client (tableau « Montant total par client »). */
+function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: number } }) {
+  const chs = [...t.chs.values()];
+  const fait = chs.filter((c) => c.etat === "fait").sort((x, y) => y.montant_ht - x.montant_ht);
+  const aFaire = chs.filter((c) => c.etat === "a_faire").sort((x, y) => y.montant_ht - x.montant_ht);
+  const date = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR") : "date non renseignée");
+  return <div className="space-y-3 p-4">
+    <p className="text-xs text-muted-foreground">Un « chantier » = un rendez-vous d'intervention du Planning : un client, une adresse et une date. Touchez une ligne pour l'ouvrir dans le Planning.</p>
+    {[{ rs: fait, label: "Chantiers faits", cls: "text-primary" }, { rs: aFaire, label: "Chantiers à faire", cls: "text-destructive" }].map(({ rs, label, cls }) => rs.length > 0 && <div key={label}>
+      <p className={`text-xs font-bold uppercase tracking-wide ${cls}`}>{label} · {rs.length} · {euro(rs.reduce((s, c) => s + c.montant_ht, 0))} HT</p>
+      <ul className="mt-1 divide-y divide-border rounded-md border border-border bg-card">
+        {rs.map((c) => <li key={c.id}><Link to="/planning" search={{ rdv: c.id }} className="grid gap-1 px-3 py-2 text-sm hover:bg-muted/40">
+          <span className="flex items-baseline justify-between gap-3">
+            <strong className="min-w-0 break-words">{c.client_nom || "Chantier sans nom"}</strong>
+            <span className="shrink-0 font-mono">{euro(c.montant_ht)} HT</span>
+          </span>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="min-w-0 break-words">{[c.adresse, c.cp_ville].filter(Boolean).join(", ") || "adresse non renseignée"}</span>
+            {c.reseau_client ? <ReseauClientBadge nom={c.reseau_client} /> : null}
+            <span>{c.etat === "fait" ? `terminé le ${date(c.termine_at ?? c.date_debut)}` : `prévu le ${date(c.date_debut)}`}</span>
+          </span>
+        </Link></li>)}</ul>
+    </div>)}
+    {chs.length === 0 && <p className="text-sm text-muted-foreground">Aucun chantier du Planning n'est relié à ces attachements.</p>}
+    {t.sans > 0 && <p className="text-xs text-muted-foreground">+ {euro(t.sans)} HT non reliés à un chantier du Planning (attachements saisis sans rendez-vous).</p>}
+  </div>;
+}
