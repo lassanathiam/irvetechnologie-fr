@@ -10,7 +10,7 @@ import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements, type ChantierLigne } from "@/lib/attachements.functions";
+import { copieEquipeAttachements, createAttachement, envoyerAttachementsGroupes, listAttachements, type ChantierLigne, type SansChantierLigne } from "@/lib/attachements.functions";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
@@ -267,12 +267,14 @@ function AttachementsPage() {
 
   /** Montant total par client (destinataire de l'attachement), hors annulés. */
   const parClient = useMemo(() => {
-    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number; chs: Map<string, ChantierLigne> }>();
+    const m = new Map<string, { nb: number; ht: number; ttc: number; facNb: number; facHt: number; facTtc: number; fait: number; aFaire: number; sans: number; chs: Map<string, ChantierLigne>; sansAtt: SansChantierLigne[] }>();
     for (const a of list.data ?? []) {
       if (a.statut === "annule") continue;
       const k = String(a.client_nom || "Client non renseigné").trim();
-      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0, chs: new Map<string, ChantierLigne>() };
+      const cur = m.get(k) ?? { nb: 0, ht: 0, ttc: 0, facNb: 0, facHt: 0, facTtc: 0, fait: 0, aFaire: 0, sans: 0, chs: new Map<string, ChantierLigne>(), sansAtt: [] as SansChantierLigne[] };
       cur.fait += Number(a.ht_fait) || 0; cur.aFaire += Number(a.ht_a_faire) || 0; cur.sans += Number(a.ht_sans_chantier) || 0;
+      const sansHt = Number(a.ht_sans_chantier) || 0;
+      if (sansHt > 0) cur.sansAtt.push({ id: a.id, numero: a.numero, objet: a.objet ?? null, emis: a.date_emission ? new Date(String(a.date_emission).slice(0, 10)).toLocaleDateString("fr-FR") : "", statut: a.statut ?? "brouillon", ht: sansHt, lignes: (a.lignes_sans ?? []) as { libelle: string; montant: number }[] });
       for (const c of (a.chantiers ?? []) as ChantierLigne[]) {
         const x = cur.chs.get(c.id) ?? { ...c, montant_ht: 0 };
         x.montant_ht = Math.round((x.montant_ht + (Number(c.montant_ht) || 0)) * 100) / 100;
@@ -372,7 +374,7 @@ function AttachementsPage() {
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
 /** Détail des chantiers derrière les montants d'un client (tableau « Montant total par client »). */
-function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: number } }) {
+function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: number; sansAtt: SansChantierLigne[] } }) {
   const chs = [...t.chs.values()];
   const fait = chs.filter((c) => c.etat === "fait").sort((x, y) => y.montant_ht - x.montant_ht);
   const aFaire = chs.filter((c) => c.etat === "a_faire").sort((x, y) => y.montant_ht - x.montant_ht);
@@ -395,6 +397,22 @@ function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: numbe
         </Link></li>)}</ul>
     </div>)}
     {chs.length === 0 && <p className="text-sm text-muted-foreground">Aucun chantier du Planning n'est relié à ces attachements.</p>}
-    {t.sans > 0 && <p className="text-xs text-muted-foreground">+ {euro(t.sans)} HT non reliés à un chantier du Planning (attachements saisis sans rendez-vous).</p>}
+    {t.sansAtt.length > 0 && <div>
+      <p className="text-xs font-bold uppercase tracking-wide text-muted-foreground">Sans chantier · {t.sansAtt.length} · {euro(t.sansAtt.reduce((s, a) => s + a.ht, 0))} HT</p>
+      <ul className="mt-1 divide-y divide-border rounded-md border border-border bg-card">
+        {t.sansAtt.map((a) => <li key={a.id}><Link to="/attachements/$id" params={{ id: a.id }} className="grid gap-1 px-3 py-2 text-sm hover:bg-muted/40">
+          <span className="flex items-baseline justify-between gap-3">
+            <strong className="min-w-0 break-words">{a.numero}</strong>
+            <span className="shrink-0 font-mono">{euro(a.ht)} HT</span>
+          </span>
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-muted-foreground">
+            <span className="min-w-0 break-words">{a.objet || "objet non renseigné"}</span>
+            {a.emis ? <span>émis le {a.emis}</span> : null}
+            <span>{statutAttachement({ statut: a.statut })}</span>
+          </span>
+          {a.lignes.filter((l) => l.montant > 0).length > 0 && <span className="min-w-0 break-words text-xs text-muted-foreground">{a.lignes.filter((l) => l.montant > 0).map((l) => `${l.libelle} · ${euro(l.montant)} HT`).join(" · ")}</span>}
+        </Link></li>)}</ul>
+      <p className="mt-1 text-xs text-muted-foreground">Ces lignes ne correspondent à aucun chantier du Planning : elles restent à rattacher à un rendez-vous, ou à assumer comme hors Planning.</p>
+    </div>}
   </div>;
 }
