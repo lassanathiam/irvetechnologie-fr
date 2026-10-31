@@ -449,6 +449,44 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
   );
 }
 
+function MontantParMois({ mois, total, nbChantiers }: { mois: MoisReception[]; total: number; nbChantiers: number }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[420px] text-left text-xs">
+        <thead className="text-[10px] uppercase text-dashboard-copy-muted">
+          <tr>
+            <th className="pb-3">Mois de réception</th>
+            <th className="pb-3">Chantiers</th>
+            <th className="pb-3 text-right">Montant HT</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-dashboard-rule">
+          {mois.map((item) => (
+            <tr key={item.cle}>
+              <td className="py-3 font-semibold text-dashboard-copy">{item.libelle}</td>
+              <td className="py-3 text-dashboard-copy-muted">{item.nb}</td>
+              <td className={`py-3 text-right font-bold ${item.total_ht ? "text-dashboard-green" : "text-dashboard-copy-muted"}`}>
+                {euro(item.total_ht)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-dashboard-rule">
+            <td className="pt-3 font-bold text-dashboard-copy">Total réceptionné</td>
+            <td className="pt-3 text-dashboard-copy-muted">{nbChantiers}</td>
+            <td className="pt-3 text-right font-extrabold text-dashboard-green">{euro(total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p className="mt-3 text-[11px] leading-relaxed text-dashboard-copy-muted">
+        Montant HT des attachements rattachés à chaque chantier réceptionné. Un mois à 0,00 € signifie
+        qu’aucun chantier n’a été marqué réceptionné ce mois-là.
+      </p>
+    </div>
+  );
+}
+
 function DashboardPanel({ title, icon: Icon, action, children }: { title: string; icon: typeof Euro; action?: { to: string; label: string }; children: React.ReactNode }) {
 
   return (
