@@ -1,5 +1,5 @@
 import { jsPDF } from "jspdf";
-import { QUESTIONS_CRI, PHOTOS_CRI } from "./cri-total";
+import { PHOTOS_CRI } from "./cri-total";
 import criTotalOriginalUrl from "@/assets/cri-total-original.pdf?url";
 
 /**
@@ -241,7 +241,3 @@ export async function genererCriTotalPdf(opts: {
 
   return doc.output("blob");
 }
-
-// QUESTIONS_CRI reste importé pour garantir que toute question ajoutée sans
-// emplacement est visible lors du développement.
-void QUESTIONS_CRI;
