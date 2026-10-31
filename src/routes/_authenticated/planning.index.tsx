@@ -424,7 +424,7 @@ function PlanningPage() {
     onSuccess: refresh,
   });
   const majOptions = useMutation({
-    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
+    mutationFn: (p: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null; receptionne?: boolean }) =>
       majOptionsChantier({ data: p }),
     onSuccess: refresh,
     onError: (e: unknown) =>
@@ -2405,6 +2405,21 @@ function PlanningPage() {
                               }`}
                             >
                               <TriangleAlert className="h-3.5 w-3.5" /> {Boolean((r as { probleme?: boolean | null }).probleme) ? "Problème signalé — retirer" : "Signaler un problème"}
+                            </button>
+
+                            {/* Réception validée par l'équipe (point client ENSIO en direct). */}
+                            <button
+                              type="button"
+                              disabled={majOptions.isPending}
+                              onClick={() => majOptions.mutate({ id: r.id, receptionne: !r.receptionne_at }, { onSuccess: () => toast.success(r.receptionne_at ? "Réception retirée" : "Chantier marqué réceptionné") })}
+                              className={`mt-2 text-mono text-[11px] font-bold min-h-[34px] px-3 rounded-full border inline-flex items-center gap-1.5 transition disabled:opacity-60 ${
+                                r.receptionne_at
+                                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-600"
+                                  : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
+                              }`}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {r.receptionne_at ? `Réceptionné le ${new Date(r.receptionne_at).toLocaleDateString("fr-FR")}` : "Marquer comme réceptionné"}
                             </button>
 
                             {/* Affectation possible directement depuis la liste du planning complet. */}
