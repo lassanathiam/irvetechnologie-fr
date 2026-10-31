@@ -84,8 +84,6 @@ function EspacePage() {
   const aVenir = rendezvous
     .filter((rdv) => new Date(rdv.date_debut).getTime() >= Date.now() - 36e5 && rdv.statut !== "annule")
     .slice(0, 4);
-  const devis = q.data?.devis ?? [];
-  const devisActifs = devis.filter((document) => document.statut !== "annule");
   const facturesEnAttente = q.data?.aEncaisser ?? [];
 
   const activite = useMemo(() => {
@@ -150,16 +148,14 @@ function EspacePage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
-                <ActivityChart data={activite} />
+                <ReceptionTracking rendezvous={rendezvous} />
                 <QuickOverview factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
-                  <PromoCard />
                   <NextAppointments rendezvous={aVenir.slice(0, 1)} />
                   <HealthCard />
                 </div>
               </div>
-              <ReceptionTracking rendezvous={rendezvous} />
-              <RecentQuotes devis={devisActifs.slice(0, 4)} />
+              <ActivityChart data={activite} />
 
             </>
           )}
@@ -285,24 +281,6 @@ function NextAppointments({ rendezvous }: { rendezvous: Array<{ id: string; date
       )}
     </DashboardPanel>
   );
-}
-
-function RecentQuotes({ devis }: { devis: Array<{ id: string; numero: string; client_nom: string; total_ttc: number | string | null; statut: string; created_at: string }> }) {
-  return (
-    <DashboardPanel title="Devis récents" icon={FileText} action={{ to: "/devis", label: "Tout afficher" }}>
-      {!devis.length ? <Empty>Aucun devis récent.</Empty> : (
-        <div className="overflow-x-auto"><table className="w-full min-w-[620px] text-left text-xs"><thead className="text-[10px] uppercase text-dashboard-copy-muted"><tr><th className="pb-3">Référence</th><th className="pb-3">Client</th><th className="pb-3">Statut</th><th className="pb-3 text-right">Montant TTC</th><th className="pb-3 text-right">Date</th></tr></thead><tbody className="divide-y divide-dashboard-rule">
-          {devis.map((document) => (
-            <tr key={document.id}><td className="py-3 font-bold text-dashboard-green"><Link to="/devis/$id" params={{ id: document.id }}>{document.numero}</Link></td><td className="py-3 font-semibold text-dashboard-copy">{document.client_nom}</td><td className="py-3"><span className="rounded bg-dashboard-blue-soft px-3 py-1 font-semibold text-dashboard-blue">Envoyé</span></td><td className="py-3 text-right font-bold text-dashboard-copy">{euro(Number(document.total_ttc ?? 0))}</td><td className="py-3 text-right text-dashboard-copy-muted">{dateFr(document.created_at)}</td></tr>
-          ))}
-        </tbody></table></div>
-      )}
-    </DashboardPanel>
-  );
-}
-
-function PromoCard() {
-  return <section className="relative min-h-32 overflow-hidden rounded-md bg-dashboard-green p-5 text-dashboard-on-navy shadow-sm"><img src={borneHero} alt="Borne de recharge IRVE" className="absolute inset-0 h-full w-full object-cover opacity-40" /><div className="absolute inset-0 bg-dashboard-promo" /><div className="relative ml-auto max-w-[68%]"><h2 className="font-bold">IRVE Technologie</h2><p className="mt-1 text-xs leading-relaxed">Des solutions de recharge pour aujourd’hui et demain</p><Button asChild size="sm" className="mt-3 bg-card text-dashboard-green hover:bg-card/90"><Link to="/devis"><FilePlus2 /> Nouveau devis</Link></Button></div></section>;
 }
 
 function HealthCard() {
