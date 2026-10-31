@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { SignaturePad } from "@/components/SignaturePad";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
 import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
+import { TelechargerPv } from "@/components/TelechargerPv";
 import {
   analyserFeuilleRapport,
   creerModeleJetable,
@@ -223,6 +224,7 @@ function RapportChantierPageInner() {
 
   const set = (id: string, v: Val) => setValeurs((x) => ({ ...x, [id]: v }));
   const signe = Boolean(sigC && sigT);
+  const nbSignatures = (sigT ? 1 : 0) + (sigC ? 1 : 0);
 
   return (
     <div className="mx-auto max-w-2xl space-y-4 pb-24">
@@ -234,6 +236,11 @@ function RapportChantierPageInner() {
         <p className="text-sm text-muted-foreground">
           {data.rdv.partenaire ? `Donneur d'ordre : ${data.rdv.partenaire}` : "Aucun donneur d'ordre indiqué"}
           {data.rempli?.sent_at ? ` · envoyé le ${new Date(data.rempli.sent_at).toLocaleString("fr-FR")}` : ""}
+        </p>
+        <p className={`mt-1 text-sm font-semibold ${nbSignatures === 2 ? "text-emerald-600" : nbSignatures === 1 ? "text-amber-600" : "text-muted-foreground"}`}>
+          Signatures : {nbSignatures} sur 2
+          {nbSignatures === 1 ? (sigT ? " — technicien seulement" : " — client seulement") : ""}
+          {" · téléchargement possible dans tous les cas"}
         </p>
       </div>
 
@@ -297,8 +304,20 @@ function RapportChantierPageInner() {
           ) : (
             <RapportDonneurDoc structure={structure} logo={modele.logo_data} donneur={modele.donneur_ordre} valeurs={valeurs} signatureClient={sigC} signatureTechnicien={sigT} signataireNom={nomClient} technicien={technicien} signedAt={data.rempli?.signed_at} />
           )}
-          <div className="flex gap-2 print:hidden">
+          <div className="flex flex-wrap gap-2 print:hidden">
             <Button variant="outline" onClick={() => setApercu(false)}>Revenir au formulaire</Button>
+            <TelechargerPv
+              structure={structure}
+              valeurs={valeurs}
+              signatureClient={sigC}
+              signatureTechnicien={sigT}
+              signataireNom={nomClient}
+              technicien={technicien}
+              signedAt={data.rempli?.signed_at}
+              logo={modele.logo_data}
+              donneur={modele.donneur_ordre}
+              nom={`PV-${data.rdv.client_nom}`}
+            />
             <Button variant="outline" onClick={() => window.print()}><Printer className="h-4 w-4" /> Imprimer / PDF</Button>
           </div>
         </>
@@ -416,6 +435,18 @@ function RapportChantierPageInner() {
               {save.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Enregistrer
             </Button>
             <Button variant="outline" onClick={() => setApercu(true)}><Printer className="h-4 w-4" /> Aperçu</Button>
+            <TelechargerPv
+              structure={structure}
+              valeurs={valeurs}
+              signatureClient={sigC}
+              signatureTechnicien={sigT}
+              signataireNom={nomClient}
+              technicien={technicien}
+              signedAt={data.rempli?.signed_at}
+              logo={modele.logo_data}
+              donneur={modele.donneur_ordre}
+              nom={`PV-${data.rdv.client_nom}`}
+            />
             <Button className="flex-1" disabled={!signe || !email || send.isPending} onClick={() => send.mutate()}>
               {send.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Signé : envoyer avec les photos
             </Button>
