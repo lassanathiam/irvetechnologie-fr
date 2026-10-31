@@ -40,7 +40,7 @@ export async function genererCriTotalPdf(opts: {
     const l = doc.splitTextToSize(label, CW * 0.6 - 4); const r = doc.splitTextToSize(valeur || "", CW * 0.4 - 4);
     const h = Math.max(l.length, r.length, 1) * 4 + 3; besoin(h);
     doc.setDrawColor(180); doc.rect(M, y, CW * 0.6, h); doc.rect(M + CW * 0.6, y, CW * 0.4, h);
-    if (gras) { doc.setFillColor(240); doc.rect(M, y, CW, h, "FD"); }
+    if (gras) { doc.setFillColor(240, 240, 240); doc.rect(M, y, CW, h, "FD"); }
     doc.setFont("helvetica", "bold"); doc.text(l, M + 2, y + 4.5);
     doc.setFont("helvetica", "normal"); doc.text(r, M + CW * 0.6 + 2, y + 4.5); y += h;
   };
