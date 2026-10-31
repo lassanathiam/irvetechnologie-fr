@@ -24,6 +24,7 @@ import { getDashboard } from "@/lib/planning.functions";
 import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
+import { grouperReceptionParMois, totalReceptionne, type MoisReception } from "@/lib/reception-mois";
 import { Button } from "@/components/ui/button";
 import { RappelsRdvBandeau } from "@/components/RappelsRdv";
 import borneHero from "@/assets/borne-hero.jpg";
@@ -350,10 +351,11 @@ type ChantierReception = {
   receptionne_at: string | null;
   statut: string;
   partenaire: string | null;
+  montant_ht: number | null;
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
-  const [tab, setTab] = useState<"recus" | "attente">("recus");
+  const [tab, setTab] = useState<"recus" | "attente" | "mois">("recus");
 
   const recus = useMemo(
     () =>
@@ -376,6 +378,9 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
     [rendezvous],
   );
 
+  const parMois = useMemo(() => grouperReceptionParMois(recus), [recus]);
+  const totalRecu = useMemo(() => totalReceptionne(recus), [recus]);
+
   const rows = tab === "recus" ? recus : aReceptionner;
 
   return (
@@ -397,8 +402,18 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         >
           À réceptionner ({aReceptionner.length})
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setTab("mois")}
+          className={`rounded-none border-b-2 px-3 ${tab === "mois" ? "border-dashboard-blue text-dashboard-blue" : "border-transparent text-dashboard-copy-muted"}`}
+        >
+          Montant par mois
+        </Button>
       </div>
-      {!rows.length ? (
+      {tab === "mois" ? (
+        <MontantParMois mois={parMois} total={totalRecu} nbChantiers={recus.length} />
+      ) : !rows.length ? (
         <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
       ) : (
         <ul className="divide-y divide-dashboard-rule">
@@ -419,6 +434,9 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                 <span className="rounded bg-dashboard-subtle px-2 py-1 text-[10px] font-bold uppercase text-dashboard-copy-muted">
                   {chantier.partenaire}
                 </span>
+              )}
+              {tab === "recus" && Number(chantier.montant_ht ?? 0) > 0 && (
+                <span className="whitespace-nowrap text-xs font-bold text-dashboard-copy">{euro(Number(chantier.montant_ht))}</span>
               )}
               <strong className={`whitespace-nowrap text-xs font-bold ${tab === "recus" ? "text-dashboard-green" : "text-dashboard-orange"}`}>
                 {tab === "recus" ? "Réceptionné" : "En attente"}
