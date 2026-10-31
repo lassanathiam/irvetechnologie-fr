@@ -2386,10 +2386,11 @@ export const affecterTechnicien = createServerFn({ method: "POST" })
 /** Bascule rapide des options chantier (répartiteur, métrage, donneur d'ordre) depuis la carte planning. */
 export const majOptionsChantier = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null }) =>
+  .inputValidator((raw: { id: string; retour_repartiteur?: boolean; metrage_m?: number; partenaire?: string | null; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null; receptionne?: boolean }) =>
     z
       .object({
         id: z.string().uuid(),
+        receptionne: z.boolean().optional(),
         retour_repartiteur: z.boolean().optional(),
         metrage_m: z.number().min(0).max(10000).optional(),
         partenaire: z.string().max(160).nullable().optional(),
@@ -2401,7 +2402,8 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
       .parse(raw),
   )
   .handler(async ({ data, context }) => {
-    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null } = {};
+    const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null; receptionne_at?: string | null } = {};
+    if (data.receptionne !== undefined) patch.receptionne_at = data.receptionne ? new Date().toISOString() : null;
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
     if (data.nature_dossier !== undefined) patch.nature_dossier = data.nature_dossier;
     if (data.checklist_materiel !== undefined) patch.checklist_materiel = data.checklist_materiel;
