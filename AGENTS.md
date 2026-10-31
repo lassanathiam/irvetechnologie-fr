@@ -22,6 +22,7 @@
 - Photo corrections on completed chantiers and per-photo comments (rendezvous_photos.legende) use authenticated appointment-scoped photo handlers only, never return fields or email (preserves closure/billing state).
 - Planning/attachments use header/line IDs and RLS reads. PDFs render offscreen, one A4 each; touch prepares before save/share. Archive classification uses a shared invoice-link/billed-status predicate without changing billing state.
 - Orders persist privately in staff-only commandes_importees. Shared reference matching reconciles invoices and blocks conflicts. Reports reread under auth; recipients are server-derived; selection never bills. Invoice PDFs use text.
+- Separate TS attachments use a parent attachment link and an atomic, staff-authorized database function with an idempotent document ID; copy billing identity but never initial lines, validation or invoice state, to preserve the original and avoid retry duplicates.
 
 - Chantier imports use shared browser-only deterministic parsing and local OCR; never automatically call AI, so unreadable documents remain manually assignable without model charges.
 - Public discovery pages self-reference https://irvetechnologie.fr in leaf canonical and og:url tags; the sitemap lists only public commercial pages, never authenticated or token-based dossiers.
