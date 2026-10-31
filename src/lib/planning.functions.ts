@@ -1823,7 +1823,10 @@ export const supprimerPhotoChantier = createServerFn({ method: "POST" })
       .eq("id", data.id)
       .maybeSingle();
     if (!row) return { ok: true as const };
-    await context.supabase.storage.from("chantier-photos").remove([row.path]);
+    // Une même image peut servir à plusieurs cases (ex. PV Total) : on ne supprime le fichier que s'il n'est plus utilisé.
+    const { count } = await context.supabase.from("rendezvous_photos").select("id", { count: "exact", head: true })
+      .eq("path", row.path).neq("id", data.id);
+    if (!count) await context.supabase.storage.from("chantier-photos").remove([row.path]);
     const { error } = await context.supabase.from("rendezvous_photos").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true as const };

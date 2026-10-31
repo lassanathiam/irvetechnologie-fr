@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { SignaturePad } from "@/components/SignaturePad";
-import { getCriTotal, enregistrerCriTotal } from "@/lib/cri-total.functions";
+import { getCriTotal, enregistrerCriTotal, attribuerPhotoCri } from "@/lib/cri-total.functions";
 import { uploadPhotoChantier, supprimerPhotoChantier } from "@/lib/planning.functions";
 import { QUESTIONS_CRI, PHOTOS_CRI, valeursParDefaut, photosManquantes } from "@/lib/cri-total";
 import { compressImage } from "@/lib/image-compress";
@@ -35,6 +35,15 @@ function CriTotalPage() {
   const saveFn = useServerFn(enregistrerCriTotal);
   const uploadFn = useServerFn(uploadPhotoChantier);
   const delFn = useServerFn(supprimerPhotoChantier);
+  const attribuerFn = useServerFn(attribuerPhotoCri);
+  const [choix, setChoix] = useState<string | null>(null);
+  const placer = async (categorie: string, photoId: string) => {
+    try {
+      await attribuerFn({ data: { rdvId, photoId, categorie } });
+      await qc.invalidateQueries({ queryKey: ["cri-total", rdvId] });
+      toast.success("Photo appliquée au PV");
+    } catch (e) { toast.error((e as Error).message); }
+  };
   const { data, isLoading, error } = useQuery({ queryKey: ["cri-total", rdvId], queryFn: () => getFn({ data: { rdvId } }) });
   const [v, setV] = useState<Record<string, string>>({});
   const [sigT, setSigT] = useState<string | null>(null);
@@ -143,9 +152,35 @@ function CriTotalPage() {
                   ))}
                   <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded border border-dashed text-xs">
                     {envoi === slot.categorie ? <Loader2 className="animate-spin" /> : <><Camera /> Ajouter</>}
+                    <input type="file" accept="image/*" capture="environment" className="hidden" onChange={(e) => { ajouter(slot.categorie, e.target.files); e.target.value = ""; }} />
+                  </label>
+                  <label className="flex h-24 w-24 cursor-pointer flex-col items-center justify-center rounded border border-dashed text-center text-xs">
+                    <ImagePlus /> Galerie
                     <input type="file" accept="image/*" multiple className="hidden" onChange={(e) => { ajouter(slot.categorie, e.target.files); e.target.value = ""; }} />
                   </label>
+                  {data.dossier.length > 0 && (
+                    <button type="button" onClick={() => setChoix(choix === slot.categorie ? null : slot.categorie)}
+                      className="flex h-24 w-24 flex-col items-center justify-center rounded border border-dashed border-primary text-center text-xs font-semibold text-primary">
+                      <FolderOpen /> Photos du chantier ({data.dossier.length})
+                    </button>
+                  )}
                 </div>
+                {choix === slot.categorie && (
+                  <div className="mt-3 rounded-md border bg-muted/40 p-2">
+                    <p className="mb-2 text-xs font-semibold">Touchez une photo déjà prise sur ce chantier pour l'appliquer à « {slot.label} » :</p>
+                    <div className="flex flex-wrap gap-2">
+                      {data.dossier.map((p) => {
+                        const deja = photos.some((x) => x.url && x.id === p.id);
+                        return (
+                          <button key={p.id} type="button" disabled={deja} onClick={() => placer(slot.categorie, p.id)}
+                            className="relative rounded ring-primary hover:ring-2 disabled:opacity-40">
+                            <img src={p.url} alt="Photo du chantier" className="h-20 w-20 rounded object-cover" />
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           })}
