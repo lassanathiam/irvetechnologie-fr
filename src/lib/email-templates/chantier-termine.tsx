@@ -29,6 +29,8 @@ export type ChantierTermineData = {
   photos?: { url: string; libelle: string }[] | null;
   /** Lien de téléchargement du dossier photos complet (ZIP). */
   zip_url?: string | null;
+  /** Lien public du PV signé (page client avec téléchargement PDF), si un PV est signé. */
+  pv_url?: string | null;
 };
 
 const dureeFr = (min?: number | null) => {
