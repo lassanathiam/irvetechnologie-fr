@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { Download, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,8 @@ export function TelechargerPv({
 }) {
   const stage = useRef<HTMLDivElement>(null);
   const [busy, setBusy] = useState(false);
+  const [monte, setMonte] = useState(false);
+  useEffect(() => setMonte(true), []);
 
   async function download() {
     const racine = stage.current;
@@ -74,7 +77,7 @@ export function TelechargerPv({
         {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
         {busy ? "Préparation du PDF…" : label}
       </Button>
-      <div ref={stage} className="rapport-export-stage" aria-hidden="true">
+      {monte && createPortal(<div ref={stage} className="rapport-export-stage" aria-hidden="true">
         {structure.original ? (
           <RapportOriginalDoc structure={structure} valeurs={valeurs} signatureClient={signatureClient} signatureTechnicien={signatureTechnicien} />
         ) : (
@@ -90,7 +93,7 @@ export function TelechargerPv({
             signedAt={signedAt}
           />
         )}
-      </div>
+      </div>, document.body)}
     </>
   );
 }
