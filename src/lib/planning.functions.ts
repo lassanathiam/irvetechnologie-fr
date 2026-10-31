@@ -1051,6 +1051,21 @@ function lienDossierPhotos(token: string): string {
   return `${base.replace(/\/$/, "")}/api/public/retour/${token}.zip`;
 }
 
+/** Lien public du dernier PV signé du chantier (page client avec téléchargement PDF), null si aucun. */
+async function lienPvSigne(supabase: any, rendezvousId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("rapport_remplis")
+    .select("public_token")
+    .eq("rendezvous_id", rendezvousId)
+    .not("signed_at", "is", null)
+    .order("signed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data?.public_token) return null;
+  const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
+  return `${base.replace(/\/$/, "")}/rapport-donneur/${data.public_token}`;
+}
+
 /** Lien privé du client pour confirmer son rendez-vous. */
 function lienConfirmationRdv(token: string): string {
   const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
