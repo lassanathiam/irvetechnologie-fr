@@ -89,6 +89,31 @@ function ChantierTermineEmail(data: ChantierTermineData) {
               <Text style={{ fontSize: 14, margin: "8px 0" }}>Observations : {data.observations}</Text>
             ) : null}
           </Section>
+          {data.pv_url ? (
+            <>
+              <Hr />
+              <Section style={{ margin: "16px 0" }}>
+                <Text style={{ fontSize: 14, fontWeight: "bold", margin: "8px 0" }}>
+                  Procès-verbal de réception signé
+                </Text>
+                <Link
+                  href={data.pv_url}
+                  style={{
+                    display: "inline-block",
+                    backgroundColor: "#00a86b",
+                    color: "#ffffff",
+                    borderRadius: 8,
+                    padding: "12px 20px",
+                    fontSize: 15,
+                    fontWeight: "bold",
+                    textDecoration: "none",
+                  }}
+                >
+                  Consulter et télécharger le PV signé (PDF)
+                </Link>
+              </Section>
+            </>
+          ) : null}
           {data.zip_url ? (
             <>
               <Hr />
