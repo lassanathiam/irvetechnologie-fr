@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { estTotal, CATEGORIES_TOTAL, CATEGORIES_TOTAL_OBLIGATOIRES, CATEGORIES_TOTAL_OPTIONNELLES, LABELS_TOTAL } from "./cri-total";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { technicienByNom } from "@/lib/geo";
@@ -1644,6 +1645,7 @@ export const RETOUR_CATEGORIES = [
 ] as const;
 
 export type RetourCategorie = (typeof RETOUR_CATEGORIES)[number];
+const CATEGORIES_ACCEPTEES = new Set<string>([...RETOUR_CATEGORIES, ...CATEGORIES_TOTAL]);
 
 export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   verification_terre_avant: "Vérification de la terre avant travaux",
@@ -1695,6 +1697,7 @@ export const RETOUR_CATEGORIES_LABELS: Record<string, string> = {
   ensio_appel_supervision: "Capture de l'appel à la supervision",
   ensio_sms_supervision: "Capture SMS avec la supervision (selon client)",
   ensio_etiquette_autel: "Étiquette de la poche plastique (bornes AUTEL)",
+  ...LABELS_TOTAL,
 };
 
 /** Le donneur d'ordre est-il ENSIO ? */
@@ -1703,6 +1706,7 @@ export function estEnsio(partenaire?: string | null): boolean {
 }
 
 export function categoriesRetourObligatoires(type?: string | null, partenaire?: string | null, reseauClient?: string | null): readonly RetourCategorie[] {
+  if (type !== "maintenance" && estTotal(reseauClient)) return CATEGORIES_TOTAL_OBLIGATOIRES as unknown as RetourCategorie[];
   const categories = type === "maintenance" ? RETOUR_CATEGORIES_MAINTENANCE
     : estEnsio(partenaire) ? RETOUR_CATEGORIES_ENSIO : RETOUR_CATEGORIES_OBLIGATOIRES;
   return photoPvObligatoire(partenaire, reseauClient) ? [...categories, "pv_signe"] : categories;
@@ -1711,6 +1715,7 @@ export function categoriesRetourObligatoires(type?: string | null, partenaire?: 
 export function categoriesRetourOptionnelles(type?: string | null, partenaire?: string | null, reseauClient?: string | null): readonly string[] {
   // Liste courte : seulement les photos réellement prises en complément, sans doublon des obligatoires.
   const principales = new Set<string>(categoriesRetourObligatoires(type, partenaire, reseauClient));
+  if (type !== "maintenance" && estTotal(reseauClient)) return [...CATEGORIES_TOTAL_OPTIONNELLES, "pv_signe", "etat_lieux_depart", "autre"];
   const ordre: string[] = type === "maintenance"
     ? ["raccordement_borne", "tableau_electrique", "cheminement_cable", "plaque_serie"]
     : estEnsio(partenaire)
@@ -1757,7 +1762,7 @@ export const uploadPhotoChantier = createServerFn({ method: "POST" })
     z
       .object({
         rendezvous_id: z.string().uuid(),
-        categorie: z.enum(RETOUR_CATEGORIES),
+        categorie: z.string().refine((c) => CATEGORIES_ACCEPTEES.has(c), "Catégorie inconnue"),
         data_url: z.string().max(4_500_000),
         legende: z.string().trim().max(160).optional().nullable(),
       })
