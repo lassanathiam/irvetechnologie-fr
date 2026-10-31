@@ -852,7 +852,7 @@ export const getDashboard = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
     const s = context.supabase;
-    const [demandes, devis, rapports, rdv, factures] = await Promise.all([
+    const [demandes, devis, rapports, rdv, factures, attLignes, attEntetes] = await Promise.all([
       s
         .from("demande_requests")
         .select("id, nom, email, telephone, code_postal, formule, status, created_at")
@@ -873,10 +873,31 @@ export const getDashboard = createServerFn({ method: "GET" })
       s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, date_echeance, paid_at, bon_commande, numero_affaire")
         .order("created_at", { ascending: false })
         .limit(500),
+      // Lignes d'attachement rattachées à un chantier : sert au montant par chantier réceptionné.
+      s
+        .from("attachement_items")
+        .select("attachement_id, rendezvous_id, quantite, prix_unitaire")
+        .not("rendezvous_id", "is", null),
+      s.from("attachements_travaux").select("id, statut"),
     ]);
 
     const now = Date.now();
-    const rows = rdv.data ?? [];
+    const annules = new Set(
+      (attEntetes.data ?? []).filter((a: any) => a.statut === "annule").map((a: any) => a.id),
+    );
+    const montants = new Map<string, number>();
+    for (const ligne of attLignes.data ?? []) {
+      if (!ligne.rendezvous_id || annules.has(ligne.attachement_id)) continue;
+      const precedent = montants.get(ligne.rendezvous_id) ?? 0;
+      montants.set(
+        ligne.rendezvous_id,
+        precedent + Number(ligne.quantite ?? 0) * Number(ligne.prix_unitaire ?? 0),
+      );
+    }
+    const rows = (rdv.data ?? []).map((r) => ({
+      ...r,
+      montant_ht: Math.round((montants.get(r.id) ?? 0) * 100) / 100,
+    }));
     const aVenir = rows.filter(
       (r) => new Date(r.date_debut).getTime() >= now && r.statut !== "annule",
     );
