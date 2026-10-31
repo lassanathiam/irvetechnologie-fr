@@ -1,6 +1,7 @@
 import type { RdvExtrait } from "./import-rdv.functions";
 import type { FicheExtraite } from "./fiches-techniques.functions";
 import { detecterReseauClient } from "./reseau-client";
+import { nettoyerTexteLu } from "./doublons-import";
 
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const mois = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
@@ -66,7 +67,8 @@ const colonnes: Record<string, string> = {
 };
 
 /** Deterministic extraction only: retains source and leaves unknown fields empty for review. */
-export function lireRdvSansIA(texte: string, maintenant = new Date()): RdvExtrait[] {
+export function lireRdvSansIA(brut: string, maintenant = new Date()): RdvExtrait[] {
+  const texte = nettoyerTexteLu(brut);
   if (!texte.trim()) return [];
   const lignes = texte.trim().split(/\r?\n/);
   const enteteIndex = lignes.findIndex((l) => {
