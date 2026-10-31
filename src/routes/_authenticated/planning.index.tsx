@@ -116,6 +116,7 @@ import { FileUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { pvPourReseau } from "@/lib/rapport-modeles";
+import { estTotal } from "@/lib/cri-total";
 
 
 export const Route = createFileRoute("/_authenticated/planning/")({
@@ -1405,7 +1406,8 @@ function PlanningPage() {
                   {missionTerrain.demarre_at && !missionTerrain.termine_at && <Button variant="outline" className="mt-3 h-12 w-full min-w-0 border-blue-300 text-base font-bold" onClick={() => setRetourRdv(missionTerrain as unknown as RetourTravauxRdv)}><Camera /> Photos</Button>}
                 </EtapeMission>
                 <EtapeMission titre="Rapport et signatures" detail="Rapport du donneur d’ordre" etat={missionTerrain.retour_complete_at ? "active" : "attente"} icone={<ClipboardCheck />}>
-                  {pvPourReseau((missionTerrain as { reseau_client?: string | null }).reseau_client)?.kind !== "crm" && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Ouvrir le PV / rapport</Link></Button>}
+                  {estTotal((missionTerrain as { reseau_client?: string | null }).reseau_client) && <Button asChild className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-cri-total/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> PV TotalEnergies (photos + débrief)</Link></Button>}
+                  {!estTotal((missionTerrain as { reseau_client?: string | null }).reseau_client) && pvPourReseau((missionTerrain as { reseau_client?: string | null }).reseau_client)?.kind !== "crm" && <Button asChild variant="outline" className="mt-3 h-12 w-full min-w-0 text-base font-bold"><Link to="/chantier-rapport/$rdvId" params={{ rdvId: missionTerrain.id }}><ClipboardCheck /> Ouvrir le PV / rapport</Link></Button>}
                   {(() => { const pv = pvPourReseau((missionTerrain as { reseau_client?: string | null }).reseau_client); if (!pv) return null; return <p className="mt-2 rounded-md border border-primary/40 bg-primary/10 px-3 py-2 text-center text-sm font-semibold">{pv.kind === "pv" ? `PV ${pv.cle} à faire signer en fin d'intervention` : `Pas de PV : à remplir dans ${pv.outil}`}</p>; })()}
                 </EtapeMission>
                 <EtapeMission titre="Clôture" detail={missionTerrain.termine_at ? "Intervention terminée" : "Finaliser et prévenir le client"} etat={missionTerrain.termine_at ? "termine" : missionTerrain.retour_complete_at ? "active" : "attente"} icone={<Flag />} dernier>

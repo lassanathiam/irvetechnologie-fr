@@ -9,7 +9,7 @@ export const ETAPES_PHOTOS = [
     id: "avant", numero: 2,
     nom: "Avant travaux",
     couleur: "photo-avant",
-    categories: ["ensio_av_tableau_ferme", "ensio_av_tableau_ouvert", "avant_tableau", "emplacement_tableau", "ensio_av_emplacement_borne", "avant_emplacement", "emplacement_borne", "etat_avant_maintenance", "avant_compteur", "avant_travaux"],
+    categories: ["ensio_av_tableau_ferme", "ensio_av_tableau_ouvert", "avant_tableau", "emplacement_tableau", "ensio_av_emplacement_borne", "avant_emplacement", "emplacement_borne", "etat_avant_maintenance", "avant_compteur", "avant_travaux", "total_avant", "total_tableau_ferme", "total_tableau_ouvert", "total_linky"],
   },
   {
     id: "borne", numero: 3,
@@ -18,6 +18,7 @@ export const ETAPES_PHOTOS = [
     categories: [
       "ensio_borne_ouverte_ensemble", "raccordement_borne", "ensio_borne_ouverte_alim", "ensio_borne_ouverte_cable_info",
       "borne_posee", "vue_ensemble", "ensio_borne_fermee_face", "ensio_borne_fermee_droite", "ensio_borne_fermee_gauche",
+      "total_interieur_borne", "total_vue_ensemble", "total_apres",
     ],
   },
   {
@@ -26,7 +27,7 @@ export const ETAPES_PHOTOS = [
     couleur: "photo-tableau",
     categories: [
       "tableau_electrique", "ensio_tableau_ouvert", "ensio_alim_protections", "ensio_liaison_pe", "ensio_protections_refs",
-      "compteur_linky", "ensio_tore_emplacement", "ensio_tore_connexions", "ensio_tension_sortie", "ensio_tableau_ferme_etiquette", "armoire",
+      "compteur_linky", "ensio_tore_emplacement", "ensio_tore_connexions", "ensio_tension_sortie", "ensio_tableau_ferme_etiquette", "armoire", "total_protections", "total_smartcharging", "total_tore",
     ],
   },
   {
@@ -36,6 +37,7 @@ export const ETAPES_PHOTOS = [
     categories: [
       "mise_en_service", "ensio_simulateur_charge", "ensio_resistance_pe", "ensio_parametrages",
       "plaque_serie", "ensio_numero_serie", "ensio_etiquette_autel", "ensio_carte_sim", "ensio_badges", "ensio_appel_supervision", "ensio_sms_supervision",
+      "total_terre", "total_numero_serie", "total_simulateur", "total_vehicule", "total_wifi",
     ],
   },
   {
@@ -48,7 +50,7 @@ export const ETAPES_PHOTOS = [
     id: "cable", numero: 7,
     nom: "Cheminement du câble et traversée de gaine",
     couleur: "photo-cable",
-    categories: ["cheminement_cable", "ensio_cheminement_cable", "ensio_gaine_traversee", "boite_derivation"],
+    categories: ["cheminement_cable", "ensio_cheminement_cable", "ensio_gaine_traversee", "boite_derivation", "total_cheminement", "total_percements"],
   },
   {
     id: "autre", numero: 8,
