@@ -3,7 +3,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
-import { ArrowLeft, FileUp, Loader2, Printer, Save, Send } from "lucide-react";
+import { ArrowLeft, ClipboardCheck, FileUp, Loader2, Printer, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -22,6 +22,7 @@ import {
   getRapportChantier,
 } from "@/lib/rapport-modeles.functions";
 import { pvPourReseau, normaliserStructure, valeursConformite } from "@/lib/rapport-modeles";
+import { estTotal } from "@/lib/cri-total";
 import { smsLien } from "@/lib/contact-client";
 
 export const Route = createFileRoute("/_authenticated/chantier-rapport/$rdvId")({
@@ -276,7 +277,15 @@ function RapportChantierPageInner() {
         </label>
       </div>
 
-      {(() => { const pv = pvPourReseau(data.rdv.reseau_client); return pv?.kind === "crm" ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold print:hidden">Client {data.rdv.reseau_client} : pas de PV papier, à remplir dans {pv.outil}.</p> : !modele ? <p className="rounded-lg border border-border p-3 text-sm print:hidden">PV à choisir dans la liste ci-dessous.</p> : null; })()}
+      {estTotal(data.rdv.reseau_client) && (
+        <div className="rounded-lg border border-primary/40 bg-primary/10 p-3 print:hidden">
+          <p className="text-sm font-semibold">Client TotalEnergies : le PV se remplit sur l'écran dédié, avec les photos dans les cases du document.</p>
+          <Button asChild className="mt-2 h-12 w-full text-base font-bold">
+            <Link to="/chantier-cri-total/$rdvId" params={{ rdvId: data.rdv.id }}><ClipboardCheck /> Ouvrir le PV TotalEnergies</Link>
+          </Button>
+        </div>
+      )}
+      {(() => { const pv = pvPourReseau(data.rdv.reseau_client); return pv?.kind === "crm" ? <p className="rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm font-semibold print:hidden">Client {data.rdv.reseau_client} : pas de PV papier, à remplir dans {pv.outil}.</p> : !modele && !estTotal(data.rdv.reseau_client) ? <p className="rounded-lg border border-border p-3 text-sm print:hidden">PV à choisir dans la liste ci-dessous.</p> : null; })()}
       {!data.modeles.length && !modele ? (
         <p className="rounded-lg border border-border p-4 text-sm">
           Aucun modèle de rapport. <Link to="/rapports/modeles" className="text-primary underline">Créer un modèle</Link>
