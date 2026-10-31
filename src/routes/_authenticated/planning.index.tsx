@@ -655,6 +655,8 @@ function PlanningPage() {
       return toutes
         .filter((r) => rechercheGlobale || ongletDe(r) === vueListe)
         .filter((r) => rechercheGlobale || filtreStatut === "tous" || r.statut === filtreStatut)
+        // « Tous » : les chantiers en pause restent uniquement dans leur onglet.
+        .filter((r) => rechercheGlobale || vueListe !== "encours" || filtreStatut !== "tous" || r.statut !== "en_pause")
         .filter((r) => !filtreProbleme || Boolean((r as { probleme?: boolean | null }).probleme))
         .filter((r) => {
           if (!(rechercheGlobale || vueListe === "clotures") || !q) return true;
@@ -666,7 +668,8 @@ function PlanningPage() {
           // Point client et chantiers terminés / clôturés : le plus récent toujours en haut.
           if (rechercheGlobale || vueListe === "clotures" || ["termine", "realise"].includes(filtreStatut))
             return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
-          return 0;
+          // Autres vues : planifiés par date, le plus proche en premier.
+          return String(a.date_debut ?? "").localeCompare(String(b.date_debut ?? ""));
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -2202,7 +2205,7 @@ function PlanningPage() {
             ].map((f) => {
               const nb =
                 f.v === "tous"
-                  ? toutes.filter((r) => ongletDe(r) === vueListe).length
+                  ? toutes.filter((r) => ongletDe(r) === vueListe && (vueListe !== "encours" || r.statut !== "en_pause")).length
                   : toutes.filter(
                       (r) => ongletDe(r) === vueListe && r.statut === f.v,
                     )
