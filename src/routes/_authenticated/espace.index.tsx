@@ -24,6 +24,7 @@ import { getDashboard } from "@/lib/planning.functions";
 import { updateFactureStatut } from "@/lib/factures.functions";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
+import { grouperReceptionParMois, totalReceptionne, type MoisReception } from "@/lib/reception-mois";
 import { Button } from "@/components/ui/button";
 import { RappelsRdvBandeau } from "@/components/RappelsRdv";
 import borneHero from "@/assets/borne-hero.jpg";
@@ -350,10 +351,11 @@ type ChantierReception = {
   receptionne_at: string | null;
   statut: string;
   partenaire: string | null;
+  montant_ht: number | null;
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
-  const [tab, setTab] = useState<"recus" | "attente">("recus");
+  const [tab, setTab] = useState<"recus" | "attente" | "mois">("recus");
 
   const recus = useMemo(
     () =>
@@ -376,6 +378,9 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
     [rendezvous],
   );
 
+  const parMois = useMemo(() => grouperReceptionParMois(recus), [recus]);
+  const totalRecu = useMemo(() => totalReceptionne(recus), [recus]);
+
   const rows = tab === "recus" ? recus : aReceptionner;
 
   return (
@@ -397,8 +402,18 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         >
           À réceptionner ({aReceptionner.length})
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setTab("mois")}
+          className={`rounded-none border-b-2 px-3 ${tab === "mois" ? "border-dashboard-blue text-dashboard-blue" : "border-transparent text-dashboard-copy-muted"}`}
+        >
+          Montant par mois
+        </Button>
       </div>
-      {!rows.length ? (
+      {tab === "mois" ? (
+        <MontantParMois mois={parMois} total={totalRecu} nbChantiers={recus.length} />
+      ) : !rows.length ? (
         <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
       ) : (
         <ul className="divide-y divide-dashboard-rule">
@@ -420,6 +435,9 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                   {chantier.partenaire}
                 </span>
               )}
+              {tab === "recus" && Number(chantier.montant_ht ?? 0) > 0 && (
+                <span className="whitespace-nowrap text-xs font-bold text-dashboard-copy">{euro(Number(chantier.montant_ht))}</span>
+              )}
               <strong className={`whitespace-nowrap text-xs font-bold ${tab === "recus" ? "text-dashboard-green" : "text-dashboard-orange"}`}>
                 {tab === "recus" ? "Réceptionné" : "En attente"}
               </strong>
@@ -428,6 +446,44 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         </ul>
       )}
     </DashboardPanel>
+  );
+}
+
+function MontantParMois({ mois, total, nbChantiers }: { mois: MoisReception[]; total: number; nbChantiers: number }) {
+  return (
+    <div className="overflow-x-auto">
+      <table className="w-full min-w-[420px] text-left text-xs">
+        <thead className="text-[10px] uppercase text-dashboard-copy-muted">
+          <tr>
+            <th className="pb-3">Mois de réception</th>
+            <th className="pb-3">Chantiers</th>
+            <th className="pb-3 text-right">Montant HT</th>
+          </tr>
+        </thead>
+        <tbody className="divide-y divide-dashboard-rule">
+          {mois.map((item) => (
+            <tr key={item.cle}>
+              <td className="py-3 font-semibold text-dashboard-copy">{item.libelle}</td>
+              <td className="py-3 text-dashboard-copy-muted">{item.nb}</td>
+              <td className={`py-3 text-right font-bold ${item.total_ht ? "text-dashboard-green" : "text-dashboard-copy-muted"}`}>
+                {euro(item.total_ht)}
+              </td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr className="border-t border-dashboard-rule">
+            <td className="pt-3 font-bold text-dashboard-copy">Total réceptionné</td>
+            <td className="pt-3 text-dashboard-copy-muted">{nbChantiers}</td>
+            <td className="pt-3 text-right font-extrabold text-dashboard-green">{euro(total)}</td>
+          </tr>
+        </tfoot>
+      </table>
+      <p className="mt-3 text-[11px] leading-relaxed text-dashboard-copy-muted">
+        Montant HT des attachements rattachés à chaque chantier réceptionné. Un mois à 0,00 € signifie
+        qu’aucun chantier n’a été marqué réceptionné ce mois-là.
+      </p>
+    </div>
   );
 }
 
