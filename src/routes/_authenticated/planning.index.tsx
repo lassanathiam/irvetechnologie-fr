@@ -7,6 +7,7 @@ import { useEffect, useMemo, useState, type InputHTMLAttributes } from "react";
 import { toast } from "sonner";
 import {
   Archive,
+  Search,
   ArchiveRestore,
   CalendarClock,
   ChevronDown,
@@ -624,7 +625,7 @@ function PlanningPage() {
   const [montantsVisibles, setMontantsVisibles] = useState(true);
 
   /** Vue « Archives » : les chantiers clôturés sont rangés à part, sans être supprimés. */
-  const [vueListe, setVueListe] = useState<"encours" | "annules" | "clotures">("encours");
+  const [vueListe, setVueListe] = useState<"encours" | "annules" | "clotures" | "recherche">("encours");
   const vueArchives = vueListe === "clotures";
   /** Filtre par état de chantier (tout, planifié, confirmé, réalisé, annulé). */
   const [filtreStatut, setFiltreStatut] = useState<string>("tous");
@@ -650,20 +651,22 @@ function PlanningPage() {
   const rows = useMemo(
     () => {
       const q = rechercheArchives.trim().toLowerCase();
+      const rechercheGlobale = vueListe === "recherche";
       return toutes
-        .filter((r) => ongletDe(r) === vueListe)
-        .filter((r) => filtreStatut === "tous" || r.statut === filtreStatut)
+        .filter((r) => rechercheGlobale || ongletDe(r) === vueListe)
+        .filter((r) => rechercheGlobale || filtreStatut === "tous" || r.statut === filtreStatut)
         .filter((r) => !filtreProbleme || Boolean((r as { probleme?: boolean | null }).probleme))
         .filter((r) => {
-          if (vueListe !== "clotures" || !q) return true;
+          if (!(rechercheGlobale || vueListe === "clotures") || !q) return true;
           const texte = [r.client_nom, r.cp_ville, r.adresse, r.partenaire, r.reseau_client, r.type, r.designation, r.titre]
             .filter(Boolean).join(" ").toLowerCase();
           return q.split(/\s+/).every((m) => (/^\d{2}$/.test(m) ? departement(r.cp_ville) === m : texte.includes(m)));
         })
         .sort((a, b) => {
-          // Chantiers terminés / clôturés : le plus récent toujours en haut.
-          if (vueListe !== "clotures" && !["termine", "realise"].includes(filtreStatut)) return 0;
-          return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
+          // Point client et chantiers terminés / clôturés : le plus récent toujours en haut.
+          if (rechercheGlobale || vueListe === "clotures" || ["termine", "realise"].includes(filtreStatut))
+            return String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut));
+          return 0;
         });
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -897,14 +900,24 @@ function PlanningPage() {
     const choisi = toutes.find((r) => r.id === dossierCarte);
     /** Chantiers terminés/clôturés : regroupés par partenaire pour retrouver vite chaque donneur d'ordre. */
     const parPartenaire = vueListe === "clotures";
+    /** Point client : regroupé par état du chantier pour répondre vite au donneur d'ordre. */
+    const parEtat = vueListe === "recherche";
+    const etiquetteEtat = (r: (typeof rows)[number]) =>
+      r.statut === "annule" ? "Annulés" : estArchiveLogique(r) ? "Clôturés / facturés" : r.termine_at || r.statut === "termine" || r.statut === "realise" ? "Terminés" : "En cours / à venir";
+    const cleDe = (r: (typeof rows)[number]) =>
+      parEtat ? etiquetteEtat(r) : parPartenaire ? (r.partenaire?.trim() || "Sans partenaire") : dayKey(r.date_debut);
     for (const r of rows) {
       if (r.id === choisi?.id) continue;
-      const k = parPartenaire ? (r.partenaire?.trim() || "Sans partenaire") : dayKey(r.date_debut);
+      const k = cleDe(r);
       map.set(k, [...(map.get(k) ?? []), r]);
     }
     let groupes = [...map.entries()];
+    if (parEtat) {
+      const ordre = ["En cours / à venir", "Terminés", "Clôturés / facturés", "Annulés"];
+      groupes.sort((a, b) => ordre.indexOf(a[0]) - ordre.indexOf(b[0]));
+    }
     // Groupes dans l'ordre des chantiers (le plus récent en premier).
-    return choisi ? [[`${parPartenaire ? (choisi.partenaire?.trim() || "Sans partenaire") : dayKey(choisi.date_debut)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
+    return choisi ? [[`${cleDe(choisi)} · Dossier sélectionné`, [choisi]] as [string, typeof rows], ...groupes] : groupes;
   }, [rows, toutes, dossierCarte, vueListe]);
 
   const choisirDepuisCarte = (id: string) => {
@@ -2138,7 +2151,7 @@ function PlanningPage() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
-              {vueListe === "clotures" ? "Chantiers clôturés" : vueListe === "annules" ? "Rendez-vous annulés" : "Rendez-vous programmés"}
+              {vueListe === "recherche" ? "Point client — tous les chantiers" : vueListe === "clotures" ? "Chantiers clôturés" : vueListe === "annules" ? "Rendez-vous annulés" : "Rendez-vous programmés"}
             </h2>
             <div className="ml-auto inline-flex rounded-full border border-border p-0.5">
               <button
@@ -2167,6 +2180,15 @@ function PlanningPage() {
                 }`}
               >
                 <Archive className="h-3.5 w-3.5" /> Chantiers clôturés ({nbArchives})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVueListe("recherche"); setFiltreStatut("tous"); setFiltreProbleme(false); }}
+                className={`text-[11px] px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition ${
+                  vueListe === "recherche" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                <Search className="h-3.5 w-3.5" /> Point client
               </button>
             </div>
           </div>
@@ -2229,17 +2251,17 @@ function PlanningPage() {
           </div>
           </div>
 
-          {vueArchives && (
+          {(vueArchives || vueListe === "recherche") && (
             <div className="space-y-2">
               <input
                 type="search"
                 value={rechercheArchives}
                 onChange={(e) => setRechercheArchives(e.target.value)}
-                placeholder="Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"
+                placeholder={vueListe === "recherche" ? "Point client : nom du client, ville, donneur d'ordre (ENSIO, BUMP…), type d'intervention…" : "Rechercher : nom du client, département (ex. 44), BUMP, CAP BORNES, 50FIVE…"}
                 className="w-full rounded-lg border border-border bg-background px-3 py-3 text-sm"
               />
               <div className="flex flex-wrap gap-2">
-                {[...new Set(toutes.filter((r) => ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
+                {[...new Set(toutes.filter((r) => vueListe === "recherche" || ongletDe(r) === "clotures").map((r) => r.reseau_client?.trim()).filter(Boolean) as string[])]
                   .sort((a, b) => a.localeCompare(b, "fr"))
                   .map((n) => (
                     <button
@@ -2265,6 +2287,8 @@ function PlanningPage() {
             <p className="text-sm text-muted-foreground">
               {vueListe === "annules"
                 ? "Aucun rendez-vous annulé."
+                : vueListe === "recherche"
+                ? "Aucun chantier ne correspond à cette recherche."
                 : vueArchives
                 ? "Aucun chantier archivé pour le moment."
                 : filtreStatut !== "tous"
