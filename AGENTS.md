@@ -30,3 +30,4 @@
 - ENSIO cable supplement preparation uses the browser-safe supplements-ensio helper and the stored price catalogue; existing documents remain unchanged when rates change, to preserve historical billing.
 - Rescheduling blocked appointments uses the shared browser-safe rescheduling rule to restore operational visibility without reopening completed jobs or changing their billing.
 - Planning intervenant selection filters the main lists only; other technicians' unfinished appointments stay listed separately and search covers all appointments, so rescheduled jobs are never hidden by the device's technician choice.
+- Imported-original PV downloads composite page pixels, measured text lines and signatures directly onto a canvas (no html2canvas), so mobile viewport or scroll can never crop the A4 page.
