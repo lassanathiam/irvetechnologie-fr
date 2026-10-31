@@ -403,6 +403,38 @@ export type Database = {
         }
         Relationships: []
       }
+      cri_total: {
+        Row: {
+          rendezvous_id: string
+          signature_client: string | null
+          signature_technicien: string | null
+          updated_at: string
+          valeurs: Json
+        }
+        Insert: {
+          rendezvous_id: string
+          signature_client?: string | null
+          signature_technicien?: string | null
+          updated_at?: string
+          valeurs?: Json
+        }
+        Update: {
+          rendezvous_id?: string
+          signature_client?: string | null
+          signature_technicien?: string | null
+          updated_at?: string
+          valeurs?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cri_total_rendezvous_id_fkey"
+            columns: ["rendezvous_id"]
+            isOneToOne: true
+            referencedRelation: "rendezvous"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       demande_photos: {
         Row: {
           created_at: string
