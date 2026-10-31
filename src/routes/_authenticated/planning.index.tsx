@@ -2150,7 +2150,7 @@ function PlanningPage() {
           <div className="flex flex-wrap items-center gap-3">
             <h2 className="text-mono text-xs font-bold uppercase tracking-[0.14em] text-muted-foreground flex items-center gap-2">
               <CalendarClock className="h-4 w-4 text-primary" />
-              {vueListe === "clotures" ? "Chantiers clôturés" : vueListe === "annules" ? "Rendez-vous annulés" : "Rendez-vous programmés"}
+              {vueListe === "recherche" ? "Point client — tous les chantiers" : vueListe === "clotures" ? "Chantiers clôturés" : vueListe === "annules" ? "Rendez-vous annulés" : "Rendez-vous programmés"}
             </h2>
             <div className="ml-auto inline-flex rounded-full border border-border p-0.5">
               <button
@@ -2179,6 +2179,15 @@ function PlanningPage() {
                 }`}
               >
                 <Archive className="h-3.5 w-3.5" /> Chantiers clôturés ({nbArchives})
+              </button>
+              <button
+                type="button"
+                onClick={() => { setVueListe("recherche"); setFiltreStatut("tous"); setFiltreProbleme(false); }}
+                className={`text-[11px] px-3 py-1.5 rounded-full inline-flex items-center gap-1.5 transition ${
+                  vueListe === "recherche" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
+                }`}
+              >
+                <Search className="h-3.5 w-3.5" /> Point client
               </button>
             </div>
           </div>
