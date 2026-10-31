@@ -1051,6 +1051,21 @@ function lienDossierPhotos(token: string): string {
   return `${base.replace(/\/$/, "")}/api/public/retour/${token}.zip`;
 }
 
+/** Lien public du dernier PV signé du chantier (page client avec téléchargement PDF), null si aucun. */
+async function lienPvSigne(supabase: any, rendezvousId: string): Promise<string | null> {
+  const { data } = await supabase
+    .from("rapport_remplis")
+    .select("public_token")
+    .eq("rendezvous_id", rendezvousId)
+    .not("signed_at", "is", null)
+    .order("signed_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (!data?.public_token) return null;
+  const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
+  return `${base.replace(/\/$/, "")}/rapport-donneur/${data.public_token}`;
+}
+
 /** Lien privé du client pour confirmer son rendez-vous. */
 function lienConfirmationRdv(token: string): string {
   const base = process.env["PUBLIC_SITE_URL"]?.trim() || "https://www.irvetechnologie.fr";
@@ -1246,6 +1261,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
         // Toutes les photos du retour de travaux en un seul lien de téléchargement.
         const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
+        const pvUrl = await lienPvSigne(context.supabase, data.id);
         const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
         const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
         for (const destinataire of destinataires) {
@@ -1263,6 +1279,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
               observations: rdv.retour_observations,
               delestage: rdv.retour_delestage,
               zip_url: zipUrl,
+              pv_url: pvUrl,
             },
             idempotencyKey: `chantier-termine-${data.id}-${destinataire.toLowerCase()}`,
           });
@@ -1334,6 +1351,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
     const dureeMin = debut ? Math.max(1, Math.round((fin.getTime() - debut.getTime()) / 60000)) : null;
     const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
+    const pvUrl = await lienPvSigne(context.supabase, data.id);
     const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
     const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
 
@@ -1353,6 +1371,7 @@ export const renvoyerRetourTravaux = createServerFn({ method: "POST" })
           observations: rdv.retour_observations,
           delestage: rdv.retour_delestage,
           zip_url: zipUrl,
+          pv_url: pvUrl,
         },
         // Renvoi explicite après correction (photos, métrage…) : clé unique à chaque
         // renvoi pour que l'email reparte réellement, sans toucher à la clôture.
