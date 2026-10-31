@@ -735,6 +735,7 @@
 .attachment-doc-compact table { margin-top: 12px; }
 @media print {
   .attachment-export-stage { display: none !important; }
+  .rapport-export-stage { display: none !important; }
   .pro-shell:has(.attachment-doc) .pro-sidebar,
   .pro-shell:has(.attachment-doc) .pro-header { display: none !important; }
   .pro-shell:has(.attachment-doc),
