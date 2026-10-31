@@ -4,6 +4,7 @@ import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { computeTotals } from "@/lib/billing";
 import { cleCommande } from "@/lib/attachement-suivi";
 import { blocageAnnulation } from "@/lib/attachement-statut";
+import { preparerLignesTs } from "@/lib/attachement-ts";
 
 const lineSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
@@ -171,7 +172,26 @@ export const getAttachement = createServerFn({ method: "GET" })
       .order("created_at", { ascending: false });
     if (props.error) throw new Error(props.error.message);
     const message_suggestion = await messageAdaptif(context.supabase, result.data);
-    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion };
+    const supplements = await context.supabase.from("attachements_travaux")
+      .select("id, numero, statut, total_ht").eq("attachement_initial_id", data.id).order("created_at", { ascending: false });
+    if (supplements.error) throw new Error(supplements.error.message);
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [] };
+  });
+
+export const creerAttachementTs = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({
+    initial_id: z.string().uuid(), document_id: z.string().uuid(),
+    bon_commande: z.string().trim().max(120).nullable(),
+    items: z.array(lineSchema).min(1).max(100),
+  }).parse(data))
+  .handler(async ({ data, context }) => {
+    const result = await context.supabase.rpc("creer_attachement_ts", {
+      _initial_id: data.initial_id, _document_id: data.document_id,
+      _bon_commande: data.bon_commande ?? "", _lignes: preparerLignesTs(data.items),
+    });
+    if (result.error) throw new Error(result.error.message);
+    return { id: result.data };
   });
 
 export const traiterPropositionAttachement = createServerFn({ method: "POST" })

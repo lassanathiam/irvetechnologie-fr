@@ -7,6 +7,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Ban, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
 import { LignesAttachement } from "@/components/LignesAttachement";
+import { CreerAttachementTs } from "@/components/CreerAttachementTs";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
 import { TelechargerAttachements } from "@/components/TelechargerAttachements";
@@ -91,6 +92,7 @@ function AttachementDetail() {
   return <ProShell><div className="print:hidden space-y-5">
     <header className="flex flex-wrap items-center gap-3"><Link to="/attachements" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-primary"><ArrowLeft className="h-4 w-4" /> Attachements</Link><strong className="text-primary">{titreAttachement(a)}</strong><span className="rounded-full border border-border px-2 py-1 text-xs">{statutAttachement(a)}</span>
       <div className="ml-auto flex flex-wrap gap-2">
+        {!a.attachement_initial_id && a.statut !== "annule" && <CreerAttachementTs id={id} numero={a.numero} chantiers={chantiers} catalogue={(bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(a.client_nom) ? "ensio" : "axians"))} disabled={edit} />}
         {!a.facture_id && (edit && confirmFermer
           ? <span className="inline-flex flex-wrap items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-sm"><span>Fermer sans enregistrer ? Les modifications seront perdues.</span><Button size="sm" variant="outline" onClick={() => setConfirmFermer(false)}>Continuer la modification</Button><Button size="sm" variant="destructive" onClick={() => { setConfirmFermer(false); setEdit(false); }}>Fermer sans enregistrer</Button></span>
           : <Button variant={edit ? "secondary" : "outline"} onClick={() => (edit ? setConfirmFermer(true) : setEdit(true))}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>)}
@@ -102,6 +104,9 @@ function AttachementDetail() {
         {!a.facture_id && <Button variant="destructive" disabled={remove.isPending} onClick={() => { if (window.confirm(`Supprimer définitivement l’attachement ${a.numero} ?`)) remove.mutate(); }}><Trash2 /> Supprimer</Button>}
       </div>
     </header>
+
+    {a.attachement_initial_id && <section className="space-y-2"><h2 className="font-semibold text-primary">TS · Travaux supplémentaires séparés</h2><Button asChild variant="outline"><Link to="/attachements/$id" params={{ id: a.attachement_initial_id }}><ArrowLeft /> Attachement initial {a.attachement_initial_numero}</Link></Button></section>}
+    {(query.data.supplements ?? []).length > 0 && <section className="space-y-2"><h2 className="text-sm font-semibold">Documents TS séparés</h2><div className="flex flex-wrap gap-2">{query.data.supplements.map((ts) => <Button key={ts.id} asChild variant="outline"><Link to="/attachements/$id" params={{ id: ts.id }}>{ts.numero} · {euro(Number(ts.total_ht))} HT · {statutAttachement(ts)}</Link></Button>)}</div></section>}
 
     <section className="space-y-2">
       <h2 className="text-sm font-semibold">Chantiers dans le Planning</h2>

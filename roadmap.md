@@ -34,6 +34,8 @@
 - [x] Facturation directe depuis le Planning pour les dossiers terminés, avec déblocage exceptionnel sans photos de M. Porhel (27/09/2026)
 # Roadmap
 
+- [x] Créer un document TS séparé depuis un attachement initial ; création/relecture et liens aller-retour vérifiés connecté sur AT-2026-0074, original conservé à 100 € HT, document temporaire de 17,50 € supprimé sans envoi ni facturation ; 9 tests réussis.
+
 - [x] Corriger le retour des chantiers bloqués reprogrammés dans Mission terrain : BOISSE retrouvé dans À venir et interventions du jour au 27 octobre 15 h, aucune photo/facturation modifiée ; tests de reprise et clôture réussis.
 
 - [x] Rendre Matériel récupéré et À facturer repliables dans tous les dossiers ; ouverture et fermeture vérifiées sur un dossier réel.

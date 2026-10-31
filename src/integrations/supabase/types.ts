@@ -143,6 +143,8 @@ export type Database = {
         Row: {
           accepted_at: string | null
           activite: string
+          attachement_initial_id: string | null
+          attachement_initial_numero: string | null
           autoliquidation: boolean
           bon_commande: string | null
           client_adresse: string | null
@@ -180,6 +182,8 @@ export type Database = {
         Insert: {
           accepted_at?: string | null
           activite?: string
+          attachement_initial_id?: string | null
+          attachement_initial_numero?: string | null
           autoliquidation?: boolean
           bon_commande?: string | null
           client_adresse?: string | null
@@ -217,6 +221,8 @@ export type Database = {
         Update: {
           accepted_at?: string | null
           activite?: string
+          attachement_initial_id?: string | null
+          attachement_initial_numero?: string | null
           autoliquidation?: boolean
           bon_commande?: string | null
           client_adresse?: string | null
@@ -252,6 +258,13 @@ export type Database = {
           viewed_at?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "attachements_travaux_attachement_initial_id_fkey"
+            columns: ["attachement_initial_id"]
+            isOneToOne: false
+            referencedRelation: "attachements_travaux"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "attachements_travaux_facture_id_fkey"
             columns: ["facture_id"]
@@ -2148,6 +2161,15 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      creer_attachement_ts: {
+        Args: {
+          _bon_commande?: string
+          _document_id: string
+          _initial_id: string
+          _lignes: Json
+        }
+        Returns: string
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
