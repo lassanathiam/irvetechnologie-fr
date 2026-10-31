@@ -157,7 +157,9 @@ function EspacePage() {
                   <HealthCard />
                 </div>
               </div>
+              <ReceptionTracking rendezvous={rendezvous} />
               <RecentQuotes devis={devisActifs.slice(0, 4)} />
+
             </>
           )}
         </div>
@@ -337,7 +339,100 @@ function InvoiceTracking({ invoices, paid, onPaid, pendingId }: { invoices: Fact
   );
 }
 
+type ChantierReception = {
+  id: string;
+  client_nom: string;
+  titre: string;
+  adresse: string;
+  cp_ville: string | null;
+  date_debut: string;
+  termine_at: string | null;
+  receptionne_at: string | null;
+  statut: string;
+  partenaire: string | null;
+};
+
+function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
+  const [tab, setTab] = useState<"recus" | "attente">("recus");
+
+  const recus = useMemo(
+    () =>
+      rendezvous
+        .filter((chantier) => chantier.receptionne_at)
+        .sort((a, b) => String(b.receptionne_at).localeCompare(String(a.receptionne_at))),
+    [rendezvous],
+  );
+
+  const aReceptionner = useMemo(
+    () =>
+      rendezvous
+        .filter(
+          (chantier) =>
+            !chantier.receptionne_at && (chantier.statut === "termine" || chantier.statut === "realise"),
+        )
+        .sort((a, b) =>
+          String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut)),
+        ),
+    [rendezvous],
+  );
+
+  const rows = tab === "recus" ? recus : aReceptionner;
+
+  return (
+    <DashboardPanel title="Chantiers réceptionnés" icon={CheckCircle2} action={{ to: "/planning", label: "Ouvrir le planning" }}>
+      <div className="mb-3 flex gap-1 border-b border-dashboard-rule">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setTab("recus")}
+          className={`rounded-none border-b-2 px-3 ${tab === "recus" ? "border-dashboard-green text-dashboard-green" : "border-transparent text-dashboard-copy-muted"}`}
+        >
+          Réceptionnés ({recus.length})
+        </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setTab("attente")}
+          className={`rounded-none border-b-2 px-3 ${tab === "attente" ? "border-dashboard-orange text-dashboard-orange" : "border-transparent text-dashboard-copy-muted"}`}
+        >
+          À réceptionner ({aReceptionner.length})
+        </Button>
+      </div>
+      {!rows.length ? (
+        <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
+      ) : (
+        <ul className="divide-y divide-dashboard-rule">
+          {rows.slice(0, 8).map((chantier) => (
+            <li key={chantier.id} className="flex flex-wrap items-center gap-3 py-3 sm:flex-nowrap">
+              <Link to="/planning" search={{ rdv: chantier.id }} className="min-w-0 flex-1">
+                <span className="block truncate text-sm font-semibold text-dashboard-copy">{chantier.client_nom}</span>
+                <span className="block truncate text-xs text-dashboard-copy-muted">
+                  {tab === "recus"
+                    ? `Réceptionné le ${dateFr(chantier.receptionne_at ?? chantier.date_debut)}`
+                    : chantier.termine_at
+                      ? `Terminé le ${dateFr(chantier.termine_at)}`
+                      : `Intervention du ${dateFr(chantier.date_debut)}`}
+                  {` · ${chantier.cp_ville || chantier.adresse}`}
+                </span>
+              </Link>
+              {chantier.partenaire && (
+                <span className="rounded bg-dashboard-subtle px-2 py-1 text-[10px] font-bold uppercase text-dashboard-copy-muted">
+                  {chantier.partenaire}
+                </span>
+              )}
+              <strong className={`whitespace-nowrap text-xs font-bold ${tab === "recus" ? "text-dashboard-green" : "text-dashboard-orange"}`}>
+                {tab === "recus" ? "Réceptionné" : "En attente"}
+              </strong>
+            </li>
+          ))}
+        </ul>
+      )}
+    </DashboardPanel>
+  );
+}
+
 function DashboardPanel({ title, icon: Icon, action, children }: { title: string; icon: typeof Euro; action?: { to: string; label: string }; children: React.ReactNode }) {
+
   return (
     <section className="min-w-0 rounded-md border border-dashboard-rule bg-card p-4 shadow-sm">
       <div className="mb-4 flex items-center justify-between gap-3">
