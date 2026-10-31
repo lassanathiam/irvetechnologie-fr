@@ -40,6 +40,7 @@ import {
   Clock3,
   Navigation,
   TriangleAlert,
+  Users,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -1521,27 +1522,67 @@ function PlanningPage() {
             </ul>
             {moi && !qMission && ongletMission !== "termines" && chantiersAutresIntervenants.length > 0 && (
               <div className="mt-4 border-t border-border pt-3">
-                <p className="text-xs font-semibold text-muted-foreground">
-                  Chantiers des autres intervenants ({chantiersAutresIntervenants.length})
-                </p>
-                <ul className="mt-2 grid gap-2">
-                  {chantiersAutresIntervenants.map((r) => {
-                    const d = new Date(r.date_debut);
-                    return (
-                      <li key={r.id}>
-                        <button type="button" onClick={() => choisirMission(r.id)} className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2 text-left transition hover:border-primary/50">
-                          <span className="w-24 shrink-0 text-xs font-bold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}<br />{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-bold">{r.client_nom}</span>
-                            <span className="block truncate text-xs font-semibold text-primary">Affecté à {technicienByNom(r.technicien)?.nom.split(" ")[0] ?? r.technicien}</span>
-                            <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
-                          </span>
-                          <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                {[
+                  { titre: "À affecter — personne n’est encore prévu", liste: chantiersAutresIntervenants.filter((r) => !r.technicien) },
+                  { titre: "Chantiers des autres intervenants", liste: chantiersAutresIntervenants.filter((r) => r.technicien) },
+                ]
+                  .filter((g) => g.liste.length > 0)
+                  .map((g, gi) => (
+                    <div key={g.titre} className={gi > 0 ? "mt-4" : ""}>
+                      <p className="text-xs font-semibold text-muted-foreground">
+                        {g.titre} ({g.liste.length})
+                      </p>
+                      <ul className="mt-2 grid gap-2">
+                        {g.liste.map((r) => {
+                          const d = new Date(r.date_debut);
+                          return (
+                            <li key={r.id}>
+                              <button type="button" onClick={() => choisirMission(r.id)} className="flex w-full min-w-0 items-center gap-3 rounded-lg border border-border bg-muted/20 px-3 py-2 text-left transition hover:border-primary/50">
+                                <span className="w-24 shrink-0 text-xs font-bold capitalize">{d.toLocaleDateString("fr-FR", { weekday: "short", day: "numeric", month: "short" })}<br />{creneauTexte(r.date_debut, r.creneau_fin, true)}</span>
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate text-sm font-bold">{r.client_nom}</span>
+                                  {r.technicien && <span className="block truncate text-xs font-semibold text-primary">Affecté à {technicienByNom(r.technicien)?.nom.split(" ")[0] ?? r.technicien}</span>}
+                                  <InterventionBadge rdv={r} /><TriphaseBadge phase={r.phase_installation} />
+                                </span>
+                                <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
+                              </button>
+                              <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                                <span className="text-mono text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Affectation</span>
+                                {TECHNICIENS.map((t) => (
+                                  <button
+                                    key={t.id}
+                                    type="button"
+                                    disabled={affecter.isPending || r.technicien === t.nom}
+                                    onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}
+                                    className={`text-mono text-[11px] px-2.5 py-1 rounded-full border transition disabled:opacity-60 ${
+                                      r.technicien === t.nom
+                                        ? "border-primary bg-primary text-primary-foreground"
+                                        : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                                    }`}
+                                  >
+                                    {t.nom.split(" ")[0]}
+                                  </button>
+                                ))}
+                                {r.technicien && (
+                                  <button
+                                    type="button"
+                                    disabled={affecter.isPending}
+                                    onClick={() => {
+                                      if (window.confirm(`Retirer l'affectation du chantier de ${r.client_nom} ?`))
+                                        affecter.mutate({ id: r.id, technicien: null });
+                                    }}
+                                    className="text-mono text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground transition hover:border-red-400 hover:text-red-600 disabled:opacity-60"
+                                  >
+                                    Retirer
+                                  </button>
+                                )}
+                              </span>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  ))}
               </div>
             )}
           </div>
@@ -2396,6 +2437,41 @@ function PlanningPage() {
                             >
                               <TriangleAlert className="h-3.5 w-3.5" /> {Boolean((r as { probleme?: boolean | null }).probleme) ? "Problème signalé — retirer" : "Signaler un problème"}
                             </button>
+
+                            {/* Affectation possible directement depuis la liste du planning complet. */}
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <span className="text-mono text-[10px] font-bold uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5" /> Affectation
+                              </span>
+                              {TECHNICIENS.map((t) => (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  disabled={affecter.isPending || r.technicien === t.nom}
+                                  onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}
+                                  className={`text-mono text-[11px] px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5 transition disabled:opacity-60 ${
+                                    r.technicien === t.nom
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  {t.nom.split(" ")[0]}
+                                </button>
+                              ))}
+                              {r.technicien && (
+                                <button
+                                  type="button"
+                                  disabled={affecter.isPending}
+                                  onClick={() => {
+                                    if (window.confirm(`Retirer l'affectation du chantier de ${r.client_nom} ?`))
+                                      affecter.mutate({ id: r.id, technicien: null });
+                                  }}
+                                  className="text-mono text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground transition hover:border-red-400 hover:text-red-600 disabled:opacity-60"
+                                >
+                                  Retirer
+                                </button>
+                              )}
+                            </div>
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
