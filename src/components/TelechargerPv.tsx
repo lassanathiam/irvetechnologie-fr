@@ -5,7 +5,6 @@ import { Button } from "@/components/ui/button";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
 import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
 import { downloadElementAsPdf, shareOrDownloadPdf } from "@/lib/pdf-download";
-import { creerPdfAttachements } from "@/lib/pdf-attachements";
 import type { ModeleStructure } from "@/lib/rapport-modeles";
 
 type Valeurs = Record<string, string | boolean | null>;
@@ -54,7 +53,7 @@ export function TelechargerPv({
       await attendreRendu(racine);
       const pages = Array.from(racine.querySelectorAll<HTMLElement>("[data-report-page]"));
       if (pages.length) {
-        const blob = await creerPdfAttachements(pages);
+        const blob = await capturerPagesOriginal(pages);
         await shareOrDownloadPdf(blob, `${nomFichier(nom)}.pdf`);
       } else {
         const doc = racine.firstElementChild as HTMLElement | null;
@@ -115,4 +114,48 @@ async function attendreRendu(racine: HTMLElement) {
   await Promise.all(
     Array.from(racine.querySelectorAll("img")).map((img) => img.decode().catch(() => undefined)),
   );
+}
+
+/**
+ * Capture fidèle des pages du PV original : dimensions en pixels fixées
+ * (sans aspect-ratio, mal géré par la capture) et une page A4 pleine par feuille.
+ */
+async function capturerPagesOriginal(pages: HTMLElement[]): Promise<Blob> {
+  const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import("html2canvas-pro"), import("jspdf")]);
+  const pdf = new jsPDF({ unit: "mm", format: "a4" });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  for (const [index, page] of pages.entries()) {
+    const source = page.querySelector("canvas");
+    const ratio = source && source.width ? source.height / source.width : 1.414;
+    const width = 760;
+    const height = Math.round(width * ratio);
+    const ancien = { w: page.style.width, h: page.style.height, a: page.style.aspectRatio };
+    page.style.width = `${width}px`;
+    page.style.height = `${height}px`;
+    page.style.aspectRatio = "auto";
+    try {
+      const image = await html2canvas(page, {
+        scale: 2, useCORS: true, logging: false, backgroundColor: "#ffffff",
+        width, height, windowWidth: 1280, windowHeight: Math.max(height, 1200),
+        scrollX: 0, scrollY: 0,
+        onclone: (_doc, clone) => {
+          clone.style.width = `${width}px`;
+          clone.style.height = `${height}px`;
+          clone.style.aspectRatio = "auto";
+          const c = clone.querySelector("canvas");
+          if (c && source) c.getContext("2d")?.drawImage(source, 0, 0);
+        },
+      });
+      if (index > 0) pdf.addPage();
+      let w = pageW, h = pageW * ratio;
+      if (h > pageH) { h = pageH; w = pageH / ratio; }
+      pdf.addImage(image.toDataURL("image/jpeg", 0.95), "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h);
+    } finally {
+      page.style.width = ancien.w;
+      page.style.height = ancien.h;
+      page.style.aspectRatio = ancien.a;
+    }
+  }
+  return pdf.output("blob");
 }
