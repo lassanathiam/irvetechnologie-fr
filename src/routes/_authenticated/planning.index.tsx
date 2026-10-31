@@ -2287,6 +2287,8 @@ function PlanningPage() {
             <p className="text-sm text-muted-foreground">
               {vueListe === "annules"
                 ? "Aucun rendez-vous annulé."
+                : vueListe === "recherche"
+                ? "Aucun chantier ne correspond à cette recherche."
                 : vueArchives
                 ? "Aucun chantier archivé pour le moment."
                 : filtreStatut !== "tous"
