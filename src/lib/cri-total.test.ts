@@ -3,18 +3,18 @@ import { estTotal, photosManquantes, CATEGORIES_TOTAL_OBLIGATOIRES } from "./cri
 import { categoriesRetourObligatoires } from "./planning.functions";
 
 test("TotalEnergies est reconnu", () => {
-  expect(estTotal("TOTALENERGIES")).toBe(true);
-  expect(estTotal("BUMP")).toBe(false);
+  expect(estTotal("TOTALENERGIES")).toEqual(true);
+  expect(estTotal("BUMP")).toEqual(false);
 });
 
 test("le numéro de série et le tore sont obligatoires pour Total", () => {
   const manq = photosManquantes([]).map((p) => p.categorie);
   expect(manq).toContain("total_numero_serie");
   expect(manq).toContain("total_tore");
-  expect(manq).not.toContain("total_vehicule");
+  expect(manq.includes("total_vehicule")).toEqual(false);
 });
 
 test("une installation Total demande les photos du PV Total", () => {
   expect([...categoriesRetourObligatoires("installation", "ENSIO", "TOTALENERGIES")]).toEqual(CATEGORIES_TOTAL_OBLIGATOIRES);
-  expect(categoriesRetourObligatoires("maintenance", "ENSIO", "TOTALENERGIES")).not.toContain("total_avant" as never);
+  expect((categoriesRetourObligatoires("maintenance", "ENSIO", "TOTALENERGIES") as readonly string[]).includes("total_avant")).toEqual(false);
 });
