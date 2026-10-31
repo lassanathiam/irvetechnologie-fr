@@ -722,6 +722,7 @@
 
 /* Feuilles imprimées (devis, factures, rapports) — fond blanc, couleurs conservées */
 .attachment-export-stage { position: fixed; left: -10000px; top: 0; width: 760px; pointer-events: none; }
+.rapport-export-stage { position: fixed; left: -10000px; top: 0; width: 794px; pointer-events: none; }
 .attachment-doc-compact { font-size: 11px; line-height: 1.35; }
 .attachment-doc-compact > div:first-child { gap: 12px; padding-bottom: 10px; }
 .attachment-doc-compact > div:first-child > div:last-child { min-width: 200px; padding: 10px; }
