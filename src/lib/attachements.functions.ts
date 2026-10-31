@@ -112,20 +112,20 @@ export const listAttachements = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("attachements_travaux")
-      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count, public_token")
+      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count, public_token, rendezvous_id, attachement_initial_id, attachement_initial_numero")
       .order("created_at", { ascending: false })
       .limit(250);
     if (error) throw new Error(error.message);
     const ids = (data ?? []).map((a) => a.id);
     // Suivi TES : nombre de lignes en supplément et leur montant HT, par attachement.
     const { data: lignesTes } = ids.length
-      ? await context.supabase.from("attachement_items").select("id, attachement_id, libelle, description, quantite, prix_unitaire").eq("tes", true).in("attachement_id", ids).order("ordre")
-      : { data: [] as { id: string; attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }[] };
-    const parAtt = new Map<string, { nb: number; ht: number; lignes: { id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number }[] }>();
+      ? await context.supabase.from("attachement_items").select("id, attachement_id, libelle, description, quantite, prix_unitaire, rendezvous_id").eq("tes", true).in("attachement_id", ids).order("ordre")
+      : { data: [] as { id: string; attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number; rendezvous_id: string | null }[] };
+    const parAtt = new Map<string, { nb: number; ht: number; lignes: { id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number; rendezvous_id: string | null }[] }>();
     for (const l of lignesTes ?? []) {
       const cur = parAtt.get(l.attachement_id) ?? { nb: 0, ht: 0, lignes: [] };
       cur.nb += 1; cur.ht += (Number(l.quantite) || 0) * (Number(l.prix_unitaire) || 0);
-      cur.lignes.push({ id: l.id, libelle: l.libelle, description: l.description, quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire) });
+      cur.lignes.push({ id: l.id, libelle: l.libelle, description: l.description, quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire), rendezvous_id: l.rendezvous_id ?? null });
       parAtt.set(l.attachement_id, cur);
     }
     return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [] }));
