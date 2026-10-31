@@ -1261,6 +1261,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
           .filter((e): e is string => !!e && !vus.has(e.toLowerCase()) && !!vus.add(e.toLowerCase()));
         // Toutes les photos du retour de travaux en un seul lien de téléchargement.
         const zipUrl = (photosRows ?? []).length ? lienDossierPhotos(rdv.public_token) : null;
+        const pvUrl = await lienPvSigne(context.supabase, data.id);
         const inclus = Number(rdv.metrage_inclus_m ?? metrageInclusDefaut(rdv.partenaire));
         const reel = rdv.metrage_reel_m == null ? null : Number(rdv.metrage_reel_m);
         for (const destinataire of destinataires) {
