@@ -128,7 +128,13 @@ export const listAttachements = createServerFn({ method: "GET" })
       cur.lignes.push({ id: l.id, libelle: l.libelle, description: l.description, quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire), rendezvous_id: l.rendezvous_id ?? null });
       parAtt.set(l.attachement_id, cur);
     }
-    return (data ?? []).map((a) => ({ ...a, tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [] }));
+    // Texte de recherche : noms des résidents, adresses et villes présents dans les lignes.
+    const { data: toutesLignes } = ids.length
+      ? await context.supabase.from("attachement_items").select("attachement_id, libelle, description").in("attachement_id", ids)
+      : { data: [] as { attachement_id: string; libelle: string; description: string | null }[] };
+    const texte = new Map<string, string>();
+    for (const l of toutesLignes ?? []) texte.set(l.attachement_id, `${texte.get(l.attachement_id) ?? ""} ${l.libelle ?? ""} ${l.description ?? ""}`);
+    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [] }));
   });
 
 /** Modifie le montant d'une ligne TES puis recalcule les totaux de l'attachement (refusé si déjà facturé). */
