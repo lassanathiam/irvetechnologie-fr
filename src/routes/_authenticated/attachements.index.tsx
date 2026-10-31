@@ -19,6 +19,7 @@ import { supplementsEnsio } from "@/lib/supplements-ensio";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
 import { AttachementsPeriode } from "@/components/AttachementsPeriode";
 import { TelechargerAttachements } from "@/components/TelechargerAttachements";
+import { CreerAttachementTs } from "@/components/CreerAttachementTs";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
   head: () => ({ meta: [{ title: "Attachements de pose de bornes — IRVE Technologie" }, { name: "description", content: "Créer, envoyer et facturer les attachements de pose de bornes ENSIO et les autres travaux." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachements de pose de bornes — IRVE Technologie" }, { property: "og:description", content: "Gestion des attachements de pose de bornes et des travaux." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -227,6 +228,12 @@ function AttachementsPage() {
   // Écarts de chantier (TES) : attachements contenant des travaux en supplément, tant qu'ils ne sont pas clôturés.
   const tesAValider = useMemo(() => (list.data ?? []).filter((a: any) => Number(a.tes_nb) > 0 && !estAttachementCloture(a) && a.statut !== "annule"), [list.data]);
   const tesTotal = useMemo(() => tesAValider.reduce((s, a: any) => s + (Number(a.tes_ht) || 0), 0), [tesAValider]);
+  /** Bordereau adapté au client de l'attachement (ENSIO / NCO ou Axians), pour la fenêtre de document TS. */
+  const cataloguePour = (a: any) => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(String(a.client_nom ?? "")) ? "ensio" : "axians"));
+  /** Chantier porté par l'attachement, proposé dans la fenêtre de document TS. */
+  const chantiersPour = (a: any): Map<string, string> => { const m = new Map<string, string>(); if (a.rendezvous_id) m.set(a.rendezvous_id, a.objet || "Chantier de l’attachement"); return m; };
+  /** Un document TS se crée depuis un attachement initial ni annulé ni déjà TS. */
+  const peutCreerTs = (a: any) => !a.attachement_initial_id && a.statut !== "annule";
 
   // Suivi mensuel : pipeline de l'attachement, du brouillon à la facture.
   const [moisSuivi, setMoisSuivi] = useState(() => new Date().toISOString().slice(0, 7));
