@@ -1279,6 +1279,7 @@ export const terminerChantier = createServerFn({ method: "POST" })
               observations: rdv.retour_observations,
               delestage: rdv.retour_delestage,
               zip_url: zipUrl,
+              pv_url: pvUrl,
             },
             idempotencyKey: `chantier-termine-${data.id}-${destinataire.toLowerCase()}`,
           });
