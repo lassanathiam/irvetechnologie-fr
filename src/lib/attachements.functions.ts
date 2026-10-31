@@ -107,6 +107,11 @@ async function messageAdaptif(supabase: any, attachment: any) {
   return `Bonjour, merci de trouver sur le lien ci-dessus l'attachement des travaux ${etat} pour la semaine S${semaineIso(lundi)} (du ${fr(lundi)} au ${fr(dimanche)}).`;
 }
 
+/** Chantier du Planning tel qu'affiché dans le détail d'un attachement. */
+export type ChantierRdv = { id: string; statut: string; client_nom: string | null; adresse: string | null; cp_ville: string | null; date_debut: string | null; termine_at: string | null; reseau_client: string | null };
+/** Chantier avec le montant HT qui lui est rattaché dans un attachement. */
+export type ChantierLigne = ChantierRdv & { etat: "fait" | "a_faire"; montant_ht: number };
+
 export const listAttachements = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
