@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Download, Loader2, Printer } from "lucide-react";
 import { RapportDonneurDoc } from "@/components/RapportDonneurDoc";
 import { RapportOriginalDoc } from "@/components/RapportOriginalDoc";
+import { TelechargerPv } from "@/components/TelechargerPv";
 import PhotoLightbox from "@/components/PhotoLightbox";
 import { getRapportDonneurPublic } from "@/lib/rapport-modeles.functions";
 import { normaliserStructure } from "@/lib/rapport-modeles";
@@ -39,6 +40,19 @@ function PublicRapport() {
     <div className="min-h-screen bg-slate-100 py-4 print:bg-white print:py-0">
       <div className="mx-auto mb-3 flex max-w-[210mm] flex-wrap gap-2 px-3 print:hidden">
         <button onClick={() => window.print()} className="inline-flex min-h-11 items-center gap-2 rounded-lg bg-blue-700 px-4 font-semibold text-white"><Printer className="h-4 w-4" /> Imprimer / PDF</button>
+        <TelechargerPv
+          structure={structure}
+          valeurs={(r.valeurs as Record<string, string | boolean | null>) ?? {}}
+          signatureClient={r.signature_client}
+          signatureTechnicien={r.signature_technicien}
+          signataireNom={r.signataire_nom}
+          technicien={r.technicien}
+          signedAt={r.signed_at}
+          logo={data.modele.logo_data}
+          donneur={data.modele.donneur_ordre}
+          nom={`PV-${data.modele.donneur_ordre}`}
+          label="Télécharger le PV"
+        />
         {data.zip_url && <a href={data.zip_url} className="inline-flex min-h-11 items-center gap-2 rounded-lg border border-slate-300 bg-white px-4 font-semibold text-slate-800"><Download className="h-4 w-4" /> Photos (ZIP)</a>}
       </div>
       <div className="shadow print:shadow-none">
