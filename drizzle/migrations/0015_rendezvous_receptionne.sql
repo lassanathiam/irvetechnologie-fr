@@ -1,0 +1,1 @@
+ALTER TABLE public.rendezvous ADD COLUMN IF NOT EXISTS receptionne_at timestamptz;
