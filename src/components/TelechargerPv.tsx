@@ -54,6 +54,11 @@ export function TelechargerPv({
     setBusy(true);
     try {
       await attendreRendu(racine);
+      // Hors écran (left négatif), la capture rogne le PV : on le place
+      // le temps de la capture à l'origine de la fenêtre, derrière l'appli.
+      Object.assign(racine.style, { position: "fixed", left: "0px", top: "0px", zIndex: "-1" });
+      window.scrollTo(0, 0);
+      await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
       const pages = Array.from(racine.querySelectorAll<HTMLElement>("[data-report-page]"));
       if (pages.length) {
         const blob = await capturerPagesOriginal(pages);
@@ -67,6 +72,7 @@ export function TelechargerPv({
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Téléchargement impossible. Réessayez.");
     } finally {
+      Object.assign(racine.style, { position: "", left: "", top: "", zIndex: "" });
       setBusy(false);
     }
   }
