@@ -40,6 +40,7 @@ import {
   Clock3,
   Navigation,
   TriangleAlert,
+  Users,
 } from "lucide-react";
 import {
   appliquerProgramme,
@@ -1538,6 +1539,24 @@ function PlanningPage() {
                           </span>
                           <span className="shrink-0 text-xs font-semibold text-muted-foreground">{styleStatut(r.statut).label}</span>
                         </button>
+                        <span className="mt-1 flex flex-wrap items-center gap-1.5">
+                          <span className="text-mono text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Affectation</span>
+                          {TECHNICIENS.map((t) => (
+                            <button
+                              key={t.id}
+                              type="button"
+                              disabled={affecter.isPending || r.technicien === t.nom}
+                              onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}
+                              className={`text-mono text-[11px] px-2.5 py-1 rounded-full border transition disabled:opacity-60 ${
+                                r.technicien === t.nom
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                              }`}
+                            >
+                              {t.nom.split(" ")[0]}
+                            </button>
+                          ))}
+                        </span>
                       </li>
                     );
                   })}
@@ -2396,6 +2415,41 @@ function PlanningPage() {
                             >
                               <TriangleAlert className="h-3.5 w-3.5" /> {Boolean((r as { probleme?: boolean | null }).probleme) ? "Problème signalé — retirer" : "Signaler un problème"}
                             </button>
+
+                            {/* Affectation possible directement depuis la liste du planning complet. */}
+                            <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                              <span className="text-mono text-[10px] font-bold uppercase tracking-wide text-muted-foreground inline-flex items-center gap-1">
+                                <Users className="h-3.5 w-3.5" /> Affectation
+                              </span>
+                              {TECHNICIENS.map((t) => (
+                                <button
+                                  key={t.id}
+                                  type="button"
+                                  disabled={affecter.isPending || r.technicien === t.nom}
+                                  onClick={() => affecter.mutate({ id: r.id, technicien: t.nom })}
+                                  className={`text-mono text-[11px] px-2.5 py-1 rounded-full border inline-flex items-center gap-1.5 transition disabled:opacity-60 ${
+                                    r.technicien === t.nom
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+                                  }`}
+                                >
+                                  {t.nom.split(" ")[0]}
+                                </button>
+                              ))}
+                              {r.technicien && (
+                                <button
+                                  type="button"
+                                  disabled={affecter.isPending}
+                                  onClick={() => {
+                                    if (window.confirm(`Retirer l'affectation du chantier de ${r.client_nom} ?`))
+                                      affecter.mutate({ id: r.id, technicien: null });
+                                  }}
+                                  className="text-mono text-[11px] px-2.5 py-1 rounded-full border border-border text-muted-foreground transition hover:border-red-400 hover:text-red-600 disabled:opacity-60"
+                                >
+                                  Retirer
+                                </button>
+                              )}
+                            </div>
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
