@@ -99,7 +99,7 @@ const cleClient = (nom: string) =>
     .trim()
     .replace(/\s+/g, " ")
     .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
+    .replace(/[\u0300-\u036f]/g, "")
     .toUpperCase();
 
 /**
