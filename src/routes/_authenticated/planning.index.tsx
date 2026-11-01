@@ -349,6 +349,8 @@ function PlanningPage() {
   const [dateGroupee, setDateGroupee] = useState("");
   const [planningComplet, setPlanningComplet] = useState(recherche.vue === "realises");
   const [detailsOuverts, setDetailsOuverts] = useState(false);
+  const [plusPour, setPlusPour] = useState<string | null>(null);
+  const [autresPour, setAutresPour] = useState<string | null>(null);
   useEffect(() => {
     if (!recherche.rdv) return;
     setActive(recherche.rdv);
@@ -1252,14 +1254,6 @@ function PlanningPage() {
                     <div className="mt-2"><TriphaseBadge phase={missionTerrain.phase_installation} /></div>
                     <div className="mt-2 flex min-w-0 items-center gap-2">{departement(missionTerrain.cp_ville) && <span className="shrink-0 rounded-lg bg-amber-400 px-2.5 py-1 text-2xl font-extrabold text-slate-900">{departement(missionTerrain.cp_ville)}</span>}<h3 className="min-w-0 truncate text-xl font-bold">{missionTerrain.client_nom}</h3></div>
                     <div className="mt-3 flex items-center gap-3 rounded-xl bg-blue-600 px-4 py-3 text-slate-50"><Clock3 className="h-8 w-8 shrink-0" /><div className="min-w-0"><p className="text-2xl font-extrabold leading-tight sm:text-3xl">{creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin, true)}</p><p className="text-base font-bold capitalize">{new Date(missionTerrain.date_debut).toLocaleDateString("fr-FR", { weekday: "long", day: "numeric", month: "long" })}{missionTerrain.technicien ? ` · ${missionTerrain.technicien.split(" ")[0]}` : ""}</p></div></div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <span className="text-xs font-semibold text-slate-300">Affectation :</span>
-                      {TECHNICIENS.map((t) => (
-                        <Button key={t.id} size="sm" variant={missionTerrain.technicien === t.nom ? "default" : "secondary"} className="h-9" disabled={affecter.isPending || missionTerrain.technicien === t.nom} onClick={() => affecter.mutate({ id: missionTerrain.id, technicien: t.nom })}>
-                          {t.nom.split(" ")[0]}
-                        </Button>
-                      ))}
-                    </div>
                     <p className="mt-1 text-sm text-slate-300">{missionTerrain.titre}</p>
                     <ReseauClientBadge nom={missionTerrain.reseau_client} />
                     <p className="mt-1 text-sm text-slate-400">{missionTerrain.adresse}{missionTerrain.cp_ville ? `, ${missionTerrain.cp_ville}` : ""}</p>
@@ -1273,6 +1267,19 @@ function PlanningPage() {
               </div>
 
               <div className="space-y-0 p-5 sm:p-6">
+                <button type="button" className="mb-5 flex min-h-12 w-full items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 px-4 text-left font-bold" aria-expanded={plusPour === missionTerrain.id} onClick={() => setPlusPour((v) => v === missionTerrain.id ? null : missionTerrain.id)}>
+                  <span>Plus de détails <span className="block text-xs font-normal text-muted-foreground">Affectation, client, documents, à facturer, matériel, voisins</span></span>
+                  {plusPour === missionTerrain.id ? <ChevronUp className="h-5 w-5 shrink-0" /> : <ChevronDown className="h-5 w-5 shrink-0" />}
+                </button>
+                {plusPour === missionTerrain.id && <div>
+                <div className="mb-5 flex flex-wrap items-center gap-2 border-b border-border pb-4">
+                  <span className="text-sm font-semibold text-muted-foreground">Affectation :</span>
+                  {TECHNICIENS.map((t) => (
+                    <Button key={t.id} size="sm" variant={missionTerrain.technicien === t.nom ? "default" : "outline"} className="h-9" disabled={affecter.isPending || missionTerrain.technicien === t.nom} onClick={() => affecter.mutate({ id: missionTerrain.id, technicien: t.nom })}>
+                      {t.nom.split(" ")[0]}
+                    </Button>
+                  ))}
+                </div>
                 {estChantierTriphase(missionTerrain) && <div className="mb-5"><TriphasePreparation phase={missionTerrain.phase_installation} /></div>}
 
                 <div className="mb-5 border-b border-border pb-4" aria-label="Détails du client">
@@ -1397,6 +1404,7 @@ function PlanningPage() {
                     </ul>
                   </div>
                 )}
+                </div>}
 
                 <EtapeMission titre="Arrivée sur site" detail={missionTerrain.demarre_at ? `Validée à ${new Date(missionTerrain.demarre_at).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" })}` : `${creneauTexte(missionTerrain.date_debut, missionTerrain.creneau_fin)} prévu`} etat={missionTerrain.demarre_at ? "termine" : "active"} icone={<MapPin />}>
                   {!missionTerrain.demarre_at && <Button className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-2 py-3 text-center text-sm font-bold leading-tight sm:px-4 sm:text-base" onClick={() => demarrer.mutate({ id: missionTerrain.id, demarre: true })} disabled={demarrer.isPending}><Play className="shrink-0" /><span className="min-w-0 break-words">Je suis arrivé — démarrer</span></Button>}
@@ -1416,14 +1424,19 @@ function PlanningPage() {
                     ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
                     : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
                   {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
+                  <button type="button" className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground" aria-expanded={autresPour === missionTerrain.id} onClick={() => setAutresPour((v) => v === missionTerrain.id ? null : missionTerrain.id)}>
+                    {autresPour === missionTerrain.id ? <>Masquer les autres actions <ChevronUp className="h-4 w-4" /></> : <>Un souci ? Autres actions <ChevronDown className="h-4 w-4" /></>}
+                  </button>
+                  {autresPour === missionTerrain.id && <>
                   <Button variant="outline" className={`mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal px-3 py-3 text-center text-sm font-bold leading-tight ${(missionTerrain as { probleme?: boolean | null }).probleme ? "border-red-600 bg-red-50 text-red-700 dark:bg-red-500/10 dark:text-red-300" : "border-red-300 text-red-600 dark:text-red-400"}`} disabled={majOptions.isPending} onClick={() => { const actif = Boolean((missionTerrain as { probleme?: boolean | null }).probleme); if (actif) { if (window.confirm(`Retirer le signalement « problématique » du chantier de ${missionTerrain.client_nom} ?`)) majOptions.mutate({ id: missionTerrain.id, probleme: false }); } else { const note = window.prompt(`Signaler le chantier de ${missionTerrain.client_nom} comme problématique / non conforme.\n\nDécrivez le problème (facultatif) :`); if (note !== null) majOptions.mutate({ id: missionTerrain.id, probleme: true, probleme_note: note || null }); } }}><TriangleAlert className="shrink-0" /> <span className="min-w-0">{(missionTerrain as { probleme?: boolean | null }).probleme ? "Chantier problématique — retirer le signalement" : "Signaler un problème sur ce chantier"}</span></Button>
-                  {Boolean((missionTerrain as { probleme?: boolean | null }).probleme) && (missionTerrain as { probleme_note?: string | null }).probleme_note && <p className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{(missionTerrain as { probleme_note?: string | null }).probleme_note}</p>}
                   {!missionTerrain.termine_at && (
                     <div className="mt-3 grid gap-2 sm:grid-cols-2">
                       <Button className="min-h-12 h-auto whitespace-normal bg-red-600 font-bold text-slate-50 hover:bg-red-700" onClick={() => setEchecRdv(missionTerrain)}><TriangleAlert /> Chantier non réalisé — envoyer le rapport</Button>
                       <Button variant="outline" className="min-h-12 h-auto whitespace-normal font-bold" disabled={remettre.isPending} onClick={() => { if (window.confirm(`Remettre le chantier de ${missionTerrain.client_nom} à planifier (date à fixer) ?`)) remettre.mutate(missionTerrain.id); }}>Remettre à planifier</Button>
                     </div>
                   )}
+                  </>}
+                  {Boolean((missionTerrain as { probleme?: boolean | null }).probleme) && (missionTerrain as { probleme_note?: string | null }).probleme_note && <p className="mt-2 rounded-md border border-red-300 bg-red-50 px-3 py-2 text-xs font-semibold text-red-700 dark:bg-red-500/10 dark:text-red-300">{(missionTerrain as { probleme_note?: string | null }).probleme_note}</p>}
                 </EtapeMission>
               </div>
 
