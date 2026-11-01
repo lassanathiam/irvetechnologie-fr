@@ -4,9 +4,10 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { messageFacture } from "@/lib/messages-documents";
-import { ArrowLeft, Copy, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
+import { ArrowLeft, Copy, FileCode2, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { telechargerFacturePdf } from "@/lib/facture-pdf";
+import { telechargerFactureUbl } from "@/lib/facture-ubl";
 import { Button } from "@/components/ui/button";
 import { DocumentPrint } from "@/components/DocumentPrint";
 import { EmailReceipts } from "@/components/EmailReceipts";
@@ -187,6 +188,14 @@ function FactureDetail() {
           >
             <Download className="h-3.5 w-3.5" /> Télécharger PDF
           </Button>
+          <button
+            type="button"
+            onClick={() => telechargerFactureUbl(facture, items)}
+            title="Fichier XML structuré (norme UBL 2.1) accepté par les plateformes de dépôt de factures"
+            className="border border-border rounded-sm px-4 py-2 text-mono text-xs hover:border-primary hover:text-primary inline-flex items-center gap-2"
+          >
+            <FileCode2 className="h-3.5 w-3.5" /> Télécharger XML (dépôt plateforme)
+          </button>
           <button
             type="button"
             onClick={() => window.print()}
