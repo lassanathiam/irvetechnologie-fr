@@ -61,7 +61,7 @@ describe("genererFactureUbl", () => {
   test("détaille chaque ligne avec son taux de TVA", () => {
     expect(xml).toContain('<cbc:InvoicedQuantity unitCode="MTR">25</cbc:InvoicedQuantity>');
     expect(xml).toContain('<cbc:LineExtensionAmount currencyID="EUR">100.00</cbc:LineExtensionAmount>');
-    expect(xml.match(/<cac:InvoiceLine>/g)).toHaveLength(2);
+    expect(xml.match(/<cac:InvoiceLine>/g)?.length).toEqual(2);
   });
 
   test("autoliquidation : catégorie AE et TVA à zéro", () => {
@@ -83,14 +83,14 @@ describe("separerCpVille", () => {
 
 describe("codeUnite", () => {
   test("mètre, heure et forfait", () => {
-    expect(codeUnite("m")).toBe("MTR");
-    expect(codeUnite("heure")).toBe("HUR");
-    expect(codeUnite("forfait")).toBe("C62");
+    expect(codeUnite("m")).toEqual("MTR");
+    expect(codeUnite("heure")).toEqual("HUR");
+    expect(codeUnite("forfait")).toEqual("C62");
   });
 });
 
 describe("xmlEscape", () => {
   test("échappe les cinq caractères réservés", () => {
-    expect(xmlEscape(`a&b<c>d"e'f`)).toBe("a&amp;b&lt;c&gt;d&quot;e&apos;f");
+    expect(xmlEscape(`a&b<c>d"e'f`)).toEqual("a&amp;b&lt;c&gt;d&quot;e&apos;f");
   });
 });
