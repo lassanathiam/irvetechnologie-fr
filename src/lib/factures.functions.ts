@@ -37,7 +37,14 @@ export const getFacture = createServerFn({ method: "GET" })
       .eq("facture_id", data.id)
       .order("ordre", { ascending: true });
     if (itemsError) throw new Error(itemsError.message);
-    return { facture, items: items ?? [] };
+    // Attachement d'origine : la facture indique d'où elle vient.
+    let attachement: { id: string; numero: string } | null = null;
+    if (facture.attachement_id) {
+      const att = await context.supabase.from("attachements_travaux").select("id, numero").eq("id", facture.attachement_id).maybeSingle();
+      if (att.error) throw new Error(att.error.message);
+      attachement = (att.data ?? null) as typeof attachement;
+    }
+    return { facture, items: items ?? [], attachement };
   });
 
 export const updateFactureStatut = createServerFn({ method: "POST" })
