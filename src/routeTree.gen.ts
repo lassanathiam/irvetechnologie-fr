@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
 import { Route as DemandeRouteImport } from './routes/demande'
+import { Route as InstallationBorneRechargeNantesRouteImport } from './routes/installation-borne-recharge-nantes'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
@@ -97,6 +98,12 @@ const DemandeRoute = DemandeRouteImport.update({
   path: '/demande',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstallationBorneRechargeNantesRoute =
+  InstallationBorneRechargeNantesRouteImport.update({
+    id: '/installation-borne-recharge-nantes',
+    path: '/installation-borne-recharge-nantes',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const InstallerRoute = InstallerRouteImport.update({
   id: '/installer',
   path: '/installer',
@@ -360,6 +367,7 @@ export interface FileRoutesByFullPath {
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
+  '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -414,6 +422,7 @@ export interface FileRoutesByTo {
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
+  '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -470,6 +479,7 @@ export interface FileRoutesById {
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
+  '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
+    | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
     | '/bornes-catalogue'
@@ -580,6 +591,7 @@ export interface FileRouteTypes {
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
+    | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
     | '/bornes-catalogue'
@@ -635,6 +647,7 @@ export interface FileRouteTypes {
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
+    | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
     | '/_authenticated/bornes-catalogue'
@@ -691,6 +704,7 @@ export interface RootRouteChildren {
   BornesRoute: typeof BornesRoute
   CalculateurIrveRoute: typeof CalculateurIrveRoute
   DemandeRoute: typeof DemandeRoute
+  InstallationBorneRechargeNantesRoute: typeof InstallationBorneRechargeNantesRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
@@ -760,6 +774,13 @@ declare module '@tanstack/react-router' {
       path: '/demande'
       fullPath: '/demande'
       preLoaderRoute: typeof DemandeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/installation-borne-recharge-nantes': {
+      id: '/installation-borne-recharge-nantes'
+      path: '/installation-borne-recharge-nantes'
+      fullPath: '/installation-borne-recharge-nantes'
+      preLoaderRoute: typeof InstallationBorneRechargeNantesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/installer': {
@@ -1164,6 +1185,7 @@ const rootRouteChildren: RootRouteChildren = {
   BornesRoute: BornesRoute,
   CalculateurIrveRoute: CalculateurIrveRoute,
   DemandeRoute: DemandeRoute,
+  InstallationBorneRechargeNantesRoute: InstallationBorneRechargeNantesRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   AttachementTokenRoute: AttachementTokenRoute,

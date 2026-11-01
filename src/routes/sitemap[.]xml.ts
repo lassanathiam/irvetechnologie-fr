@@ -17,6 +17,7 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/", changefreq: "weekly", priority: "1.0" },
           { path: "/bornes", changefreq: "weekly", priority: "0.8" },
           { path: "/a-propos", changefreq: "monthly", priority: "0.6" },
+          { path: "/installation-borne-recharge-nantes", changefreq: "monthly", priority: "0.8" },
           { path: "/calculateur-irve", changefreq: "monthly", priority: "0.7" },
           { path: "/demande", changefreq: "monthly", priority: "0.8" },
         ];
