@@ -1,0 +1,1 @@
+ALTER TABLE public.factures ADD COLUMN IF NOT EXISTS depose_at timestamptz, ADD COLUMN IF NOT EXISTS depose_reference text;
