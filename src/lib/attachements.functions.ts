@@ -312,19 +312,26 @@ export const createAttachement = createServerFn({ method: "POST" })
       created_by: context.userId,
     }).select("id").single();
     if (error) throw new Error(error.message);
+    const unique = chantierUnique(items, [data.rendezvous_id]);
     const { error: lineError } = await context.supabase.from("attachement_items").insert(items.map((item, index) => ({
       attachement_id: row.id,
       libelle: item.libelle,
       description: item.description ?? null,
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
-      rendezvous_id: item.rendezvous_id ?? null,
+      rendezvous_id: item.rendezvous_id ?? unique,
       tes: Boolean(item.tes),
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);
     return { id: row.id };
   });
+
+/** Lignes saisies à la main : si l'attachement ne concerne qu'un seul chantier, elles y sont rattachées. */
+function chantierUnique(items: { rendezvous_id?: string | null }[], extra: (string | null | undefined)[] = []) {
+  const ids = new Set([...items.map((i) => i.rendezvous_id), ...extra].filter(Boolean) as string[]);
+  return ids.size === 1 ? [...ids][0] : null;
+}
 
 export const updateAttachement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
@@ -346,6 +353,7 @@ export const updateAttachement = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     const anciens = await context.supabase.from("attachement_items").select("libelle, description, rendezvous_id").eq("attachement_id", id);
     const liens = new Map((anciens.data ?? []).filter((l: any) => l.rendezvous_id).map((l: any) => [`${l.libelle}|${l.description ?? ""}`, l.rendezvous_id as string]));
+    const unique = chantierUnique(items, [...(anciens.data ?? []).map((l: any) => l.rendezvous_id), data.rendezvous_id]);
     const del = await context.supabase.from("attachement_items").delete().eq("attachement_id", id);
     if (del.error) throw new Error(del.error.message);
     const { error: lineError } = await context.supabase.from("attachement_items").insert(items.map((item, index) => ({
@@ -354,7 +362,7 @@ export const updateAttachement = createServerFn({ method: "POST" })
       description: item.description ?? null,
       quantite: item.quantite,
       prix_unitaire: item.prix_unitaire,
-      rendezvous_id: item.rendezvous_id ?? liens.get(`${item.libelle}|${item.description ?? ""}`) ?? null,
+      rendezvous_id: item.rendezvous_id ?? liens.get(`${item.libelle}|${item.description ?? ""}`) ?? unique,
       tes: Boolean(item.tes),
       ordre: index + 1,
     })));
