@@ -72,7 +72,7 @@ function AttachementDetail() {
 
   if (query.isLoading) return <ProShell><Loader2 className="animate-spin text-primary" /></ProShell>;
   if (!query.data || query.error) return <ProShell><p className="text-destructive">Attachement introuvable.</p></ProShell>;
-  const { attachement: a, items, propositions } = query.data as any;
+  const { attachement: a, items, propositions, facture } = query.data as any;
   const enAttente = (propositions ?? []).find((p: any) => p.statut === "en_attente");
   const origin = typeof window === "undefined" ? "" : window.location.origin; const link = `${origin}/attachement/${a.public_token}`;
   const total = lines.reduce((sum, l) => sum + (Number(l.quantite) || 0) * (Number(l.prix) || 0), 0);
@@ -97,7 +97,7 @@ function AttachementDetail() {
           ? <span className="inline-flex flex-wrap items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 px-3 py-1.5 text-sm"><span>Fermer sans enregistrer ? Les modifications seront perdues.</span><Button size="sm" variant="outline" onClick={() => setConfirmFermer(false)}>Continuer la modification</Button><Button size="sm" variant="destructive" onClick={() => { setConfirmFermer(false); setEdit(false); }}>Fermer sans enregistrer</Button></span>
           : <Button variant={edit ? "secondary" : "outline"} onClick={() => (edit ? setConfirmFermer(true) : setEdit(true))}>{edit ? <><X /> Fermer la modification</> : <><Pencil /> Modifier</>}</Button>)}
         <Button variant="outline" onClick={() => window.print()}><Printer /> Imprimer / PDF</Button>
-        {a.facture_id ? <Button asChild><Link to="/factures/$id" params={{ id: a.facture_id }}><CheckCircle2 /> Voir la facture</Link></Button> : <Button onClick={() => convert.mutate()} disabled={convert.isPending}><Receipt /> Convertir en facture</Button>}
+        {a.facture_id ? <Button asChild><Link to="/factures/$id" params={{ id: a.facture_id }}><CheckCircle2 /> Facture {facture?.numero ?? ""}</Link></Button> : <Button onClick={() => convert.mutate()} disabled={convert.isPending}><Receipt /> Convertir en facture</Button>}
         {!a.facture_id && (a.statut === "annule"
           ? <Button variant="outline" disabled={statutM.isPending} onClick={() => statutM.mutate("reactiver")}><RotateCcw /> Réactiver</Button>
           : <Button variant="outline" disabled={statutM.isPending} onClick={() => { if (window.confirm(`Annuler l’attachement ${a.numero} ? Le client verra l’annulation sur son lien.`)) statutM.mutate("annuler"); }}><Ban /> Annuler</Button>)}

@@ -4,7 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { messageFacture } from "@/lib/messages-documents";
-import { ArrowLeft, Copy, FileCode2, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
+import { ArrowLeft, ClipboardList, Copy, FileCode2, FileText, Loader2, Mail, Printer, Download } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { telechargerFacturePdf } from "@/lib/facture-pdf";
 import { telechargerFactureUbl } from "@/lib/facture-ubl";
@@ -131,7 +131,7 @@ function FactureDetail() {
     );
   }
 
-  const { facture, items } = query.data;
+  const { facture, items, attachement } = query.data;
   const origin = typeof window === "undefined" ? "" : window.location.origin;
   const lienClient = `${origin}/facture-client/${facture.public_token}`;
 
@@ -153,6 +153,15 @@ function FactureDetail() {
               className="text-mono text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
             >
               <FileText className="h-3.5 w-3.5" /> Devis d'origine
+            </Link>
+          )}
+          {attachement && (
+            <Link
+              to="/attachements/$id"
+              params={{ id: attachement.id }}
+              className="text-mono text-xs text-muted-foreground hover:text-primary inline-flex items-center gap-1.5"
+            >
+              <ClipboardList className="h-3.5 w-3.5" /> Attachement {attachement.numero}
             </Link>
           )}
           <select

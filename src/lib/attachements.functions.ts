@@ -161,9 +161,15 @@ export const listAttachements = createServerFn({ method: "GET" })
       }
       avancement.set(l.attachement_id, cur);
     }
+    // Facture née de l'attachement : numéro et paiement affichés directement dans la liste.
+    const factureIds = [...new Set((data ?? []).map((a) => a.facture_id).filter((v): v is string => Boolean(v)))];
+    const { data: facturesLiees } = factureIds.length
+      ? await context.supabase.from("factures").select("id, numero, statut, paid_at").in("id", factureIds)
+      : { data: [] as { id: string; numero: string; statut: string; paid_at: string | null }[] };
+    const fac = new Map((facturesLiees ?? []).map((f) => [f.id, f]));
     const texte = new Map<string, string>();
     for (const l of toutesLignes ?? []) texte.set(l.attachement_id, `${texte.get(l.attachement_id) ?? ""} ${l.libelle ?? ""} ${l.description ?? ""}`);
-    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [], ht_fait: Math.round((avancement.get(a.id)?.fait ?? 0) * 100) / 100, ht_a_faire: Math.round((avancement.get(a.id)?.a_faire ?? 0) * 100) / 100, ht_sans_chantier: Math.round((avancement.get(a.id)?.sans ?? 0) * 100) / 100, lignes_sans: (avancement.get(a.id)?.sansLignes ?? []).sort((x, y) => y.montant - x.montant), chantiers: [...(avancement.get(a.id)?.parRdv.values() ?? [])].sort((x, y) => String(y.date_debut ?? "").localeCompare(String(x.date_debut ?? ""))) }));
+    return (data ?? []).map((a) => ({ ...a, recherche: texte.get(a.id) ?? "", facture_numero: fac.get(a.facture_id ?? "")?.numero ?? null, facture_payee: Boolean(fac.get(a.facture_id ?? "")?.paid_at), tes_nb: parAtt.get(a.id)?.nb ?? 0, tes_ht: Math.round((parAtt.get(a.id)?.ht ?? 0) * 100) / 100, tes_lignes: parAtt.get(a.id)?.lignes ?? [], ht_fait: Math.round((avancement.get(a.id)?.fait ?? 0) * 100) / 100, ht_a_faire: Math.round((avancement.get(a.id)?.a_faire ?? 0) * 100) / 100, ht_sans_chantier: Math.round((avancement.get(a.id)?.sans ?? 0) * 100) / 100, lignes_sans: (avancement.get(a.id)?.sansLignes ?? []).sort((x, y) => y.montant - x.montant), chantiers: [...(avancement.get(a.id)?.parRdv.values() ?? [])].sort((x, y) => String(y.date_debut ?? "").localeCompare(String(x.date_debut ?? ""))) }));
   });
 
 /** Modifie le montant d'une ligne TES puis recalcule les totaux de l'attachement (refusé si déjà facturé). */
@@ -210,7 +216,14 @@ export const getAttachement = createServerFn({ method: "GET" })
     const supplements = await context.supabase.from("attachements_travaux")
       .select("id, numero, statut, total_ht").eq("attachement_initial_id", data.id).order("created_at", { ascending: false });
     if (supplements.error) throw new Error(supplements.error.message);
-    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [] };
+    // Facture née de l'attachement : son numéro est affiché dans l'en-tête de la fiche.
+    let facture: { id: string; numero: string; statut: string; paid_at: string | null } | null = null;
+    if (result.data.facture_id) {
+      const f = await context.supabase.from("factures").select("id, numero, statut, paid_at").eq("id", result.data.facture_id).maybeSingle();
+      if (f.error) throw new Error(f.error.message);
+      facture = (f.data ?? null) as typeof facture;
+    }
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture };
   });
 
 export const creerAttachementTs = createServerFn({ method: "POST" })
