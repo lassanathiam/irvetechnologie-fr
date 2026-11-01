@@ -2691,10 +2691,10 @@ function PlanningPage() {
                             {(() => {
                               const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
                               const termine = Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise");
-                              if (pv?.kind === "crm") return <p className="mt-2 text-xs font-semibold text-muted-foreground">Pas de PV : à 
+                              if (pv?.kind === "crm") return <p className="mt-2 text-xs font-semibold text-muted-foreground">Pas de PV : à remplir dans {pv.outil}</p>;
                               if (!pv && !termine) return null;
                               return (
-                                <Link to="/chantier-rapport/$rdvId" params={{ rdvId: r.id }} className="mt-2 inline-flex min-h-[40px] items-
+                                <Link to="/chantier-rapport/$rdvId" params={{ rdvId: r.id }} className="mt-2 inline-flex min-h-[40px] items-center gap-1.5 rounded-sm border-2 border-sky-500 px-3 text-xs font-bold text-sky-600 dark:text-sky-400">
                                   <ClipboardCheck className="h-3.5 w-3.5" /> {pv ? `Ouvrir le PV ${pv.cle}` : "Ouvrir le PV / rapport"}
                                 </Link>
                               );
