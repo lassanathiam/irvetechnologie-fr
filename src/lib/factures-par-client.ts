@@ -91,6 +91,18 @@ export function dansPeriode(dateEmission: string, periode: Periode): boolean {
 const montant = (f: FacturePourTotal, champ: "total_ht" | "total_ttc") => Number(f[champ] ?? 0) || 0;
 
 /**
+ * Clé de regroupement : «  ensio » et « ENSIO » sont le même client.
+ * Accents, casse et espaces doubles sont ignorés ; le nom affiché reste celui de la fiche.
+ */
+const cleClient = (nom: string) =>
+  nom
+    .trim()
+    .replace(/\s+/g, " ")
+    .normalize("NFD")
+    .replace(/[̀-ͯ]/g, "")
+    .toUpperCase();
+
+/**
  * Regroupe les factures par client et additionne leurs montants.
  * Les factures annulées sont écartées ; les autres sont toutes comptées,
  * y compris les brouillons (un brouillon reste une facture émise).
@@ -103,11 +115,21 @@ export function totauxParClient(
   for (const f of factures) {
     if (f.statut === "annulee") continue;
     if (!dansPeriode(f.date_emission, periode)) continue;
-    const nom = String(f.client_nom ?? "").trim() || "Client non renseigné";
-    let t = map.get(nom);
+    const brut = String(f.client_nom ?? "").trim();
+    const cle = cleClient(brut) || "__sans_nom__";
+    let t = map.get(cle);
     if (!t) {
-      t = { nom, nb: 0, ht: 0, ttc: 0, nbPayees: 0, htPaye: 0, ttcPaye: 0, factures: [] };
-      map.set(nom, t);
+      t = {
+        nom: brut || "Client non renseigné",
+        nb: 0,
+        ht: 0,
+        ttc: 0,
+        nbPayees: 0,
+        htPaye: 0,
+        ttcPaye: 0,
+        factures: [],
+      };
+      map.set(cle, t);
     }
     const ht = montant(f, "total_ht");
     const ttc = montant(f, "total_ttc");
