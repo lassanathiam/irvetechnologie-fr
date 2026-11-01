@@ -137,7 +137,7 @@ function EspacePage() {
                   label="Factures en attente"
                   value={euro(q.data?.stats.caEnAttente ?? 0)}
                   detail={`${facturesEnAttente.length} facture(s) à encaisser`}
-                  to="/facturation"
+                  to="/factures"
                 />
                 <MetricCard
                   tone="orange"
