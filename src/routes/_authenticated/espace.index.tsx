@@ -565,3 +565,34 @@ function DashboardPanel({ title, icon: Icon, action, children }: { title: string
 function Empty({ children }: { children: React.ReactNode }) {
   return <p className="py-8 text-center text-sm text-dashboard-copy-muted">{children}</p>;
 }
+/** Liste des chantiers réceptionnés au format tableur (ouvrable dans Excel), sans doublon. */
+function telechargerReceptionnes(chantiers: ChantierReception[]) {
+  const vus = new Set<string>();
+  const uniques = chantiers.filter((c) => {
+    const cle = `${c.client_nom}|${c.adresse}`.toLowerCase().replace(/\s+/g, " ").trim();
+    if (vus.has(cle)) return false;
+    vus.add(cle);
+    return true;
+  });
+  const cell = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  const lignes = [
+    ["Client", "Adresse", "Ville", "Donneur d'ordre", "Intervention", "Réceptionné le", "Montant HT", "Attachement"],
+    ...uniques.map((c) => [
+      c.client_nom,
+      c.adresse,
+      c.cp_ville,
+      c.partenaire,
+      dateFr(c.date_debut),
+      dateFr(c.receptionne_at ?? c.date_debut),
+      c.montant_ht == null ? "" : String(c.montant_ht).replace(".", ","),
+      c.attachement?.numero ?? "",
+    ]),
+  ];
+  const csv = "\uFEFF" + lignes.map((l) => l.map(cell).join(";")).join("\r\n");
+  const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `chantiers-receptionnes-${new Date().toISOString().slice(0, 10)}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
