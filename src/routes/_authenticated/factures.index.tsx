@@ -1,16 +1,22 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useMemo, useState } from "react";
 import { FileText, Loader2, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { dateFr, euro } from "@/lib/company";
-import { deleteFacture, listFactures } from "@/lib/factures.functions";
+import { deleteFacture, listFactures, updateFactureDepot } from "@/lib/factures.functions";
+import { etapeDepotFacture, peutDeposerFacture, type EtapeDepotFacture } from "@/lib/suivi-facturation";
 
 export const Route = createFileRoute("/_authenticated/factures/")({
   head: () => ({
     meta: [
       { title: "Factures — Espace pro Borne de l'Ouest" },
-      { name: "description", content: "Suivi des factures, encaissements et envois clients." },
+      {
+        name: "description",
+        content:
+          "Suivi des factures, encaissements, envois clients et dépôts sur la plateforme du client.",
+      },
       { name: "robots", content: "noindex" },
     ],
   }),
@@ -25,6 +31,15 @@ const STATUT_LABEL: Record<string, string> = {
   annulee: "Annulée",
 };
 
+type FiltreDepot = "toutes" | EtapeDepotFacture;
+
+const FILTRES: { cle: FiltreDepot; label: string }[] = [
+  { cle: "toutes", label: "Toutes" },
+  { cle: "a_deposer", label: "À déposer" },
+  { cle: "deposee", label: "Déposées" },
+  { cle: "payee", label: "Payées" },
+];
+
 function FacturesPage() {
   const qc = useQueryClient();
   const fetchFactures = useServerFn(listFactures);
@@ -37,6 +52,38 @@ function FacturesPage() {
     .filter((f) => f.statut !== "payee" && f.statut !== "annulee")
     .reduce((s, f) => s + Number(f.total_ttc), 0);
 
+  const [filtre, setFiltre] = useState<FiltreDepot>("toutes");
+
+  const parEtape = useMemo(() => {
+    const m = new Map<EtapeDepotFacture, number>([
+      ["a_deposer", 0],
+      ["deposee", 0],
+      ["payee", 0],
+    ]);
+    for (const f of list) {
+      if (!peutDeposerFacture(f)) continue;
+      const e = etapeDepotFacture(f);
+      m.set(e, (m.get(e) ?? 0) + 1);
+    }
+    return m;
+  }, [list]);
+
+  const aDeposer = useMemo(
+    () =>
+      list
+        .filter((f) => peutDeposerFacture(f) && etapeDepotFacture(f) === "a_deposer")
+        .reduce((s, f) => s + Number(f.total_ttc), 0),
+    [list],
+  );
+
+  const rows = useMemo(
+    () =>
+      filtre === "toutes"
+        ? list
+        : list.filter((f) => peutDeposerFacture(f) && etapeDepotFacture(f) === filtre),
+    [list, filtre],
+  );
+
   return (
     <ProShell>
       <div className="pro-workspace">
@@ -47,7 +94,8 @@ function FacturesPage() {
           </div>
           <h1 className="mt-2 text-3xl font-medium tracking-tight">Factures</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Depuis un devis accepté, ou directement (prestations au BPU).
+            Depuis un devis accepté, ou directement (prestations au BPU). Cochez « Déposée » dès que la
+            facture est sur la plateforme du client.
           </p>
         </div>
         <div className="flex gap-2">
@@ -64,9 +112,10 @@ function FacturesPage() {
       </div>
       </div>
 
-      <div className="mt-8 grid sm:grid-cols-4 gap-4">
+      <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
         <Stat label="Factures" value={String(list.length)} />
         <Stat label="Total facturé TTC" value={euro(total)} />
+        <Stat label="À déposer" value={`${parEtape.get("a_deposer") ?? 0} · ${euro(aDeposer)}`} accent />
         <Stat
           label="Consultées par le client"
           value={String(list.filter((f) => f.viewed_at).length)}
@@ -74,59 +123,143 @@ function FacturesPage() {
         <Stat label="Reste à encaisser" value={euro(impaye)} accent />
       </div>
 
-      <div className="mt-8 border border-border rounded-sm bg-card divide-y divide-border overflow-hidden">
+      <div className="mt-8 flex flex-wrap gap-2" role="group" aria-label="Filtres de dépôt">
+        {FILTRES.map((f) => (
+          <button
+            key={f.cle}
+            type="button"
+            aria-pressed={filtre === f.cle}
+            onClick={() => setFiltre(f.cle)}
+            className={`text-mono text-xs rounded-sm border px-3 py-2 ${
+              filtre === f.cle
+                ? "border-primary bg-primary/15 text-primary"
+                : "border-border text-muted-foreground hover:border-primary hover:text-primary"
+            }`}
+          >
+            {f.label}
+            {f.cle !== "toutes" ? ` (${parEtape.get(f.cle) ?? 0})` : ` (${list.length})`}
+          </button>
+        ))}
+      </div>
+
+      <div className="mt-4 border border-border rounded-sm bg-card divide-y divide-border overflow-hidden">
         {factures.isLoading && (
           <div className="p-6">
             <Loader2 className="h-4 w-4 animate-spin text-primary" />
           </div>
         )}
-        {!factures.isLoading && list.length === 0 && (
+        {!factures.isLoading && rows.length === 0 && (
           <p className="p-6 text-sm text-muted-foreground">
-            Aucune facture. Ouvrez un devis puis « Convertir en facture ».
+            {list.length === 0
+              ? "Aucune facture. Ouvrez un devis puis « Convertir en facture »."
+              : "Aucune facture dans ce filtre."}
           </p>
         )}
-        {list.map((f) => (
-          <div key={f.id} className="p-4 flex items-center gap-4 flex-wrap hover:bg-muted/30 transition">
-            <Link to="/factures/$id" params={{ id: f.id }} className="text-mono text-xs text-primary hover:underline">
-              {f.numero}
-            </Link>
-            <span className="font-medium">{f.client_nom}</span>
-            <span className="text-sm text-muted-foreground hidden sm:block">{f.objet}</span>
-            <span className="text-mono text-xs text-muted-foreground">
-              {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
-            </span>
-            <span className="ml-auto text-mono">{euro(Number(f.total_ttc))}</span>
-            <span
-              className={`text-mono text-[11px] px-2 py-1 rounded-sm border ${
-                f.statut === "payee"
-                  ? "border-primary text-primary"
-                  : "border-border text-muted-foreground"
-              }`}
-            >
-              {STATUT_LABEL[f.statut] ?? f.statut}
-            </span>
-            {f.viewed_at && (
-              <span className="text-[11px] font-semibold text-primary" title={`Vu ${f.view_count} fois`}>
-                Consultée le {dateFr(f.last_viewed_at ?? f.viewed_at)}
-                {f.view_count > 1 ? ` · ${f.view_count} vues` : ""}
+        {rows.map((f) => (
+          <div key={f.id} className="p-4 flex flex-wrap items-center gap-x-4 gap-y-2 hover:bg-muted/30 transition">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <Link to="/factures/$id" params={{ id: f.id }} className="shrink-0 text-mono text-xs text-primary hover:underline">
+                {f.numero}
+              </Link>
+              <span className="min-w-0 truncate font-medium">{f.client_nom}</span>
+              <span className="hidden min-w-0 truncate text-sm text-muted-foreground sm:block">{f.objet}</span>
+              <span className="shrink-0 text-mono text-xs text-muted-foreground whitespace-nowrap">
+                {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
               </span>
-            )}
-            <button
-              type="button"
-              onClick={async () => {
-                if (!confirm(`Supprimer la facture ${f.numero} ?`)) return;
-                await deleteFn({ data: { id: f.id } });
-                qc.invalidateQueries({ queryKey: ["factures"] });
-              }}
-              className="text-muted-foreground hover:text-destructive"
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="text-mono">{euro(Number(f.total_ttc))}</span>
+              <DepotChip
+                f={{
+                  id: f.id,
+                  numero: f.numero,
+                  statut: f.statut,
+                  depose_at: f.depose_at,
+                  depose_reference: f.depose_reference,
+                }}
+              />
+              <span
+                className={`text-mono text-[11px] px-2 py-1 rounded-sm border ${
+                  f.statut === "payee"
+                    ? "border-primary text-primary"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {STATUT_LABEL[f.statut] ?? f.statut}
+              </span>
+              {f.viewed_at && (
+                <span className="text-[11px] font-semibold text-primary" title={`Vu ${f.view_count} fois`}>
+                  Consultée le {dateFr(f.last_viewed_at ?? f.viewed_at)}
+                  {f.view_count > 1 ? ` · ${f.view_count} vues` : ""}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm(`Supprimer la facture ${f.numero} ?`)) return;
+                  await deleteFn({ data: { id: f.id } });
+                  qc.invalidateQueries({ queryKey: ["factures"] });
+                }}
+                className="text-muted-foreground hover:text-destructive"
+                aria-label="Supprimer"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ))}
+
       </div>
     </ProShell>
+  );
+}
+
+/** Case « déposée sur la plateforme du client », cochable directement depuis la liste. */
+function DepotChip({
+  f,
+}: {
+  f: {
+    id: string;
+    numero: string;
+    statut: string;
+    depose_at: string | null;
+    depose_reference: string | null;
+  };
+}) {
+  const qc = useQueryClient();
+  const marquer = useServerFn(updateFactureDepot);
+  const [enCours, setEnCours] = useState(false);
+  if (!peutDeposerFacture(f)) return null;
+  const deposee = Boolean(f.depose_at);
+  return (
+    <button
+      type="button"
+      disabled={enCours}
+      title={
+        deposee
+          ? `Déposée le ${new Date(f.depose_at as string).toLocaleDateString("fr-FR")}${
+              f.depose_reference ? ` · référence ${f.depose_reference}` : ""
+            } — cliquer pour décocher`
+          : "Marquer comme déposée sur la plateforme du client"
+      }
+      onClick={async () => {
+        setEnCours(true);
+        try {
+          await marquer({ data: { id: f.id, valeur: !deposee } });
+          await qc.invalidateQueries({ queryKey: ["factures"] });
+        } finally {
+          setEnCours(false);
+        }
+      }}
+      className={`text-mono text-[11px] rounded-sm border px-2 py-1 disabled:opacity-50 ${
+        deposee
+          ? "border-primary bg-primary/15 font-semibold text-primary"
+          : "border-dashed border-border text-muted-foreground hover:bg-muted"
+      }`}
+    >
+      {deposee ? "✓ " : "☐ "}
+      {deposee ? `Déposée ${f.depose_reference ? `· ${f.depose_reference}` : ""}` : "Déposer"}
+    </button>
   );
 }
 

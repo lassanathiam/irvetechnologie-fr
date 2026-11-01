@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
+import { peutDeposerFacture } from "@/lib/suivi-facturation";
+
 
 const STATUTS = ["brouillon", "validee", "envoyee", "payee", "annulee"] as const;
 
@@ -10,7 +12,7 @@ export const listFactures = createServerFn({ method: "GET" })
     const { data, error } = await context.supabase
       .from("factures")
       .select(
-        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_echeance, sent_at, paid_at, devis_id, viewed_at, last_viewed_at, view_count",
+        "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_echeance, sent_at, paid_at, devis_id, viewed_at, last_viewed_at, view_count, depose_at, depose_reference",
       )
       .order("created_at", { ascending: false })
       .limit(200);
@@ -348,3 +350,42 @@ export const listChantiersAFacturer = createServerFn({ method: "GET" })
     if (error) throw new Error(error.message);
     return data ?? [];
   });
+
+/**
+ * Dépose (ou retire) une facture sur la plateforme du client, avec sa référence de dépôt.
+ * Ne change ni le statut de la facture ni son paiement.
+ */
+export const updateFactureDepot = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        valeur: z.boolean().optional(),
+        reference: z.string().trim().max(200).nullable().optional(),
+      })
+      .refine((v) => v.valeur !== undefined || v.reference !== undefined, {
+        message: "Rien à enregistrer.",
+      })
+      .parse(data),
+  )
+  .handler(async ({ data, context }) => {
+    const { data: facture, error: fErr } = await context.supabase
+      .from("factures")
+      .select("id, statut")
+      .eq("id", data.id)
+      .maybeSingle();
+    if (fErr) throw new Error(fErr.message);
+    if (!facture) throw new Error("Facture introuvable");
+    if (!peutDeposerFacture(facture))
+      throw new Error("Une facture en brouillon ou annulée ne se dépose pas.");
+
+    const patch: Record<string, string | null> = {};
+    if (data.valeur !== undefined) patch.depose_at = data.valeur ? new Date().toISOString() : null;
+    if (data.reference !== undefined) patch.depose_reference = data.reference || null;
+
+    const { error } = await context.supabase.from("factures").update(patch as never).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+

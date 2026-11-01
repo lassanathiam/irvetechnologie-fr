@@ -134,6 +134,13 @@
       "when": 1793558038571,
       "tag": "0018_suivi_depot_facturation",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "7",
+      "when": 1793561075477,
+      "tag": "0019_factures_depot_plateforme",
+      "breakpoints": true
     }
   ]
 }

@@ -15,9 +15,12 @@ import {
   envoyerFacture,
   getFacture,
   updateFactureDates,
+  updateFactureDepot,
   updateFactureReferences,
   updateFactureStatut,
 } from "@/lib/factures.functions";
+import { peutDeposerFacture } from "@/lib/suivi-facturation";
+
 
 export const Route = createFileRoute("/_authenticated/factures/$id")({
   head: () => ({
@@ -50,6 +53,8 @@ function FactureDetail() {
   const statutFn = useServerFn(updateFactureStatut);
   const datesFn = useServerFn(updateFactureDates);
   const refsFn = useServerFn(updateFactureReferences);
+  const depotFn = useServerFn(updateFactureDepot);
+
 
   const [message, setMessage] = useState("");
   const [edition, setEdition] = useState(false);
@@ -103,6 +108,12 @@ function FactureDetail() {
       refsFn({ data: { id, ...v } }),
     onSuccess: invalidate,
   });
+
+  const depot = useMutation({
+    mutationFn: (v: { valeur?: boolean; reference?: string | null }) => depotFn({ data: { id, ...v } }),
+    onSuccess: invalidate,
+  });
+
 
   if (query.isLoading) {
     return (
@@ -258,6 +269,59 @@ function FactureDetail() {
         </div>
         {refs.isSuccess && <p className="text-xs text-primary">Références enregistrées.</p>}
 
+        {peutDeposerFacture(facture) && (
+          <div className="border border-border rounded-sm bg-card p-6 space-y-3">
+            <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
+              Dépôt sur la plateforme du client
+            </h2>
+            <p className="text-sm text-muted-foreground">
+              Cochez dès que la facture est déposée sur la plateforme du client. Notez la référence
+              donnée par la plateforme pour la retrouver.
+            </p>
+            <div className="flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                disabled={depot.isPending}
+                onClick={() => depot.mutate({ valeur: !facture.depose_at })}
+                className={`rounded-sm border px-4 py-2 text-mono text-xs disabled:opacity-50 ${
+                  facture.depose_at
+                    ? "border-primary bg-primary/15 font-semibold text-primary"
+                    : "border-dashed border-border text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                {facture.depose_at ? "✓ Déposée" : "☐ Marquer déposée"}
+              </button>
+              {facture.depose_at && (
+                <span className="text-mono text-xs text-muted-foreground">
+                  Déposée le {new Date(facture.depose_at).toLocaleDateString("fr-FR")}
+                </span>
+              )}
+              {depot.isPending && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+            </div>
+            <label className="block">
+              <span className="text-mono text-xs text-muted-foreground">Référence de dépôt</span>
+              <input
+                key={facture.depose_reference ?? ""}
+                type="text"
+                defaultValue={facture.depose_reference ?? ""}
+                placeholder="N° donné par la plateforme (optionnel)"
+                onBlur={(e) => {
+                  const v = e.target.value.trim();
+                  if (v === (facture.depose_reference ?? "")) return;
+                  depot.mutate({ reference: v || null });
+                }}
+                className="mt-2 w-full bg-input border border-border rounded-sm px-4 py-2.5"
+              />
+            </label>
+            {depot.isError && (
+              <p className="text-xs text-destructive">
+                Dépôt impossible : {depot.error instanceof Error ? depot.error.message : "erreur"}
+              </p>
+            )}
+          </div>
+        )}
+
+
         <div className="border border-border rounded-sm bg-card p-6 space-y-3">
           <h2 className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
             Envoyer au client
@@ -335,6 +399,17 @@ function FactureDetail() {
               label="Envoyée"
               value={facture.sent_at ? new Date(facture.sent_at).toLocaleString("fr-FR") : null}
             />
+            <TrackRow
+              label="Déposée sur la plateforme"
+              value={
+                facture.depose_at
+                  ? `${new Date(facture.depose_at).toLocaleDateString("fr-FR")}${
+                      facture.depose_reference ? ` · ${facture.depose_reference}` : ""
+                    }`
+                  : null
+              }
+            />
+
             <TrackRow
               label="Première ouverture"
               value={facture.viewed_at ? new Date(facture.viewed_at).toLocaleString("fr-FR") : null}

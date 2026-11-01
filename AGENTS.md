@@ -32,3 +32,4 @@
 - Rescheduling blocked appointments uses the shared browser-safe rescheduling rule to restore operational visibility without reopening completed jobs or changing their billing.
 - Planning intervenant selection filters the main lists only; other technicians' unfinished appointments stay listed separately and search covers all appointments, so rescheduled jobs are never hidden by the device's technician choice.
 - Imported-original PV downloads composite page pixels, measured text lines and signatures directly onto a canvas (no html2canvas), so mobile viewport or scroll can never crop the A4 page.
+- Platform-deposit tracking for attachments and invoices reads its step rule from the shared browser-safe module `src/lib/suivi-facturation.ts` (never recompute the step inside a screen), and a deposit marker must never change a document's status or payment state (why: one rule keeps attachements and factures consistent and billing state trustworthy).

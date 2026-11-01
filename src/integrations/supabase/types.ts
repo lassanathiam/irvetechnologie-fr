@@ -979,6 +979,8 @@ export type Database = {
           created_by: string | null
           date_echeance: string
           date_emission: string
+          depose_at: string | null
+          depose_reference: string | null
           devis_id: string | null
           id: string
           last_viewed_at: string | null
@@ -1017,6 +1019,8 @@ export type Database = {
           created_by?: string | null
           date_echeance?: string
           date_emission?: string
+          depose_at?: string | null
+          depose_reference?: string | null
           devis_id?: string | null
           id?: string
           last_viewed_at?: string | null
@@ -1055,6 +1059,8 @@ export type Database = {
           created_by?: string | null
           date_echeance?: string
           date_emission?: string
+          depose_at?: string | null
+          depose_reference?: string | null
           devis_id?: string | null
           id?: string
           last_viewed_at?: string | null

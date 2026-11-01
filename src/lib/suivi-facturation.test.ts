@@ -1,5 +1,11 @@
 import { expect, it } from "bun:test";
-import { etapeAttachement, prochainChamp } from "./suivi-facturation";
+import {
+  etapeAttachement,
+  etapeDepotFacture,
+  peutDeposerFacture,
+  prochainChamp,
+} from "./suivi-facturation";
+
 
 it("chantier sans attachement", () => {
   expect(etapeAttachement(null)).toEqual("sans_attachement");
@@ -16,3 +22,19 @@ it("après déposé, la case suivante est Envoyé en facturation", () => {
 it("payé n'a plus d'étape", () => {
   expect(prochainChamp("paye")).toEqual(null);
 });
+
+it("facture non déposée", () => {
+  expect(etapeDepotFacture({ statut: "validee" })).toEqual("a_deposer");
+});
+it("facture déposée sur la plateforme", () => {
+  expect(etapeDepotFacture({ statut: "envoyee", depose_at: "2026-10-05" })).toEqual("deposee");
+});
+it("payée l'emporte sur déposée", () => {
+  expect(etapeDepotFacture({ depose_at: "2026-10-05", paid_at: "2026-11-02" })).toEqual("payee");
+});
+it("brouillon et annulée ne se déposent pas", () => {
+  expect(peutDeposerFacture({ statut: "brouillon" })).toEqual(false);
+  expect(peutDeposerFacture({ statut: "annulee" })).toEqual(false);
+  expect(peutDeposerFacture({ statut: "validee" })).toEqual(true);
+});
+
