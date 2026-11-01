@@ -15,7 +15,7 @@ export const listFactures = createServerFn({ method: "GET" })
         "id, numero, client_nom, objet, statut, total_ht, total_ttc, date_emission, date_echeance, sent_at, paid_at, devis_id, viewed_at, last_viewed_at, view_count, depose_at, depose_reference",
       )
       .order("created_at", { ascending: false })
-      .limit(200);
+      .limit(1000);
     if (error) throw new Error(error.message);
     return data ?? [];
   });

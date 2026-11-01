@@ -1,11 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useMemo, useState } from "react";
-import { FileText, Loader2, Trash2 } from "lucide-react";
+import { Fragment, useMemo, useState } from "react";
+import { ChevronDown, ChevronRight, FileText, Loader2, Trash2 } from "lucide-react";
 import { ProShell } from "@/components/ProShell";
 import { dateFr, euro } from "@/lib/company";
 import { deleteFacture, listFactures, updateFactureDepot } from "@/lib/factures.functions";
+import {
+  periodeDepuisCle,
+  totauxParClient,
+  type PeriodeCle,
+} from "@/lib/factures-par-client";
 import { etapeDepotFacture, peutDeposerFacture, type EtapeDepotFacture } from "@/lib/suivi-facturation";
 
 export const Route = createFileRoute("/_authenticated/factures/")({
