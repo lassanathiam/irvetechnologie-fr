@@ -898,8 +898,11 @@ export const getDashboard = createServerFn({ method: "GET" })
     const enteteParId = new Map((attEntetes.data ?? []).map((a: any) => [a.id, a]));
     const attParRdv = new Map<string, any>();
     for (const ligne of attLignes.data ?? []) {
-      if (!ligne.rendezvous_id || annules.has(ligne.attachement_id) || attParRdv.has(ligne.rendezvous_id)) continue;
+      if (!ligne.rendezvous_id || annules.has(ligne.attachement_id)) continue;
       const a = enteteParId.get(ligne.attachement_id);
+      const deja = attParRdv.get(ligne.rendezvous_id);
+      // Priorité à l'attachement déjà facturé (un TS séparé ne doit pas masquer la facture).
+      if (deja && (deja.facture_id || !a?.facture_id)) continue;
       if (a) attParRdv.set(ligne.rendezvous_id, { id: a.id, numero: a.numero, depose_at: a.depose_at, envoye_facturation_at: a.envoye_facturation_at, paye_at: a.paye_at, facture_id: a.facture_id });
     }
     const rows = (rdv.data ?? []).map((r) => ({
