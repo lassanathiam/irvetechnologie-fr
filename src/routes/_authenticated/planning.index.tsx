@@ -2212,7 +2212,7 @@ function PlanningPage() {
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
             <div className="flex min-w-max items-center gap-2">
             {[
-              { v: "tous", l: "Tous", point: "bg-muted-foreground" },
+              { v: "tous", l: vueListe === "encours" ? "Tous sauf pause" : "Tous", point: "bg-muted-foreground" },
               ...STATUTS.filter((s) => (vueListe === "annules" ? false : s.v !== "annule")).map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
             ].map((f) => {
               const nb =
@@ -2268,6 +2268,17 @@ function PlanningPage() {
             </button>
           </div>
           </div>
+          {vueListe === "encours" && (() => {
+            const parts = STATUTS.filter((s) => s.v !== "annule")
+              .map((s) => ({ l: s.l.toLowerCase(), n: toutes.filter((r) => ongletDe(r) === "encours" && r.statut === s.v).length }))
+              .filter((x) => x.n > 0);
+            return (
+              <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <strong className="text-foreground">{nbEnCours} chantiers à faire</strong> = {parts.map((x) => `${x.n} ${x.l}`).join(" + ")}.
+                {" "}Les terminés validés vont dans « Chantiers clôturés », les annulés dans « Annulés ».
+              </p>
+            );
+          })()}
 
           {(vueArchives || vueListe === "recherche") && (
             <div className="space-y-2">
