@@ -42,7 +42,7 @@ export const getFacture = createServerFn({ method: "GET" })
     if (facture.attachement_id) {
       const att = await context.supabase.from("attachements_travaux").select("id, numero").eq("id", facture.attachement_id).maybeSingle();
       if (att.error) throw new Error(att.error.message);
-      attachement = (att.data ?? null) as typeof attachement;
+      attachement = att.data ? { id: att.data.id, numero: att.data.numero } : null;
     }
     return { facture, items: items ?? [], attachement };
   });
