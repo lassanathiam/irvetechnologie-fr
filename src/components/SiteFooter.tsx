@@ -19,6 +19,7 @@ export function SiteFooter() {
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               <Link to="/a-propos" className="transition hover:text-emerald-600">À propos</Link>
+              <Link to="/installation-borne-recharge-nantes" className="transition hover:text-emerald-600">Borne à Nantes</Link>
               <Link to="/calculateur-irve" className="transition hover:text-emerald-600">Calculateur IRVE</Link>
               <Link to="/demande" className="transition hover:text-emerald-600">Demande de devis</Link>
             </div>
