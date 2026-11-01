@@ -119,7 +119,7 @@ export const listAttachements = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const { data, error } = await context.supabase
       .from("attachements_travaux")
-      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count, public_token, rendezvous_id, attachement_initial_id, attachement_initial_numero")
+      .select("id, numero, objet, client_nom, client_email, numero_ticket, numero_affaire, bon_commande, statut, total_ht, total_tva, total_ttc, autoliquidation, date_emission, facture_id, sent_at, viewed_at, last_viewed_at, view_count, public_token, rendezvous_id, attachement_initial_id, attachement_initial_numero, depose_at, envoye_facturation_at, paye_at")
       .order("created_at", { ascending: false })
       .limit(250);
     if (error) throw new Error(error.message);
@@ -603,4 +603,21 @@ export const copieEquipeAttachements = createServerFn({ method: "POST" })
       templateData: { ...templateData, message: `Copie équipe — ${templateData.message}` },
     });
     return { ...result, nb: templateData.lignes.length };
+  });
+
+/** Coche / décoche une étape de dépôt sur la plateforme du donneur d'ordre. Ne change ni le statut ni la facture. */
+export const marquerSuiviFacturation = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((d: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(100), champ: z.enum(["depose_at", "envoye_facturation_at", "paye_at"]), valeur: z.boolean() }).parse(d))
+  .handler(async ({ data, context }) => {
+    const v = data.valeur ? new Date().toISOString() : null;
+    const patch: Record<string, string | null> = { [data.champ]: v };
+    // Cocher une étape coche aussi les précédentes ; décocher efface les suivantes.
+    if (data.valeur) { if (data.champ !== "depose_at") patch.depose_at = v; if (data.champ === "paye_at") patch.envoye_facturation_at = v; }
+    else { if (data.champ === "depose_at") { patch.envoye_facturation_at = null; patch.paye_at = null; } if (data.champ === "envoye_facturation_at") patch.paye_at = null; }
+    let q = context.supabase.from("attachements_travaux").update(patch as never).in("id", data.ids);
+    if (data.valeur) q = q.is(data.champ, null);
+    const { error } = await q;
+    if (error) throw new Error(error.message);
+    return { ok: true };
   });
