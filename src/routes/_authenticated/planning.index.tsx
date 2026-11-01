@@ -2177,7 +2177,7 @@ function PlanningPage() {
                   vueListe === "encours" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
                 }`}
               >
-                En cours ({nbEnCours})
+                À faire ({nbEnCours})
               </button>
               <button
                 type="button"
@@ -2223,6 +2223,8 @@ function PlanningPage() {
                     )
                       .length;
               const on = filtreStatut === f.v;
+              // Un état vide ne s'affiche pas : moins de chiffres à lire.
+              if (f.v !== "tous" && nb === 0 && !on) return null;
               return (
                 <button
                   key={f.v}
