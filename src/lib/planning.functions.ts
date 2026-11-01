@@ -870,7 +870,7 @@ export const getDashboard = createServerFn({ method: "GET" })
         .select("*")
         .eq("archive", false)
         .order("date_debut", { ascending: true })
-        .limit(200),
+        .limit(1000),
       s.from("factures").select("id, numero, client_nom, total_ttc, statut, date_emission, date_echeance, paid_at, bon_commande, numero_affaire")
         .order("created_at", { ascending: false })
         .limit(500),
