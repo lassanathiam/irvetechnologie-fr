@@ -2327,7 +2327,8 @@ function PlanningPage() {
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
                      const dossierOuvert = dossier === r.id;
-                     const toutOuvert = ouverts[r.id] ?? vueArchives;
+                     // Dossiers repliés par défaut : nom, type, client, affectation, date et adresse seulement.
+                     const toutOuvert = ouverts[r.id] ?? false;
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
@@ -2388,6 +2389,12 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
                             <ReseauClientBadge nom={r.reseau_client} />
+                            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-foreground">
+                              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                              {r.technicien ? `Affecté à ${r.technicien}` : "Non affecté"}
+                              {r.receptionne_at && <span className="ml-2 text-emerald-600">· Réceptionné</span>}
+                            </p>
+                            {toutOuvert && (<>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -2458,6 +2465,7 @@ function PlanningPage() {
                                 </button>
                               )}
                             </div>
+                            </>)}
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
