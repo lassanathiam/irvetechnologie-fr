@@ -376,6 +376,9 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         <span className="text-xs text-dashboard-blue">{ouvert ? "Replier ▲" : "Déplier ▼"}</span>
       </button>
       {ouvert && (<>
+      <Button type="button" variant="outline" size="sm" className="mb-3" disabled={!recus.length} onClick={() => telechargerReceptionnes(recus)}>
+        Télécharger les chantiers réceptionnés ({recus.length})
+      </Button>
       <div className="mb-3 flex gap-1 border-b border-dashboard-rule">
         <Button
           type="button"
