@@ -2669,7 +2669,8 @@ function PlanningPage() {
                              </div>
                              )}
 
-                            {/* Documents du chantier toujours visibles : fiches techniques + PV */}
+                            {/* Documents du chantier (dossier déplié) : fiches techniques + PV */}
+                            {toutOuvert && (<>
                             <FichesChantier rendezvousId={r.id} />
                             <AttachementsChantier rendezvousId={r.id} />
                             {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
@@ -2690,14 +2691,15 @@ function PlanningPage() {
                             {(() => {
                               const pv = pvPourReseau((r as { reseau_client?: string | null }).reseau_client);
                               const termine = Boolean(r.termine_at || r.statut === "termine" || r.statut === "realise");
-                              if (pv?.kind === "crm") return <p className="mt-2 text-xs font-semibold text-muted-foreground">Pas de PV : à remplir dans {pv.outil}</p>;
+                              if (pv?.kind === "crm") return <p className="mt-2 text-xs font-semibold text-muted-foreground">Pas de PV : à 
                               if (!pv && !termine) return null;
                               return (
-                                <Link to="/chantier-rapport/$rdvId" params={{ rdvId: r.id }} className="mt-2 inline-flex min-h-[40px] items-center gap-1.5 rounded-sm border-2 border-sky-500 px-3 text-xs font-bold text-sky-600 dark:text-sky-400">
+                                <Link to="/chantier-rapport/$rdvId" params={{ rdvId: r.id }} className="mt-2 inline-flex min-h-[40px] items-
                                   <ClipboardCheck className="h-3.5 w-3.5" /> {pv ? `Ouvrir le PV ${pv.cle}` : "Ouvrir le PV / rapport"}
                                 </Link>
                               );
                             })()}
+                            </>)}
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2745,8 +2747,9 @@ function PlanningPage() {
                                  <ChevronDown
                                    className={`h-3.5 w-3.5 transition-transform ${toutOuvert ? "rotate-180" : ""}`}
                                  />
-                                 {toutOuvert ? "Réduire" : "Afficher tout"}
+                                 {toutOuvert ? "Replier" : "Déplier le dossier"}
                                </button>
+                              {toutOuvert && (<>
                               {(() => {
                                 const inclus =
                                   Number(r.metrage_inclus_m ?? 0) ||
@@ -2824,6 +2827,7 @@ function PlanningPage() {
                                   </>
                                 );
                               })()}
+                              </>)}
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé
