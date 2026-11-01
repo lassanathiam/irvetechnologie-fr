@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it } from "bun:test";
 import { codeUnite, genererFactureUbl, separerCpVille, xmlEscape } from "./facture-ubl";
 
 const FACTURE = {
@@ -27,44 +27,44 @@ const LIGNES = [
 describe("genererFactureUbl", () => {
   const xml = genererFactureUbl(FACTURE, LIGNES);
 
-  test("déclare la norme UBL Invoice 2.1", () => {
+  it("déclare la norme UBL Invoice 2.1", () => {
     expect(xml).toContain("urn:oasis:names:specification:ubl:schema:xsd:Invoice-2");
     expect(xml).toContain("<cbc:UBLVersionID>2.1</cbc:UBLVersionID>");
     expect(xml).toContain("<cbc:InvoiceTypeCode>380</cbc:InvoiceTypeCode>");
   });
 
-  test("reprend le numéro, les dates et le bon de commande", () => {
+  it("reprend le numéro, les dates et le bon de commande", () => {
     expect(xml).toContain("<cbc:ID>F-2026-0042</cbc:ID>");
     expect(xml).toContain("<cbc:IssueDate>2026-10-15</cbc:IssueDate>");
     expect(xml).toContain("<cbc:DueDate>2026-11-29</cbc:DueDate>");
     expect(xml).toContain("<cbc:ID>BC-2026-118</cbc:ID>");
   });
 
-  test("identifie le fournisseur par SIRET et TVA", () => {
+  it("identifie le fournisseur par SIRET et TVA", () => {
     expect(xml).toContain('<cbc:EndpointID schemeID="0002">98953372400013</cbc:EndpointID>');
     expect(xml).toContain("<cbc:CompanyID>FR89989533724</cbc:CompanyID>");
   });
 
-  test("échappe les caractères spéciaux du client et des lignes", () => {
+  it("échappe les caractères spéciaux du client et des lignes", () => {
     expect(xml).toContain("ENSIO SAS &amp; Fils");
     expect(xml).toContain("Pose borne &lt;WB&gt; 22 kW");
     expect(xml).toContain("Main d&apos;œuvre &amp; réglages");
-    expect(xml).not.toContain("ENSIO SAS & Fils");
+    expect(xml.includes("ENSIO SAS & Fils")).toBeFalse();
   });
 
-  test("totalise HT, TVA et TTC", () => {
+  it("totalise HT, TVA et TTC", () => {
     expect(xml).toContain('<cbc:TaxExclusiveAmount currencyID="EUR">250.00</cbc:TaxExclusiveAmount>');
     expect(xml).toContain('<cbc:TaxAmount currencyID="EUR">50.00</cbc:TaxAmount>');
     expect(xml).toContain('<cbc:PayableAmount currencyID="EUR">300.00</cbc:PayableAmount>');
   });
 
-  test("détaille chaque ligne avec son taux de TVA", () => {
+  it("détaille chaque ligne avec son taux de TVA", () => {
     expect(xml).toContain('<cbc:InvoicedQuantity unitCode="MTR">25</cbc:InvoicedQuantity>');
     expect(xml).toContain('<cbc:LineExtensionAmount currencyID="EUR">100.00</cbc:LineExtensionAmount>');
     expect(xml.match(/<cac:InvoiceLine>/g)?.length).toEqual(2);
   });
 
-  test("autoliquidation : catégorie AE et TVA à zéro", () => {
+  it("autoliquidation : catégorie AE et TVA à zéro", () => {
     const xmlAe = genererFactureUbl({ ...FACTURE, autoliquidation: true, total_tva: 0, total_ttc: 250 }, LIGNES);
     expect(xmlAe).toContain("<cbc:ID>AE</cbc:ID>");
     expect(xmlAe).toContain("VATEX-EU-AE");
@@ -73,16 +73,16 @@ describe("genererFactureUbl", () => {
 });
 
 describe("separerCpVille", () => {
-  test("sépare le code postal de la ville", () => {
+  it("sépare le code postal de la ville", () => {
     expect(separerCpVille("44100 Nantes")).toEqual({ codePostal: "44100", ville: "Nantes" });
   });
-  test("ville seule sans code postal", () => {
+  it("ville seule sans code postal", () => {
     expect(separerCpVille("Nantes")).toEqual({ codePostal: "", ville: "Nantes" });
   });
 });
 
 describe("codeUnite", () => {
-  test("mètre, heure et forfait", () => {
+  it("mètre, heure et forfait", () => {
     expect(codeUnite("m")).toEqual("MTR");
     expect(codeUnite("heure")).toEqual("HUR");
     expect(codeUnite("forfait")).toEqual("C62");
@@ -90,7 +90,7 @@ describe("codeUnite", () => {
 });
 
 describe("xmlEscape", () => {
-  test("échappe les cinq caractères réservés", () => {
+  it("échappe les cinq caractères réservés", () => {
     expect(xmlEscape(`a&b<c>d"e'f`)).toEqual("a&amp;b&lt;c&gt;d&quot;e&apos;f");
   });
 });
