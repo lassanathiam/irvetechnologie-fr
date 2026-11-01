@@ -662,6 +662,22 @@ function FacturesReceptionneesZip({ chantiers }: { chantiers: ChantierReception[
         {dansPeriode.length} chantier(s) réceptionné(s) · {factureIds.length} facture(s)
         {sansFacture > 0 ? ` · ${sansFacture} sans facture (non inclus)` : ""}
       </p>
+      {sansFacture > 0 && (
+        <div className="mt-2 rounded border border-dashboard-orange/50 p-2 text-xs">
+          <p className="font-semibold text-dashboard-orange">Chantier(s) sans facture, à corriger :</p>
+          <ul className="mt-1 space-y-1">
+            {dansPeriode.filter((c) => !c.attachement?.facture_id).map((c) => (
+              <li key={c.id}>
+                <Link to="/planning" search={{ rdv: c.id }} className="underline">{c.client_nom}</Link>
+                {` · ${c.cp_ville || c.adresse} · `}
+                {c.attachement
+                  ? <Link to="/attachements/$id" params={{ id: c.attachement.id }} className="underline">attachement {c.attachement.numero} pas encore facturé</Link>
+                  : "aucun attachement"}
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <div className="mt-2 flex flex-wrap gap-2">
         <Button type="button" size="sm" variant="outline" disabled={!factureIds.length || Boolean(busy)} onClick={preparer}>
           {busy ?? `Préparer les ${factureIds.length} factures`}
