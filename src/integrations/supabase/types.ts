@@ -156,6 +156,8 @@ export type Database = {
           created_by: string | null
           date_echeance: string
           date_emission: string
+          depose_at: string | null
+          envoye_facturation_at: string | null
           facture_id: string | null
           id: string
           last_viewed_at: string | null
@@ -164,6 +166,7 @@ export type Database = {
           numero_affaire: string | null
           numero_ticket: string
           objet: string | null
+          paye_at: string | null
           proposition_autorisee: boolean
           public_token: string
           refused_at: string | null
@@ -195,6 +198,8 @@ export type Database = {
           created_by?: string | null
           date_echeance?: string
           date_emission?: string
+          depose_at?: string | null
+          envoye_facturation_at?: string | null
           facture_id?: string | null
           id?: string
           last_viewed_at?: string | null
@@ -203,6 +208,7 @@ export type Database = {
           numero_affaire?: string | null
           numero_ticket: string
           objet?: string | null
+          paye_at?: string | null
           proposition_autorisee?: boolean
           public_token?: string
           refused_at?: string | null
@@ -234,6 +240,8 @@ export type Database = {
           created_by?: string | null
           date_echeance?: string
           date_emission?: string
+          depose_at?: string | null
+          envoye_facturation_at?: string | null
           facture_id?: string | null
           id?: string
           last_viewed_at?: string | null
@@ -242,6 +250,7 @@ export type Database = {
           numero_affaire?: string | null
           numero_ticket?: string
           objet?: string | null
+          paye_at?: string | null
           proposition_autorisee?: boolean
           public_token?: string
           refused_at?: string | null
