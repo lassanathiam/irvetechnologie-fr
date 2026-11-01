@@ -45,6 +45,13 @@ const FILTRES: { cle: FiltreDepot; label: string }[] = [
   { cle: "payee", label: "Payées" },
 ];
 
+const PERIODES: { cle: PeriodeCle; label: string }[] = [
+  { cle: "tout", label: "Depuis le début" },
+  { cle: "mois_courant", label: "Ce mois-ci" },
+  { cle: "mois_precedent", label: "Mois dernier" },
+  { cle: "personnalise", label: "Dates choisies" },
+];
+
 function FacturesPage() {
   const qc = useQueryClient();
   const fetchFactures = useServerFn(listFactures);
