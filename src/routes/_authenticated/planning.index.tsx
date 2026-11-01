@@ -2177,7 +2177,7 @@ function PlanningPage() {
                   vueListe === "encours" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary"
                 }`}
               >
-                En cours ({nbEnCours})
+                À faire ({nbEnCours})
               </button>
               <button
                 type="button"
@@ -2212,7 +2212,7 @@ function PlanningPage() {
           <div className="-mx-1 overflow-x-auto px-1 pb-1">
             <div className="flex min-w-max items-center gap-2">
             {[
-              { v: "tous", l: "Tous", point: "bg-muted-foreground" },
+              { v: "tous", l: vueListe === "encours" ? "Tous sauf pause" : "Tous", point: "bg-muted-foreground" },
               ...STATUTS.filter((s) => (vueListe === "annules" ? false : s.v !== "annule")).map((s) => ({ v: s.v, l: s.l, point: styleStatut(s.v).point })),
             ].map((f) => {
               const nb =
@@ -2223,6 +2223,8 @@ function PlanningPage() {
                     )
                       .length;
               const on = filtreStatut === f.v;
+              // Un état vide ne s'affiche pas : moins de chiffres à lire.
+              if (f.v !== "tous" && nb === 0 && !on) return null;
               return (
                 <button
                   key={f.v}
@@ -2266,6 +2268,17 @@ function PlanningPage() {
             </button>
           </div>
           </div>
+          {vueListe === "encours" && (() => {
+            const parts = STATUTS.filter((s) => s.v !== "annule")
+              .map((s) => ({ l: s.l.toLowerCase(), n: toutes.filter((r) => ongletDe(r) === "encours" && r.statut === s.v).length }))
+              .filter((x) => x.n > 0);
+            return (
+              <p className="rounded-lg border border-border bg-muted/40 px-3 py-2 text-xs text-muted-foreground">
+                <strong className="text-foreground">{nbEnCours} chantiers à faire</strong> = {parts.map((x) => `${x.n} ${x.l}`).join(" + ")}.
+                {" "}Les terminés validés vont dans « Chantiers clôturés », les annulés dans « Annulés ».
+              </p>
+            );
+          })()}
 
           {(vueArchives || vueListe === "recherche") && (
             <div className="space-y-2">
@@ -2327,7 +2340,8 @@ function PlanningPage() {
                     const isDatePanel = panel?.id === r.id && panel.tab === "date";
                     const isDossierPanel = panel?.id === r.id && panel.tab === "dossier";
                      const dossierOuvert = dossier === r.id;
-                     const toutOuvert = ouverts[r.id] ?? vueArchives;
+                     // Dossiers repliés par défaut : nom, type, client, affectation, date et adresse seulement.
+                     const toutOuvert = ouverts[r.id] ?? false;
                     const st = styleStatut(r.statut);
                     const notesVisibles =
                       r.notes && !estNoteAutoDepuisDevis(r.notes) ? r.notes : null;
@@ -2388,6 +2402,12 @@ function PlanningPage() {
                               <p className="text-sm text-primary mt-0.5">{r.designation}</p>
                             )}
                             <ReseauClientBadge nom={r.reseau_client} />
+                            <p className="mt-1 inline-flex items-center gap-1 text-xs font-semibold text-foreground">
+                              <Users className="h-3.5 w-3.5 text-muted-foreground" />
+                              {r.technicien ? `Affecté à ${r.technicien}` : "Non affecté"}
+                              {r.receptionne_at && <span className="ml-2 text-emerald-600">· Réceptionné</span>}
+                            </p>
+                            {toutOuvert && (<>
                             <button
                               type="button"
                               onClick={(e) => {
@@ -2458,6 +2478,7 @@ function PlanningPage() {
                                 </button>
                               )}
                             </div>
+                            </>)}
 
                             {toutOuvert && (tel || wa || r.client_email) && (
                               <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -2669,7 +2690,8 @@ function PlanningPage() {
                              </div>
                              )}
 
-                            {/* Documents du chantier toujours visibles : fiches techniques + PV */}
+                            {/* Documents du chantier (dossier déplié) : fiches techniques + PV */}
+                            {toutOuvert && (<>
                             <FichesChantier rendezvousId={r.id} />
                             <AttachementsChantier rendezvousId={r.id} />
                             {(r.termine_at || r.statut === "termine" || r.statut === "realise") && (
@@ -2698,6 +2720,7 @@ function PlanningPage() {
                                 </Link>
                               );
                             })()}
+                            </>)}
 
                             {/* Un seul bouton pour gérer tout le dossier */}
                             <div className="mt-3 flex flex-wrap items-center gap-2">
@@ -2745,8 +2768,9 @@ function PlanningPage() {
                                  <ChevronDown
                                    className={`h-3.5 w-3.5 transition-transform ${toutOuvert ? "rotate-180" : ""}`}
                                  />
-                                 {toutOuvert ? "Réduire" : "Afficher tout"}
+                                 {toutOuvert ? "Replier" : "Déplier le dossier"}
                                </button>
+                              {toutOuvert && (<>
                               {(() => {
                                 const inclus =
                                   Number(r.metrage_inclus_m ?? 0) ||
@@ -2824,6 +2848,7 @@ function PlanningPage() {
                                   </>
                                 );
                               })()}
+                              </>)}
                               {r.chantier_valide && (
                                 <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-primary/40 text-primary inline-flex items-center gap-1">
                                   <CheckCircle2 className="h-3 w-3" /> Chantier validé

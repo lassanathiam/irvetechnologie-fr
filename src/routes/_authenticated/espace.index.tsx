@@ -363,9 +363,19 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
   const totalRecu = useMemo(() => totalReceptionne(recus), [recus]);
 
   const rows = tab === "recus" ? recus : aReceptionner;
+  const [ouvert, setOuvert] = useState(false);
 
   return (
     <DashboardPanel title="Chantiers réceptionnés" icon={CheckCircle2} action={{ to: "/planning", label: "Ouvrir le planning" }}>
+      <button
+        type="button"
+        onClick={() => setOuvert((o) => !o)}
+        className="mb-3 flex w-full items-center justify-between gap-2 rounded-md border border-dashboard-rule px-3 py-2 text-left text-sm font-semibold text-dashboard-copy"
+      >
+        <span>{recus.length} réceptionnés · {aReceptionner.length} à réceptionner</span>
+        <span className="text-xs text-dashboard-blue">{ouvert ? "Replier ▲" : "Déplier ▼"}</span>
+      </button>
+      {ouvert && (<>
       <div className="mb-3 flex gap-1 border-b border-dashboard-rule">
         <Button
           type="button"
@@ -407,8 +417,8 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
       ) : !rows.length ? (
         <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
       ) : (
-        <ul className="divide-y divide-dashboard-rule">
-          {rows.slice(0, 8).map((chantier) => (
+        <ul className="max-h-[480px] divide-y divide-dashboard-rule overflow-y-auto">
+          {rows.map((chantier) => (
             <li key={chantier.id} className="flex flex-wrap items-center gap-3 py-3 sm:flex-nowrap">
               <Link to="/planning" search={{ rdv: chantier.id }} className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-dashboard-copy">{chantier.client_nom}</span>
@@ -436,6 +446,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
           ))}
         </ul>
       )}
+      </>)}
     </DashboardPanel>
   );
 }
