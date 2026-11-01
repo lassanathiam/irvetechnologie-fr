@@ -572,7 +572,7 @@ export const updateDossierRendezVous = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     const { data: avant, error: readErr } = await context.supabase
       .from("rendezvous")
-      .select("id, statut, date_debut, termine_at, probleme")
+      .select("id, statut, date_debut, termine_at, probleme, statut_facturation")
       .eq("id", data.id)
       .single();
     if (readErr) throw new Error(readErr.message);
@@ -1474,7 +1474,7 @@ export const appliquerProgramme = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     for (const item of data.items) {
-      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme").eq("id", item.id).single();
+      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme, statut_facturation").eq("id", item.id).single();
       if (lecture) throw new Error(lecture.message);
       const date = new Date(item.date_debut).toISOString();
       const { error } = await context.supabase
@@ -1575,7 +1575,7 @@ export const programmerEnsemble = createServerFn({ method: "POST" })
       }
       const id = data.ids[i];
       if (!id) continue;
-      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme").eq("id", id).single();
+      const { data: avant, error: lecture } = await context.supabase.from("rendezvous").select("date_debut, statut, termine_at, probleme, statut_facturation").eq("id", id).single();
       if (lecture) throw new Error(lecture.message);
       const { error } = await context.supabase
         .from("rendezvous")
