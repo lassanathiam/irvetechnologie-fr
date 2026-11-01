@@ -879,7 +879,7 @@ export const getDashboard = createServerFn({ method: "GET" })
         .from("attachement_items")
         .select("attachement_id, rendezvous_id, quantite, prix_unitaire")
         .not("rendezvous_id", "is", null),
-      s.from("attachements_travaux").select("id, statut"),
+      s.from("attachements_travaux").select("id, numero, statut, depose_at, envoye_facturation_at, paye_at"),
     ]);
 
     const now = Date.now();
@@ -895,9 +895,17 @@ export const getDashboard = createServerFn({ method: "GET" })
         precedent + Number(ligne.quantite ?? 0) * Number(ligne.prix_unitaire ?? 0),
       );
     }
+    const enteteParId = new Map((attEntetes.data ?? []).map((a: any) => [a.id, a]));
+    const attParRdv = new Map<string, any>();
+    for (const ligne of attLignes.data ?? []) {
+      if (!ligne.rendezvous_id || annules.has(ligne.attachement_id) || attParRdv.has(ligne.rendezvous_id)) continue;
+      const a = enteteParId.get(ligne.attachement_id);
+      if (a) attParRdv.set(ligne.rendezvous_id, { id: a.id, numero: a.numero, depose_at: a.depose_at, envoye_facturation_at: a.envoye_facturation_at, paye_at: a.paye_at });
+    }
     const rows = (rdv.data ?? []).map((r) => ({
       ...r,
       montant_ht: Math.round((montants.get(r.id) ?? 0) * 100) / 100,
+      attachement: (attParRdv.get(r.id) ?? null) as { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null } | null,
     }));
     const aVenir = rows.filter(
       (r) => new Date(r.date_debut).getTime() >= now && r.statut !== "annule",

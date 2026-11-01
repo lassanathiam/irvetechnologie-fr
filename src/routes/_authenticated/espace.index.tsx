@@ -27,6 +27,8 @@ import { euro } from "@/lib/company";
 import { grouperReceptionParMois, totalReceptionne, type MoisReception } from "@/lib/reception-mois";
 import { Button } from "@/components/ui/button";
 import { RappelsRdvBandeau } from "@/components/RappelsRdv";
+import { marquerSuiviFacturation } from "@/lib/attachements.functions";
+import { ETAPES_SUIVI, etapeAttachement, prochainChamp, type EtapeSuivi } from "@/lib/suivi-facturation";
 import borneHero from "@/assets/borne-hero.jpg";
 
 export const Route = createFileRoute("/_authenticated/espace/")({
@@ -330,10 +332,11 @@ type ChantierReception = {
   statut: string;
   partenaire: string | null;
   montant_ht: number | null;
+  attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null } | null;
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
-  const [tab, setTab] = useState<"recus" | "attente" | "mois">("recus");
+  const [tab, setTab] = useState<"recus" | "attente" | "mois" | "factu">("recus");
 
   const recus = useMemo(
     () =>
@@ -388,8 +391,18 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         >
           Montant par mois
         </Button>
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => setTab("factu")}
+          className={`rounded-none border-b-2 px-3 ${tab === "factu" ? "border-dashboard-green text-dashboard-green" : "border-transparent text-dashboard-copy-muted"}`}
+        >
+          Suivi facturation
+        </Button>
       </div>
-      {tab === "mois" ? (
+      {tab === "factu" ? (
+        <SuiviFacturation chantiers={recus} />
+      ) : tab === "mois" ? (
         <MontantParMois mois={parMois} total={totalRecu} nbChantiers={recus.length} />
       ) : !rows.length ? (
         <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
@@ -424,6 +437,63 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         </ul>
       )}
     </DashboardPanel>
+  );
+}
+
+function SuiviFacturation({ chantiers }: { chantiers: ChantierReception[] }) {
+  const qc = useQueryClient();
+  const marquer = useServerFn(marquerSuiviFacturation);
+  const [filtre, setFiltre] = useState<EtapeSuivi>("sans_attachement");
+  const [enCours, setEnCours] = useState<string | null>(null);
+  const parEtape = useMemo(() => {
+    const m = new Map<EtapeSuivi, ChantierReception[]>(ETAPES_SUIVI.map((e) => [e.cle, []]));
+    for (const c of chantiers) m.get(etapeAttachement(c.attachement))!.push(c);
+    return m;
+  }, [chantiers]);
+  const liste = parEtape.get(filtre) ?? [];
+  const total = liste.reduce((t, c) => t + Number(c.montant_ht ?? 0), 0);
+  async function avancer(c: ChantierReception, champ: "depose_at" | "envoye_facturation_at" | "paye_at") {
+    if (!c.attachement) return;
+    setEnCours(c.id);
+    try { await marquer({ data: { ids: [c.attachement.id], champ, valeur: true } }); await qc.invalidateQueries(); } finally { setEnCours(null); }
+  }
+  return (
+    <div>
+      <div className="mb-3 flex flex-wrap gap-1.5">
+        {ETAPES_SUIVI.map((e) => (
+          <button key={e.cle} type="button" onClick={() => setFiltre(e.cle)}
+            className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold ${filtre === e.cle ? "border-dashboard-green bg-dashboard-green-soft text-dashboard-green" : "border-dashboard-rule text-dashboard-copy-muted"}`}>
+            {e.label} · {parEtape.get(e.cle)?.length ?? 0}
+          </button>
+        ))}
+      </div>
+      {!liste.length ? <Empty>Aucun chantier réceptionné à cette étape.</Empty> : (
+        <>
+          <p className="mb-2 text-xs text-dashboard-copy-muted">{liste.length} chantier(s) · <strong className="text-dashboard-copy">{euro(total)} HT</strong></p>
+          <ul className="divide-y divide-dashboard-rule">
+            {liste.slice(0, 30).map((c) => {
+              const suivant = prochainChamp(etapeAttachement(c.attachement));
+              return (
+                <li key={c.id} className="flex flex-wrap items-center gap-2 py-2.5">
+                  <Link to="/planning" search={{ rdv: c.id }} className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-semibold text-dashboard-copy">{c.client_nom}</span>
+                    <span className="block truncate text-xs text-dashboard-copy-muted">{c.attachement ? c.attachement.numero : "Pas encore d’attachement"} · {c.cp_ville || c.adresse}</span>
+                  </Link>
+                  {Number(c.montant_ht ?? 0) > 0 && <span className="whitespace-nowrap text-xs font-bold text-dashboard-copy">{euro(Number(c.montant_ht))}</span>}
+                  {!c.attachement ? (
+                    <Button asChild size="sm" variant="outline"><Link to="/attachements" search={{ rdv: c.id }}><FilePlus2 /> Faire l’attachement</Link></Button>
+                  ) : suivant ? (
+                    <Button size="sm" variant="outline" disabled={enCours === c.id} onClick={() => void avancer(c, suivant.champ)} className="border-dashboard-green text-dashboard-green hover:bg-dashboard-green-soft">
+                      {enCours === c.id ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {suivant.label}
+                    </Button>
+                  ) : <strong className="text-xs text-dashboard-green">Payé</strong>}
+                </li>
+              );
+            })}
+          </ul>
+        </>
+      )}
+    </div>
   );
 }
 
