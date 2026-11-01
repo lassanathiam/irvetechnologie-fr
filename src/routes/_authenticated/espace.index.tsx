@@ -21,7 +21,8 @@ import {
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { getDashboard } from "@/lib/planning.functions";
-import { updateFactureStatut } from "@/lib/factures.functions";
+import { getFacture, updateFactureStatut } from "@/lib/factures.functions";
+import { creerFacturePdf } from "@/lib/facture-pdf";
 import { ProShell } from "@/components/ProShell";
 import { euro } from "@/lib/company";
 import { grouperReceptionParMois, totalReceptionne, type MoisReception } from "@/lib/reception-mois";
@@ -332,7 +333,7 @@ type ChantierReception = {
   statut: string;
   partenaire: string | null;
   montant_ht: number | null;
-  attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null } | null;
+  attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id?: string | null } | null;
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
@@ -379,6 +380,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
       <Button type="button" variant="outline" size="sm" className="mb-3" disabled={!recus.length} onClick={() => telechargerReceptionnes(recus)}>
         Télécharger les chantiers réceptionnés ({recus.length})
       </Button>
+      <FacturesReceptionneesZip chantiers={recus} />
       <div className="mb-3 flex gap-1 border-b border-dashboard-rule">
         <Button
           type="button"
@@ -595,4 +597,79 @@ function telechargerReceptionnes(chantiers: ChantierReception[]) {
   a.download = `chantiers-receptionnes-${new Date().toISOString().slice(0, 10)}.csv`;
   a.click();
   URL.revokeObjectURL(url);
+}
+
+
+/** Toutes les factures des chantiers réceptionnés d'une période, en un seul ZIP (un PDF par facture). */
+function FacturesReceptionneesZip({ chantiers }: { chantiers: ChantierReception[] }) {
+  const lireFacture = useServerFn(getFacture);
+  const auj = new Date();
+  const [du, setDu] = useState(new Date(auj.getFullYear(), auj.getMonth() - 1, 1).toLocaleDateString("sv-SE"));
+  const [au, setAu] = useState(new Date(auj.getFullYear(), auj.getMonth(), 0).toLocaleDateString("sv-SE"));
+  const [busy, setBusy] = useState<string | null>(null);
+  const [blob, setBlob] = useState<{ b: Blob; nom: string } | null>(null);
+  const dansPeriode = chantiers.filter((c) => {
+    const j = new Date(c.receptionne_at ?? c.date_debut).toLocaleDateString("sv-SE");
+    return j >= du && j <= au;
+  });
+  const factureIds = [...new Set(dansPeriode.map((c) => c.attachement?.facture_id).filter((x): x is string => Boolean(x)))];
+  const sansFacture = dansPeriode.length - dansPeriode.filter((c) => c.attachement?.facture_id).length;
+
+  async function preparer() {
+    setBlob(null);
+    const { default: JSZip } = await import("jszip");
+    const zip = new JSZip();
+    try {
+      for (const [i, id] of factureIds.entries()) {
+        setBusy(`Préparation ${i + 1}/${factureIds.length}…`);
+        const f = await lireFacture({ data: { id } });
+        const pdf = await creerFacturePdf({ ...f.facture, date_limite: f.facture.date_echeance }, f.items);
+        const client = String(f.facture.client_nom ?? "").replace(/[^\p{L}\d]+/gu, "-");
+        zip.file(`Facture_${f.facture.numero}_${client}.pdf`, pdf);
+      }
+      setBlob({ b: await zip.generateAsync({ type: "blob" }), nom: `factures-receptionnees-${du}-au-${au}.zip` });
+    } catch (e) {
+      alert(e instanceof Error ? e.message : "Préparation impossible.");
+    } finally {
+      setBusy(null);
+    }
+  }
+
+  function telecharger() {
+    if (!blob) return;
+    const url = URL.createObjectURL(blob.b);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = blob.nom;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 30_000);
+  }
+
+  return (
+    <div className="mb-3 rounded-md border border-dashboard-rule p-3 text-sm text-dashboard-copy">
+      <p className="font-semibold">Factures des chantiers réceptionnés (ZIP)</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-1">Réceptionnés du
+          <input type="date" value={du} onChange={(e) => { setDu(e.target.value); setBlob(null); }} className="rounded border border-dashboard-rule bg-transparent px-2 py-1" />
+        </label>
+        <label className="flex items-center gap-1">au
+          <input type="date" value={au} onChange={(e) => { setAu(e.target.value); setBlob(null); }} className="rounded border border-dashboard-rule bg-transparent px-2 py-1" />
+        </label>
+      </div>
+      <p className="mt-2 text-xs text-dashboard-copy-muted">
+        {dansPeriode.length} chantier(s) réceptionné(s) · {factureIds.length} facture(s)
+        {sansFacture > 0 ? ` · ${sansFacture} sans facture (non inclus)` : ""}
+      </p>
+      <div className="mt-2 flex flex-wrap gap-2">
+        <Button type="button" size="sm" variant="outline" disabled={!factureIds.length || Boolean(busy)} onClick={preparer}>
+          {busy ?? `Préparer les ${factureIds.length} factures`}
+        </Button>
+        {blob && (
+          <Button type="button" size="sm" onClick={telecharger}>Télécharger le ZIP</Button>
+        )}
+      </div>
+    </div>
+  );
 }
