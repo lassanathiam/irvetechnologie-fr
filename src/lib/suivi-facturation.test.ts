@@ -1,5 +1,11 @@
 import { expect, it } from "bun:test";
-import { etapeAttachement, prochainChamp } from "./suivi-facturation";
+import {
+  etapeAttachement,
+  etapeDepotFacture,
+  peutDeposerFacture,
+  prochainChamp,
+} from "./suivi-facturation";
+
 
 it("chantier sans attachement", () => {
   expect(etapeAttachement(null)).toEqual("sans_attachement");

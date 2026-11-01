@@ -28,3 +28,25 @@ export function prochainChamp(e: EtapeSuivi): { champ: ChampSuivi; label: string
   if (e === "envoye_facturation") return { champ: "paye_at", label: "Marquer payé" };
   return null;
 }
+
+/** Étapes de dépôt d'une facture sur la plateforme du client (indépendantes du statut interne). */
+export type EtapeDepotFacture = "a_deposer" | "deposee" | "payee";
+
+type Fact = {
+  depose_at?: string | null;
+  paid_at?: string | null;
+  statut?: string | null;
+} | null | undefined;
+
+/** Où en est une facture dans son dépôt chez le client. */
+export function etapeDepotFacture(f: Fact): EtapeDepotFacture {
+  if (f?.paid_at || f?.statut === "payee") return "payee";
+  if (f?.depose_at) return "deposee";
+  return "a_deposer";
+}
+
+/** Une facture en brouillon ou annulée ne se dépose pas sur la plateforme du client. */
+export function peutDeposerFacture(f: { statut?: string | null } | null | undefined): boolean {
+  return Boolean(f) && f!.statut !== "annulee" && f!.statut !== "brouillon";
+}
+
