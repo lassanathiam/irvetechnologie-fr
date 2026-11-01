@@ -332,7 +332,7 @@ type ChantierReception = {
   statut: string;
   partenaire: string | null;
   montant_ht: number | null;
-  attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null } | null;
+  attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id?: string | null } | null;
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
