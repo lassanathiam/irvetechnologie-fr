@@ -156,54 +156,59 @@ function FacturesPage() {
           </p>
         )}
         {rows.map((f) => (
-          <div key={f.id} className="p-4 flex items-center gap-4 flex-wrap hover:bg-muted/30 transition">
-            <Link to="/factures/$id" params={{ id: f.id }} className="text-mono text-xs text-primary hover:underline">
-              {f.numero}
-            </Link>
-            <span className="font-medium">{f.client_nom}</span>
-            <span className="text-sm text-muted-foreground hidden sm:block">{f.objet}</span>
-            <span className="text-mono text-xs text-muted-foreground">
-              {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
-            </span>
-            <span className="ml-auto text-mono">{euro(Number(f.total_ttc))}</span>
-            <DepotChip
-              f={{
-                id: f.id,
-                numero: f.numero,
-                statut: f.statut,
-                depose_at: f.depose_at,
-                depose_reference: f.depose_reference,
-              }}
-            />
-            <span
-              className={`text-mono text-[11px] px-2 py-1 rounded-sm border ${
-                f.statut === "payee"
-                  ? "border-primary text-primary"
-                  : "border-border text-muted-foreground"
-              }`}
-            >
-              {STATUT_LABEL[f.statut] ?? f.statut}
-            </span>
-            {f.viewed_at && (
-              <span className="text-[11px] font-semibold text-primary" title={`Vu ${f.view_count} fois`}>
-                Consultée le {dateFr(f.last_viewed_at ?? f.viewed_at)}
-                {f.view_count > 1 ? ` · ${f.view_count} vues` : ""}
+          <div key={f.id} className="p-4 flex flex-wrap items-center gap-x-4 gap-y-2 hover:bg-muted/30 transition">
+            <div className="flex min-w-0 flex-1 items-center gap-3">
+              <Link to="/factures/$id" params={{ id: f.id }} className="shrink-0 text-mono text-xs text-primary hover:underline">
+                {f.numero}
+              </Link>
+              <span className="min-w-0 truncate font-medium">{f.client_nom}</span>
+              <span className="hidden min-w-0 truncate text-sm text-muted-foreground sm:block">{f.objet}</span>
+              <span className="shrink-0 text-mono text-xs text-muted-foreground whitespace-nowrap">
+                {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
               </span>
-            )}
-            <button
-              type="button"
-              onClick={async () => {
-                if (!confirm(`Supprimer la facture ${f.numero} ?`)) return;
-                await deleteFn({ data: { id: f.id } });
-                qc.invalidateQueries({ queryKey: ["factures"] });
-              }}
-              className="text-muted-foreground hover:text-destructive"
-              aria-label="Supprimer"
-            >
-              <Trash2 className="h-4 w-4" />
-            </button>
+            </div>
+            <div className="flex shrink-0 items-center gap-3">
+              <span className="text-mono">{euro(Number(f.total_ttc))}</span>
+              <DepotChip
+                f={{
+                  id: f.id,
+                  numero: f.numero,
+                  statut: f.statut,
+                  depose_at: f.depose_at,
+                  depose_reference: f.depose_reference,
+                }}
+              />
+              <span
+                className={`text-mono text-[11px] px-2 py-1 rounded-sm border ${
+                  f.statut === "payee"
+                    ? "border-primary text-primary"
+                    : "border-border text-muted-foreground"
+                }`}
+              >
+                {STATUT_LABEL[f.statut] ?? f.statut}
+              </span>
+              {f.viewed_at && (
+                <span className="text-[11px] font-semibold text-primary" title={`Vu ${f.view_count} fois`}>
+                  Consultée le {dateFr(f.last_viewed_at ?? f.viewed_at)}
+                  {f.view_count > 1 ? ` · ${f.view_count} vues` : ""}
+                </span>
+              )}
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm(`Supprimer la facture ${f.numero} ?`)) return;
+                  await deleteFn({ data: { id: f.id } });
+                  qc.invalidateQueries({ queryKey: ["factures"] });
+                }}
+                className="text-muted-foreground hover:text-destructive"
+                aria-label="Supprimer"
+              >
+                <Trash2 className="h-4 w-4" />
+              </button>
+            </div>
           </div>
         ))}
+
       </div>
     </ProShell>
   );
