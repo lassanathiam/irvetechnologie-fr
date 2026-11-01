@@ -12,8 +12,16 @@ describe("Reprogrammation des chantiers bloqués", () => {
   it("retire le blocage d'un chantier problématique reprogrammé", () => {
     expect(repriseApresNouvelleDate({ ...boisse, statut: "planifie", probleme: true }, "2026-10-27T14:00:00Z")).toEqual({ statut: "planifie", probleme: false, demarre_at: null });
   });
-  it("conserve la clôture des chantiers réellement terminés", () => {
-    expect(repriseApresNouvelleDate({ ...boisse, termine_at: "2026-10-20T16:00:00Z" }, "2026-10-27T14:00:00Z")).toEqual({});
-    expect(repriseApresNouvelleDate({ ...boisse, statut: "termine" }, "2026-10-27T14:00:00Z")).toEqual({});
+  const malezieux = { date_debut: "2026-10-12T12:00:00Z", statut: "planifie", termine_at: "2026-10-12T15:31:00Z", probleme: false };
+  const avant = new Date("2026-11-01T20:00:00Z").getTime();
+  it("rouvre un chantier terminé non facturé replanifié à une date future (retour délestage)", () => {
+    expect(repriseApresNouvelleDate(malezieux, "2026-11-04T12:30:00Z", "planifie", avant)).toEqual({ statut: "planifie", probleme: false, demarre_at: null, termine_at: null, archive: false });
+  });
+  it("ne rouvre jamais un chantier facturé ou payé", () => {
+    expect(repriseApresNouvelleDate({ ...malezieux, statut_facturation: "facture" }, "2026-11-04T12:30:00Z", "planifie", avant)).toEqual({});
+    expect(repriseApresNouvelleDate({ ...malezieux, statut_facturation: "paye" }, "2026-11-04T12:30:00Z", "planifie", avant)).toEqual({});
+  });
+  it("ne rouvre pas un chantier terminé avec une date passée", () => {
+    expect(repriseApresNouvelleDate(malezieux, "2026-10-27T14:00:00Z", "planifie", avant)).toEqual({});
   });
 });
