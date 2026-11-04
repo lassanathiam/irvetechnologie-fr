@@ -1218,7 +1218,17 @@ export const terminerChantier = createServerFn({ method: "POST" })
       .eq("rendezvous_id", data.id);
 
     if (photosErr) throw new Error("Impossible de vérifier les photos du chantier. Réessayez.");
-    verifierPhotoPv(rdv.partenaire, rdv.reseau_client, photosRows ?? []);
+    const { data: pvRows } = await context.supabase
+      .from("rapport_remplis")
+      .select("signed_at, signature_client")
+      .eq("rendezvous_id", data.id);
+    const { data: cri } = await context.supabase
+      .from("cri_total")
+      .select("signature_client")
+      .eq("rendezvous_id", data.id)
+      .maybeSingle();
+    const pvSigne = (pvRows ?? []).some((r) => r.signed_at || r.signature_client) || !!cri?.signature_client;
+    verifierPhotoPv(rdv.partenaire, rdv.reseau_client, photosRows ?? [], pvSigne);
 
     const fin = new Date();
     const debut = rdv.demarre_at ? new Date(rdv.demarre_at) : null;
@@ -2484,4 +2494,21 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
     const { error } = await context.supabase.from("rendezvous").update(patch).eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+/** Indique si un PV a été rempli et signé dans l'application pour ce chantier. */
+export const pvSigneChantier = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string }) => z.object({ id: z.string().uuid() }).parse(raw))
+  .handler(async ({ data, context }) => {
+    const { data: pvRows } = await context.supabase
+      .from("rapport_remplis")
+      .select("signed_at, signature_client")
+      .eq("rendezvous_id", data.id);
+    const { data: cri } = await context.supabase
+      .from("cri_total")
+      .select("signature_client")
+      .eq("rendezvous_id", data.id)
+      .maybeSingle();
+    return { signe: (pvRows ?? []).some((r) => r.signed_at || r.signature_client) || !!cri?.signature_client };
   });
