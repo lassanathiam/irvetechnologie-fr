@@ -15,6 +15,7 @@ import {
   enregistrerRetourTravaux,
   listPhotosChantier,
   metrageInclusDefaut,
+  pvSigneChantier,
   supprimerPhotoChantier,
   uploadPhotoChantier,
 } from "@/lib/planning.functions";
@@ -77,6 +78,12 @@ export default function RetourTravauxSheet({
     }
     nbFileAvant.current = fileAttente.length;
   }, [fileAttente.length, qc, rdv.id]);
+
+  const pvSigneFn = useServerFn(pvSigneChantier);
+  const pvSigne = useQuery({
+    queryKey: ["pv-signe-chantier", rdv.id],
+    queryFn: () => pvSigneFn({ data: { id: rdv.id } }),
+  });
 
   const photos = useQuery({
     queryKey: ["photos-chantier", rdv.id],
@@ -198,7 +205,8 @@ export default function RetourTravauxSheet({
   });
 
   const obligatoires = new Set<string>(categoriesRetourObligatoires(rdv.type, rdv.partenaire, rdv.reseau_client));
-  const pvManquant = photoPvObligatoire(rdv.partenaire, rdv.reseau_client) && !liste.some((p) => p.categorie === "pv_signe");
+  if (pvSigne.data?.signe) obligatoires.delete("pv_signe");
+  const pvManquant = !pvSigne.data?.signe && photoPvObligatoire(rdv.partenaire, rdv.reseau_client) && !liste.some((p) => p.categorie === "pv_signe");
   const etapes = photosParEtape([...obligatoires, ...optionnelles, ...liste.map((p) => p.categorie)]);
 
   function ligne(cat: string) {
