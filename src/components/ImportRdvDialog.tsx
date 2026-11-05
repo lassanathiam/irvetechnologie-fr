@@ -9,6 +9,7 @@ import { createRendezVous } from "@/lib/planning.functions";
 import { Button } from "@/components/ui/button";
 import { lireRdvSansIA } from "@/lib/import-chantier-local";
 import { texteFichierSansIA } from "@/lib/fichier-chantier-local";
+import { telephoneClient } from "@/lib/telephone-client";
 import { reperesDoublons, type ChantierComparable } from "@/lib/doublons-import";
 
 type Ligne = RdvExtrait & { garder: boolean; doublon?: string | null };
@@ -99,7 +100,7 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
             statut: "planifie",
             client_nom: l.client_nom,
             reseau_client: l.reseau_client,
-            client_telephone: l.client_telephone,
+            client_telephone: telephoneClient(l.client_telephone),
             client_email: l.client_email,
             adresse: l.adresse,
             cp_ville: l.cp_ville,
