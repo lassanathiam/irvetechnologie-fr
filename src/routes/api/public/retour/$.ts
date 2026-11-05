@@ -31,12 +31,16 @@ export const Route = createFileRoute("/api/public/retour/$")({
 
         const { data: rdv } = await supabaseAdmin
           .from("rendezvous")
-          .select("id, client_nom, termine_at, archive_at, echec_at, date_debut")
+          .select("id, client_nom, statut, termine_at, archive_at, echec_at, date_debut")
           .eq("public_token", token)
           .maybeSingle();
         if (!rdv) return new Response("Lien invalide", { status: 404 });
 
-        const reference = rdv.termine_at ?? rdv.archive_at ?? rdv.echec_at;
+        const reference =
+          rdv.termine_at ??
+          rdv.archive_at ??
+          rdv.echec_at ??
+          (["termine", "realise"].includes(String(rdv.statut)) ? rdv.date_debut : null);
         if (!reference) return new Response("Dossier non disponible", { status: 404 });
         // La validité court à partir du dernier envoi (fin de chantier ou archivage),
         // sinon un dossier archivé après le délai de paiement arriverait déjà expiré.
