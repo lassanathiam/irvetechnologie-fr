@@ -2,6 +2,7 @@ import type { RdvExtrait } from "./import-rdv.functions";
 import type { FicheExtraite } from "./fiches-techniques.functions";
 import { detecterReseauClient } from "./reseau-client";
 import { nettoyerTexteLu } from "./doublons-import";
+import { premierTelephoneClient } from "./telephone-client";
 
 const norm = (s: string) => s.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim();
 const mois = ["janvier", "fevrier", "mars", "avril", "mai", "juin", "juillet", "aout", "septembre", "octobre", "novembre", "decembre"];
@@ -35,7 +36,8 @@ function valeur(texte: string, labels: string): string | null {
 }
 
 function intervention(texte: string, maintenant: Date): RdvExtrait {
-  const telephone = texte.match(/(?:\+33\s*(?:\(0\)\s*)?|0)[1-9](?:[ .-]?\d{2}){4}\b/)?.[0] ?? null;
+  // Les fiches ENSIO impriment le numéro du sous-traitant (IRVE) : on prend le premier numéro qui n'est pas le nôtre.
+  const telephone = premierTelephoneClient(texte);
   const cp = texte.match(/\b\d{5}\s+[A-Za-zÀ-ÿ][A-Za-zÀ-ÿ '\-]*/)?.[0]?.trim() ?? null;
   const adresse = valeur(texte, "adresse(?: du chantier| d'intervention)?") ?? texte.match(/\b\d{1,4}\s*(?:bis\s+|ter\s+)?(?:rue|avenue|av\.|boulevard|bd|route|chemin|impasse|allée|allee|place|lieu-dit)\s+[^\n;,|—–]+/i)?.[0]?.replace(/\s*\d{5}\s.*$/, "").trim() ?? "";
   const civilite = texte.match(/\b(?:Mme|Monsieur|Madame|Mr|M\.)\s+([^\n;,|—–]+)/i)?.[0]?.trim();
@@ -47,7 +49,7 @@ function intervention(texte: string, maintenant: Date): RdvExtrait {
   return {
     client_nom: valeur(texte, "client(?:_nom)?|nom(?: du client)?|bénéficiaire|beneficiaire") ?? civilite ?? "Client à préciser",
     reseau_client: valeur(texte, "réseau(?:_client)?|reseau(?:_client)?|enseigne|opérateur|operateur") ?? detecterReseauClient(texte),
-    client_telephone: telephone?.replace(/[ .()-]/g, "").replace(/^\+33/, "0") ?? null,
+    client_telephone: telephone,
     client_email: texte.match(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/i)?.[0] ?? null,
     adresse, cp_ville: valeur(texte, "cp.?ville|code postal(?: et ville)?") ?? cp,
     date_debut: debut, creneau_fin: fin, type,
