@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
-import { Camera, Check, Circle, Cable, Loader2, Trash2, WifiOff, Wrench, X } from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { Camera, Check, Circle, Cable, FileCheck2, Loader2, Trash2, WifiOff, Wrench, X } from "lucide-react";
 import { toast } from "sonner";
 import { compressImage } from "@/lib/image-compress";
 import PhotoLightbox from "@/components/PhotoLightbox";
@@ -390,6 +391,20 @@ export default function RetourTravauxSheet({
         </div>}
 
         <div className="grid gap-5">
+          {pvSigne.data?.signe && (
+            <div role="status" className="flex flex-wrap items-center justify-between gap-2 rounded-lg border border-primary/40 bg-primary/10 p-3 text-sm">
+              <span className="flex items-center gap-2 font-semibold text-foreground">
+                <FileCheck2 className="h-4 w-4 shrink-0 text-primary" /> PV signé — enregistré dans ce dossier, signatures conservées
+              </span>
+              <Link
+                to={pvSigne.data.source === "total" ? "/chantier-cri-total/$rdvId" : "/chantier-rapport/$rdvId"}
+                params={{ rdvId: rdv.id }}
+                className="text-xs font-semibold text-primary underline"
+              >
+                Voir le PV
+              </Link>
+            </div>
+          )}
           {pvManquant && <p role="status" className="rounded-lg border border-destructive/40 bg-destructive/10 p-3 text-sm font-semibold text-foreground">{photosSeulement ? "Photo du PV manquante dans ce dossier ENSIO." : "Photo du PV obligatoire avant de terminer ce chantier ENSIO."}</p>}
           {etapes.map((etape) => (
             <section key={etape.id} className={etape.couleur} aria-label={etape.nom}>
