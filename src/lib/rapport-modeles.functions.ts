@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { fusionnerSignatures } from "./signatures-pv";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { normaliserStructure, modelePourPartenaire, modelePourReseau } from "./rapport-modeles";
@@ -244,30 +245,27 @@ export const enregistrerRapportRempli = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    // Une signature client déjà posée (ex. via le lien SMS) n'est jamais effacée par un enregistrement.
-    let sigClient = data.signature_client ?? null;
+    // Une signature déjà posée (client via SMS ou sur place, technicien) n'est jamais effacée
+    // par un enregistrement, même après la fermeture du dossier : seule une nouvelle signature la remplace.
     let nom = data.signataire_nom ?? null;
-    if (data.id && !sigClient) {
-      const { data: prev } = await context.supabase
+    let prev: { signature_client: string | null; signature_technicien: string | null; signataire_nom: string | null; signed_at: string | null } | null = null;
+    if (data.id) {
+      const { data: p } = await context.supabase
         .from("rapport_remplis")
-        .select("signature_client, signataire_nom")
+        .select("signature_client, signature_technicien, signataire_nom, signed_at")
         .eq("id", data.id)
         .maybeSingle();
-      if (prev?.signature_client) {
-        sigClient = prev.signature_client;
-        nom = prev.signataire_nom ?? nom;
-      }
+      prev = p ?? null;
+      if (!data.signature_client && prev?.signature_client) nom = prev.signataire_nom ?? nom;
     }
-    const signed = Boolean(sigClient && data.signature_technicien);
+    const sig = fusionnerSignatures(prev, data, new Date().toISOString());
     const row = {
       modele_id: data.modele_id,
       rendezvous_id: data.rendezvous_id,
       valeurs: data.valeurs as Json,
-      signature_client: sigClient,
-      signature_technicien: data.signature_technicien ?? null,
+      ...sig,
       signataire_nom: nom,
       technicien: data.technicien ?? null,
-      signed_at: signed ? new Date().toISOString() : null,
     };
     const q = data.id
       ? context.supabase.from("rapport_remplis").update(row).eq("id", data.id).select("id, public_token").single()

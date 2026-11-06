@@ -2510,5 +2510,11 @@ export const pvSigneChantier = createServerFn({ method: "POST" })
       .select("signature_client")
       .eq("rendezvous_id", data.id)
       .maybeSingle();
-    return { signe: (pvRows ?? []).some((r) => r.signed_at || r.signature_client) || !!cri?.signature_client };
+    const rapportSigne = (pvRows ?? []).some((r) => r.signed_at || r.signature_client);
+    const totalSigne = !!cri?.signature_client;
+    return {
+      signe: rapportSigne || totalSigne,
+      // Quel PV ouvrir depuis le retour travaux.
+      source: (totalSigne ? "total" : rapportSigne ? "rapport" : null) as "total" | "rapport" | null,
+    };
   });

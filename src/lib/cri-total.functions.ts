@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { CATEGORIES_TOTAL } from "./cri-total";
+import { fusionnerSignatures } from "./signatures-pv";
 
 const TOTAL = new Set<string>(CATEGORIES_TOTAL);
 
@@ -50,11 +51,17 @@ export const enregistrerCriTotal = createServerFn({ method: "POST" })
     }).parse(raw),
   )
   .handler(async ({ data, context }) => {
+    // Une signature déjà enregistrée n'est jamais effacée, même après la fermeture du dossier.
+    const { data: prev } = await context.supabase
+      .from("cri_total")
+      .select("signature_technicien, signature_client")
+      .eq("rendezvous_id", data.rdvId)
+      .maybeSingle();
     const { error } = await context.supabase.from("cri_total").upsert({
       rendezvous_id: data.rdvId,
       valeurs: data.valeurs,
-      signature_technicien: data.signature_technicien ?? null,
-      signature_client: data.signature_client ?? null,
+      signature_technicien: fusionnerSignatures(prev, data, "").signature_technicien,
+      signature_client: fusionnerSignatures(prev, data, "").signature_client,
       updated_at: new Date().toISOString(),
     });
     if (error) throw new Error("Enregistrement du compte-rendu impossible.");
