@@ -244,30 +244,36 @@ export const enregistrerRapportRempli = createServerFn({ method: "POST" })
       .parse(i),
   )
   .handler(async ({ data, context }) => {
-    // Une signature client déjà posée (ex. via le lien SMS) n'est jamais effacée par un enregistrement.
+    // Une signature déjà posée (client via SMS ou sur place, technicien) n'est jamais effacée
+    // par un enregistrement, même après la fermeture du dossier : seule une nouvelle signature la remplace.
     let sigClient = data.signature_client ?? null;
+    let sigTech = data.signature_technicien ?? null;
     let nom = data.signataire_nom ?? null;
-    if (data.id && !sigClient) {
+    let signeLe: string | null = null;
+    if (data.id) {
       const { data: prev } = await context.supabase
         .from("rapport_remplis")
-        .select("signature_client, signataire_nom")
+        .select("signature_client, signature_technicien, signataire_nom, signed_at")
         .eq("id", data.id)
         .maybeSingle();
-      if (prev?.signature_client) {
+      if (!sigClient && prev?.signature_client) {
         sigClient = prev.signature_client;
         nom = prev.signataire_nom ?? nom;
       }
+      if (!sigTech && prev?.signature_technicien) sigTech = prev.signature_technicien;
+      signeLe = prev?.signed_at ?? null;
     }
-    const signed = Boolean(sigClient && data.signature_technicien);
+    const signed = Boolean(sigClient && sigTech);
     const row = {
       modele_id: data.modele_id,
       rendezvous_id: data.rendezvous_id,
       valeurs: data.valeurs as Json,
       signature_client: sigClient,
-      signature_technicien: data.signature_technicien ?? null,
+      signature_technicien: sigTech,
       signataire_nom: nom,
       technicien: data.technicien ?? null,
-      signed_at: signed ? new Date().toISOString() : null,
+      // La date de signature d'origine est conservée lors des enregistrements suivants.
+      signed_at: signed ? signeLe ?? new Date().toISOString() : null,
     };
     const q = data.id
       ? context.supabase.from("rapport_remplis").update(row).eq("id", data.id).select("id, public_token").single()
