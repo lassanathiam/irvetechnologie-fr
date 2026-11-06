@@ -160,7 +160,10 @@ function Page() {
   }
 
   async function telecharger() {
-    const prets = lignes.filter((l) => l.factureId);
+    // Une commande rectifiée remplace la précédente : une seule entrée par facture (la dernière importée).
+    const parFacture = new Map<string, Ligne>();
+    for (const l of lignes) if (l.factureId) parFacture.set(l.factureId, l);
+    const prets = [...parFacture.values()];
     if (!prets.length) return;
     const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
@@ -173,6 +176,8 @@ function Page() {
         const dossier = `${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}_${(l.lu.client ?? f.facture.client_nom).replace(/[^\p{L}\d]+/gu, "-")}`;
         zip.file(`${dossier}/Facture_${f.facture.numero}.pdf`, pdf);
         zip.file(`${dossier}/Commande_${l.lu.numero.replace(/[^\p{L}\d_-]+/gu, "")}.pdf`, l.bytes);
+        zip.file(`Toutes_les_factures/Facture_${f.facture.numero}_${dossier}.pdf`, pdf);
+        zip.file(`Toutes_les_commandes/Commande_${dossier}.pdf`, l.bytes);
       }
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob);
