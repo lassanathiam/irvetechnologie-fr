@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test";
+import { describe, expect, it as test } from "bun:test";
 import { fusionnerSignatures } from "./signatures-pv";
 
 const NOW = "2026-11-06T17:00:00.000Z";
