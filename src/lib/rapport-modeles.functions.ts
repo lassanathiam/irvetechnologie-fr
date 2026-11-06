@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { fusionnerSignatures } from "./signatures-pv";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { z } from "zod";
 import { normaliserStructure, modelePourPartenaire, modelePourReseau } from "./rapport-modeles";
@@ -246,34 +247,25 @@ export const enregistrerRapportRempli = createServerFn({ method: "POST" })
   .handler(async ({ data, context }) => {
     // Une signature déjà posée (client via SMS ou sur place, technicien) n'est jamais effacée
     // par un enregistrement, même après la fermeture du dossier : seule une nouvelle signature la remplace.
-    let sigClient = data.signature_client ?? null;
-    let sigTech = data.signature_technicien ?? null;
     let nom = data.signataire_nom ?? null;
-    let signeLe: string | null = null;
+    let prev: { signature_client: string | null; signature_technicien: string | null; signataire_nom: string | null; signed_at: string | null } | null = null;
     if (data.id) {
-      const { data: prev } = await context.supabase
+      const { data: p } = await context.supabase
         .from("rapport_remplis")
         .select("signature_client, signature_technicien, signataire_nom, signed_at")
         .eq("id", data.id)
         .maybeSingle();
-      if (!sigClient && prev?.signature_client) {
-        sigClient = prev.signature_client;
-        nom = prev.signataire_nom ?? nom;
-      }
-      if (!sigTech && prev?.signature_technicien) sigTech = prev.signature_technicien;
-      signeLe = prev?.signed_at ?? null;
+      prev = p ?? null;
+      if (!data.signature_client && prev?.signature_client) nom = prev.signataire_nom ?? nom;
     }
-    const signed = Boolean(sigClient && sigTech);
+    const sig = fusionnerSignatures(prev, data, new Date().toISOString());
     const row = {
       modele_id: data.modele_id,
       rendezvous_id: data.rendezvous_id,
       valeurs: data.valeurs as Json,
-      signature_client: sigClient,
-      signature_technicien: sigTech,
+      ...sig,
       signataire_nom: nom,
       technicien: data.technicien ?? null,
-      // La date de signature d'origine est conservée lors des enregistrements suivants.
-      signed_at: signed ? signeLe ?? new Date().toISOString() : null,
     };
     const q = data.id
       ? context.supabase.from("rapport_remplis").update(row).eq("id", data.id).select("id, public_token").single()
