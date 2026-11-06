@@ -2,7 +2,7 @@ import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, ClipboardCheck, FileUp, Loader2, Printer, Save, Send } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
@@ -73,6 +73,8 @@ function RapportChantierPageInner() {
   const [valeurs, setValeurs] = useState<Record<string, Val>>({});
   const [sigC, setSigC] = useState<string | null>(null);
   const [sigT, setSigT] = useState<string | null>(null);
+  // Signatures déjà enregistrées (technicien|client) : sert à l'enregistrement automatique.
+  const sigSauvees = useRef("|");
   const [nomClient, setNomClient] = useState("");
   const [technicien, setTechnicien] = useState("");
   const [email, setEmail] = useState("");
@@ -137,6 +139,7 @@ function RapportChantierPageInner() {
     setEmail(data.rempli?.sent_to || m?.email_destinataire || data.email_donneur || "");
     setEmailClient(data.rdv.client_email ?? "");
     const r = data.rempli;
+    sigSauvees.current = `${r?.signature_technicien ?? ""}|${r?.signature_client ?? ""}`;
     if (r) {
       setRempliId(r.id);
       setPublicToken(r.public_token ?? null);
@@ -196,7 +199,8 @@ function RapportChantierPageInner() {
       setRempliId(r.id);
       setPublicToken(r.public_token ?? null);
       qc.invalidateQueries({ queryKey: ["rapport-chantier", rdvId] });
-      toast.success(sigC && sigT ? "Rapport signé et enregistré" : "Brouillon enregistré");
+      qc.invalidateQueries({ queryKey: ["pv-signe-chantier", rdvId] });
+      toast.success(sigC && sigT ? "PV signé — enregistré dans le retour travaux" : "Brouillon enregistré");
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -219,6 +223,22 @@ function RapportChantierPageInner() {
     onSuccess: () => toast.success("PV envoyé au client"),
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Enregistrement automatique dès qu'une signature est posée : plus besoin de toucher « Enregistrer ».
+  // Une signature effacée n'est pas enregistrée (on attend la nouvelle) : l'ancienne reste conservée.
+  useEffect(() => {
+    if (!data || !modeleId || (!sigC && !sigT) || save.isPending) return;
+    const cle = `${sigT ?? ""}|${sigC ?? ""}`;
+    if (cle === sigSauvees.current) return;
+    const [dejaT, dejaC] = sigSauvees.current.split("|");
+    if ((dejaT && !sigT) || (dejaC && !sigC)) return;
+    const t = setTimeout(() => {
+      sigSauvees.current = cle;
+      save.mutate();
+    }, 1200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sigC, sigT, modeleId, data, save.isPending]);
 
   if (isLoading) return <Loader2 className="m-6 h-6 w-6 animate-spin" />;
   if (error || !data) return <p className="p-6 text-destructive">{(error as Error)?.message ?? "Chantier introuvable."}</p>;

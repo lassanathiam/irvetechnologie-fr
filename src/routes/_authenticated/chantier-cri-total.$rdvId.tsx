@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowLeft, Camera, Download, FolderOpen, ImagePlus, Loader2, Save, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
@@ -48,6 +48,8 @@ function CriTotalPage() {
   const [v, setV] = useState<Record<string, string>>({});
   const [sigT, setSigT] = useState<string | null>(null);
   const [sigC, setSigC] = useState<string | null>(null);
+  // Signatures déjà enregistrées (technicien|client) : sert à l'enregistrement automatique.
+  const sigSauvees = useRef("|");
   const [envoi, setEnvoi] = useState<string | null>(null);
   const [pdf, setPdf] = useState(false);
   const [pret, setPret] = useState(false);
@@ -61,14 +63,33 @@ function CriTotalPage() {
     setV({ ...base, ...((data.cri?.valeurs as Record<string, string>) ?? {}) });
     setSigT(data.cri?.signature_technicien ?? null);
     setSigC(data.cri?.signature_client ?? null);
+    sigSauvees.current = `${data.cri?.signature_technicien ?? ""}|${data.cri?.signature_client ?? ""}`;
     setPret(true);
   }, [data, pret]);
 
   const save = useMutation({
     mutationFn: () => saveFn({ data: { rdvId, valeurs: v, signature_technicien: sigT, signature_client: sigC } }),
-    onSuccess: () => toast.success("PV TotalEnergies enregistré"),
+    onSuccess: () => {
+      void qc.invalidateQueries({ queryKey: ["pv-signe-chantier", rdvId] });
+      toast.success(sigC && sigT ? "PV TotalEnergies signé — enregistré dans le retour travaux" : "PV TotalEnergies enregistré");
+    },
     onError: (e: Error) => toast.error(e.message),
   });
+
+  // Enregistrement automatique dès qu'une signature est posée ; une signature effacée attend la nouvelle.
+  useEffect(() => {
+    if (!pret || (!sigC && !sigT) || save.isPending) return;
+    const cle = `${sigT ?? ""}|${sigC ?? ""}`;
+    if (cle === sigSauvees.current) return;
+    const [dejaT, dejaC] = sigSauvees.current.split("|");
+    if ((dejaT && !sigT) || (dejaC && !sigC)) return;
+    const t = setTimeout(() => {
+      sigSauvees.current = cle;
+      save.mutate();
+    }, 1200);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sigC, sigT, pret, save.isPending]);
 
   const ajouter = async (categorie: string, files: FileList | null) => {
     if (!files?.length) return;
