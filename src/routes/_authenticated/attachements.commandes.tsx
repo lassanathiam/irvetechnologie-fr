@@ -163,8 +163,20 @@ function Page() {
     // Une commande rectifiée remplace la précédente : une seule entrée par facture (la dernière importée).
     const parFacture = new Map<string, Ligne>();
     for (const l of lignes) if (l.factureId) parFacture.set(l.factureId, l);
-    const prets = [...parFacture.values()];
-    if (!prets.length) return;
+    const tous = [...parFacture.values()];
+    if (!tous.length) return;
+    // Le donneur d'ordre n'accepte que les factures des chantiers réceptionnés.
+    setBusy("Recherche des chantiers réceptionnés…");
+    const attIds = [...new Set(tous.map((l) => l.attId).filter(Boolean))] as string[];
+    const { data: items } = await supabase.from("attachement_items").select("attachement_id, rendezvous_id").in("attachement_id", attIds);
+    const rdvIds = [...new Set((items ?? []).map((x) => x.rendezvous_id).filter(Boolean))] as string[];
+    const { data: rdvs } = rdvIds.length ? await supabase.from("rendezvous").select("id, receptionne_at").in("id", rdvIds) : { data: [] };
+    const recus = new Set((rdvs ?? []).filter((r) => r.receptionne_at).map((r) => r.id));
+    const attRecus = new Set((items ?? []).filter((x) => x.rendezvous_id && recus.has(x.rendezvous_id)).map((x) => x.attachement_id));
+    const prets = tous.filter((l) => attRecus.has(l.attId));
+    const exclus = tous.filter((l) => !attRecus.has(l.attId));
+    if (!prets.length) { setBusy(null); toast.error("Aucune facture de chantier réceptionné parmi ces commandes."); return; }
+    if (exclus.length) toast.info(`${exclus.length} non réceptionné(s) retiré(s) : ${exclus.map((l) => l.lu.client ?? l.lu.numero).join(", ")}`, { duration: 15000 });
     const { default: JSZip } = await import("jszip");
     const zip = new JSZip();
     try {
@@ -268,7 +280,7 @@ function Page() {
         {lignes.length > 0 && (
           <div className="flex flex-wrap gap-2">
             <Button disabled={!!busy || chargementErreur || sauvegardeErreur || !aTraiter} onClick={() => void valider()}><CheckCircle2 /> Valider et facturer tout ({aTraiter})</Button>
-            <Button variant="outline" disabled={!!busy || !prets} onClick={() => void telecharger()}><Download /> Télécharger le dossier ({prets})</Button>
+            <Button variant="outline" disabled={!!busy || !prets} onClick={() => void telecharger()}><Download /> Télécharger les réceptionnés + commandes</Button>
           </div>
         )}
       </div>
