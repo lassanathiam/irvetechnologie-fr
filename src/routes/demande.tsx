@@ -9,6 +9,16 @@ import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 import { trouverBorne } from "@/lib/bornes-catalogue";
+import { lireOrigineLead } from "@/lib/lead-source";
+
+const SECTEURS_PRO = [
+  "Syndic / copropriété",
+  "Entreprise avec parking",
+  "Hôtel / restaurant / commerce",
+  "Garage / concession",
+  "Collectivité",
+  "Autre activité",
+];
 
 type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -26,8 +36,8 @@ const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/demande")({
-  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } => {
-    const out: { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } = {};
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string; profil?: "particulier" | "professionnel"; secteur?: string } => {
+    const out: { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string; profil?: "particulier" | "professionnel"; secteur?: string } = {};
     const f = search.formule;
     if (f === "serenite" || f === "premium" || f === "pro") out.formule = f;
     const b = search.borne;
@@ -39,6 +49,9 @@ export const Route = createFileRoute("/demande")({
     const d = Number(search.distance); if (d > 0) out.distance = Math.round(d);
     const n = Number(search.nb); if (n > 0) out.nb = Math.round(n);
     out.bien = str("bien"); out.notes = str("notes");
+    const pr = search.profil;
+    if (pr === "particulier" || pr === "professionnel") out.profil = pr;
+    if (SECTEURS_PRO.includes(str("secteur") ?? "")) out.secteur = str("secteur");
     return out;
   },
   head: () => ({
@@ -82,7 +95,7 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const { formule, borne: borneId, puissance: pCalc, kva: kvaCalc, phase: phaseCalc, distance: distCalc, bien: bienCalc, nb: nbCalc, notes: notesCalc } = Route.useSearch();
+  const { formule, borne: borneId, puissance: pCalc, kva: kvaCalc, phase: phaseCalc, distance: distCalc, bien: bienCalc, nb: nbCalc, notes: notesCalc, profil: profilInitial, secteur: secteurInitial } = Route.useSearch();
   const borneChoisie = trouverBorne(borneId);
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [kva, setKva] = useState(kvaCalc ?? ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
