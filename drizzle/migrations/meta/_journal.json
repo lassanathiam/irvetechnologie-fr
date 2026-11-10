@@ -148,6 +148,13 @@
       "when": 1794320089142,
       "tag": "0020_demandes_suivi_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 21,
+      "version": "7",
+      "when": 1794346011540,
+      "tag": "0021_remove_open_demande_insert",
+      "breakpoints": true
     }
   ]
 }
