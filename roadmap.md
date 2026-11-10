@@ -131,4 +131,5 @@
 - [x] Créer un document TS depuis l’attachement initial : bouton dans la liste des attachements et dans le panneau « Écarts de chantier (TES) », fenêtres préremplies avec les écarts déjà marqués ; 5 tests réussis, boutons et préremplissage vérifiés à l’écran, aucun document créé par le test
 
 ## Leads clients (10/11)
-- [ ] Système de leads particuliers + pros (visibilité Google, demandes, suivi) — choix des leviers en attente de réponse utilisateur
+- [x] Leads : pages par ville (Bretagne + Pays de la Loire), page professionnels, profil particulier/pro et origine sur chaque demande, bilan du mois et relances dans Demandes ; demande de test vérifiée puis supprimée
+- [ ] Publicité Google Ads : en attente du compte Google Ads et du budget par jour de l'utilisateur
