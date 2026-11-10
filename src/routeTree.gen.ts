@@ -16,6 +16,7 @@ import { Route as AuthRouteImport } from './routes/auth'
 import { Route as BorneRechargeProfessionnelsRouteImport } from './routes/borne-recharge-professionnels'
 import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
+import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as InstallationBorneRechargeNantesRouteImport } from './routes/installation-borne-recharge-nantes'
 import { Route as InstallerRouteImport } from './routes/installer'
@@ -100,6 +101,11 @@ const BornesRoute = BornesRouteImport.update({
 const CalculateurIrveRoute = CalculateurIrveRouteImport.update({
   id: '/calculateur-irve',
   path: '/calculateur-irve',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
+  id: '/confidentialite',
+  path: '/confidentialite',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DemandeRoute = DemandeRouteImport.update({
@@ -387,6 +393,7 @@ export interface FileRoutesByFullPath {
   '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
@@ -445,6 +452,7 @@ export interface FileRoutesByTo {
   '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
@@ -505,6 +513,7 @@ export interface FileRoutesById {
   '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
+  '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
@@ -565,6 +574,7 @@ export interface FileRouteTypes {
     | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
+    | '/confidentialite'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
@@ -623,6 +633,7 @@ export interface FileRouteTypes {
     | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
+    | '/confidentialite'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
@@ -682,6 +693,7 @@ export interface FileRouteTypes {
     | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
+    | '/confidentialite'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
@@ -742,6 +754,7 @@ export interface RootRouteChildren {
   BorneRechargeProfessionnelsRoute: typeof BorneRechargeProfessionnelsRoute
   BornesRoute: typeof BornesRoute
   CalculateurIrveRoute: typeof CalculateurIrveRoute
+  ConfidentialiteRoute: typeof ConfidentialiteRoute
   DemandeRoute: typeof DemandeRoute
   InstallationBorneRechargeNantesRoute: typeof InstallationBorneRechargeNantesRoute
   InstallerRoute: typeof InstallerRoute
@@ -815,6 +828,13 @@ declare module '@tanstack/react-router' {
       path: '/calculateur-irve'
       fullPath: '/calculateur-irve'
       preLoaderRoute: typeof CalculateurIrveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/confidentialite': {
+      id: '/confidentialite'
+      path: '/confidentialite'
+      fullPath: '/confidentialite'
+      preLoaderRoute: typeof ConfidentialiteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/demande': {
@@ -1247,6 +1267,7 @@ const rootRouteChildren: RootRouteChildren = {
   BorneRechargeProfessionnelsRoute: BorneRechargeProfessionnelsRoute,
   BornesRoute: BornesRoute,
   CalculateurIrveRoute: CalculateurIrveRoute,
+  ConfidentialiteRoute: ConfidentialiteRoute,
   DemandeRoute: DemandeRoute,
   InstallationBorneRechargeNantesRoute: InstallationBorneRechargeNantesRoute,
   InstallerRoute: InstallerRoute,
