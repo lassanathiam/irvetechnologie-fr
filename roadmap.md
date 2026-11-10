@@ -133,3 +133,9 @@
 ## Leads clients (10/11)
 - [x] Leads : pages par ville (Bretagne + Pays de la Loire), page professionnels, profil particulier/pro et origine sur chaque demande, bilan du mois et relances dans Demandes ; demande de test vérifiée puis supprimée
 - [ ] Publicité Google Ads : en attente du compte Google Ads et du budget par jour de l'utilisateur
+
+## Publicité Google (10/11/2026)
+- [x] Statistiques Google (G-V2S0YLZEHX) sur les pages publiques + comptage des demandes de devis
+- [x] Relier le compte Google Ads (849-204-3839), budget 7 €/jour, recherche concurrents
+- [ ] Images de la campagne « tous les canaux Google » — en attente des vraies photos de chantier de l'utilisateur
+- [ ] Textes d'annonce, mesure des demandes dans Google Ads, publication, création de la campagne (après les images)

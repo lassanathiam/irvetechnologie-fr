@@ -1,18 +1,18 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { estPagePubliqueMesuree } from "./analytics";
 
 describe("suivi Google limité aux pages publiques", () => {
   it("mesure l'accueil, la demande et les pages ville", () => {
-    expect(estPagePubliqueMesuree("/")).toBe(true);
-    expect(estPagePubliqueMesuree("/demande")).toBe(true);
-    expect(estPagePubliqueMesuree("/installation-borne-recharge-nantes")).toBe(true);
-    expect(estPagePubliqueMesuree("/installation-borne-recharge/rennes")).toBe(true);
+    expect(estPagePubliqueMesuree("/")).toEqual(true);
+    expect(estPagePubliqueMesuree("/demande")).toEqual(true);
+    expect(estPagePubliqueMesuree("/installation-borne-recharge-nantes")).toEqual(true);
+    expect(estPagePubliqueMesuree("/installation-borne-recharge/rennes")).toEqual(true);
   });
   it("ne mesure jamais l'espace pro ni les liens privés", () => {
-    expect(estPagePubliqueMesuree("/espace")).toBe(false);
-    expect(estPagePubliqueMesuree("/planning")).toBe(false);
-    expect(estPagePubliqueMesuree("/devis-client/abc")).toBe(false);
-    expect(estPagePubliqueMesuree("/partenaire/xyz")).toBe(false);
-    expect(estPagePubliqueMesuree("/signer-pv/tok")).toBe(false);
+    expect(estPagePubliqueMesuree("/espace")).toEqual(false);
+    expect(estPagePubliqueMesuree("/planning")).toEqual(false);
+    expect(estPagePubliqueMesuree("/devis-client/abc")).toEqual(false);
+    expect(estPagePubliqueMesuree("/partenaire/xyz")).toEqual(false);
+    expect(estPagePubliqueMesuree("/signer-pv/tok")).toEqual(false);
   });
 });
