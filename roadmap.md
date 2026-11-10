@@ -137,5 +137,6 @@
 ## Publicité Google (10/11/2026)
 - [x] Statistiques Google (G-V2S0YLZEHX) sur les pages publiques + comptage des demandes de devis
 - [x] Relier le compte Google Ads (849-204-3839), budget 7 €/jour, recherche concurrents
-- [ ] Images de la campagne « tous les canaux Google » — en attente des vraies photos de chantier de l'utilisateur
-- [ ] Textes d'annonce, mesure des demandes dans Google Ads, publication, création de la campagne (après les images)
+- [x] Images de la campagne (11, photos de l'utilisateur) et textes validés
+- [x] Bandeau cookies, page confidentialité, comptage « Demande de devis envoyée (site) » dans Google Ads
+- [ ] Publier le site, vérifier le comptage en ligne, puis créer la campagne (accord final de l'utilisateur)

@@ -36,3 +36,4 @@
 - Imported client phones pass through the browser-safe telephone-client helper, which discards the company's own numbers (printed as subcontractor on partner sheets), so a client can never receive the company number.
 - PV signatures merge through the browser-safe `src/lib/signatures-pv.ts` rule in every PV save handler: a stored signature and its original signed date are never cleared by a later save (why: signatures must survive dossier closure).
 - Lead origin comes from `src/lib/lead-source.ts`; city pages and sitemap share `src/lib/zones-intervention.ts` (why: one source).
+- Google tags load only through `src/lib/analytics.ts`, after the visitor choice stored by `src/lib/consentement.ts` (why: prior consent is mandatory in France).
