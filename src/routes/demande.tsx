@@ -9,6 +9,16 @@ import { uploadDemandePhoto } from "@/lib/photos.functions";
 import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 import { trouverBorne } from "@/lib/bornes-catalogue";
+import { lireOrigineLead } from "@/lib/lead-source";
+
+const SECTEURS_PRO = [
+  "Syndic / copropriété",
+  "Entreprise avec parking",
+  "Hôtel / restaurant / commerce",
+  "Garage / concession",
+  "Collectivité",
+  "Autre activité",
+];
 
 type Formule = "serenite" | "premium" | "pro";
 const FORMULES: Record<Formule, { label: string; price: string }> = {
@@ -26,8 +36,8 @@ const TYPES_DEMANDE: { v: TypeDemande; label: string }[] = [
 ];
 
 export const Route = createFileRoute("/demande")({
-  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } => {
-    const out: { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string } = {};
+  validateSearch: (search: Record<string, unknown>): { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string; profil?: "particulier" | "professionnel"; secteur?: string } => {
+    const out: { formule?: Formule; borne?: string; puissance?: string; kva?: string; phase?: string; distance?: number; bien?: string; nb?: number; notes?: string; profil?: "particulier" | "professionnel"; secteur?: string } = {};
     const f = search.formule;
     if (f === "serenite" || f === "premium" || f === "pro") out.formule = f;
     const b = search.borne;
@@ -39,6 +49,9 @@ export const Route = createFileRoute("/demande")({
     const d = Number(search.distance); if (d > 0) out.distance = Math.round(d);
     const n = Number(search.nb); if (n > 0) out.nb = Math.round(n);
     out.bien = str("bien"); out.notes = str("notes");
+    const pr = search.profil;
+    if (pr === "particulier" || pr === "professionnel") out.profil = pr;
+    if (SECTEURS_PRO.includes(str("secteur") ?? "")) out.secteur = str("secteur");
     return out;
   },
   head: () => ({
@@ -82,7 +95,7 @@ export const Route = createFileRoute("/demande")({
 const MAX_CHEMINEMENT = 5;
 
 function Demande() {
-  const { formule, borne: borneId, puissance: pCalc, kva: kvaCalc, phase: phaseCalc, distance: distCalc, bien: bienCalc, nb: nbCalc, notes: notesCalc } = Route.useSearch();
+  const { formule, borne: borneId, puissance: pCalc, kva: kvaCalc, phase: phaseCalc, distance: distCalc, bien: bienCalc, nb: nbCalc, notes: notesCalc, profil: profilInitial, secteur: secteurInitial } = Route.useSearch();
   const borneChoisie = trouverBorne(borneId);
   const formuleInfo = formule ? FORMULES[formule as Formule] : null;
   const [kva, setKva] = useState(kvaCalc ?? ABONNEMENTS_KVA[ABONNEMENTS_KVA.length - 1]!);
@@ -92,6 +105,9 @@ function Demande() {
   const alerte = alerteAbonnement(kva, puissanceBorne);
   const [typeDemande, setTypeDemande] = useState<TypeDemande>(
     formule ? "souscription" : "raccordement",
+  );
+  const [profil, setProfil] = useState<"particulier" | "professionnel">(
+    profilInitial ?? (formule === "pro" || bienCalc === "Entreprise" || bienCalc?.startsWith("Parking") ? "professionnel" : "particulier"),
   );
   const [tableau, setTableau] = useState<string | null>(null);
   const [linky, setLinky] = useState<string | null>(null);
@@ -192,6 +208,7 @@ function Demande() {
       const distance = distanceRaw ? Number(distanceRaw) : null;
       const nbRaw = get("nb_bornes");
       const nb = nbRaw ? Number(nbRaw) : null;
+      const origine = lireOrigineLead();
       const res = await submitDemandeFn({
         data: {
           nom: get("nom"),
@@ -217,6 +234,11 @@ function Demande() {
           formule: formule ?? null,
           type_demande: typeDemande,
           nb_bornes: nb && Number.isFinite(nb) && nb > 0 ? Math.round(nb) : null,
+          profil_client: profil,
+          secteur_pro: profil === "professionnel" ? get("secteur_pro") || null : null,
+          lead_source: origine?.source ?? null,
+          lead_campagne: origine?.campagne ?? null,
+          page_origine: origine?.page ?? null,
           website: get("website") || null,
           elapsed_ms: Date.now() - mountedAt.current,
         },
@@ -374,6 +396,32 @@ function Demande() {
 
           <div>
             <SectionHeading n="03" title="Votre projet" />
+            <div className="mt-8">
+              <p className="text-sm font-medium">Vous êtes</p>
+              <div className="mt-2 grid grid-cols-2 gap-2 max-w-md">
+                {([
+                  ["particulier", "Un particulier"],
+                  ["professionnel", "Un professionnel"],
+                ] as const).map(([v, l]) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setProfil(v)}
+                    aria-pressed={profil === v}
+                    className={`rounded-md border px-4 py-3 text-sm font-medium transition ${
+                      profil === v ? "border-primary bg-primary/10 text-primary" : "border-border hover:border-primary/60"
+                    }`}
+                  >
+                    {l}
+                  </button>
+                ))}
+              </div>
+              {profil === "professionnel" && (
+                <div className="mt-4 max-w-md">
+                  <Select label="Votre activité" name="secteur_pro" defaultValue={secteurInitial} options={SECTEURS_PRO} />
+                </div>
+              )}
+            </div>
             <div className="grid md:grid-cols-2 gap-4 mt-8">
               <SelectControlled
                 label="Objet de votre demande"

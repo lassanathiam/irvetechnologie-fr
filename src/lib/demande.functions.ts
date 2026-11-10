@@ -26,6 +26,13 @@ const submitSchema = z.object({
     .enum(["raccordement", "intervention", "maintenance", "souscription", "avis"])
     .default("raccordement"),
   nb_bornes: z.number().int().min(1).max(500).optional().nullable(),
+  /** Particulier ou professionnel, et secteur pour les pros. */
+  profil_client: z.enum(["particulier", "professionnel"]).optional().nullable(),
+  secteur_pro: z.string().trim().max(120).optional().nullable(),
+  /** Origine du visiteur (recherche Google, publicité…) et page d'arrivée. */
+  lead_source: z.enum(["google_ads", "google", "reseaux_sociaux", "autre_site", "direct"]).optional().nullable(),
+  lead_campagne: z.string().trim().max(120).optional().nullable(),
+  page_origine: z.string().trim().max(200).optional().nullable(),
   // Honeypot — must stay empty. Bots usually fill every field.
   website: z.string().max(0).optional().nullable(),
   // Time spent on the form in ms — humans take >1.5s
@@ -130,6 +137,11 @@ export const submitDemande = createServerFn({ method: "POST" })
         formule: data.formule ?? null,
         type_demande: data.type_demande,
         nb_bornes: data.nb_bornes ?? null,
+        profil_client: data.profil_client ?? null,
+        secteur_pro: data.profil_client === "professionnel" ? (data.secteur_pro ?? null) : null,
+        lead_source: data.lead_source ?? null,
+        lead_campagne: data.lead_campagne ?? null,
+        page_origine: data.page_origine ?? null,
       })
       .select("id")
       .single();

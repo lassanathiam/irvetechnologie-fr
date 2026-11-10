@@ -516,11 +516,18 @@ export type Database = {
           email: string
           formule: string | null
           id: string
+          lead_campagne: string | null
+          lead_source: string | null
           nb_bornes: number | null
           nom: string
+          note_suivi: string | null
           notes: string | null
+          page_origine: string | null
           phase: string | null
+          profil_client: string | null
           puissance: string | null
+          relance_le: string | null
+          secteur_pro: string | null
           status: string
           telephone: string
           type_bien: string | null
@@ -537,11 +544,18 @@ export type Database = {
           email: string
           formule?: string | null
           id?: string
+          lead_campagne?: string | null
+          lead_source?: string | null
           nb_bornes?: number | null
           nom: string
+          note_suivi?: string | null
           notes?: string | null
+          page_origine?: string | null
           phase?: string | null
+          profil_client?: string | null
           puissance?: string | null
+          relance_le?: string | null
+          secteur_pro?: string | null
           status?: string
           telephone: string
           type_bien?: string | null
@@ -558,11 +572,18 @@ export type Database = {
           email?: string
           formule?: string | null
           id?: string
+          lead_campagne?: string | null
+          lead_source?: string | null
           nb_bornes?: number | null
           nom?: string
+          note_suivi?: string | null
           notes?: string | null
+          page_origine?: string | null
           phase?: string | null
+          profil_client?: string | null
           puissance?: string | null
+          relance_le?: string | null
+          secteur_pro?: string | null
           status?: string
           telephone?: string
           type_bien?: string | null

@@ -12,6 +12,7 @@ import { useEffect, type ReactNode } from "react";
 import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
+import { memoriserOrigineLead } from "../lib/lead-source";
 
 function NotFoundComponent() {
   return (
@@ -232,6 +233,11 @@ function RootShell({ children }: { children: ReactNode }) {
 
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
+
+  // Mémorise d'où vient le visiteur (Google, publicité…) pour le suivi des demandes.
+  useEffect(() => {
+    memoriserOrigineLead();
+  }, []);
 
   return (
     <QueryClientProvider client={queryClient}>

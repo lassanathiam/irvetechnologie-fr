@@ -13,18 +13,21 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AProposRouteImport } from './routes/a-propos'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as BorneRechargeProfessionnelsRouteImport } from './routes/borne-recharge-professionnels'
 import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
 import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as InstallationBorneRechargeNantesRouteImport } from './routes/installation-borne-recharge-nantes'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as ZonesInterventionRouteImport } from './routes/zones-intervention'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
 import { Route as AttachementsLotTokensRouteImport } from './routes/attachements-lot.$tokens'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
+import { Route as InstallationBorneRechargeVilleRouteImport } from './routes/installation-borne-recharge.$ville'
 import { Route as PartenaireTokenRouteImport } from './routes/partenaire.$token'
 import { Route as RapportDonneurTokenRouteImport } from './routes/rapport-donneur.$token'
 import { Route as RdvTokenRouteImport } from './routes/rdv.$token'
@@ -83,6 +86,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const BorneRechargeProfessionnelsRoute =
+  BorneRechargeProfessionnelsRouteImport.update({
+    id: '/borne-recharge-professionnels',
+    path: '/borne-recharge-professionnels',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const BornesRoute = BornesRouteImport.update({
   id: '/bornes',
   path: '/bornes',
@@ -112,6 +121,11 @@ const InstallerRoute = InstallerRouteImport.update({
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
   id: '/sitemap.xml',
   path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ZonesInterventionRoute = ZonesInterventionRouteImport.update({
+  id: '/zones-intervention',
+  path: '/zones-intervention',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthenticatedBornesCatalogueRoute =
@@ -145,6 +159,12 @@ const FactureClientTokenRoute = FactureClientTokenRouteImport.update({
   path: '/facture-client/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const InstallationBorneRechargeVilleRoute =
+  InstallationBorneRechargeVilleRouteImport.update({
+    id: '/installation-borne-recharge/$ville',
+    path: '/installation-borne-recharge/$ville',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const PartenaireTokenRoute = PartenaireTokenRouteImport.update({
   id: '/partenaire/$token',
   path: '/partenaire/$token',
@@ -364,18 +384,21 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
@@ -419,18 +442,21 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
@@ -476,18 +502,21 @@ export interface FileRoutesById {
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/a-propos': typeof AProposRoute
   '/auth': typeof AuthRoute
+  '/borne-recharge-professionnels': typeof BorneRechargeProfessionnelsRoute
   '/bornes': typeof BornesRoute
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/demande': typeof DemandeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/zones-intervention': typeof ZonesInterventionRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
+  '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
   '/partenaire/$token': typeof PartenaireTokenRoute
   '/rapport-donneur/$token': typeof RapportDonneurTokenRoute
   '/rdv/$token': typeof RdvTokenRoute
@@ -533,18 +562,21 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/auth'
+    | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
+    | '/zones-intervention'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/installation-borne-recharge/$ville'
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
@@ -588,18 +620,21 @@ export interface FileRouteTypes {
     | '/'
     | '/a-propos'
     | '/auth'
+    | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
+    | '/zones-intervention'
     | '/bornes-catalogue'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/installation-borne-recharge/$ville'
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
@@ -644,18 +679,21 @@ export interface FileRouteTypes {
     | '/_authenticated'
     | '/a-propos'
     | '/auth'
+    | '/borne-recharge-professionnels'
     | '/bornes'
     | '/calculateur-irve'
     | '/demande'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
+    | '/zones-intervention'
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
     | '/devis-client/$token'
     | '/facture-client/$token'
+    | '/installation-borne-recharge/$ville'
     | '/partenaire/$token'
     | '/rapport-donneur/$token'
     | '/rdv/$token'
@@ -701,16 +739,19 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AProposRoute: typeof AProposRoute
   AuthRoute: typeof AuthRoute
+  BorneRechargeProfessionnelsRoute: typeof BorneRechargeProfessionnelsRoute
   BornesRoute: typeof BornesRoute
   CalculateurIrveRoute: typeof CalculateurIrveRoute
   DemandeRoute: typeof DemandeRoute
   InstallationBorneRechargeNantesRoute: typeof InstallationBorneRechargeNantesRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  ZonesInterventionRoute: typeof ZonesInterventionRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
   AttachementsLotTokensRoute: typeof AttachementsLotTokensRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
+  InstallationBorneRechargeVilleRoute: typeof InstallationBorneRechargeVilleRoute
   PartenaireTokenRoute: typeof PartenaireTokenRoute
   RapportDonneurTokenRoute: typeof RapportDonneurTokenRoute
   RdvTokenRoute: typeof RdvTokenRoute
@@ -755,6 +796,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/borne-recharge-professionnels': {
+      id: '/borne-recharge-professionnels'
+      path: '/borne-recharge-professionnels'
+      fullPath: '/borne-recharge-professionnels'
+      preLoaderRoute: typeof BorneRechargeProfessionnelsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/bornes': {
       id: '/bornes'
       path: '/bornes'
@@ -797,6 +845,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SitemapDotxmlRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/zones-intervention': {
+      id: '/zones-intervention'
+      path: '/zones-intervention'
+      fullPath: '/zones-intervention'
+      preLoaderRoute: typeof ZonesInterventionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/bornes-catalogue': {
       id: '/_authenticated/bornes-catalogue'
       path: '/bornes-catalogue'
@@ -837,6 +892,13 @@ declare module '@tanstack/react-router' {
       path: '/facture-client/$token'
       fullPath: '/facture-client/$token'
       preLoaderRoute: typeof FactureClientTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/installation-borne-recharge/$ville': {
+      id: '/installation-borne-recharge/$ville'
+      path: '/installation-borne-recharge/$ville'
+      fullPath: '/installation-borne-recharge/$ville'
+      preLoaderRoute: typeof InstallationBorneRechargeVilleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/partenaire/$token': {
@@ -1182,16 +1244,19 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AProposRoute: AProposRoute,
   AuthRoute: AuthRoute,
+  BorneRechargeProfessionnelsRoute: BorneRechargeProfessionnelsRoute,
   BornesRoute: BornesRoute,
   CalculateurIrveRoute: CalculateurIrveRoute,
   DemandeRoute: DemandeRoute,
   InstallationBorneRechargeNantesRoute: InstallationBorneRechargeNantesRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  ZonesInterventionRoute: ZonesInterventionRoute,
   AttachementTokenRoute: AttachementTokenRoute,
   AttachementsLotTokensRoute: AttachementsLotTokensRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
+  InstallationBorneRechargeVilleRoute: InstallationBorneRechargeVilleRoute,
   PartenaireTokenRoute: PartenaireTokenRoute,
   RapportDonneurTokenRoute: RapportDonneurTokenRoute,
   RdvTokenRoute: RdvTokenRoute,
