@@ -67,3 +67,28 @@ export const purgerDemandesRefusees = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true, nb: rows?.length ?? 0 };
   });
+
+/** Suivi commercial d'un lead : date de relance et note interne. */
+export const updateSuiviDemande = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { id: string; relance_le: string | null; note_suivi: string | null }) =>
+    z
+      .object({
+        id: z.string().uuid(),
+        relance_le: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).nullable(),
+        note_suivi: z.string().trim().max(2000).nullable(),
+      })
+      .parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const { error } = await context.supabase
+      .from("demande_requests")
+      .update({
+        relance_le: data.relance_le,
+        note_suivi: data.note_suivi || null,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });

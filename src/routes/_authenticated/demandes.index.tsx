@@ -17,7 +17,8 @@ import {
   XCircle,
 } from "lucide-react";
 import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
-import { supprimerDemande, updateStatutDemande } from "@/lib/demandes-admin.functions";
+import { supprimerDemande, updateStatutDemande, updateSuiviDemande } from "@/lib/demandes-admin.functions";
+import { LEAD_SOURCE_LABELS, type LeadSource } from "@/lib/lead-source";
 import { ProShell } from "@/components/ProShell";
 import { ReponseExpressButton } from "@/components/ReponseExpress";
 import { telLien, whatsappLien } from "@/lib/contact-client";
@@ -113,6 +114,7 @@ function DemandesPage() {
   const demandes = useQuery({ queryKey: ["demandes"], queryFn: () => fetchDemandes() });
   const [open, setOpen] = useState<string | null>(null);
   const [filtre, setFiltre] = useState<string>("tous");
+  const [profilFiltre, setProfilFiltre] = useState<"tous" | "particulier" | "professionnel" | "relance">("tous");
 
   const rafraichir = () => {
     qc.invalidateQueries({ queryKey: ["demandes"] });
@@ -131,7 +133,18 @@ function DemandesPage() {
 
 
   const toutes = demandes.data ?? [];
-  const visibles = toutes.filter((d) => filtre === "tous" || d.status === filtre);
+  const aujourdhui = new Date().toISOString().slice(0, 10);
+  const aRelancer = (d: (typeof toutes)[number]) =>
+    !!d.relance_le && d.relance_le <= aujourdhui && d.status !== "refuse" && d.status !== "clos";
+  const visibles = toutes
+    .filter((d) => filtre === "tous" || d.status === filtre)
+    .filter((d) =>
+      profilFiltre === "tous"
+        ? true
+        : profilFiltre === "relance"
+          ? aRelancer(d)
+          : d.profil_client === profilFiltre,
+    );
 
   return (
     <ProShell>
@@ -149,6 +162,38 @@ function DemandesPage() {
           moment.
         </p>
       </div>
+      </div>
+
+      <BilanLeads demandes={toutes} />
+
+      <div className="flex flex-wrap items-center gap-2 mb-3">
+        {([
+          ["tous", "Tous les clients"],
+          ["particulier", "Particuliers"],
+          ["professionnel", "Professionnels"],
+          ["relance", "À relancer"],
+        ] as const).map(([v, l]) => {
+          const nb =
+            v === "tous"
+              ? toutes.length
+              : v === "relance"
+                ? toutes.filter(aRelancer).length
+                : toutes.filter((d) => d.profil_client === v).length;
+          return (
+            <button
+              key={v}
+              type="button"
+              onClick={() => setProfilFiltre(v)}
+              className={`text-[12px] px-3 py-1.5 rounded-full border transition ${
+                profilFiltre === v
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-border text-muted-foreground hover:border-primary/60"
+              }`}
+            >
+              {l} ({nb})
+            </button>
+          );
+        })}
       </div>
 
       <div className="flex flex-wrap items-center gap-2 mb-6">
@@ -216,6 +261,23 @@ function DemandesPage() {
                         {TYPE_DEMANDE_LABELS[d.type_demande ?? "raccordement"] ??
                           "Demande de raccordement"}
                       </span>
+                      {d.profil_client && (
+                        <span className="text-mono text-[11px] rounded-full border border-border px-2.5 py-1">
+                          {d.profil_client === "professionnel"
+                            ? `Pro${d.secteur_pro ? ` · ${d.secteur_pro}` : ""}`
+                            : "Particulier"}
+                        </span>
+                      )}
+                      {d.lead_source && (
+                        <span className="text-mono text-[11px] rounded-full bg-secondary text-secondary-foreground px-2.5 py-1">
+                          {LEAD_SOURCE_LABELS[d.lead_source as LeadSource] ?? d.lead_source}
+                        </span>
+                      )}
+                      {aRelancer(d) && (
+                        <span className="text-mono text-[11px] font-bold rounded-full bg-destructive/15 text-destructive px-2.5 py-1">
+                          À relancer
+                        </span>
+                      )}
                       {d.formule && (
                         <span className="text-mono text-[11px] rounded-full border border-border text-muted-foreground px-2.5 py-1">
                           Formule {FORMULE_LABELS[d.formule] ?? d.formule}
@@ -362,6 +424,14 @@ function DemandesPage() {
                       <Info label="Installation" value={d.type_installation} />
                       <Info label="Distance" value={d.distance_m ? `${d.distance_m} m` : null} />
                     </div>
+                    <SuiviLead
+                      id={d.id}
+                      relance={d.relance_le}
+                      note={d.note_suivi}
+                      page={d.page_origine}
+                      campagne={d.lead_campagne}
+                      onSaved={rafraichir}
+                    />
                     {d.notes && (
                       <p className="text-sm whitespace-pre-line border border-border rounded-lg p-4">
                         {d.notes}
@@ -420,6 +490,126 @@ function Info({ label, value }: { label: string; value?: string | null }) {
     <div>
       <div className="text-[11px] text-muted-foreground">{label}</div>
       <div className="text-mono">{value || "—"}</div>
+    </div>
+  );
+}
+
+type DemandeLead = {
+  created_at: string;
+  status: string;
+  profil_client: string | null;
+  lead_source: string | null;
+};
+
+/** Bilan du mois : nombre de demandes, clients acceptés et origine. */
+function BilanLeads({ demandes }: { demandes: DemandeLead[] }) {
+  const debutMois = new Date();
+  debutMois.setDate(1);
+  debutMois.setHours(0, 0, 0, 0);
+  const mois = demandes.filter((d) => new Date(d.created_at) >= debutMois);
+  const acceptees = mois.filter((d) => d.status === "accepte").length;
+  const pros = mois.filter((d) => d.profil_client === "professionnel").length;
+  const parSource = new Map<string, number>();
+  for (const d of mois) {
+    const k = d.lead_source ?? "inconnu";
+    parSource.set(k, (parSource.get(k) ?? 0) + 1);
+  }
+  const taux = mois.length ? Math.round((acceptees / mois.length) * 100) : 0;
+  return (
+    <section className="mb-6 rounded-xl border border-border bg-card p-4">
+      <h2 className="text-sm font-semibold">Bilan des demandes ce mois-ci</h2>
+      <div className="mt-3 grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+        <Chiffre label="Demandes reçues" value={String(mois.length)} />
+        <Chiffre label="Clients acceptés" value={`${acceptees} (${taux} %)`} />
+        <Chiffre label="Professionnels" value={String(pros)} />
+        <Chiffre label="Particuliers" value={String(mois.length - pros)} />
+      </div>
+      {mois.length > 0 && (
+        <div className="mt-3 flex flex-wrap gap-2 text-xs text-muted-foreground">
+          <span>Origine :</span>
+          {[...parSource.entries()].map(([k, n]) => (
+            <span key={k} className="rounded-full border border-border px-2 py-0.5">
+              {k === "inconnu" ? "Non renseignée" : (LEAD_SOURCE_LABELS[k as LeadSource] ?? k)} : {n}
+            </span>
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
+function Chiffre({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg border border-border p-3">
+      <div className="text-[11px] text-muted-foreground">{label}</div>
+      <div className="mt-1 text-xl font-semibold">{value}</div>
+    </div>
+  );
+}
+
+/** Date de relance + note de suivi d'un lead. */
+function SuiviLead({
+  id,
+  relance,
+  note,
+  page,
+  campagne,
+  onSaved,
+}: {
+  id: string;
+  relance: string | null;
+  note: string | null;
+  page: string | null;
+  campagne: string | null;
+  onSaved: () => void;
+}) {
+  const saveFn = useServerFn(updateSuiviDemande);
+  const [date, setDate] = useState(relance ?? "");
+  const [texte, setTexte] = useState(note ?? "");
+  const enregistrer = useMutation({
+    mutationFn: () => saveFn({ data: { id, relance_le: date || null, note_suivi: texte || null } }),
+    onSuccess: onSaved,
+  });
+  return (
+    <div className="rounded-lg border border-border p-4 space-y-3">
+      <div className="text-sm font-semibold">Suivi du client</div>
+      {(page || campagne) && (
+        <p className="text-xs text-muted-foreground">
+          {page ? `Arrivé sur la page ${page}` : ""}
+          {campagne ? ` · campagne « ${campagne} »` : ""}
+        </p>
+      )}
+      <div className="grid sm:grid-cols-[180px_1fr] gap-3">
+        <label className="text-xs text-muted-foreground">
+          Relancer le
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+          />
+        </label>
+        <label className="text-xs text-muted-foreground">
+          Note (appel, devis envoyé, réponse…)
+          <textarea
+            value={texte}
+            onChange={(e) => setTexte(e.target.value)}
+            rows={2}
+            className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm text-foreground"
+          />
+        </label>
+      </div>
+      <button
+        type="button"
+        onClick={() => enregistrer.mutate()}
+        disabled={enregistrer.isPending}
+        className="rounded-full bg-primary px-3 py-1.5 text-[12px] font-bold text-primary-foreground disabled:opacity-50"
+      >
+        {enregistrer.isPending ? "Enregistrement…" : enregistrer.isSuccess ? "Enregistré ✓" : "Enregistrer le suivi"}
+      </button>
+      {enregistrer.isError && (
+        <p className="text-xs text-destructive">{(enregistrer.error as Error).message}</p>
+      )}
     </div>
   );
 }
