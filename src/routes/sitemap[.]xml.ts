@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
+import { VILLES_ZONE } from "@/lib/zones-intervention";
 
 const BASE_URL = "https://irvetechnologie.fr";
 
@@ -18,6 +19,13 @@ export const Route = createFileRoute("/sitemap.xml")({
           { path: "/bornes", changefreq: "weekly", priority: "0.8" },
           { path: "/a-propos", changefreq: "monthly", priority: "0.6" },
           { path: "/installation-borne-recharge-nantes", changefreq: "monthly", priority: "0.8" },
+          { path: "/zones-intervention", changefreq: "monthly", priority: "0.7" },
+          { path: "/borne-recharge-professionnels", changefreq: "monthly", priority: "0.8" },
+          ...VILLES_ZONE.map((v) => ({
+            path: `/installation-borne-recharge/${v.slug}`,
+            changefreq: "monthly" as const,
+            priority: "0.7",
+          })),
           { path: "/calculateur-irve", changefreq: "monthly", priority: "0.7" },
           { path: "/demande", changefreq: "monthly", priority: "0.8" },
         ];
