@@ -15,6 +15,7 @@ import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { memoriserOrigineLead } from "../lib/lead-source";
 import { suivrePageVue } from "../lib/analytics";
+import { BandeauConsentement } from "../components/BandeauConsentement";
 
 function NotFoundComponent() {
   return (
@@ -251,6 +252,7 @@ function RootComponent() {
     <QueryClientProvider client={queryClient}>
       {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
       <Outlet />
+      <BandeauConsentement pathname={pathname} />
       <Toaster />
     </QueryClientProvider>
   );

@@ -131,8 +131,6 @@ export function suivreDemandeEnvoyee(profil: string | null | undefined, demandeI
   if (publiciteAutorisee()) {
     gtag("event", "conversion", {
       send_to: GOOGLE_ADS_DEVIS_SEND_TO,
-      value: 0,
-      currency: "EUR",
       transaction_id: demandeId,
     });
   }

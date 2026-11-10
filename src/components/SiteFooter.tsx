@@ -1,4 +1,5 @@
 import { Link } from "@tanstack/react-router";
+import { ouvrirReglagesConsentement } from "@/lib/consentement";
 
 export function SiteFooter() {
   return (
@@ -42,7 +43,11 @@ export function SiteFooter() {
         </div>
 
         <div className="border-t border-slate-100 pt-4 text-xs">
-          © {new Date().getFullYear()} Borne de l&apos;Ouest · Tous droits réservés
+          © {new Date().getFullYear()} Borne de l&apos;Ouest · Tous droits réservés ·{" "}
+          <Link to="/confidentialite" className="transition hover:text-emerald-600">Confidentialité et cookies</Link> ·{" "}
+          <button type="button" onClick={ouvrirReglagesConsentement} className="underline-offset-2 transition hover:text-emerald-600 hover:underline">
+            Gérer les cookies
+          </button>
         </div>
       </div>
     </footer>

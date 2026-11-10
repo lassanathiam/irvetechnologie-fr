@@ -245,9 +245,9 @@ function Demande() {
         },
       });
       setSubmitted(true);
-      suivreDemandeEnvoyee(profil);
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (res?.id && res.id !== "honeypot" && res.id !== "timetrap") {
+        suivreDemandeEnvoyee(profil, res.id);
         void uploadPhotos(res.id);
       }
     } catch (err) {
