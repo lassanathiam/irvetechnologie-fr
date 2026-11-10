@@ -10,6 +10,7 @@ import { compressImage } from "@/lib/image-compress";
 import { ABONNEMENTS_KVA, PUISSANCES_BORNE, alerteAbonnement } from "@/lib/rapport-checklist";
 import { trouverBorne } from "@/lib/bornes-catalogue";
 import { lireOrigineLead } from "@/lib/lead-source";
+import { suivreDemandeEnvoyee } from "@/lib/analytics";
 
 const SECTEURS_PRO = [
   "Syndic / copropriété",
@@ -244,6 +245,7 @@ function Demande() {
         },
       });
       setSubmitted(true);
+      suivreDemandeEnvoyee(profil);
       window.scrollTo({ top: 0, behavior: "smooth" });
       if (res?.id && res.id !== "honeypot" && res.id !== "timetrap") {
         void uploadPhotos(res.id);

@@ -4,6 +4,7 @@ import {
   Link,
   createRootRouteWithContext,
   useRouter,
+  useRouterState,
   HeadContent,
   Scripts,
 } from "@tanstack/react-router";
@@ -13,6 +14,7 @@ import appCss from "../styles.css?url";
 import { Toaster } from "../components/ui/sonner";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { memoriserOrigineLead } from "../lib/lead-source";
+import { suivrePageVue } from "../lib/analytics";
 
 function NotFoundComponent() {
   return (
@@ -238,6 +240,12 @@ function RootComponent() {
   useEffect(() => {
     memoriserOrigineLead();
   }, []);
+
+  // Statistiques Google : pages publiques du site uniquement.
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  useEffect(() => {
+    suivrePageVue(pathname);
+  }, [pathname]);
 
   return (
     <QueryClientProvider client={queryClient}>
