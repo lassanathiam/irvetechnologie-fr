@@ -32,8 +32,7 @@
 - Rescheduling uses the shared browser-safe rescheduling rule: blocked jobs regain visibility, and a completed job reopens only when unbilled and moved to a future date (return visit); billing is never changed.
 - Planning intervenant selection filters the main lists only; other technicians' unfinished appointments stay listed separately and search covers all appointments, so rescheduled jobs are never hidden by the device's technician choice.
 - Imported-original PV downloads composite page pixels, measured text lines and signatures directly onto a canvas (no html2canvas), so mobile viewport or scroll can never crop the A4 page.
-- Platform-deposit tracking for attachments and invoices reads its step rule from the shared browser-safe module `src/lib/suivi-facturation.ts` (never recompute the step inside a screen), and a deposit marker must never change a document's status or payment state (why: one rule keeps attachements and factures consistent and billing state trustworthy).
+- Platform-deposit tracking for attachments and invoices uses only `src/lib/suivi-facturation.ts` for its step and never changes status or payment state (why: consistent, trustworthy billing).
 - Imported client phones pass through the browser-safe telephone-client helper, which discards the company's own numbers (printed as subcontractor on partner sheets), so a client can never receive the company number.
 - PV signatures merge through the browser-safe `src/lib/signatures-pv.ts` rule in every PV save handler: a stored signature and its original signed date are never cleared by a later save (why: signatures must survive dossier closure).
-- Lead origin comes from `src/lib/lead-source.ts`; city pages and sitemap share `src/lib/zones-intervention.ts` (why: one source).
-- Google tags load only through `src/lib/analytics.ts`, after the visitor choice stored by `src/lib/consentement.ts` (why: prior consent is mandatory in France).
+- Lead origin: `lib/lead-source.ts`; city pages+sitemap: `lib/zones-intervention.ts`; Google tags only via `lib/analytics.ts` after `lib/consentement.ts` consent (why: one source; French consent law).
