@@ -72,7 +72,7 @@ export function BandeauConsentement({ pathname }: { pathname: string }) {
                 <span className="font-medium">Mesure d&apos;audience</span>
                 <span className="block text-muted-foreground">Google Analytics : pages vues et demandes envoyées.</span>
               </span>
-              <Switch checked={mesure} onCheckedChange={setMesure} aria-label="Mesure d'audience" />
+              <Switch className="data-[state=unchecked]:bg-muted-foreground/40" checked={mesure} onCheckedChange={setMesure} aria-label="Mesure d'audience" />
             </label>
             <label className="flex items-start justify-between gap-4">
               <span className="text-sm">
@@ -82,7 +82,7 @@ export function BandeauConsentement({ pathname }: { pathname: string }) {
                   {gpc && " Votre navigateur demande de ne pas être suivi : ce choix reste désactivé."}
                 </span>
               </span>
-              <Switch checked={pub && !gpc} disabled={gpc} onCheckedChange={setPub} aria-label="Publicité" />
+              <Switch className="data-[state=unchecked]:bg-muted-foreground/40" checked={pub && !gpc} disabled={gpc} onCheckedChange={setPub} aria-label="Publicité" />
             </label>
           </div>
         )}
