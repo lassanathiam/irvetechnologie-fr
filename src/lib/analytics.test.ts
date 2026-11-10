@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { estPagePubliqueMesuree } from "./analytics";
 
 describe("suivi Google limité aux pages publiques", () => {
