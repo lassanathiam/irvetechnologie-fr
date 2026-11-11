@@ -37,3 +37,4 @@
 - PV signatures merge through the browser-safe `src/lib/signatures-pv.ts` rule in every PV save handler: a stored signature and its original signed date are never cleared by a later save (why: signatures must survive dossier closure).
 - Lead origin: `lib/lead-source.ts`; city pages+sitemap: `lib/zones-intervention.ts`; Google tags only via `lib/analytics.ts` after `lib/consentement.ts` consent (why: one source; French consent law).
 - Direct-sale pricing math: only `lib/tarification.ts`; purchase prices, costs and margins stay in admin-only tables via `is_admin()` (why: staff quote without supplier prices).
+- B2B prospecting lives in staff-only `prospects` with rules in browser-safe `src/lib/prospection.ts`; mails open in the user's own mail client (mailto), never via app emails, to protect invoice/quote deliverability and French opt-out rules.
