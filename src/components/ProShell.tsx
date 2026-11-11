@@ -75,7 +75,8 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
   {
     label: "Ressources & Outils",
     links: [
-      { to: "/bornes-catalogue", label: "Catalogue bornes", icon: Zap },
+      { to: "/catalogue-commercial", label: "Catalogue et tarifs", icon: Calculator },
+      { to: "/bornes-catalogue", label: "Bornes du site", icon: Zap },
       { to: "/calculateur-irve", label: "Calculateur IRVE", icon: Calculator, externe: true },
       { to: "/documents", label: "Documents", icon: FolderLock },
       { to: "/partenaires", label: "Partenaires", icon: Handshake },

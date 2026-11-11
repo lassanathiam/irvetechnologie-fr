@@ -583,6 +583,7 @@ const envoiSchema = propositionSchema.extend({
   adresse: z.string().trim().max(300).nullish(),
   cp_ville: z.string().trim().max(160).nullish(),
   envoyer: z.boolean(),
+  type_pose: z.string().trim().max(80).nullish(),
   derogation_motif: z.string().trim().max(500).nullish(),
 });
 
@@ -665,7 +666,12 @@ export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
         remise_pct: 0,
         acompte_pct: 30,
         conditions_paiement: CONDITIONS_DEFAUT,
-        notes: `Distance tableau → borne indiquée : ${data.distance_m} m (forfait jusqu'à ${analyse.palier} m).`,
+        notes: [
+          `Distance tableau → borne indiquée : ${data.distance_m} m (forfait jusqu'à ${analyse.palier} m).`,
+          data.type_pose ? `Type d'installation : ${data.type_pose}.` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
         total_ht_brut: totals.total_ht_brut,
         total_remise: totals.total_remise,
         total_ht: totals.total_ht,
