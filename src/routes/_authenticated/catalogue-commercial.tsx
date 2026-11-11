@@ -9,7 +9,7 @@ import { FicheProduitEditeur } from "@/components/catalogue/FicheProduitEditeur"
 import { EditeurCouts, EditeurOptions } from "@/components/catalogue/OptionsEtCouts";
 import { CONNECTEUR_LIBELLE, montant, ouiNon, PHASE_LIBELLE } from "@/components/catalogue/outils";
 import { getCatalogueCommercial, type ProduitCatalogue } from "@/lib/catalogue-commercial.functions";
-import { MARGE_MINIMUM_HT, PALIERS_CABLE_M } from "@/lib/tarification";
+import { MARGE_MINIMUM_HT, MARGE_PLANCHER_HT, PALIERS_CABLE_M } from "@/lib/tarification";
 
 export const Route = createFileRoute("/_authenticated/catalogue-commercial")({
   head: () => ({
@@ -195,7 +195,7 @@ function CatalogueCommercialPage() {
             <p className="text-mono text-[10px] text-primary">VENTE DIRECTE</p>
             <h1 className="pro-heading text-2xl font-bold sm:text-3xl">Catalogue commercial et tarifs</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Bornes réelles, forfaits de câble, options et marge minimale de {MARGE_MINIMUM_HT} € HT par installation.
+              Bornes réelles, forfaits de câble, options et marge minimale de {MARGE_MINIMUM_HT} € HT par installation (acceptée dès {MARGE_PLANCHER_HT} €).
             </p>
           </div>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
@@ -215,7 +215,7 @@ function CatalogueCommercialPage() {
                   <strong>{sansAchat}</strong> borne(s) avec prix d'achat à confirmer : elles ne peuvent pas être proposées.
                 </p>
                 <p className={`rounded-md border p-3 text-sm ${sousMarge ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border"}`}>
-                  <strong>{sousMarge}</strong> borne(s) avec au moins un forfait sous {MARGE_MINIMUM_HT} € de marge.
+                  <strong>{sousMarge}</strong> borne(s) avec au moins un forfait sous {MARGE_PLANCHER_HT} € de marge : verrouillé, à remonter au prix conseillé.
                 </p>
               </div>
             )}

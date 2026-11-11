@@ -56,7 +56,6 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
   const [distance, setDistance] = useState(prefill?.metrage_m ? String(prefill.metrage_m) : "");
   const [optionIds, setOptionIds] = useState<string[]>([]);
   const [typePose, setTypePose] = useState("");
-  const [motif, setMotif] = useState("");
   const [resultat, setResultat] = useState<{ numero: string; lien: string; sent: boolean; telephone: string | null; nom: string } | null>(null);
 
   const data = catalogue.data;
