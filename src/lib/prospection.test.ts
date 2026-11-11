@@ -11,9 +11,9 @@ describe("prospection", () => {
     expect(finaliserCorps("Bonjour")).toContain("STOP");
   });
   it("un prospect en STOP ne peut plus recevoir de mail", () => {
-    expect(lienMailto({ email: "contact@exemple.fr", statut: "stop", objet: "x", corps: "y" })).toBeNull();
+    expect(lienMailto({ email: "contact@exemple.fr", statut: "stop", objet: "x", corps: "y" })).toEqual(null);
   });
   it("relance prévue 7 jours après l'envoi", () => {
-    expect(dateRelance(new Date("2026-11-11T20:00:00Z"))).toBe("2026-11-18");
+    expect(dateRelance(new Date("2026-11-11T20:00:00Z"))).toEqual("2026-11-18");
   });
 });
