@@ -1625,6 +1625,7 @@ export type Database = {
           created_at: string
           created_by: string | null
           departement: string | null
+          dernier_canal: string | null
           email: string | null
           entreprise: string
           envoye_le: string | null
@@ -1632,7 +1633,9 @@ export type Database = {
           id: string
           inconnu: string | null
           lot: string | null
+          mail_ouvert_le: string | null
           metier: string
+          nb_envois: number
           notes: string | null
           objet_mail: string | null
           pourquoi: string | null
@@ -1650,6 +1653,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           departement?: string | null
+          dernier_canal?: string | null
           email?: string | null
           entreprise: string
           envoye_le?: string | null
@@ -1657,7 +1661,9 @@ export type Database = {
           id?: string
           inconnu?: string | null
           lot?: string | null
+          mail_ouvert_le?: string | null
           metier?: string
+          nb_envois?: number
           notes?: string | null
           objet_mail?: string | null
           pourquoi?: string | null
@@ -1675,6 +1681,7 @@ export type Database = {
           created_at?: string
           created_by?: string | null
           departement?: string | null
+          dernier_canal?: string | null
           email?: string | null
           entreprise?: string
           envoye_le?: string | null
@@ -1682,7 +1689,9 @@ export type Database = {
           id?: string
           inconnu?: string | null
           lot?: string | null
+          mail_ouvert_le?: string | null
           metier?: string
+          nb_envois?: number
           notes?: string | null
           objet_mail?: string | null
           pourquoi?: string | null
