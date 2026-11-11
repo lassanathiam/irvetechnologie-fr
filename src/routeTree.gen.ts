@@ -24,6 +24,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ZonesInterventionRouteImport } from './routes/zones-intervention'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedCatalogueCommercialRouteImport } from './routes/_authenticated/catalogue-commercial'
+import { Route as AuthenticatedProspectsRouteImport } from './routes/_authenticated/prospects'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
 import { Route as AttachementsLotTokensRouteImport } from './routes/attachements-lot.$tokens'
@@ -147,6 +148,11 @@ const AuthenticatedCatalogueCommercialRoute =
     path: '/catalogue-commercial',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedProspectsRoute = AuthenticatedProspectsRouteImport.update({
+  id: '/prospects',
+  path: '/prospects',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedTarifsSiteRoute = AuthenticatedTarifsSiteRouteImport.update({
   id: '/tarifs-site',
   path: '/tarifs-site',
@@ -408,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/prospects': typeof AuthenticatedProspectsRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
@@ -468,6 +475,7 @@ export interface FileRoutesByTo {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/prospects': typeof AuthenticatedProspectsRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
@@ -530,6 +538,7 @@ export interface FileRoutesById {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/_authenticated/prospects': typeof AuthenticatedProspectsRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
@@ -592,6 +601,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/bornes-catalogue'
     | '/catalogue-commercial'
+    | '/prospects'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
@@ -652,6 +662,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/bornes-catalogue'
     | '/catalogue-commercial'
+    | '/prospects'
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
@@ -713,6 +724,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/catalogue-commercial'
+    | '/_authenticated/prospects'
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
@@ -897,6 +909,13 @@ declare module '@tanstack/react-router' {
       path: '/catalogue-commercial'
       fullPath: '/catalogue-commercial'
       preLoaderRoute: typeof AuthenticatedCatalogueCommercialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/prospects': {
+      id: '/_authenticated/prospects'
+      path: '/prospects'
+      fullPath: '/prospects'
+      preLoaderRoute: typeof AuthenticatedProspectsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/tarifs-site': {
@@ -1213,6 +1232,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBornesCatalogueRoute: typeof AuthenticatedBornesCatalogueRoute
   AuthenticatedCatalogueCommercialRoute: typeof AuthenticatedCatalogueCommercialRoute
+  AuthenticatedProspectsRoute: typeof AuthenticatedProspectsRoute
   AuthenticatedTarifsSiteRoute: typeof AuthenticatedTarifsSiteRoute
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
@@ -1245,6 +1265,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBornesCatalogueRoute: AuthenticatedBornesCatalogueRoute,
   AuthenticatedCatalogueCommercialRoute: AuthenticatedCatalogueCommercialRoute,
+  AuthenticatedProspectsRoute: AuthenticatedProspectsRoute,
   AuthenticatedTarifsSiteRoute: AuthenticatedTarifsSiteRoute,
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
   AuthenticatedAttachementsBordereauRoute:

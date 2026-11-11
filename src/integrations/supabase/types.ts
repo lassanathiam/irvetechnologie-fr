@@ -1618,6 +1618,84 @@ export type Database = {
         }
         Relationships: []
       }
+      prospects: {
+        Row: {
+          cible: string | null
+          corps_mail: string | null
+          created_at: string
+          created_by: string | null
+          departement: string | null
+          email: string | null
+          entreprise: string
+          envoye_le: string | null
+          formulaire_url: string | null
+          id: string
+          inconnu: string | null
+          lot: string | null
+          metier: string
+          notes: string | null
+          objet_mail: string | null
+          pourquoi: string | null
+          relance_le: string | null
+          site_web: string | null
+          source_url: string | null
+          statut: string
+          telephone: string | null
+          updated_at: string
+          ville: string | null
+        }
+        Insert: {
+          cible?: string | null
+          corps_mail?: string | null
+          created_at?: string
+          created_by?: string | null
+          departement?: string | null
+          email?: string | null
+          entreprise: string
+          envoye_le?: string | null
+          formulaire_url?: string | null
+          id?: string
+          inconnu?: string | null
+          lot?: string | null
+          metier?: string
+          notes?: string | null
+          objet_mail?: string | null
+          pourquoi?: string | null
+          relance_le?: string | null
+          site_web?: string | null
+          source_url?: string | null
+          statut?: string
+          telephone?: string | null
+          updated_at?: string
+          ville?: string | null
+        }
+        Update: {
+          cible?: string | null
+          corps_mail?: string | null
+          created_at?: string
+          created_by?: string | null
+          departement?: string | null
+          email?: string | null
+          entreprise?: string
+          envoye_le?: string | null
+          formulaire_url?: string | null
+          id?: string
+          inconnu?: string | null
+          lot?: string | null
+          metier?: string
+          notes?: string | null
+          objet_mail?: string | null
+          pourquoi?: string | null
+          relance_le?: string | null
+          site_web?: string | null
+          source_url?: string | null
+          statut?: string
+          telephone?: string | null
+          updated_at?: string
+          ville?: string | null
+        }
+        Relationships: []
+      }
       push_subscriptions: {
         Row: {
           appareil: string | null
