@@ -376,7 +376,7 @@ export const enregistrerForfaitsCatalogue = createServerFn({ method: "POST" })
     const aRetirer = PALIERS_CABLE_M.filter((p) => !aGarder.includes(p));
     if (aGarder.length) {
       const { error } = await context.supabase.from("catalogue_forfaits").upsert(
-        aGarder.map((p) => ({ produit_id: data.produit_id, palier_m: p, prix_ttc: data.forfaits[p] })),
+        aGarder.map((p) => ({ produit_id: data.produit_id, palier_m: p, prix_ttc: data.forfaits[p] as number })),
         { onConflict: "produit_id,palier_m" },
       );
       if (error) throw new Error(error.message);
@@ -425,7 +425,7 @@ export const enregistrerOptionCatalogue = createServerFn({ method: "POST" })
     }
     const { error } = await context.supabase
       .from("catalogue_options_couts")
-      .upsert({ option_id: optionId, cout_ht, updated_at: new Date().toISOString() }, { onConflict: "option_id" });
+      .upsert({ option_id: optionId as string, cout_ht, updated_at: new Date().toISOString() }, { onConflict: "option_id" });
     if (error) throw new Error(error.message);
     return { id: optionId as string };
   });

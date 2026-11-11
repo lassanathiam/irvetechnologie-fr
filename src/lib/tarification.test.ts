@@ -24,23 +24,23 @@ const couts: CoutsReference = {
 
 describe("forfaits de câble", () => {
   it("choisit le forfait 5, 10, 15 ou 20 m selon la distance", () => {
-    expect(palierPourDistance(3)).toBe(5);
-    expect(palierPourDistance(5)).toBe(5);
-    expect(palierPourDistance(7)).toBe(10);
-    expect(palierPourDistance(15)).toBe(15);
-    expect(palierPourDistance(18)).toBe(20);
+    expect(palierPourDistance(3)).toEqual(5);
+    expect(palierPourDistance(5)).toEqual(5);
+    expect(palierPourDistance(7)).toEqual(10);
+    expect(palierPourDistance(15)).toEqual(15);
+    expect(palierPourDistance(18)).toEqual(20);
   });
   it("au-delà de 20 m : étude personnalisée, pas de prix automatique", () => {
-    expect(palierPourDistance(21)).toBeNull();
+    expect(palierPourDistance(21)).toEqual(null);
   });
 });
 
 describe("règle des 500 € de marge", () => {
   it("prix TTC minimum = (prix de revient HT + 500 €) × 1,20", () => {
-    expect(prixMinimumTtc(800)).toBe(1560);
+    expect(prixMinimumTtc(800)).toEqual(1560);
   });
   it("TVA de référence 20 % : 1 299 € TTC = 1 082,50 € HT", () => {
-    expect(ttcVersHt(1299)).toBe(1082.5);
+    expect(ttcVersHt(1299)).toEqual(1082.5);
   });
   it("calcule le prix de revient réel avec la pub à 30 € et le temps de câble en plus", () => {
     const r = prixRevientHt({
@@ -50,7 +50,7 @@ describe("règle des 500 € de marge", () => {
       metres: 10,
     });
     // 700 + 100 + 60 + 40 + (4 h + 5 m × 6 min) × 40 € + 50 + 30
-    expect(r.total_ht).toBe(700 + 100 + 60 + 40 + 180 + 50 + 30);
+    expect(r.total_ht).toEqual(700 + 100 + 60 + 40 + 180 + 50 + 30);
   });
   it("signale une marge insuffisante sous 500 €", () => {
     const r = prixRevientHt({
@@ -60,8 +60,8 @@ describe("règle des 500 € de marge", () => {
       metres: 10,
     });
     const a = analyserMarge(1350, r);
-    expect(a.marge_ht).toBe(1125 - 1160);
-    expect(a.suffisante).toBe(false);
+    expect(a.marge_ht).toEqual(1125 - 1160);
+    expect(a.suffisante).toEqual(false);
   });
   it("accepte une marge d'au moins 500 €", () => {
     const r = prixRevientHt({
@@ -70,12 +70,12 @@ describe("règle des 500 € de marge", () => {
       phase: "mono",
       metres: 10,
     });
-    expect(analyserMarge(prixMinimumTtc(r.total_ht!), r).suffisante).toBe(true);
+    expect(analyserMarge(prixMinimumTtc(r.total_ht!), r).suffisante).toEqual(true);
   });
   it("sans prix d'achat confirmé, la marge n'est jamais considérée suffisante", () => {
     const r = prixRevientHt({ achat: null, couts, phase: "mono", metres: 5 });
-    expect(r.total_ht).toBeNull();
-    expect(analyserMarge(5000, r).suffisante).toBe(false);
+    expect(r.total_ht).toEqual(null);
+    expect(analyserMarge(5000, r).suffisante).toEqual(false);
   });
   it("les coûts non renseignés rendent la marge provisoire", () => {
     const r = prixRevientHt({
@@ -84,6 +84,6 @@ describe("règle des 500 € de marge", () => {
       phase: "mono",
       metres: 5,
     });
-    expect(analyserMarge(3000, r).provisoire).toBe(true);
+    expect(analyserMarge(3000, r).provisoire).toEqual(true);
   });
 });
