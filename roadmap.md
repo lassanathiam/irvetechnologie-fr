@@ -144,5 +144,6 @@
 ## Catalogue commercial et tarification (demande du 11/11/2026)
 - [x] Répondre à la question des prix d'achat indicatifs (Autel, Schneider, Hager, 50five, TotalEnergies, Tricolore) et des bornes les plus posées
 - [x] Étape 1 : catalogue de 16 bornes (12 marques), prix d'achat réservés à l'administrateur, forfaits 5/10/15/20 m, options, règle des 500 €, réponse express depuis la demande ; devis test créé puis supprimé, 9 tests réussis
+- [x] Réponse express : prix automatiques selon la distance, 1 à 3 bornes au choix dans un seul e-mail, saisie du prix d'achat et prix conseillé sur place
 - [ ] Saisir les vrais prix d'achat, coûts de référence et prix des options (attente : factures fournisseurs, coût horaire et temps de pose du gérant)
 - [ ] Étape 2 (si validée) : tableau de rentabilité, séparation vente directe / sous-traitance, recherche des photos officielles

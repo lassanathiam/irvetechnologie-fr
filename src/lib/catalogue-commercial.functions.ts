@@ -566,10 +566,26 @@ async function calculerProposition(ctx: Ctx, input: z.infer<typeof propositionSc
   };
 }
 
+const propositionsSchema = z.object({
+  produit_ids: z.array(z.string().uuid()).min(1).max(3),
+  distance_m: z.number().min(0).max(500),
+  option_ids: z.array(z.string().uuid()).max(15).default([]),
+});
+
+export type AnalyseBorneProposee = AnalyseProposition & { produit_id: string };
+
+/** Analyse de 1 à 3 bornes pour la même demande (même distance, mêmes options). */
 export const analyserPropositionCatalogue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => propositionSchema.parse(d))
-  .handler(async ({ context, data }) => (await calculerProposition(context, data)).analyse);
+  .inputValidator((d: unknown) => propositionsSchema.parse(d))
+  .handler(async ({ context, data }): Promise<AnalyseBorneProposee[]> => {
+    const out: AnalyseBorneProposee[] = [];
+    for (const produit_id of data.produit_ids) {
+      const c = await calculerProposition(context, { produit_id, distance_m: data.distance_m, option_ids: data.option_ids });
+      out.push({ ...c.analyse, produit_id });
+    }
+    return out;
+  });
 
 const PHASE_TEXTE: Record<string, string> = { mono: "monophasé", tri: "triphasé", mono_tri: "mono/triphasé" };
 
@@ -580,7 +596,7 @@ export function libelleBorne(p: { marque: string; nom_commercial: string; puissa
   return `Borne ${p.marque} ${p.nom_commercial}${puissance} ${PHASE_TEXTE[p.phase] ?? ""}`.trim();
 }
 
-const envoiSchema = propositionSchema.extend({
+const envoiSchema = propositionsSchema.extend({
   prenom: z.string().trim().max(80).nullish(),
   nom: z.string().trim().min(1).max(120),
   email: z.string().trim().email().max(255).nullish().or(z.literal("")),
@@ -589,170 +605,225 @@ const envoiSchema = propositionSchema.extend({
   cp_ville: z.string().trim().max(160).nullish(),
   envoyer: z.boolean(),
   type_pose: z.string().trim().max(80).nullish(),
-  derogation_motif: z.string().trim().max(500).nullish(),
 });
 
+/** Refuse toute borne non proposable : étude > 20 m, achat non confirmé, forfait vide, marge < 490 €. */
+function verifierProposable(calc: Calcul) {
+  const { analyse, marge, produit } = calc;
+  const nom = `${produit.marque} ${produit.nom_commercial}`;
+  if (analyse.etude) throw new Error("Plus de 20 m : faites une étude personnalisée, pas de prix automatique.");
+  if (!analyse.achat_confirme) throw new Error(`${nom} : prix d'achat à confirmer, borne pas encore proposable.`);
+  if (analyse.forfait_ttc == null || !marge)
+    throw new Error(`${nom} : aucun prix n'est renseigné pour le forfait ${analyse.palier} m.`);
+  // Verrou : sous 490 € HT de marge, aucune proposition, même pour l'administrateur.
+  if (!marge.suffisante)
+    throw new Error(
+      `${nom} : marge trop faible (${marge.marge_ht} € HT, minimum 490 €). Prix conseillé : ${marge.prix_conseille_ttc} € TTC.`,
+    );
+  return marge;
+}
+
+type DevisCree = {
+  id: string;
+  numero: string;
+  lien: string;
+  objet: string;
+  borne: string;
+  items: { libelle: string; description: string | null; quantite: number; prix_unitaire: number; tva: number }[];
+  totals: ReturnType<typeof computeTotals>;
+};
+
+async function creerDevisBorne(
+  context: Ctx,
+  data: z.infer<typeof envoiSchema>,
+  calc: Calcul,
+  marge: AnalyseMarge,
+  nbChoix: number,
+): Promise<DevisCree> {
+  const { analyse, produit, options } = calc;
+  const borne = libelleBorne(produit);
+  const descriptif = [
+    `Fourniture et pose de la ${borne}${produit.reference_constructeur ? ` (réf. ${produit.reference_constructeur})` : ""}`,
+    "",
+    `— Forfait installation jusqu'à ${analyse.palier} m de câble entre le tableau et la borne`,
+    `— Création d'une ligne d'alimentation dédiée (${produit.phase === "tri" ? "5G6" : "3G10"} mm²)`,
+    "— Fourniture et pose des protections électriques dédiées",
+    "— Gaine / fourreau et accessoires de cheminement",
+    "— Raccordement au tableau électrique",
+    "— Mise en service, essais et contrôles",
+    "— Rapport de fin de chantier et dossier technique",
+  ].join("\n");
+
+  const items = [
+    {
+      libelle: `${borne} — forfait jusqu'à ${analyse.palier} m`,
+      description: descriptif as string | null,
+      quantite: 1,
+      prix_unitaire: ttcVersHt(analyse.forfait_ttc as number),
+      tva: 20,
+    },
+    ...options.map((o) => ({
+      libelle: o.libelle,
+      description: o.description,
+      quantite: 1,
+      prix_unitaire: ttcVersHt(o.prix_ttc),
+      tva: 20,
+    })),
+  ];
+  const totals = computeTotals(items, 0);
+  const emission = new Date().toISOString().slice(0, 10);
+  const expiration = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
+  const prefix = `D-${emission.slice(0, 4)}-`;
+  const { data: dernier } = await context.supabase
+    .from("devis")
+    .select("numero")
+    .like("numero", `${prefix}%`)
+    .order("numero", { ascending: false })
+    .limit(1);
+  const last = dernier?.[0]?.numero ? Number(String(dernier[0].numero).slice(prefix.length)) : 277;
+  const numero = `${prefix}${String((Number.isFinite(last) ? last : 277) + 1).padStart(4, "0")}`;
+  const nomComplet = [data.prenom?.trim(), data.nom.trim()].filter(Boolean).join(" ");
+  const objet = `Installation d'une borne de recharge — ${borne}`;
+
+  const { data: devis, error } = await context.supabase
+    .from("devis")
+    .insert({
+      numero,
+      client_nom: nomComplet,
+      client_email: data.email || null,
+      client_telephone: data.telephone || null,
+      client_adresse: data.adresse || null,
+      client_cp_ville: data.cp_ville || null,
+      objet,
+      date_emission: emission,
+      date_expiration: expiration,
+      remise_pct: 0,
+      acompte_pct: 30,
+      conditions_paiement: CONDITIONS_DEFAUT,
+      notes: [
+        `Distance tableau → borne indiquée : ${data.distance_m} m (forfait jusqu'à ${analyse.palier} m).`,
+        data.type_pose ? `Type d'installation : ${data.type_pose}.` : null,
+        nbChoix > 1 ? `Proposition envoyée avec ${nbChoix} bornes au choix : le client en accepte une seule.` : null,
+      ]
+        .filter(Boolean)
+        .join("\n"),
+      total_ht_brut: totals.total_ht_brut,
+      total_remise: totals.total_remise,
+      total_ht: totals.total_ht,
+      total_tva: totals.total_tva,
+      total_ttc: totals.total_ttc,
+      created_by: context.userId,
+    })
+    .select("id, numero, public_token")
+    .single();
+  if (error) throw new Error(error.message);
+
+  const { error: itemsError } = await context.supabase.from("devis_items").insert(
+    items.map((item, index) => ({ devis_id: devis.id, ...item, description: item.description ?? null, ordre: index + 1 })),
+  );
+  if (itemsError) throw new Error(itemsError.message);
+
+  // Copie interne de la marge au moment du devis (lecture réservée à l'administrateur).
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  await supabaseAdmin.from("devis_marges").insert({
+    devis_id: devis.id,
+    produit_id: produit.id,
+    produit_libelle: borne,
+    palier_m: analyse.palier,
+    distance_m: data.distance_m,
+    options: options.map((o) => ({ libelle: o.libelle, prix_ttc: o.prix_ttc, cout_ht: o.cout_ht })),
+    prix_vente_ht: marge.prix_vente_ht,
+    cout_revient_ht: marge.revient_ht ?? 0,
+    marge_ht: marge.marge_ht ?? 0,
+    couts_complets: !marge.provisoire,
+    derogation_motif: null,
+    derogation_par: null,
+  });
+
+  const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
+  return {
+    id: devis.id as string,
+    numero: devis.numero as string,
+    lien: `${base}/devis-client/${devis.public_token}`,
+    objet,
+    borne,
+    items,
+    totals,
+  };
+}
+
+export type DevisPropose = { id: string; numero: string; lien: string; borne: string; total_ttc: number };
+
+/** Crée un devis par borne choisie (1 à 3) ; à l'envoi, un seul e-mail présente tous les choix. */
 export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: unknown) => envoiSchema.parse(d))
   .handler(async ({ context, data }) => {
-    const calc = await calculerProposition(context, data);
-    const { analyse, produit, options, marge } = calc;
-    if (analyse.etude) throw new Error("Plus de 20 m : faites une étude personnalisée, pas de prix automatique.");
-    if (!analyse.achat_confirme)
-      throw new Error("Prix d'achat à confirmer : cette borne ne peut pas encore être proposée.");
-    if (analyse.forfait_ttc == null || !marge)
-      throw new Error(`Aucun prix n'est renseigné pour le forfait ${analyse.palier} m de cette borne.`);
-
-    // Verrou : sous 490 € HT de marge, aucune proposition, même pour l'administrateur.
-    if (!marge.suffisante)
-      throw new Error(
-        `Marge trop faible (${marge.marge_ht} € HT, minimum 490 €). Prix conseillé : ${marge.prix_conseille_ttc} € TTC.`,
-      );
-    const borne = libelleBorne(produit);
-    const descriptif = [
-      `Fourniture et pose de la ${borne}${produit.reference_constructeur ? ` (réf. ${produit.reference_constructeur})` : ""}`,
-      "",
-      `— Forfait installation jusqu'à ${analyse.palier} m de câble entre le tableau et la borne`,
-      `— Création d'une ligne d'alimentation dédiée (${produit.phase === "tri" ? "5G6" : "3G10"} mm²)`,
-      "— Fourniture et pose des protections électriques dédiées",
-      "— Gaine / fourreau et accessoires de cheminement",
-      "— Raccordement au tableau électrique",
-      "— Mise en service, essais et contrôles",
-      "— Rapport de fin de chantier et dossier technique",
-    ].join("\n");
-
-    const items = [
-      {
-        libelle: `${borne} — forfait jusqu'à ${analyse.palier} m`,
-        description: descriptif,
-        quantite: 1,
-        prix_unitaire: ttcVersHt(analyse.forfait_ttc),
-        tva: 20,
-      },
-      ...options.map((o) => ({
-        libelle: o.libelle,
-        description: o.description,
-        quantite: 1,
-        prix_unitaire: ttcVersHt(o.prix_ttc),
-        tva: 20,
-      })),
-    ];
-    const totals = computeTotals(items, 0);
-    const emission = new Date().toISOString().slice(0, 10);
-    const expiration = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
-    const prefix = `D-${emission.slice(0, 4)}-`;
-    const { data: dernier } = await context.supabase
-      .from("devis")
-      .select("numero")
-      .like("numero", `${prefix}%`)
-      .order("numero", { ascending: false })
-      .limit(1);
-    const last = dernier?.[0]?.numero ? Number(String(dernier[0].numero).slice(prefix.length)) : 277;
-    const numero = `${prefix}${String((Number.isFinite(last) ? last : 277) + 1).padStart(4, "0")}`;
-    const nomComplet = [data.prenom?.trim(), data.nom.trim()].filter(Boolean).join(" ");
-    const objet = `Installation d'une borne de recharge — ${borne}`;
-
-    const { data: devis, error } = await context.supabase
-      .from("devis")
-      .insert({
-        numero,
-        client_nom: nomComplet,
-        client_email: data.email || null,
-        client_telephone: data.telephone || null,
-        client_adresse: data.adresse || null,
-        client_cp_ville: data.cp_ville || null,
-        objet,
-        date_emission: emission,
-        date_expiration: expiration,
-        remise_pct: 0,
-        acompte_pct: 30,
-        conditions_paiement: CONDITIONS_DEFAUT,
-        notes: [
-          `Distance tableau → borne indiquée : ${data.distance_m} m (forfait jusqu'à ${analyse.palier} m).`,
-          data.type_pose ? `Type d'installation : ${data.type_pose}.` : null,
-        ]
-          .filter(Boolean)
-          .join("\n"),
-        total_ht_brut: totals.total_ht_brut,
-        total_remise: totals.total_remise,
-        total_ht: totals.total_ht,
-        total_tva: totals.total_tva,
-        total_ttc: totals.total_ttc,
-        created_by: context.userId,
-      })
-      .select("id, numero, public_token")
-      .single();
-    if (error) throw new Error(error.message);
-
-    const { error: itemsError } = await context.supabase.from("devis_items").insert(
-      items.map((item, index) => ({ devis_id: devis.id, ...item, description: item.description ?? null, ordre: index + 1 })),
-    );
-    if (itemsError) throw new Error(itemsError.message);
-
-    // Copie interne de la marge au moment du devis (lecture réservée à l'administrateur).
-    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-    await supabaseAdmin.from("devis_marges").insert({
-      devis_id: devis.id,
-      produit_id: produit.id,
-      produit_libelle: borne,
-      palier_m: analyse.palier,
-      distance_m: data.distance_m,
-      options: options.map((o) => ({ libelle: o.libelle, prix_ttc: o.prix_ttc, cout_ht: o.cout_ht })),
-      prix_vente_ht: marge.prix_vente_ht,
-      cout_revient_ht: marge.revient_ht ?? 0,
-      marge_ht: marge.marge_ht ?? 0,
-      couts_complets: !marge.provisoire,
-      derogation_motif: null,
-      derogation_par: null,
-    });
-
-    const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");
-    const lien = `${base}/devis-client/${devis.public_token}`;
-    if (!data.envoyer || !data.email) {
-      return { id: devis.id as string, numero: devis.numero as string, lien, sent: false, total_ttc: totals.total_ttc };
+    const ids = Array.from(new Set(data.produit_ids));
+    // Tout est vérifié avant de créer le moindre devis.
+    const calculs: { calc: Calcul; marge: AnalyseMarge }[] = [];
+    for (const produit_id of ids) {
+      const calc = await calculerProposition(context, { produit_id, distance_m: data.distance_m, option_ids: data.option_ids });
+      calculs.push({ calc, marge: verifierProposable(calc) });
     }
+    const crees: DevisCree[] = [];
+    for (const { calc, marge } of calculs) crees.push(await creerDevisBorne(context, data, calc, marge, calculs.length));
+    const devis: DevisPropose[] = crees.map((d) => ({
+      id: d.id,
+      numero: d.numero,
+      lien: d.lien,
+      borne: d.borne,
+      total_ttc: d.totals.total_ttc,
+    }));
+    if (!data.envoyer || !data.email) return { devis, sent: false };
 
-    const message =
-      "Suite à votre demande, voici notre proposition d'installation de borne de recharge, réalisée par un électricien qualifié IRVE (P1/P2/P3). Nous restons disponibles pour tout ajustement.";
+    const nomComplet = [data.prenom?.trim(), data.nom.trim()].filter(Boolean).join(" ");
+    const premier = crees[0];
+    const plusieurs = crees.length > 1;
+    const message = plusieurs
+      ? `Suite à votre demande, voici ${crees.length} propositions d'installation de borne de recharge, réalisées par un électricien qualifié IRVE (P1/P2/P3). Comparez-les et acceptez celle qui vous convient : une seule suffit. Nous restons disponibles pour vous conseiller.`
+      : "Suite à votre demande, voici notre proposition d'installation de borne de recharge, réalisée par un électricien qualifié IRVE (P1/P2/P3). Nous restons disponibles pour tout ajustement.";
     const { sendTemplateEmail } = await import("@/lib/email-templates/send-email");
     const { resoudreCopieEnsio } = await import("@/lib/copie-ensio.server");
+    const emission = new Date().toISOString().slice(0, 10);
+    const expiration = new Date(Date.now() + 30 * 864e5).toISOString().slice(0, 10);
     const result = await sendTemplateEmail("devis-client", data.email, {
       copieEnsio: await resoudreCopieEnsio(context.supabase, data.email, nomComplet),
-      idempotencyKey: `devis-${devis.id}`,
+      idempotencyKey: `devis-${crees.map((d) => d.id).join("-")}`,
       replyTo: "contacts@irvetechnologie.fr",
       templateData: {
         type: "devis",
-        numero: devis.numero,
+        numero: plusieurs ? crees.map((d) => d.numero).join(", ") : premier.numero,
         client_nom: nomComplet,
-        objet,
+        objet: premier.objet,
         date_emission: emission,
         date_limite: expiration,
         message,
-        lien,
+        lien: premier.lien,
         remise_pct: 0,
-        total_ht_brut: totals.total_ht_brut,
-        total_remise: totals.total_remise,
-        total_ht: totals.total_ht,
-        total_tva: totals.total_tva,
-        total_ttc: totals.total_ttc,
+        total_ht_brut: premier.totals.total_ht_brut,
+        total_remise: premier.totals.total_remise,
+        total_ht: premier.totals.total_ht,
+        total_tva: premier.totals.total_tva,
+        total_ttc: premier.totals.total_ttc,
         acompte_pct: 30,
         conditions_paiement: CONDITIONS_DEFAUT,
-        items,
+        items: premier.items,
+        ...(plusieurs
+          ? { choix: crees.map((d) => ({ numero: d.numero, libelle: d.borne, total_ttc: d.totals.total_ttc, lien: d.lien })) }
+          : {}),
       },
     });
-    await context.supabase.from("devis_envois").insert({
-      devis_id: devis.id,
-      destinataire: data.email,
-      message,
-      resultat: result.sent ? "envoye" : "bloque",
-      created_by: context.userId,
-    });
-    if (result.sent) {
-      await context.supabase
-        .from("devis")
-        .update({ sent_at: new Date().toISOString(), statut: "envoye" })
-        .eq("id", devis.id);
+    const maintenant = new Date().toISOString();
+    for (const d of crees) {
+      await context.supabase.from("devis_envois").insert({
+        devis_id: d.id,
+        destinataire: data.email,
+        message,
+        resultat: result.sent ? "envoye" : "bloque",
+        created_by: context.userId,
+      });
+      if (result.sent) await context.supabase.from("devis").update({ sent_at: maintenant, statut: "envoye" }).eq("id", d.id);
     }
-    return { id: devis.id as string, numero: devis.numero as string, lien, sent: result.sent, total_ttc: totals.total_ttc };
+    return { devis, sent: result.sent };
   });
