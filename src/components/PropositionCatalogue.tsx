@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AlertTriangle, CheckCircle2, Copy, Loader2, Save, X, Zap } from "lucide-react";
+import { AlertTriangle, Check, CheckCircle2, Copy, Loader2, Save, X, Zap } from "lucide-react";
 import { toast } from "sonner";
 import { AdresseFields } from "@/components/AdresseFields";
 import { whatsappLien } from "@/lib/contact-client";
@@ -20,6 +20,7 @@ import {
   DISTANCE_MAX_FORFAIT_M,
   MARGE_MINIMUM_HT,
   MARGE_PLANCHER_HT,
+  PALIERS_CABLE_M,
   palierPourDistance,
   type PalierCable,
 } from "@/lib/tarification";
@@ -69,6 +70,9 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
   const [distance, setDistance] = useState(prefill?.metrage_m ? String(prefill.metrage_m) : "");
   const [optionIds, setOptionIds] = useState<string[]>([]);
   const [typePose, setTypePose] = useState("");
+  const [voirClient, setVoirClient] = useState(!prefill?.nom);
+  const [voirPlus, setVoirPlus] = useState(false);
+  const [voirAutres, setVoirAutres] = useState(false);
   const [resultat, setResultat] = useState<{ devis: DevisPropose[]; sent: boolean; telephone: string | null; nom: string } | null>(null);
 
   const data = catalogue.data;
@@ -114,6 +118,50 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
   const rafraichir = () => {
     qc.invalidateQueries({ queryKey: ["catalogue-commercial"] });
     qc.invalidateQueries({ queryKey: ["proposition-catalogue"] });
+  };
+
+  // Bornes prêtes (prix d'achat + forfait) en premier ; les autres sont rangées à part.
+  const estPrete = (p: ProduitCatalogue) => !distanceSaisie || (p.achat_confirme && prixPour(p) != null);
+  const prets = modeles.filter((p) => estPrete(p) || choisis.includes(p.id));
+  const autres = modeles.filter((p) => !estPrete(p) && !choisis.includes(p.id));
+
+  const carteBorne = (p: ProduitCatalogue) => {
+    const prix = prixPour(p);
+    const coche = choisis.includes(p.id);
+    const plein = !coche && choisis.length >= MAX_CHOIX;
+    const a = analyses.find((x) => x.produit_id === p.id);
+    return (
+      <div key={p.id} className={`rounded-md border ${coche ? "border-primary bg-primary/5" : "border-border"} ${plein ? "opacity-50" : ""}`}>
+        <button type="button" disabled={plein} onClick={() => basculer(p.id)} className="flex w-full items-center gap-3 p-3 text-left">
+          <span className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-sm border ${coche ? "border-primary bg-primary text-primary-foreground" : "border-border"}`}>
+            {coche && <Check className="h-4 w-4" />}
+          </span>
+          <span className="min-w-0 flex-1">
+            <span className="block text-sm font-semibold">{p.marque} — {p.nom_commercial}</span>
+            <span className="block text-xs text-muted-foreground">{String(p.puissance_kw).replace(".", ",")} kW · {PHASE_LIBELLE[p.phase]}</span>
+          </span>
+          <span className="shrink-0 text-right">
+            {!distanceSaisie ? (
+              <span className="text-xs text-muted-foreground">—</span>
+            ) : prix == null ? (
+              <span className="text-xs font-semibold text-destructive">Pas de prix à {palier} m</span>
+            ) : (
+              <>
+                <span className="block text-lg font-bold">{montant(prix + optionsTtc)}</span>
+                <span className={`text-xs ${p.achat_confirme ? "text-muted-foreground" : "font-semibold text-destructive"}`}>
+                  {p.achat_confirme ? "TTC posé" : "prix d'achat manquant"}
+                </span>
+              </>
+            )}
+          </span>
+        </button>
+        {coche && distanceSaisie && (
+          <div className="border-t border-border px-3 py-2">
+            {a ? <CarteAnalyse a={a} p={p} estAdmin={estAdmin} onChange={rafraichir} /> : <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+          </div>
+        )}
+      </div>
+    );
   };
 
   const mutation = useMutation({
@@ -164,7 +212,7 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
           <div>
             <h2 className="text-lg font-bold">Réponse express</h2>
             <p className="mt-1 text-xs text-muted-foreground">
-              Indiquez la distance : les prix s'affichent tout seuls. Cochez jusqu'à {MAX_CHOIX} bornes pour laisser le choix au client.
+              Choisissez la distance, puis touchez 1 à {MAX_CHOIX} bornes : le prix posé s'affiche tout seul.
             </p>
           </div>
           <button type="button" onClick={onClose} className="rounded-sm p-2 text-muted-foreground hover:text-foreground" aria-label="Fermer">
@@ -217,148 +265,190 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
           </div>
         ) : (
           <form
-            className="mt-5 grid gap-4"
+            className="mt-5 grid gap-5"
             onSubmit={(e) => {
               e.preventDefault();
               mutation.mutate({ form: e.currentTarget, avecEnvoi: true });
             }}
           >
-            <div className="grid gap-3 sm:grid-cols-2">
-              <label className="block"><span className={LIB}>Prénom</span><input name="prenom" defaultValue={prefill?.prenom ?? ""} className={INPUT} autoComplete="off" /></label>
-              <label className="block"><span className={LIB}>Nom *</span><input name="nom" required defaultValue={prefill?.nom ?? ""} className={INPUT} autoComplete="off" /></label>
-              <label className="block"><span className={LIB}>E-mail</span><input name="email" type="email" defaultValue={prefill?.email ?? ""} className={INPUT} autoComplete="off" /></label>
-              <label className="block"><span className={LIB}>Téléphone</span><input name="telephone" type="tel" defaultValue={prefill?.telephone ?? ""} className={INPUT} autoComplete="off" /></label>
-            </div>
-            <AdresseFields defaultAdresse={prefill?.adresse ?? undefined} defaultCpVille={prefill?.cp_ville ?? undefined} />
+            {/* 1. Client : résumé en une ligne, détails seulement si besoin */}
+            <section className="grid gap-2">
+              <TitreEtape n={1} titre="Client" />
+              {!voirClient && (
+                <div className="flex items-center justify-between gap-3 rounded-md border border-border bg-muted/30 px-3 py-2.5 text-sm">
+                  <span className="min-w-0">
+                    <span className="block font-semibold">{prefill?.nom}</span>
+                    <span className="block truncate text-xs text-muted-foreground">
+                      {[prefill?.email, prefill?.telephone, prefill?.cp_ville].filter(Boolean).join(" · ") || "Coordonnées à compléter"}
+                    </span>
+                  </span>
+                  <button type="button" onClick={() => setVoirClient(true)} className="shrink-0 text-xs font-bold text-primary hover:underline">
+                    Modifier
+                  </button>
+                </div>
+              )}
+              <div className={voirClient ? "grid gap-3" : "hidden"}>
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <label className="block"><span className={LIB}>Prénom</span><input name="prenom" defaultValue={prefill?.prenom ?? ""} className={INPUT} autoComplete="off" /></label>
+                  <label className="block"><span className={LIB}>Nom *</span><input name="nom" defaultValue={prefill?.nom ?? ""} className={INPUT} autoComplete="off" /></label>
+                  <label className="block"><span className={LIB}>E-mail</span><input name="email" type="email" defaultValue={prefill?.email ?? ""} className={INPUT} autoComplete="off" /></label>
+                  <label className="block"><span className={LIB}>Téléphone</span><input name="telephone" type="tel" defaultValue={prefill?.telephone ?? ""} className={INPUT} autoComplete="off" /></label>
+                </div>
+                <AdresseFields defaultAdresse={prefill?.adresse ?? undefined} defaultCpVille={prefill?.cp_ville ?? undefined} />
+              </div>
+            </section>
 
-            <label className="block">
-              <span className={LIB}>Distance tableau électrique → borne (m) *</span>
-              <input value={distance} onChange={(e) => setDistance(e.target.value)} inputMode="decimal" placeholder="Ex. 8" className={INPUT} />
-              <span className="mt-1 block text-xs text-muted-foreground">
-                {!distanceSaisie
-                  ? "Indiquez la distance pour afficher les prix."
-                  : etude
-                    ? `Plus de ${DISTANCE_MAX_FORFAIT_M} m : étude personnalisée, aucun prix automatique.`
-                    : `Forfait appliqué : jusqu'à ${palier} m de câble.`}
-              </span>
-            </label>
-
-            <div className="grid gap-3 sm:grid-cols-3">
-              <label className="block">
-                <span className={LIB}>Marque</span>
-                <select className={INPUT} value={marque} onChange={(e) => setMarque(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {marques.map((m) => <option key={m} value={m}>{m}</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className={LIB}>Puissance</span>
-                <select className={INPUT} value={puissance} onChange={(e) => setPuissance(e.target.value)}>
-                  <option value="">Toutes</option>
-                  {puissances.map((p) => <option key={p} value={String(p)}>{String(p).replace(".", ",")} kW</option>)}
-                </select>
-              </label>
-              <label className="block">
-                <span className={LIB}>Type d'installation</span>
-                <select className={INPUT} value={typePose} onChange={(e) => setTypePose(e.target.value)}>
-                  <option value="">À préciser</option>
-                  {TYPES_POSE.map((t) => <option key={t} value={t}>{t}</option>)}
-                </select>
-              </label>
-            </div>
-
-            {options.length > 0 && (
-              <div className="grid gap-1.5">
-                <span className={LIB}>Options</span>
-                {options.map((o) => (
-                  <label key={o.id} className="flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      className="h-4 w-4"
-                      checked={optionIds.includes(o.id)}
-                      onChange={(e) => setOptionIds((x) => (e.target.checked ? [...x, o.id] : x.filter((i) => i !== o.id)))}
-                    />
-                    {o.libelle} (+{montant(o.prix_ttc)} TTC)
-                  </label>
+            {/* 2. Distance : un seul clic sur le forfait */}
+            <section className="grid gap-2">
+              <TitreEtape n={2} titre="Distance tableau électrique → borne" />
+              <div className="grid grid-cols-3 gap-2 sm:grid-cols-5">
+                {PALIERS_CABLE_M.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setDistance(String(m))}
+                    className={`min-h-12 rounded-md border text-sm font-bold ${palier === m ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"}`}
+                  >
+                    {m} m
+                  </button>
                 ))}
+                <button
+                  type="button"
+                  onClick={() => setDistance(String(DISTANCE_MAX_FORFAIT_M + 1))}
+                  className={`min-h-12 rounded-md border px-2 text-xs font-bold ${etude ? "border-primary bg-primary text-primary-foreground" : "border-border hover:border-primary"}`}
+                >
+                  + de {DISTANCE_MAX_FORFAIT_M} m
+                </button>
               </div>
+              <p className="text-xs text-muted-foreground">
+                {!distanceSaisie
+                  ? "Touchez la distance la plus proche (arrondir au-dessus)."
+                  : etude
+                    ? `Plus de ${DISTANCE_MAX_FORFAIT_M} m : passez faire une visite, pas de prix automatique.`
+                    : prefill?.metrage_m && palierPourDistance(prefill.metrage_m) === palier
+                      ? `Le client a indiqué ${String(prefill.metrage_m).replace(".", ",")} m → forfait ${palier} m.`
+                      : `Forfait jusqu'à ${palier} m de câble.`}
+              </p>
+            </section>
+
+            {/* 3. Bornes : cartes avec le prix final, toucher pour choisir */}
+            {!etude && (
+              <section className="grid gap-2">
+                <div className="flex flex-wrap items-end justify-between gap-2">
+                  <TitreEtape n={3} titre={`Bornes à proposer (${choisis.length}/${MAX_CHOIX})`} />
+                  <div className="flex gap-2">
+                    <select aria-label="Marque" className="rounded-sm border border-border bg-input px-2 py-1.5 text-xs" value={marque} onChange={(e) => setMarque(e.target.value)}>
+                      <option value="">Toutes marques</option>
+                      {marques.map((m) => <option key={m} value={m}>{m}</option>)}
+                    </select>
+                    <select aria-label="Puissance" className="rounded-sm border border-border bg-input px-2 py-1.5 text-xs" value={puissance} onChange={(e) => setPuissance(e.target.value)}>
+                      <option value="">Toutes puissances</option>
+                      {puissances.map((p) => <option key={p} value={String(p)}>{String(p).replace(".", ",")} kW</option>)}
+                    </select>
+                  </div>
+                </div>
+                {!distanceSaisie && <p className="text-xs text-muted-foreground">Choisissez d'abord la distance pour voir les prix.</p>}
+                <div className="grid gap-2">
+                  {prets.length === 0 && distanceSaisie && (
+                    <p className="rounded-md border border-dashed border-border p-3 text-sm text-muted-foreground">Aucune borne avec prix prêt pour ces critères.</p>
+                  )}
+                  {prets.map((p) => carteBorne(p))}
+                </div>
+                {autres.length > 0 && (
+                  <div>
+                    <button type="button" onClick={() => setVoirAutres((v) => !v)} className="text-xs font-bold text-muted-foreground hover:text-foreground">
+                      {voirAutres ? "▾" : "▸"} {autres.length} autre(s) borne(s) sans prix complet
+                    </button>
+                    {voirAutres && <div className="mt-2 grid gap-2">{autres.map((p) => carteBorne(p))}</div>}
+                  </div>
+                )}
+              </section>
             )}
 
-            <div className="grid gap-1.5">
-              <span className={LIB}>
-                Bornes à proposer · {choisis.length}/{MAX_CHOIX} choisie(s)
-              </span>
-              <div className="grid max-h-80 gap-1.5 overflow-y-auto rounded-md border border-border p-1.5">
-                {modeles.length === 0 && <p className="p-2 text-sm text-muted-foreground">Aucune borne pour ces critères.</p>}
-                {modeles.map((p) => {
-                  const prix = prixPour(p);
-                  const coche = choisis.includes(p.id);
-                  const plein = !coche && choisis.length >= MAX_CHOIX;
-                  return (
-                    <label
-                      key={p.id}
-                      className={`flex items-center gap-3 rounded-sm px-2.5 py-2 text-sm ${coche ? "bg-primary/10 ring-1 ring-primary/40" : "hover:bg-muted/50"} ${plein ? "opacity-50" : "cursor-pointer"}`}
-                    >
-                      <input type="checkbox" className="h-4 w-4 shrink-0" checked={coche} disabled={plein} onChange={() => basculer(p.id)} />
-                      <span className="min-w-0 flex-1">
-                        <span className="block font-semibold">{p.marque} — {p.nom_commercial}</span>
-                        <span className="block text-xs text-muted-foreground">
-                          {String(p.puissance_kw).replace(".", ",")} kW · {PHASE_LIBELLE[p.phase]}
-                        </span>
-                      </span>
-                      <span className="shrink-0 text-right text-xs">
-                        {!distanceSaisie || etude ? (
-                          <span className="text-muted-foreground">—</span>
-                        ) : prix == null ? (
-                          <span className="text-muted-foreground">Pas de prix à {palier} m</span>
-                        ) : (
-                          <>
-                            <span className="block text-base font-bold">{montant(prix + optionsTtc)}</span>
-                            <span className={p.achat_confirme ? "text-muted-foreground" : "font-semibold text-destructive"}>
-                              {p.achat_confirme ? "TTC posé" : "prix d'achat à saisir"}
-                            </span>
-                          </>
-                        )}
-                      </span>
+            {/* Détails facultatifs */}
+            {!etude && (
+              <section>
+                <button type="button" onClick={() => setVoirPlus((v) => !v)} className="text-xs font-bold text-muted-foreground hover:text-foreground">
+                  {voirPlus ? "▾" : "▸"} Options et type de pose (facultatif){optionIds.length ? ` · ${optionIds.length} option(s)` : ""}
+                </button>
+                {voirPlus && (
+                  <div className="mt-2 grid gap-3 rounded-md border border-border p-3">
+                    <label className="block">
+                      <span className={LIB}>Type d'installation</span>
+                      <select className={INPUT} value={typePose} onChange={(e) => setTypePose(e.target.value)}>
+                        <option value="">À préciser</option>
+                        {TYPES_POSE.map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
                     </label>
-                  );
-                })}
-              </div>
-            </div>
-
-            {choisis.length > 0 && distanceSaisie && !etude && (
-              <div className="grid gap-2">
-                {analyse.isLoading && <Loader2 className="h-5 w-5 animate-spin text-primary" />}
-                {analyses.map((a) => {
-                  const p = actifs.find((x) => x.id === a.produit_id);
-                  return p ? (
-                    <CarteAnalyse key={a.produit_id} a={a} p={p} estAdmin={estAdmin} onChange={rafraichir} />
-                  ) : null;
-                })}
-              </div>
+                    {options.length > 0 && (
+                      <div className="grid gap-1.5">
+                        <span className={LIB}>Options ajoutées au prix</span>
+                        {options.map((o) => (
+                          <label key={o.id} className="flex items-center gap-2 text-sm">
+                            <input
+                              type="checkbox"
+                              className="h-4 w-4"
+                              checked={optionIds.includes(o.id)}
+                              onChange={(e) => setOptionIds((x) => (e.target.checked ? [...x, o.id] : x.filter((i) => i !== o.id)))}
+                            />
+                            {o.libelle} (+{montant(o.prix_ttc)} TTC)
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </section>
             )}
 
-            <div className="grid gap-2 sm:grid-cols-2">
-              <button
-                type="submit"
-                disabled={mutation.isPending || bloque}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
-              >
-                {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
-                {choisis.length > 1 ? `Envoyer les ${choisis.length} choix` : "Envoyer la proposition"}
-              </button>
-              <button
-                type="button"
-                disabled={mutation.isPending || bloque}
-                onClick={(e) => {
-                  const form = e.currentTarget.closest("form");
-                  if (form) mutation.mutate({ form, avecEnvoi: false });
-                }}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-bold hover:border-primary hover:text-primary disabled:opacity-50"
-              >
-                <CheckCircle2 className="h-4 w-4" /> Enregistrer sans envoyer
-              </button>
-            </div>
+            {/* 4. Récapitulatif clair avant envoi */}
+            {!etude && (
+              <section className="grid gap-2">
+                <TitreEtape n={4} titre="Ce que le client va recevoir" />
+                {choisis.length === 0 || !distanceSaisie ? (
+                  <p className="text-xs text-muted-foreground">Choisissez la distance et au moins une borne.</p>
+                ) : (
+                  <ul className="grid gap-1 rounded-md border border-border bg-muted/30 p-3 text-sm">
+                    {choisis.map((id) => {
+                      const p = actifs.find((x) => x.id === id);
+                      const a = analyses.find((x) => x.produit_id === id);
+                      if (!p) return null;
+                      const ok = a ? proposable(a) : false;
+                      return (
+                        <li key={id} className="flex items-center justify-between gap-3">
+                          <span className="min-w-0 truncate">{p.marque} — {p.nom_commercial}</span>
+                          <span className={`shrink-0 font-bold ${a && !ok ? "text-destructive" : ""}`}>
+                            {a?.total_ttc != null ? `${montant(a.total_ttc)} TTC` : "—"}
+                            {a && !ok ? " · à corriger" : ""}
+                          </span>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+                <div className="grid gap-2 sm:grid-cols-2">
+                  <button
+                    type="submit"
+                    disabled={mutation.isPending || bloque}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-primary px-4 text-sm font-bold text-primary-foreground hover:bg-primary/90 disabled:opacity-50"
+                  >
+                    {mutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <Zap className="h-4 w-4" />}
+                    {choisis.length > 1 ? `Envoyer les ${choisis.length} choix` : "Envoyer la proposition"}
+                  </button>
+                  <button
+                    type="button"
+                    disabled={mutation.isPending || bloque}
+                    onClick={(e) => {
+                      const form = e.currentTarget.closest("form");
+                      if (form) mutation.mutate({ form, avecEnvoi: false });
+                    }}
+                    className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-border px-4 text-sm font-bold hover:border-primary hover:text-primary disabled:opacity-50"
+                  >
+                    <CheckCircle2 className="h-4 w-4" /> Enregistrer sans envoyer
+                  </button>
+                </div>
+              </section>
+            )}
           </form>
         )}
       </div>
@@ -413,10 +503,9 @@ function CarteAnalyse({
   const conseille = a.detail?.prix_conseille_ttc ?? null;
 
   return (
-    <div className="rounded-md border border-border bg-muted/30 p-3">
-      <p className="text-sm font-bold">{nom}</p>
+    <div aria-label={nom}>
       {!a.achat_confirme ? (
-        <div className="mt-1.5 space-y-2">
+        <div className="space-y-2">
           <p className="text-sm font-semibold text-destructive">
             Prix d'achat pas encore saisi : impossible de vérifier vos 500 € de marge.
           </p>
@@ -443,12 +532,9 @@ function CarteAnalyse({
           )}
         </div>
       ) : a.total_ttc == null ? (
-        <p className="mt-1.5 text-sm font-semibold text-destructive">Aucun prix n'est renseigné pour le forfait {a.palier} m.</p>
+        <p className="text-sm font-semibold text-destructive">Aucun prix n'est renseigné pour le forfait {a.palier} m.</p>
       ) : (
-        <div className="mt-1 space-y-1.5">
-          <p className="text-xl font-bold">
-            {montant(a.total_ttc)} <span className="text-xs font-normal text-muted-foreground">TTC · forfait jusqu'à {a.palier} m</span>
-          </p>
+        <div className="space-y-1.5">
           {estAdmin && a.detail && (
             <p className="text-xs text-muted-foreground">
               Prix de revient {montant(a.detail.revient_ht)} HT · marge {montant(a.detail.marge_ht)} HT · prix conseillé {montant(conseille)} TTC
@@ -475,7 +561,7 @@ function CarteAnalyse({
               Marge entre {MARGE_PLANCHER_HT} et {MARGE_MINIMUM_HT} € : accepté.
             </p>
           ) : (
-            <p className="text-xs font-semibold text-primary">Prêt à proposer.</p>
+            <p className="text-xs font-semibold text-primary">✓ Prêt à proposer (forfait jusqu'à {a.palier} m).</p>
           )}
           {a.suffisante && a.provisoire && (
             <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Marge provisoire : certains coûts de référence ne sont pas encore renseignés.</p>
