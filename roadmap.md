@@ -140,3 +140,7 @@
 - [x] Images de la campagne (11, photos de l'utilisateur) et textes validés
 - [x] Bandeau cookies, page confidentialité, comptage « Demande de devis envoyée (site) » dans Google Ads
 - [ ] Publier le site, vérifier le comptage en ligne, puis créer la campagne (accord final de l'utilisateur)
+
+## Catalogue commercial et tarification (demande du 11/11/2026)
+- [ ] Répondre à la question des prix d'achat indicatifs (Autel, Schneider, Hager, 50five, TotalEnergies, Tricolore) et des bornes les plus posées
+- [ ] Faire valider le plan : catalogue réel, prix d'achat réservés à l'administration, forfaits 5/10/15/20 m, marge mini 500 €, options, réponse depuis la demande
