@@ -73,7 +73,11 @@ export function DevisClientEmail(data: DevisEmailData) {
   return (
     <Html lang="fr">
       <Head />
-      <Preview>{`${titre} ${data.numero} — ${euro(data.total_ttc)} TTC`}</Preview>
+      <Preview>
+        {choix
+          ? `${choix.length} propositions de borne au choix, dès ${euro(Math.min(...choix.map((c) => c.total_ttc)))} TTC`
+          : `${titre} ${data.numero} — ${euro(data.total_ttc)} TTC`}
+      </Preview>
       <Body style={{ backgroundColor: "#f2f5f4", fontFamily: "Helvetica, Arial, sans-serif", margin: 0, padding: "32px 0" }}>
         <Container style={{ backgroundColor: "#ffffff", maxWidth: 620, margin: "0 auto", borderRadius: 4, overflow: "hidden", border: "1px solid #dfe6e3" }}>
           <Section style={{ backgroundColor: ink, padding: "24px 32px" }}>
