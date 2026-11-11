@@ -538,7 +538,7 @@ async function calculerProposition(ctx: Ctx, input: z.infer<typeof propositionSc
         achat: achat as AchatBorne | null,
         couts,
         phase: produit.phase as Phase,
-        metres: Math.max(input.distance_m, 0),
+        metres: palier,
         options,
       }),
     );
