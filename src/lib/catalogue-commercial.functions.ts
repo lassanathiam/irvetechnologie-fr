@@ -97,7 +97,8 @@ async function verifierEquipe(ctx: Ctx) {
 }
 
 async function estAdministrateur(ctx: Ctx): Promise<boolean> {
-  const { data } = await ctx.supabase.rpc("has_role", { _user_id: ctx.userId, _role: "admin" });
+  // has_role n'est pas exécutable par les comptes connectés : is_admin() l'appelle côté base.
+  const { data } = await ctx.supabase.rpc("is_admin");
   return data === true;
 }
 

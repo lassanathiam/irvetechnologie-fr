@@ -162,6 +162,13 @@
       "when": 1794428108656,
       "tag": "0022_catalogue_commercial_tarification",
       "breakpoints": true
+    },
+    {
+      "idx": 23,
+      "version": "7",
+      "when": 1794428623594,
+      "tag": "0023_is_admin_grants",
+      "breakpoints": true
     }
   ]
 }
