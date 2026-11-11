@@ -48,6 +48,8 @@ export type DevisEmailData = {
   bon_commande?: string | null;
   autoliquidation?: boolean;
   items: Item[];
+  /** Plusieurs bornes au choix : un devis (et un lien) par borne, le client en accepte une. */
+  choix?: { numero: string; libelle: string; total_ttc: number; lien: string }[];
 };
 
 const euro = (n: number) =>
@@ -65,6 +67,7 @@ export function DevisClientEmail(data: DevisEmailData) {
   const isFacture = data.type === "facture";
   const titre = isFacture ? "Facture" : "Devis";
   const items = data.items ?? [];
+  const choix = !isFacture && (data.choix?.length ?? 0) > 1 ? data.choix! : null;
   const acompte = Math.round(data.total_ttc * ((data.acompte_pct || 0) / 100) * 100) / 100;
 
   return (
@@ -97,7 +100,32 @@ export function DevisClientEmail(data: DevisEmailData) {
             </Text>
           </Section>
 
-          {data.lien && (
+          {choix && (
+            <Section style={{ padding: "20px 32px 4px" }}>
+              {choix.map((c, i) => (
+                <Section key={c.numero} style={{ border: "1px solid #dfe6e3", borderRadius: 4, padding: "14px 16px", margin: "0 0 12px" }}>
+                  <Text style={{ color: muted, fontSize: 11, margin: 0, textTransform: "uppercase", letterSpacing: "0.08em" }}>
+                    Choix {i + 1} · devis {c.numero}
+                  </Text>
+                  <Text style={{ color: ink, fontSize: 14, fontWeight: 700, margin: "4px 0 0" }}>{c.libelle}</Text>
+                  <Text style={{ color: accent, fontSize: 18, fontWeight: 700, margin: "4px 0 10px" }}>
+                    {euro(c.total_ttc)} TTC <span style={{ color: muted, fontSize: 11, fontWeight: 400 }}>pose comprise</span>
+                  </Text>
+                  <a
+                    href={c.lien}
+                    style={{ display: "inline-block", backgroundColor: accent, color: "#ffffff", fontSize: 13, fontWeight: 700, textDecoration: "none", padding: "10px 20px", borderRadius: 4 }}
+                  >
+                    Voir et accepter ce choix
+                  </a>
+                </Section>
+              ))}
+              <Text style={{ color: muted, fontSize: 11, margin: "4px 0 0" }}>
+                Liens personnels — chaque devis détaillé se consulte, se télécharge en PDF et s'accepte en ligne.
+              </Text>
+            </Section>
+          )}
+
+          {!choix && data.lien && (
             <Section style={{ padding: "20px 32px 4px", textAlign: "center" as const }}>
               <a
                 href={data.lien}
@@ -120,6 +148,7 @@ export function DevisClientEmail(data: DevisEmailData) {
             </Section>
           )}
 
+          {!choix && (<>
           <Section style={{ padding: "16px 32px" }}>
             {(data.numero_ticket || data.numero_affaire || data.bon_commande) && (
               <Text style={{ color: ink, fontSize: 12, lineHeight: "20px", margin: "0 0 12px" }}>
@@ -174,6 +203,7 @@ export function DevisClientEmail(data: DevisEmailData) {
               </Text>
             )}
           </Section>
+          </>)}
 
           {data.conditions_paiement && (
             <Section style={{ padding: "8px 32px 0" }}>
@@ -223,7 +253,9 @@ export const template: TemplateEntry = {
   subject: (data) =>
     data['type'] === "facture"
       ? `Facture ${data['numero']} — Borne de l'Ouest`
-      : `Votre devis ${data['numero']} — Borne de l'Ouest`,
+      : Array.isArray(data['choix']) && data['choix'].length > 1
+        ? `Vos ${data['choix'].length} propositions de borne de recharge — Borne de l'Ouest`
+        : `Votre devis ${data['numero']} — Borne de l'Ouest`,
   previewData: {
     type: "devis",
     numero: "D-2026-0279",
