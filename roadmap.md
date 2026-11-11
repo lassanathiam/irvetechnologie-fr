@@ -142,5 +142,7 @@
 - [ ] Publier le site, vérifier le comptage en ligne, puis créer la campagne (accord final de l'utilisateur)
 
 ## Catalogue commercial et tarification (demande du 11/11/2026)
-- [ ] Répondre à la question des prix d'achat indicatifs (Autel, Schneider, Hager, 50five, TotalEnergies, Tricolore) et des bornes les plus posées
-- [ ] Faire valider le plan : catalogue réel, prix d'achat réservés à l'administration, forfaits 5/10/15/20 m, marge mini 500 €, options, réponse depuis la demande
+- [x] Répondre à la question des prix d'achat indicatifs (Autel, Schneider, Hager, 50five, TotalEnergies, Tricolore) et des bornes les plus posées
+- [x] Étape 1 : catalogue de 16 bornes (12 marques), prix d'achat réservés à l'administrateur, forfaits 5/10/15/20 m, options, règle des 500 €, réponse express depuis la demande ; devis test créé puis supprimé, 9 tests réussis
+- [ ] Saisir les vrais prix d'achat, coûts de référence et prix des options (attente : factures fournisseurs, coût horaire et temps de pose du gérant)
+- [ ] Étape 2 (si validée) : tableau de rentabilité, séparation vente directe / sous-traitance, recherche des photos officielles

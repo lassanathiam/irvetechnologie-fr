@@ -573,7 +573,8 @@ const PHASE_TEXTE: Record<string, string> = { mono: "monophasé", tri: "triphas�
 /** Libellé client de la borne (aucun coût interne). */
 export function libelleBorne(p: { marque: string; nom_commercial: string; puissance_kw: number; phase: string }) {
   const kw = String(p.puissance_kw).replace(".", ",");
-  return `Borne ${p.marque} ${p.nom_commercial} ${kw} kW ${PHASE_TEXTE[p.phase] ?? ""}`.trim();
+  const puissance = /kW/i.test(p.nom_commercial) ? "" : ` ${kw} kW`;
+  return `Borne ${p.marque} ${p.nom_commercial}${puissance} ${PHASE_TEXTE[p.phase] ?? ""}`.trim();
 }
 
 const envoiSchema = propositionSchema.extend({
