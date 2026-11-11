@@ -609,8 +609,6 @@ export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
       throw new Error(
         `Marge trop faible (${marge.marge_ht} € HT, minimum 490 €). Prix conseillé : ${marge.prix_conseille_ttc} € TTC.`,
       );
-    const motif: string | null = null;
-
     const borne = libelleBorne(produit);
     const descriptif = [
       `Fourniture et pose de la ${borne}${produit.reference_constructeur ? ` (réf. ${produit.reference_constructeur})` : ""}`,
@@ -705,8 +703,8 @@ export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
       cout_revient_ht: marge.revient_ht ?? 0,
       marge_ht: marge.marge_ht ?? 0,
       couts_complets: !marge.provisoire,
-      derogation_motif: motif,
-      derogation_par: motif ? context.userId : null,
+      derogation_motif: null,
+      derogation_par: null,
     });
 
     const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");

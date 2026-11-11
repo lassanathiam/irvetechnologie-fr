@@ -121,7 +121,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                   <th className="py-1 pr-2 font-semibold">Prix client TTC</th>
                   {estAdmin && <th className="py-1 pr-2 font-semibold">Prix de revient HT</th>}
                   {estAdmin && <th className="py-1 pr-2 font-semibold">Marge HT</th>}
-                  {estAdmin && <th className="py-1 font-semibold">Minimum TTC</th>}
+                  {estAdmin && <th className="py-1 font-semibold">Prix conseillé TTC</th>}
                 </tr>
               </thead>
               <tbody>
@@ -129,8 +129,9 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                   const prix = p.forfaits[m];
                   const a = p.analyses?.[m];
                   const rouge = a && a.marge_ht != null && !a.suffisante;
+                  const orange = a?.niveau === "tolerance";
                   return (
-                    <tr key={m} className={`border-t border-border ${rouge ? "bg-destructive/10 text-destructive" : ""}`}>
+                    <tr key={m} className={`border-t border-border ${rouge ? "bg-destructive/10 text-destructive" : orange ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : ""}`}>
                       <td className="py-1.5 pr-2">Jusqu'à {m} m</td>
                       <td className="py-1.5 pr-2 font-semibold">{prix != null ? montant(prix) : <span className="text-muted-foreground">Non proposé</span>}</td>
                       {estAdmin && <td className="py-1.5 pr-2">{a ? montant(a.revient_ht) : "—"}</td>}
@@ -138,7 +139,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                         <td className="py-1.5 pr-2 font-semibold">
                           {a?.marge_ht != null ? (
                             <span className="inline-flex items-center gap-1">
-                              {rouge && <AlertTriangle className="h-3.5 w-3.5" />}
+                              {(rouge || orange) && <AlertTriangle className="h-3.5 w-3.5" />}
                               {montant(a.marge_ht)}
                               {a.provisoire ? " (provisoire)" : ""}
                             </span>
@@ -149,7 +150,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                           )}
                         </td>
                       )}
-                      {estAdmin && <td className="py-1.5">{a ? montant(a.prix_minimum_ttc) : "—"}</td>}
+                      {estAdmin && <td className="py-1.5">{a ? montant(a.prix_conseille_ttc) : "—"}</td>}
                     </tr>
                   );
                 })}
