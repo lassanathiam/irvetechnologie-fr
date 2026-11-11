@@ -68,3 +68,71 @@ export function dateRelance(depuis: Date): string {
   d.setDate(d.getDate() + JOURS_AVANT_RELANCE);
   return d.toISOString().slice(0, 10);
 }
+
+// ---------- Suivi des envois (éviter les doubles envois) ----------
+
+export type CanalEnvoi = "mail" | "formulaire" | "telephone";
+export const CANAL_LIBELLE: Record<CanalEnvoi, string> = { mail: "par mail", formulaire: "par formulaire", telephone: "par téléphone" };
+
+export type ProspectSuivi = {
+  id: string;
+  entreprise: string;
+  statut: StatutProspect;
+  email: string | null;
+  telephone: string | null;
+  site_web: string | null;
+  envoye_le: string | null;
+  relance_le: string | null;
+  nb_envois: number;
+  mail_ouvert_le: string | null;
+};
+
+/**
+ * jamais : jamais contacté · a_confirmer : mail ouvert, envoi pas encore confirmé ·
+ * deja_envoye : contacté, relance pas encore due · a_relancer : relance due · clos : réponse, refus ou STOP.
+ */
+export type EtatEnvoi = "jamais" | "a_confirmer" | "deja_envoye" | "a_relancer" | "clos";
+
+export function etatEnvoi(p: ProspectSuivi, aujourdhui: string): EtatEnvoi {
+  if (p.statut === "stop" || p.statut === "pas_interesse" || p.statut === "repondu" || p.statut === "interesse") return "clos";
+  if (p.mail_ouvert_le && (!p.envoye_le || p.mail_ouvert_le > p.envoye_le)) return "a_confirmer";
+  if (p.nb_envois <= 0 && !p.envoye_le) return "jamais";
+  if (p.relance_le && p.relance_le <= aujourdhui) return "a_relancer";
+  return "deja_envoye";
+}
+
+/** On ne propose d'envoyer que si jamais contacté ou si la relance est due. */
+export function envoiPermis(p: ProspectSuivi, aujourdhui: string): boolean {
+  const e = etatEnvoi(p, aujourdhui);
+  return e === "jamais" || e === "a_relancer" || e === "a_confirmer";
+}
+
+function cleEmail(e: string | null) { return e?.trim().toLowerCase() || null; }
+function cleTel(t: string | null) { const d = (t ?? "").replace(/\D/g, "").replace(/^33/, "0"); return d.length >= 9 ? d : null; }
+function cleSite(s: string | null) {
+  if (!s) return null;
+  try { return new URL(s.startsWith("http") ? s : `https://${s}`).hostname.replace(/^www\./, "").toLowerCase(); } catch { return null; }
+}
+
+/** Autres fiches qui désignent la même entreprise (même email, téléphone ou site). */
+export function memesContacts<T extends ProspectSuivi>(p: T, tous: T[]): T[] {
+  const e = cleEmail(p.email), t = cleTel(p.telephone), s = cleSite(p.site_web);
+  return tous.filter((o) => o.id !== p.id && (
+    (e && cleEmail(o.email) === e) || (t && cleTel(o.telephone) === t) || (s && cleSite(o.site_web) === s)
+  ));
+}
+
+/** Bloque l'envoi si la même entreprise a demandé STOP ou a déjà été contactée via une autre fiche. */
+export function blocageDoublon<T extends ProspectSuivi>(p: T, tous: T[]): { type: "stop" | "deja_contacte"; autre: T } | null {
+  const autres = memesContacts(p, tous);
+  const stop = autres.find((o) => o.statut === "stop");
+  if (stop) return { type: "stop", autre: stop };
+  const contacte = autres.find((o) => o.nb_envois > 0 || !!o.envoye_le);
+  if (contacte) return { type: "deja_contacte", autre: contacte };
+  return null;
+}
+
+export function objetPourEnvoi(objet: string, nbEnvois: number): string {
+  if (nbEnvois <= 0 || /^relance/i.test(objet.trim())) return objet;
+  return `Relance — ${objet}`;
+}
