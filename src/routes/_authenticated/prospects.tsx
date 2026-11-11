@@ -11,6 +11,8 @@ import { supabase } from "@/integrations/supabase/client";
 import type { Tables } from "@/integrations/supabase/types";
 import {
   blocageDoublon,
+  memesContacts,
+  type ProspectSuivi,
   CANAL_LIBELLE,
   dateRelance,
   envoiPermis,
@@ -179,7 +181,8 @@ function FormAjout({ tous, onFini }: { tous: Prospect[]; onFini: () => void }) {
       email: f.email.trim() || null, telephone: f.telephone.trim() || null, site_web: null,
       envoye_le: null, relance_le: null, nb_envois: 0, mail_ouvert_le: null,
     };
-    const doublon = tous.find((o) => blocageDoublon(candidat, [suivi(o)]) || (o.email && candidat.email && o.email.trim().toLowerCase() === candidat.email.toLowerCase()));
+    const doublon = memesContacts<ProspectSuivi>(candidat, tous.map(suivi))[0]
+      ?? tous.find((o) => o.entreprise.trim().toLowerCase() === candidat.entreprise.toLowerCase());
     if (doublon) return toast.error(`Déjà dans la liste : ${doublon.entreprise} (${STATUT_LIBELLE[doublon.statut as StatutProspect]}).`);
     setEnCours(true);
     const mail = mailParDefaut(f.metier, f.entreprise.trim());
