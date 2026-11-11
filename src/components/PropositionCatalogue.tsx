@@ -571,3 +571,12 @@ function CarteAnalyse({
     </div>
   );
 }
+
+function TitreEtape({ n, titre }: { n: number; titre: string }) {
+  return (
+    <h3 className="flex items-center gap-2 text-sm font-bold">
+      <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary text-xs text-primary-foreground">{n}</span>
+      {titre}
+    </h3>
+  );
+}
