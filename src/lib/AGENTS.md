@@ -1,0 +1,1 @@
+- B2B prospecting lives in staff-only `prospects` with rules in browser-safe `src/lib/prospection.ts`; mails open in the user's own mail client (mailto), never via app emails, to protect invoice/quote deliverability and French opt-out rules.
