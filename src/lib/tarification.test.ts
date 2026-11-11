@@ -3,6 +3,7 @@ import {
   analyserMarge,
   COUTS_DEFAUT,
   palierPourDistance,
+  prixConseilleTtc,
   prixMinimumTtc,
   prixRevientHt,
   ttcVersHt,
@@ -85,5 +86,27 @@ describe("règle des 500 € de marge", () => {
       metres: 5,
     });
     expect(analyserMarge(3000, r).provisoire).toEqual(true);
+  });
+});
+
+describe("souplesse de 10 € sous les 500 €", () => {
+  const revient = { total_ht: 1000, detail: null, manquants: [] };
+  it("une marge de 495 € HT est acceptée (signalée en orange)", () => {
+    const a = analyserMarge(1794, revient); // 1 495 € HT
+    expect(a.marge_ht).toEqual(495);
+    expect(a.suffisante).toEqual(true);
+    expect(a.niveau).toEqual("tolerance");
+  });
+  it("une marge de 490 € HT est encore acceptée", () => {
+    expect(analyserMarge(1788, revient).suffisante).toEqual(true); // 1 490 € HT
+  });
+  it("une marge de 489 € HT est verrouillée", () => {
+    const a = analyserMarge(1786.8, revient); // 1 489 € HT
+    expect(a.suffisante).toEqual(false);
+    expect(a.niveau).toEqual("insuffisante");
+  });
+  it("le prix conseillé garde 500 € et s'arrondit à la dizaine supérieure", () => {
+    expect(prixConseilleTtc(800)).toEqual(1560);
+    expect(prixConseilleTtc(801)).toEqual(1570);
   });
 });

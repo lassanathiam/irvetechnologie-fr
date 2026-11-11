@@ -9,7 +9,7 @@ import { FicheProduitEditeur } from "@/components/catalogue/FicheProduitEditeur"
 import { EditeurCouts, EditeurOptions } from "@/components/catalogue/OptionsEtCouts";
 import { CONNECTEUR_LIBELLE, montant, ouiNon, PHASE_LIBELLE } from "@/components/catalogue/outils";
 import { getCatalogueCommercial, type ProduitCatalogue } from "@/lib/catalogue-commercial.functions";
-import { MARGE_MINIMUM_HT, PALIERS_CABLE_M } from "@/lib/tarification";
+import { MARGE_MINIMUM_HT, MARGE_PLANCHER_HT, PALIERS_CABLE_M } from "@/lib/tarification";
 
 export const Route = createFileRoute("/_authenticated/catalogue-commercial")({
   head: () => ({
@@ -121,7 +121,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                   <th className="py-1 pr-2 font-semibold">Prix client TTC</th>
                   {estAdmin && <th className="py-1 pr-2 font-semibold">Prix de revient HT</th>}
                   {estAdmin && <th className="py-1 pr-2 font-semibold">Marge HT</th>}
-                  {estAdmin && <th className="py-1 font-semibold">Minimum TTC</th>}
+                  {estAdmin && <th className="py-1 font-semibold">Prix conseillé TTC</th>}
                 </tr>
               </thead>
               <tbody>
@@ -129,8 +129,9 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                   const prix = p.forfaits[m];
                   const a = p.analyses?.[m];
                   const rouge = a && a.marge_ht != null && !a.suffisante;
+                  const orange = a?.niveau === "tolerance";
                   return (
-                    <tr key={m} className={`border-t border-border ${rouge ? "bg-destructive/10 text-destructive" : ""}`}>
+                    <tr key={m} className={`border-t border-border ${rouge ? "bg-destructive/10 text-destructive" : orange ? "bg-amber-500/10 text-amber-700 dark:text-amber-400" : ""}`}>
                       <td className="py-1.5 pr-2">Jusqu'à {m} m</td>
                       <td className="py-1.5 pr-2 font-semibold">{prix != null ? montant(prix) : <span className="text-muted-foreground">Non proposé</span>}</td>
                       {estAdmin && <td className="py-1.5 pr-2">{a ? montant(a.revient_ht) : "—"}</td>}
@@ -138,7 +139,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                         <td className="py-1.5 pr-2 font-semibold">
                           {a?.marge_ht != null ? (
                             <span className="inline-flex items-center gap-1">
-                              {rouge && <AlertTriangle className="h-3.5 w-3.5" />}
+                              {(rouge || orange) && <AlertTriangle className="h-3.5 w-3.5" />}
                               {montant(a.marge_ht)}
                               {a.provisoire ? " (provisoire)" : ""}
                             </span>
@@ -149,7 +150,7 @@ function CarteProduit({ p, estAdmin, onModifier }: { p: ProduitCatalogue; estAdm
                           )}
                         </td>
                       )}
-                      {estAdmin && <td className="py-1.5">{a ? montant(a.prix_minimum_ttc) : "—"}</td>}
+                      {estAdmin && <td className="py-1.5">{a ? montant(a.prix_conseille_ttc) : "—"}</td>}
                     </tr>
                   );
                 })}
@@ -194,7 +195,7 @@ function CatalogueCommercialPage() {
             <p className="text-mono text-[10px] text-primary">VENTE DIRECTE</p>
             <h1 className="pro-heading text-2xl font-bold sm:text-3xl">Catalogue commercial et tarifs</h1>
             <p className="mt-1 text-sm text-muted-foreground">
-              Bornes réelles, forfaits de câble, options et marge minimale de {MARGE_MINIMUM_HT} € HT par installation.
+              Bornes réelles, forfaits de câble, options et marge minimale de {MARGE_MINIMUM_HT} € HT par installation (acceptée dès {MARGE_PLANCHER_HT} €).
             </p>
           </div>
           <span className="grid h-11 w-11 shrink-0 place-items-center rounded-lg bg-primary/15 text-primary">
@@ -214,7 +215,7 @@ function CatalogueCommercialPage() {
                   <strong>{sansAchat}</strong> borne(s) avec prix d'achat à confirmer : elles ne peuvent pas être proposées.
                 </p>
                 <p className={`rounded-md border p-3 text-sm ${sousMarge ? "border-destructive/40 bg-destructive/10 text-destructive" : "border-border"}`}>
-                  <strong>{sousMarge}</strong> borne(s) avec au moins un forfait sous {MARGE_MINIMUM_HT} € de marge.
+                  <strong>{sousMarge}</strong> borne(s) avec au moins un forfait sous {MARGE_PLANCHER_HT} € de marge : verrouillé, à remonter au prix conseillé.
                 </p>
               </div>
             )}

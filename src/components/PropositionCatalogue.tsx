@@ -12,7 +12,7 @@ import {
   envoyerPropositionCatalogue,
   getCatalogueCommercial,
 } from "@/lib/catalogue-commercial.functions";
-import { DISTANCE_MAX_FORFAIT_M, MARGE_MINIMUM_HT } from "@/lib/tarification";
+import { DISTANCE_MAX_FORFAIT_M, MARGE_MINIMUM_HT, MARGE_PLANCHER_HT } from "@/lib/tarification";
 import { montant, PHASE_LIBELLE } from "@/components/catalogue/outils";
 import type { ReponseExpressPrefill } from "@/components/ReponseExpress";
 
@@ -56,7 +56,6 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
   const [distance, setDistance] = useState(prefill?.metrage_m ? String(prefill.metrage_m) : "");
   const [optionIds, setOptionIds] = useState<string[]>([]);
   const [typePose, setTypePose] = useState("");
-  const [motif, setMotif] = useState("");
   const [resultat, setResultat] = useState<{ numero: string; lien: string; sent: boolean; telephone: string | null; nom: string } | null>(null);
 
   const data = catalogue.data;
@@ -80,7 +79,7 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
   const a = analyse.data;
   const estAdmin = Boolean(data?.estAdmin);
   const bloque =
-    !a || a.etude || !a.achat_confirme || a.total_ttc == null || (!a.suffisante && (!estAdmin || !motif.trim()));
+    !a || a.etude || !a.achat_confirme || a.total_ttc == null || !a.suffisante;
 
   const mutation = useMutation({
     mutationFn: async ({ form, avecEnvoi }: { form: HTMLFormElement; avecEnvoi: boolean }) => {
@@ -100,7 +99,6 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
         option_ids: optionIds,
         type_pose: typePose || null,
         envoyer: avecEnvoi,
-        derogation_motif: motif.trim() || null,
       };
       const fn = avecEnvoi ? envoyer : enregistrer;
       const r = await fn({ data: payload } as never);
@@ -276,7 +274,7 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
                   )}
                   {estAdmin && a.detail && (
                     <p className="text-xs text-muted-foreground">
-                      Prix de revient {montant(a.detail.revient_ht)} HT · marge {montant(a.detail.marge_ht)} HT · minimum {montant(a.detail.prix_minimum_ttc)} TTC
+                      Prix de revient {montant(a.detail.revient_ht)} HT · marge {montant(a.detail.marge_ht)} HT · prix conseillé {montant(a.detail.prix_conseille_ttc)} TTC
                       {a.provisoire ? " · marge provisoire (coûts à compléter)" : ""}
                     </p>
                   )}
@@ -284,19 +282,17 @@ function PanneauProposition({ onClose, prefill }: { onClose: () => void; prefill
                     <div className="flex items-start gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm font-semibold text-destructive">
                       <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
                       <span>
-                        Marge sous {MARGE_MINIMUM_HT} € HT.{" "}
-                        {estAdmin ? "Indiquez la raison pour valider quand même." : "Seul un administrateur peut valider ce tarif."}
+                        Verrouillé : marge sous {MARGE_PLANCHER_HT} € HT. Ce prix ne permet pas de gagner sa vie sur ce chantier.
+                        {estAdmin && a.detail?.prix_conseille_ttc != null
+                          ? ` Montez le forfait à ${montant(a.detail.prix_conseille_ttc)} TTC dans le catalogue.`
+                          : " Demandez à l'administrateur de revoir le prix du forfait."}
                       </span>
                     </div>
                   )}
-                  {!a.suffisante && estAdmin && (
-                    <textarea
-                      value={motif}
-                      onChange={(e) => setMotif(e.target.value)}
-                      rows={2}
-                      placeholder="Raison de la validation sous 500 € (gardée en interne)"
-                      className={INPUT}
-                    />
+                  {a.suffisante && a.tolerance && (
+                    <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                      Marge légèrement sous {MARGE_MINIMUM_HT} € (entre {MARGE_PLANCHER_HT} et {MARGE_MINIMUM_HT} €) : accepté.
+                    </p>
                   )}
                   {a.suffisante && a.provisoire && (
                     <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">Marge provisoire : certains coûts de référence ne sont pas encore renseignés.</p>

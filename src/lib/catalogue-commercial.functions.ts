@@ -474,6 +474,8 @@ export type AnalyseProposition = {
   options_ttc: number;
   total_ttc: number | null;
   suffisante: boolean;
+  /** Marge entre 490 et 499 € HT : acceptée avec un simple avertissement. */
+  tolerance: boolean;
   provisoire: boolean;
   /** Montants internes — administrateur uniquement. */
   detail?: AnalyseMarge;
@@ -557,6 +559,7 @@ async function calculerProposition(ctx: Ctx, input: z.infer<typeof propositionSc
       options_ttc: optionsTtc,
       total_ttc: forfaitTtc != null ? forfaitTtc + optionsTtc : null,
       suffisante: Boolean(marge?.suffisante),
+      tolerance: marge?.niveau === "tolerance",
       provisoire: Boolean(marge?.provisoire),
       ...(estAdmin && marge ? { detail: marge } : {}),
     },
@@ -601,14 +604,11 @@ export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
     if (analyse.forfait_ttc == null || !marge)
       throw new Error(`Aucun prix n'est renseigné pour le forfait ${analyse.palier} m de cette borne.`);
 
-    const estAdmin = await estAdministrateur(context);
-    let motif: string | null = null;
-    if (!marge.suffisante) {
-      if (!estAdmin) throw new Error("Marge sous 500 € : la validation d'un administrateur est obligatoire.");
-      motif = data.derogation_motif?.trim() || null;
-      if (!motif) throw new Error("Indiquez la raison de la validation sous 500 € de marge.");
-    }
-
+    // Verrou : sous 490 € HT de marge, aucune proposition, même pour l'administrateur.
+    if (!marge.suffisante)
+      throw new Error(
+        `Marge trop faible (${marge.marge_ht} € HT, minimum 490 €). Prix conseillé : ${marge.prix_conseille_ttc} € TTC.`,
+      );
     const borne = libelleBorne(produit);
     const descriptif = [
       `Fourniture et pose de la ${borne}${produit.reference_constructeur ? ` (réf. ${produit.reference_constructeur})` : ""}`,
@@ -703,8 +703,8 @@ export const envoyerPropositionCatalogue = createServerFn({ method: "POST" })
       cout_revient_ht: marge.revient_ht ?? 0,
       marge_ht: marge.marge_ht ?? 0,
       couts_complets: !marge.provisoire,
-      derogation_motif: motif,
-      derogation_par: motif ? context.userId : null,
+      derogation_motif: null,
+      derogation_par: null,
     });
 
     const base = (process.env["PUBLIC_SITE_URL"] || "https://www.irvetechnologie.fr").replace(/\/$/, "");

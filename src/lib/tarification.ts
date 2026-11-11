@@ -6,6 +6,10 @@
 
 export const TVA_VENTE_PCT = 20;
 export const MARGE_MINIMUM_HT = 500;
+/** Souplesse voulue par le gérant : une marge de 490 à 499 € reste acceptée (« on ne crache pas dessus »). */
+export const TOLERANCE_MARGE_HT = 10;
+/** En dessous de ce plancher, la proposition est verrouillée pour tout le monde. */
+export const MARGE_PLANCHER_HT = MARGE_MINIMUM_HT - TOLERANCE_MARGE_HT;
 export const PALIERS_CABLE_M = [5, 10, 15, 20] as const;
 export type PalierCable = (typeof PALIERS_CABLE_M)[number];
 /** Au-delà de cette distance : étude personnalisée, aucun prix automatique. */
@@ -159,13 +163,30 @@ export function prixMinimumTtc(revientHt: number): number {
   return htVersTtc(revientHt + MARGE_MINIMUM_HT);
 }
 
+/** Prix TTC conseillé : minimum des 500 € arrondi à la dizaine d'euros supérieure. */
+export function prixConseilleTtc(revientHt: number): number {
+  return Math.ceil(prixMinimumTtc(revientHt) / 10 - 1e-9) * 10;
+}
+
+/** ok ≥ 500 € · tolerance 490–499 € · insuffisante < 490 € · inconnue = coût non calculable. */
+export type NiveauMarge = "ok" | "tolerance" | "insuffisante" | "inconnue";
+
+export function niveauMarge(margeHt: number | null): NiveauMarge {
+  if (margeHt == null) return "inconnue";
+  if (margeHt >= MARGE_MINIMUM_HT) return "ok";
+  if (margeHt >= MARGE_PLANCHER_HT) return "tolerance";
+  return "insuffisante";
+}
+
 export interface AnalyseMarge {
   prix_vente_ttc: number;
   prix_vente_ht: number;
   revient_ht: number | null;
   marge_ht: number | null;
   prix_minimum_ttc: number | null;
-  /** true seulement si la marge est calculable et ≥ 500 €. */
+  prix_conseille_ttc: number | null;
+  niveau: NiveauMarge;
+  /** true si la marge est calculable et ≥ 490 € (500 € moins la tolérance). */
   suffisante: boolean;
   provisoire: boolean;
   manquants: string[];
@@ -181,7 +202,9 @@ export function analyserMarge(prixVenteTtc: number, revient: ResultatRevient): A
     revient_ht: revient.total_ht,
     marge_ht: marge,
     prix_minimum_ttc: revient.total_ht == null ? null : prixMinimumTtc(revient.total_ht),
-    suffisante: marge != null && marge >= MARGE_MINIMUM_HT,
+    prix_conseille_ttc: revient.total_ht == null ? null : prixConseilleTtc(revient.total_ht),
+    niveau: niveauMarge(marge),
+    suffisante: marge != null && marge >= MARGE_PLANCHER_HT,
     provisoire: revient.manquants.length > 0,
     manquants: revient.manquants,
   };
