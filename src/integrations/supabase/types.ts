@@ -389,6 +389,240 @@ export type Database = {
         }
         Relationships: []
       }
+      catalogue_forfaits: {
+        Row: {
+          created_at: string
+          id: string
+          palier_m: number
+          prix_ttc: number
+          produit_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          palier_m: number
+          prix_ttc: number
+          produit_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          palier_m?: number
+          prix_ttc?: number
+          produit_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalogue_forfaits_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_produits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalogue_options: {
+        Row: {
+          actif: boolean
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          libelle: string
+          ordre: number
+          prix_ttc: number | null
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle: string
+          ordre?: number
+          prix_ttc?: number | null
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          libelle?: string
+          ordre?: number
+          prix_ttc?: number | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      catalogue_options_couts: {
+        Row: {
+          cout_ht: number | null
+          option_id: string
+          updated_at: string
+        }
+        Insert: {
+          cout_ht?: number | null
+          option_id: string
+          updated_at?: string
+        }
+        Update: {
+          cout_ht?: number | null
+          option_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalogue_options_couts_option_id_fkey"
+            columns: ["option_id"]
+            isOneToOne: true
+            referencedRelation: "catalogue_options"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalogue_prix_achat: {
+        Row: {
+          actualise_le: string | null
+          disponibilite: string | null
+          fournisseur: string | null
+          frais_livraison_ht: number
+          justificatif_path: string | null
+          prix_achat_ht: number | null
+          produit_id: string
+          reference_fournisseur: string | null
+          remise_pct: number
+          tva_achat_pct: number
+          updated_at: string
+        }
+        Insert: {
+          actualise_le?: string | null
+          disponibilite?: string | null
+          fournisseur?: string | null
+          frais_livraison_ht?: number
+          justificatif_path?: string | null
+          prix_achat_ht?: number | null
+          produit_id: string
+          reference_fournisseur?: string | null
+          remise_pct?: number
+          tva_achat_pct?: number
+          updated_at?: string
+        }
+        Update: {
+          actualise_le?: string | null
+          disponibilite?: string | null
+          fournisseur?: string | null
+          frais_livraison_ht?: number
+          justificatif_path?: string | null
+          prix_achat_ht?: number | null
+          produit_id?: string
+          reference_fournisseur?: string | null
+          remise_pct?: number
+          tva_achat_pct?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "catalogue_prix_achat_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: true
+            referencedRelation: "catalogue_produits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      catalogue_produits: {
+        Row: {
+          actif: boolean
+          autres_fonctions: string | null
+          compatible_tic: boolean | null
+          connecteur: string
+          connectivite: string[]
+          created_at: string
+          fiche_technique_url: string | null
+          garantie_ans: number | null
+          gestion_dynamique: boolean | null
+          id: string
+          marque: string
+          mid: boolean | null
+          nb_phases: number
+          nom_commercial: string
+          notes: string | null
+          ordre: number
+          phase: string
+          photos: Json
+          prix_public_ttc: number | null
+          puissance_kw: number
+          reference_constructeur: string | null
+          reference_verifiee: boolean
+          rfid: boolean | null
+          site_officiel_url: string | null
+          sku: string | null
+          updated_at: string
+        }
+        Insert: {
+          actif?: boolean
+          autres_fonctions?: string | null
+          compatible_tic?: boolean | null
+          connecteur?: string
+          connectivite?: string[]
+          created_at?: string
+          fiche_technique_url?: string | null
+          garantie_ans?: number | null
+          gestion_dynamique?: boolean | null
+          id?: string
+          marque: string
+          mid?: boolean | null
+          nb_phases?: number
+          nom_commercial: string
+          notes?: string | null
+          ordre?: number
+          phase?: string
+          photos?: Json
+          prix_public_ttc?: number | null
+          puissance_kw?: number
+          reference_constructeur?: string | null
+          reference_verifiee?: boolean
+          rfid?: boolean | null
+          site_officiel_url?: string | null
+          sku?: string | null
+          updated_at?: string
+        }
+        Update: {
+          actif?: boolean
+          autres_fonctions?: string | null
+          compatible_tic?: boolean | null
+          connecteur?: string
+          connectivite?: string[]
+          created_at?: string
+          fiche_technique_url?: string | null
+          garantie_ans?: number | null
+          gestion_dynamique?: boolean | null
+          id?: string
+          marque?: string
+          mid?: boolean | null
+          nb_phases?: number
+          nom_commercial?: string
+          notes?: string | null
+          ordre?: number
+          phase?: string
+          photos?: Json
+          prix_public_ttc?: number | null
+          puissance_kw?: number
+          reference_constructeur?: string | null
+          reference_verifiee?: boolean
+          rfid?: boolean | null
+          site_officiel_url?: string | null
+          sku?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       commandes_importees: {
         Row: {
           created_at: string
@@ -791,6 +1025,69 @@ export type Database = {
             columns: ["devis_id"]
             isOneToOne: false
             referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devis_marges: {
+        Row: {
+          cout_revient_ht: number
+          couts_complets: boolean
+          created_at: string
+          derogation_motif: string | null
+          derogation_par: string | null
+          devis_id: string
+          distance_m: number | null
+          marge_ht: number
+          options: Json
+          palier_m: number | null
+          prix_vente_ht: number
+          produit_id: string | null
+          produit_libelle: string
+        }
+        Insert: {
+          cout_revient_ht: number
+          couts_complets?: boolean
+          created_at?: string
+          derogation_motif?: string | null
+          derogation_par?: string | null
+          devis_id: string
+          distance_m?: number | null
+          marge_ht: number
+          options?: Json
+          palier_m?: number | null
+          prix_vente_ht: number
+          produit_id?: string | null
+          produit_libelle: string
+        }
+        Update: {
+          cout_revient_ht?: number
+          couts_complets?: boolean
+          created_at?: string
+          derogation_motif?: string | null
+          derogation_par?: string | null
+          devis_id?: string
+          distance_m?: number | null
+          marge_ht?: number
+          options?: Json
+          palier_m?: number | null
+          prix_vente_ht?: number
+          produit_id?: string | null
+          produit_libelle?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devis_marges_devis_id_fkey"
+            columns: ["devis_id"]
+            isOneToOne: true
+            referencedRelation: "devis"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devis_marges_produit_id_fkey"
+            columns: ["produit_id"]
+            isOneToOne: false
+            referencedRelation: "catalogue_produits"
             referencedColumns: ["id"]
           },
         ]
@@ -2115,6 +2412,24 @@ export type Database = {
           },
         ]
       }
+      tarification_couts: {
+        Row: {
+          id: number
+          updated_at: string
+          valeurs: Json
+        }
+        Insert: {
+          id?: number
+          updated_at?: string
+          valeurs?: Json
+        }
+        Update: {
+          id?: number
+          updated_at?: string
+          valeurs?: Json
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -2213,6 +2528,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      is_admin: { Args: never; Returns: boolean }
       is_staff: { Args: never; Returns: boolean }
     }
     Enums: {

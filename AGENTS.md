@@ -31,8 +31,9 @@
 - ENSIO cable supplement preparation uses the browser-safe supplements-ensio helper and the stored price catalogue; existing documents remain unchanged when rates change, to preserve historical billing.
 - Rescheduling uses the shared browser-safe rescheduling rule: blocked jobs regain visibility, and a completed job reopens only when unbilled and moved to a future date (return visit); billing is never changed.
 - Planning intervenant selection filters the main lists only; other technicians' unfinished appointments stay listed separately and search covers all appointments, so rescheduled jobs are never hidden by the device's technician choice.
-- Imported-original PV downloads composite page pixels, measured text lines and signatures directly onto a canvas (no html2canvas), so mobile viewport or scroll can never crop the A4 page.
-- Platform-deposit tracking for attachments and invoices uses only `src/lib/suivi-facturation.ts` for its step and never changes status or payment state (why: consistent, trustworthy billing).
+- Imported-original PV downloads draw page pixels, text and signatures straight onto a canvas (no html2canvas), so mobile scroll never crops the A4 page.
+- Platform-deposit steps come only from `src/lib/suivi-facturation.ts` and never change status or payment state (why: trustworthy billing).
 - Imported client phones pass through the browser-safe telephone-client helper, which discards the company's own numbers (printed as subcontractor on partner sheets), so a client can never receive the company number.
 - PV signatures merge through the browser-safe `src/lib/signatures-pv.ts` rule in every PV save handler: a stored signature and its original signed date are never cleared by a later save (why: signatures must survive dossier closure).
 - Lead origin: `lib/lead-source.ts`; city pages+sitemap: `lib/zones-intervention.ts`; Google tags only via `lib/analytics.ts` after `lib/consentement.ts` consent (why: one source; French consent law).
+- Direct-sale pricing math: only `lib/tarification.ts`; purchase prices, costs and margins stay in admin-only tables via `is_admin()` (why: staff quote without supplier prices).

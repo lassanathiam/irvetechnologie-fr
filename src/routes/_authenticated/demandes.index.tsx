@@ -20,7 +20,7 @@ import { getPhotoUrls, listDemandes } from "@/lib/photos.functions";
 import { supprimerDemande, updateStatutDemande, updateSuiviDemande } from "@/lib/demandes-admin.functions";
 import { LEAD_SOURCE_LABELS, type LeadSource } from "@/lib/lead-source";
 import { ProShell } from "@/components/ProShell";
-import { ReponseExpressButton } from "@/components/ReponseExpress";
+import { PropositionCatalogueButton } from "@/components/PropositionCatalogue";
 import { telLien, whatsappLien } from "@/lib/contact-client";
 import { dateFr } from "@/lib/company";
 
@@ -338,7 +338,7 @@ function DemandesPage() {
                     </a>
                   )}
                   <span className="w-px h-5 bg-border mx-1 hidden sm:block" />
-                  <ReponseExpressButton
+                  <PropositionCatalogueButton
                     label="Réponse express"
                     prefill={{
                       nom: d.nom,
