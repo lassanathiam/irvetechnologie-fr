@@ -26,6 +26,7 @@ import {
   ShieldCheck,
   X,
   Zap,
+  Target,
   Package,
   Settings,
   UserRound,
@@ -58,6 +59,7 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
     label: "Commercial & Finance",
     links: [
       { to: "/demandes", label: "Demandes", icon: Inbox },
+      { to: "/prospects", label: "Prospects", icon: Target },
       { to: "/devis", label: "Devis", icon: FileText },
       { to: "/factures", label: "Mes factures", icon: Receipt },
       { to: "/signatures", label: "Signatures", icon: PenLine },
