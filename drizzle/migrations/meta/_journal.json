@@ -155,6 +155,13 @@
       "when": 1794346011540,
       "tag": "0021_remove_open_demande_insert",
       "breakpoints": true
+    },
+    {
+      "idx": 22,
+      "version": "7",
+      "when": 1794428108656,
+      "tag": "0022_catalogue_commercial_tarification",
+      "breakpoints": true
     }
   ]
 }
