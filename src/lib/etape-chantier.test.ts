@@ -65,3 +65,25 @@ describe("numéro de commande", () => {
     expect(numeroCommandeValide("AT-2026-0082")).toBeNull();
   });
 });
+
+describe("nom du donneur d'ordre", () => {
+  it("ENSIO SAS, Ensio et ENSIO sont le même client", () => {
+    expect(nomDonneur("ENSIO SAS")).toBe("ENSIO");
+    expect(nomDonneur("Ensio")).toBe("ENSIO");
+    expect(nomDonneur(" ENSIO ")).toBe("ENSIO");
+  });
+  it("garde deux clients différents séparés", () => expect(nomDonneur("INFRATEL SERVICES")).not.toBe(nomDonneur("ENSIO")));
+});
+
+describe("réceptionnés sans commande", () => {
+  const l = (rdvId: string | null, receptionneLe: string | null, commande: string | null) => ({ rdvId, receptionneLe, commande });
+  it("signale un chantier réceptionné sans aucune commande", () => {
+    expect([...receptionnesSansCommande([l("r1", "2026-11-14", null)])]).toEqual(["r1"]);
+  });
+  it("un TS sans numéro hérite de la commande de l'attachement initial", () => {
+    expect(receptionnesSansCommande([l("r1", "2026-11-14", "CST 02048154"), l("r1", "2026-11-14", null)]).size).toBe(0);
+  });
+  it("ignore les chantiers non réceptionnés", () => {
+    expect(receptionnesSansCommande([l("r2", null, null)]).size).toBe(0);
+  });
+});
