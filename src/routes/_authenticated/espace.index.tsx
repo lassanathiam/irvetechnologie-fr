@@ -334,6 +334,8 @@ type ChantierReception = {
   statut: string;
   partenaire: string | null;
   montant_ht: number | null;
+  montant_facture_ht?: number | null;
+  montant_devis_ht?: number | null;
   attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id?: string | null } | null;
 };
 
@@ -386,9 +388,27 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
     (c) => !terme || `${c.client_nom} ${c.adresse} ${c.cp_ville ?? ""} ${c.partenaire ?? ""}`.toLowerCase().includes(terme),
   );
   const [ouvert, setOuvert] = useState(false);
+  const somme = (liste: ChantierReception[], cle: "montant_ht" | "montant_devis_ht" | "montant_facture_ht") =>
+    liste.reduce((t, c) => t + Number(c[cle] ?? 0), 0);
+  const tous = [...recus, ...aReceptionner];
+  const tuiles = [
+    { label: "Attachements", valeur: somme(tous, "montant_ht"), aide: `${tous.length} chantiers terminés` },
+    { label: "Devis", valeur: somme(tous, "montant_devis_ht"), aide: "devis liés aux chantiers" },
+    { label: "Facturé", valeur: somme(tous, "montant_facture_ht"), aide: "attachements devenus facture" },
+    { label: "Réceptionné", valeur: somme(recus, "montant_ht"), aide: `${recus.length} chantiers réceptionnés` },
+  ];
 
   return (
     <DashboardPanel title="Chantiers réceptionnés" icon={CheckCircle2} action={{ to: "/planning", label: "Ouvrir le planning" }}>
+      <div className="mb-3 grid grid-cols-2 gap-2">
+        {tuiles.map((t) => (
+          <div key={t.label} className="rounded-md border border-dashboard-rule px-3 py-2">
+            <span className="block text-[11px] font-semibold uppercase text-dashboard-copy-muted">{t.label}</span>
+            <strong className="block text-base text-dashboard-copy">{euro(t.valeur)} <span className="text-[10px] font-normal text-dashboard-copy-muted">HT</span></strong>
+            <span className="block text-[10px] text-dashboard-copy-muted">{t.aide}</span>
+          </div>
+        ))}
+      </div>
       <button
         type="button"
         onClick={() => setOuvert((o) => !o)}
@@ -459,7 +479,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
       ) : (
         <ul className="max-h-[480px] divide-y divide-dashboard-rule overflow-y-auto">
           {rows.map((chantier) => (
-            <li key={chantier.id} className="flex flex-wrap items-center gap-3 py-3 sm:flex-nowrap">
+            <li key={chantier.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
               <Link to="/planning" search={{ rdv: chantier.id }} className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-dashboard-copy">{chantier.client_nom}</span>
                 <span className="block truncate text-xs text-dashboard-copy-muted">
@@ -476,9 +496,11 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                   {chantier.partenaire}
                 </span>
               )}
-              {tab === "recus" && Number(chantier.montant_ht ?? 0) > 0 && (
-                <span className="whitespace-nowrap text-xs font-bold text-dashboard-copy">{euro(Number(chantier.montant_ht))}</span>
-              )}
+              <span className="order-last flex basis-full flex-wrap gap-x-4 text-[11px] text-dashboard-copy-muted">
+                <span>Attachement <strong className="text-dashboard-copy">{Number(chantier.montant_ht ?? 0) > 0 ? euro(Number(chantier.montant_ht)) : "—"}</strong></span>
+                <span>Devis <strong className="text-dashboard-copy">{Number(chantier.montant_devis_ht ?? 0) > 0 ? euro(Number(chantier.montant_devis_ht)) : "—"}</strong></span>
+                <span>Facturé <strong className="text-dashboard-copy">{Number(chantier.montant_facture_ht ?? 0) > 0 ? euro(Number(chantier.montant_facture_ht)) : "—"}</strong></span>
+              </span>
               {tab === "recus" ? (
                 <Button type="button" size="sm" variant="ghost" disabled={enCours === chantier.id} onClick={() => void basculer(chantier, false)} className="text-xs text-dashboard-copy-muted">
                   {enCours === chantier.id ? <Loader2 className="animate-spin" /> : null} Annuler
@@ -492,6 +514,15 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
           ))}
         </ul>
       )}
+        {rows.length > 0 && (
+          <p className="mt-2 flex flex-wrap justify-end gap-x-4 border-t border-dashboard-rule pt-2 text-xs text-dashboard-copy">
+            <span className="font-bold">Total ({rows.length})</span>
+            <span>Attachements <strong>{euro(somme(rows, "montant_ht"))}</strong></span>
+            <span>Devis <strong>{euro(somme(rows, "montant_devis_ht"))}</strong></span>
+            <span>Facturé <strong>{euro(somme(rows, "montant_facture_ht"))}</strong></span>
+            <span className="text-dashboard-copy-muted">HT</span>
+          </p>
+        )}
       </>)}
       </>)}
     </DashboardPanel>
