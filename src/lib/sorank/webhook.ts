@@ -386,7 +386,7 @@ async function appliquerAudit(
     else suivant.images.push(entree);
   }
   if (c.json_ld !== undefined) {
-    suivant.json_ld = c.json_ld;
+    suivant.json_ld = c.json_ld as SurchargeSeo["json_ld"];
     suivant.json_ld_mode = c.json_ld === null ? "remove" : "replace";
   }
 

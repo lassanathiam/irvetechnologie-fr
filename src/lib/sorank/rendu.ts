@@ -3,6 +3,8 @@
  * Sorank. Aucun import serveur ici.
  */
 
+export type JsonValeur = string | number | boolean | null | JsonValeur[] | { [cle: string]: JsonValeur };
+
 export type ImageSurcharge = {
   placement: string;
   src: string;
@@ -16,7 +18,7 @@ export type SurchargeSeo = {
   meta_description: string | null;
   content_html: string | null;
   images: ImageSurcharge[];
-  json_ld: unknown;
+  json_ld: JsonValeur;
   json_ld_mode: "default" | "replace" | "remove";
 };
 
@@ -88,7 +90,8 @@ export type ArticleAffiche = {
   publishedAt: string;
   updatedAt: string;
   jsonLdMode: SurchargeSeo["json_ld_mode"];
-  jsonLd: unknown;
+  /** JSON-LD de remplacement déjà sérialisé, ou null. */
+  jsonLd: string | null;
 };
 
 /** Combine l'article publié et ses corrections d'audit (qui survivent aux mises à jour). */
@@ -111,7 +114,7 @@ export function composerArticle(a: ArticleBase, s: SurchargeSeo | null): Article
     publishedAt: a.published_at,
     updatedAt: a.updated_at,
     jsonLdMode: sur.json_ld_mode,
-    jsonLd: sur.json_ld,
+    jsonLd: sur.json_ld ? JSON.stringify(sur.json_ld) : null,
   };
 }
 

@@ -14,7 +14,7 @@ export function versSurcharge(row: Database["public"]["Tables"]["seo_page_overri
     meta_description: row.meta_description,
     content_html: row.content_html,
     images: Array.isArray(row.images) ? (row.images as unknown as ImageSurcharge[]) : [],
-    json_ld: row.json_ld ?? null,
+    json_ld: (row.json_ld ?? null) as SurchargeSeo["json_ld"],
     json_ld_mode: (row.json_ld_mode as SurchargeSeo["json_ld_mode"]) ?? "default",
   };
 }

@@ -24,12 +24,12 @@ export const Route = createFileRoute("/blog/$slug")({
     const url = `https://irvetechnologie.fr/blog/${a.slug}`;
     const publie = isoAvecFuseau(a.publishedAt);
     const modifie = isoAvecFuseau(a.updatedAt);
-    const jsonLd =
+    const jsonLd: string | null =
       a.jsonLdMode === "replace"
         ? a.jsonLd
         : a.jsonLdMode === "remove"
           ? null
-          : {
+          : JSON.stringify({
               "@context": "https://schema.org",
               "@type": "BlogPosting",
               headline: a.h1,
@@ -41,7 +41,7 @@ export const Route = createFileRoute("/blog/$slug")({
               mainEntityOfPage: { "@type": "WebPage", "@id": url },
               author: { "@type": "Organization", name: COMPANY_CONFIG.brandName },
               publisher: { "@type": "Organization", name: COMPANY_CONFIG.brandName },
-            };
+            });
     return {
       links: [{ rel: "canonical", href: url }],
       meta: [
@@ -63,7 +63,7 @@ export const Route = createFileRoute("/blog/$slug")({
         { name: "twitter:title", content: a.seoTitle },
         { name: "twitter:description", content: a.description },
       ],
-      scripts: jsonLd ? [{ type: "application/ld+json", children: JSON.stringify(jsonLd) }] : [],
+      scripts: jsonLd ? [{ type: "application/ld+json", children: jsonLd }] : [],
     };
   },
   component: ArticlePage,
