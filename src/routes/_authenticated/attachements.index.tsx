@@ -431,12 +431,25 @@ function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: numbe
   const fait = chs.filter((c) => c.etat === "fait").sort((x, y) => y.montant_ht - x.montant_ht);
   const aFaire = chs.filter((c) => c.etat === "a_faire").sort((x, y) => y.montant_ht - x.montant_ht);
   const date = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR") : "date non renseignée");
+  const qc = useQueryClient(); const receptionner = useServerFn(receptionnerChantiers); const [enCours, setEnCours] = useState<string | null>(null);
+  const faitsNonRecus = fait.filter((c) => !c.receptionne_at).map((c) => c.id);
+  const appliquer = async (ids: string[], oui: boolean, cle: string) => {
+    if (!ids.length) return;
+    if (!oui && !window.confirm("Retirer la réception de ce chantier ?")) return;
+    setEnCours(cle);
+    try { const r = await receptionner({ data: { ids, receptionne: oui } }); toast.success(oui ? `${r.nb} chantier(s) réceptionné(s)` : "Réception retirée"); await qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["dashboard"] }); }
+    catch (e) { toast.error(e instanceof Error ? e.message : "Réception impossible."); }
+    finally { setEnCours(null); }
+  };
   return <div className="space-y-3 p-4">
-    <p className="text-xs text-muted-foreground">Un « chantier » = un rendez-vous d'intervention du Planning : un client, une adresse et une date. Touchez une ligne pour l'ouvrir dans le Planning.</p>
+    <div className="flex flex-wrap items-center gap-2">
+      <p className="flex-1 text-xs text-muted-foreground">Un « chantier » = un rendez-vous d'intervention du Planning. Le nom ouvre le Planning ; le bouton « Réceptionner » valide le chantier sans quitter cette page.</p>
+      <Button size="sm" disabled={!faitsNonRecus.length || !!enCours} onClick={() => void appliquer(faitsNonRecus, true, "tous")}>{enCours === "tous" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner tous les chantiers faits ({faitsNonRecus.length})</Button>
+    </div>
     {[{ rs: fait, label: "Chantiers faits", cls: "text-primary" }, { rs: aFaire, label: "Chantiers à faire", cls: "text-destructive" }].map(({ rs, label, cls }) => rs.length > 0 && <div key={label}>
       <p className={`text-xs font-bold uppercase tracking-wide ${cls}`}>{label} · {rs.length} · {euro(rs.reduce((s, c) => s + c.montant_ht, 0))} HT</p>
       <ul className="mt-1 divide-y divide-border rounded-md border border-border bg-card">
-        {rs.map((c) => <li key={c.id}><Link to="/planning" search={{ rdv: c.id }} className="grid gap-1 px-3 py-2 text-sm hover:bg-muted/40">
+        {rs.map((c) => <li key={c.id} className="flex flex-wrap items-center gap-2 pr-3"><Link to="/planning" search={{ rdv: c.id }} className="grid min-w-0 flex-1 gap-1 px-3 py-2 text-sm hover:bg-muted/40">
           <span className="flex items-baseline justify-between gap-3">
             <strong className="min-w-0 break-words">{c.client_nom || "Chantier sans nom"}</strong>
             <span className="shrink-0 font-mono">{euro(c.montant_ht)} HT</span>
@@ -446,7 +459,9 @@ function DetailClient({ t }: { t: { chs: Map<string, ChantierLigne>; sans: numbe
             {c.reseau_client ? <ReseauClientBadge nom={c.reseau_client} /> : null}
             <span>{c.etat === "fait" ? `terminé le ${date(c.termine_at ?? c.date_debut)}` : `prévu le ${date(c.date_debut)}`}</span>
           </span>
-        </Link></li>)}</ul>
+        </Link>{c.receptionne_at
+          ? <button type="button" disabled={!!enCours} onClick={() => void appliquer([c.id], false, c.id)} className="rounded-full border border-primary/50 bg-primary/10 px-2 py-1 text-xs font-semibold text-primary">✓ Réceptionné le {date(c.receptionne_at)}</button>
+          : c.etat === "fait" ? <Button size="sm" variant="outline" disabled={!!enCours} onClick={() => void appliquer([c.id], true, c.id)}>{enCours === c.id ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner</Button> : null}</li>)}</ul>
     </div>)}
     {chs.length === 0 && <p className="text-sm text-muted-foreground">Aucun chantier du Planning n'est relié à ces attachements.</p>}
     {t.sansAtt.length > 0 && <div>
