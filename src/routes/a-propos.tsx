@@ -1,10 +1,11 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2, ShieldCheck, Users, Wrench } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 
 export const Route = createFileRoute("/a-propos")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: "https://irvetechnologie.fr/a-propos" }],
     meta: [
       { property: "og:url", content: "https://irvetechnologie.fr/a-propos" },
@@ -19,7 +20,7 @@ export const Route = createFileRoute("/a-propos")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: AboutPage,
 });
 

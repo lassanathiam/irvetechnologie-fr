@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Phone, Zap, Wrench, HardHat, Activity, Check, ShieldCheck, Sparkles, Clock, MapPin, ChevronDown, BadgeCheck } from "lucide-react";
@@ -15,7 +16,7 @@ import { getTarifsSitePublic, TARIFS_SITE_DEFAUT } from "@/lib/tarifs-site.funct
 import { getCompteursPublics } from "@/lib/compteurs-site.functions";
 
 export const Route = createFileRoute("/")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: "https://irvetechnologie.fr/" }],
     meta: [
       { property: "og:url", content: "https://irvetechnologie.fr/" },
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/")({
         }),
       },
     ],
-  }),
+  })),
   component: Index,
 });
 

@@ -29,7 +29,7 @@ export const Route = createFileRoute("/sitemap.xml")({
         }
 
         const entrees: EntreePlan[] = [
-          ...PAGES_PUBLIQUES.map((p) => ({ ...p, loc: `${SITE_URL}${p.path === "/" ? "" : p.path}` })),
+          ...PAGES_PUBLIQUES.map((p) => ({ ...p, loc: `${SITE_URL}${p.path}` })),
           ...articles.map((a) => ({ loc: urlArticle(a.slug), lastmod: a.updated_at })),
         ];
 

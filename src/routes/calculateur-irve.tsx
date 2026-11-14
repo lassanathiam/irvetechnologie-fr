@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { AlertTriangle, ArrowLeft, ArrowRight, Building2, Car, Factory, Home, Info, Zap, HelpCircle } from "lucide-react";
@@ -11,7 +12,7 @@ const TITLE = "Calculateur de pré-dimensionnement IRVE | Borne de l'Ouest";
 const DESC = "Estimez rapidement la puissance, le câble et les protections nécessaires pour votre projet de borne de recharge.";
 
 export const Route = createFileRoute("/calculateur-irve")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: "https://irvetechnologie.fr/calculateur-irve" }],
     meta: [
       { property: "og:url", content: "https://irvetechnologie.fr/calculateur-irve" },
@@ -22,7 +23,7 @@ export const Route = createFileRoute("/calculateur-irve")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: Calculateur,
 });
 

@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/installation-borne-recharge-nantes")({
       return TARIFS_SITE_DEFAUT;
     }
   },
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: URL }],
     meta: [
       { title: TITRE },
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/installation-borne-recharge-nantes")({
       { property: "og:type", content: "article" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: PageNantes,
 });
 

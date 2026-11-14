@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, MapPin } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -10,7 +11,7 @@ const DESC =
   "Installation de bornes de recharge en Bretagne et Pays de la Loire : Nantes, Rennes, Brest, Angers, Le Mans, Vannes, Saint-Nazaire et alentours. Particuliers et professionnels.";
 
 export const Route = createFileRoute("/zones-intervention")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: URL }],
     meta: [
       { title: TITRE },
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/zones-intervention")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: Zones,
 });
 

@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight } from "lucide-react";
 import { SiteNav } from "@/components/SiteNav";
@@ -7,7 +8,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { borneImage, surErreurImageBorne, bornesStatiquesEnSecours, listBornesPubliques } from "@/lib/bornes.functions";
 
 export const Route = createFileRoute("/bornes")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: "https://irvetechnologie.fr/bornes" }],
     meta: [
       { property: "og:url", content: "https://irvetechnologie.fr/bornes" },
@@ -26,7 +27,7 @@ export const Route = createFileRoute("/bornes")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: Bornes,
 });
 
