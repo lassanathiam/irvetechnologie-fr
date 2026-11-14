@@ -280,7 +280,7 @@ function PagePartenaire() {
           </button>
 
           <p className="text-xs text-muted-foreground">
-            Code oublié ? Demandez sa réinitialisation à IRVE Technologie au 06 33 65 78 40.
+            Code oublié ? Demandez sa réinitialisation à IRVE Technologie au 07 68 08 43 67.
           </p>
         </form>
       </main>

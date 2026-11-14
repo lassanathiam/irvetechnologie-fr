@@ -87,7 +87,7 @@ export function DocumentPrint({
               <div>{COMPANY.adresse}</div>
               <div>{COMPANY.cpVille}</div>
               <div className="font-semibold text-foreground">{COMPANY.email}</div>
-              <div>{COMPANY.telephone} · {COMPANY.telephone2}</div>
+              <div>{COMPANY.telephone}</div>
               <div className="text-mono text-[10px] pt-1">
                 SIRET {COMPANY.siret} · TVA {COMPANY.tva} · {COMPANY.site}
               </div>
@@ -309,7 +309,7 @@ export function DocumentPrint({
           partagez notre lien : <span className="font-semibold text-foreground">{COMPANY.siteUrl}</span>
         </p>
         <p className="mt-1 text-muted-foreground">
-          Contact : {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2}
+          Contact : {COMPANY.email} · {COMPANY.telephone}
         </p>
       </div>
 

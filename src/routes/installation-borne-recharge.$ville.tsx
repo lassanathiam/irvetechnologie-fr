@@ -43,7 +43,7 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
             "@context": "https://schema.org",
             "@type": "Service",
             serviceType: "Installation de borne de recharge pour véhicule électrique",
-            provider: { "@type": "Electrician", name: "Borne de l'Ouest", url: BASE, telephone: "+33633657840" },
+            provider: { "@type": "Electrician", name: "Borne de l'Ouest", url: BASE, telephone: "+33768084367" },
             areaServed: [{ "@type": "City", name: v.nom }, ...v.communes.map((c) => ({ "@type": "City", name: c }))],
             url,
           }),
@@ -90,8 +90,8 @@ function PageVille() {
               <Link to="/demande" search={{ profil: "professionnel" }} className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
                 <Building2 className="h-4 w-4" /> Devis professionnel
               </Link>
-              <a href="tel:+33633657840" className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
-                <Phone className="h-4 w-4" /> 06 33 65 78 40
+              <a href="tel:+33768084367" className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
+                <Phone className="h-4 w-4" /> 07 68 08 43 67
               </a>
             </div>
           </div>
