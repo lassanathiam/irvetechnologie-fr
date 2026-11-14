@@ -1,5 +1,5 @@
 import { DonneurOrdreField } from "@/components/DonneurOrdreField";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { DateAvecJour } from "@/components/DateAvecJour";
 import { useServerFn } from "@tanstack/react-start";
 import { FileUp, Loader2, Trash2, X } from "lucide-react";
@@ -72,16 +72,21 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
   };
 
   // Les chantiers déjà créés ne sont pas reproposés : seuls les nouveaux restent dans la liste.
-  const ajouter = (res: RdvExtrait[]) => setLignes((l) => {
+  const lignesRef = useRef<Ligne[]>([]);
+  lignesRef.current = lignes;
+  const ajouter = (res: RdvExtrait[]) => {
+    const avant = lignesRef.current;
     const nouvelles = res.map((r) => ({ ...r, client_telephone: telephoneClient(r.client_telephone), garder: true }) as Ligne);
-    const raisons = reperesDoublons([...l, ...nouvelles], existants).slice(l.length);
-    const doublons = nouvelles.flatMap((x, i) => (raisons[i] ? [{ ...x, doublon: raisons[i], garder: true }] : []));
+    const raisons = reperesDoublons([...avant, ...nouvelles], existants).slice(avant.length);
+    const doublons = nouvelles.flatMap((x, i) => (raisons[i] ? [{ ...x, doublon: raisons[i] }] : []));
+    const suivantes = [...avant, ...nouvelles.filter((_, i) => !raisons[i])];
+    lignesRef.current = suivantes;
+    setLignes(suivantes);
     if (doublons.length) {
       setEcartes((e) => [...e, ...doublons]);
       toast.info(`${doublons.length} chantier(s) déjà créé(s), non reproposé(s).`);
     }
-    return [...l, ...nouvelles.filter((_, i) => !raisons[i])];
-  });
+  };
 
   const maj = (i: number, p: Partial<Ligne>) => setLignes((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
 
