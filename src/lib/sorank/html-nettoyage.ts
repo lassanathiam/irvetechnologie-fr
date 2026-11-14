@@ -1,4 +1,7 @@
-import { FilterXSS, safeAttrValue } from "xss";
+import xss from "xss";
+
+// « xss » est un module CommonJS : on passe par son export par défaut.
+const { FilterXSS, safeAttrValue } = xss;
 
 /**
  * Nettoyage serveur du HTML reçu de Sorank : on garde titres, paragraphes, listes,
