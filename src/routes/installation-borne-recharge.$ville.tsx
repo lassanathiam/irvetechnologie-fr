@@ -12,11 +12,11 @@ const BASE = "https://irvetechnologie.fr";
 /** Une page ville peut être mise en avant alors qu'elle a sa propre route (ex. Nantes). */
 function lienVoisine(slug: string) {
   if (slug === "nantes") {
-    return { href: `${BASE}/installation-borne-recharge-nantes`, nom: "Nantes" };
+    return { slug, nom: "Nantes", href: `${BASE}/installation-borne-recharge-nantes` };
   }
   const v = trouverVille(slug);
   if (!v) return null;
-  return { href: `${BASE}/installation-borne-recharge/${v.slug}`, nom: v.nom };
+  return { slug, nom: v.nom, href: `${BASE}/installation-borne-recharge/${v.slug}` };
 }
 
 export const Route = createFileRoute("/installation-borne-recharge/$ville")({
@@ -122,7 +122,7 @@ function PageVille() {
   const eur = (n: number) => `${n.toLocaleString("fr-FR")} €`;
   const voisines = (c?.voisines ?? [])
     .map((s) => lienVoisine(s))
-    .filter((x): x is { href: string; nom: string } => Boolean(x));
+    .filter((x): x is { slug: string; href: string; nom: string } => Boolean(x));
   const voisinesDefaut = VILLES_ZONE.filter(
     (x) => x.region === v.region && x.slug !== v.slug && !c?.voisines.includes(x.slug),
   ).slice(0, 6);
@@ -256,11 +256,17 @@ function PageVille() {
           <div className="mx-auto max-w-5xl px-6 py-12">
             <h2 className="text-xl font-medium">Nous intervenons aussi à</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              {voisines.map((x) => (
-                <a key={x.href} href={x.href} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
-                  {x.nom}
-                </a>
-              ))}
+              {voisines.map((x) =>
+                trouverVille(x.slug) ? (
+                  <Link key={x.href} to="/installation-borne-recharge/$ville" params={{ ville: x.slug }} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
+                    {x.nom}
+                  </Link>
+                ) : (
+                  <a key={x.href} href={x.href} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
+                    {x.nom}
+                  </a>
+                ),
+              )}
               {voisinesDefaut.map((x) => (
                 <Link key={x.slug} to="/installation-borne-recharge/$ville" params={{ ville: x.slug }} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
                   {x.nom}
