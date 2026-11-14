@@ -34,4 +34,25 @@ describe("imports de chantier sans IA", () => {
     expect(f.metrage_m).toEqual(18);
     expect(f.repartiteur).toBeFalse();
   });
+  test("fiche technique : le technicien de la visite n'est jamais pris pour le client", () => {
+    const f = lireFicheSansIA("Visite technique réalisée par : M. Durand Paul\nTechnicien : Durand Paul\nNom : Martin\nPrénom : Sophie\n12 rue des Lilas\n44100 Nantes");
+    expect(f.client_nom).toEqual("Martin Sophie");
+    expect(f.technicien).toEqual("M. Durand Paul");
+  });
+  test("rubrique Technicien suivie de Nom : le nom du client reste celui du client", () => {
+    const f = lireFicheSansIA("Technicien\nNom : Le Goff\nTél : 06 11 22 33 44\nClient : Mme Bernard\nAdresse : 3 rue B");
+    expect(f.client_nom).toEqual("Mme Bernard");
+    expect(f.technicien).toEqual("Le Goff");
+  });
+  test("une phrase n'est jamais prise pour un nom de client", () => {
+    const f = lireFicheSansIA("Client : le client souhaite que la borne soit installée dans le garage près du tableau");
+    expect(f.client_nom).toEqual(null);
+  });
+  test("le dossier ne reçoit pas toute la fiche, seulement un court résumé", () => {
+    const longue = "Le tableau électrique se trouve au sous-sol. ".repeat(60);
+    const f = lireFicheSansIA(`Client : Martin\n${longue}\nPuissance : 7,4 kW\nRemarques : chien dans le jardin`);
+    expect(f.resume).toEqual("7,4 kW\nRemarques : chien dans le jardin");
+    const rdv = lireRdvSansIA(`Client : Martin\nAdresse : 12 rue A\n${longue}`)[0];
+    expect(rdv?.notes).toEqual(null);
+  });
 });
