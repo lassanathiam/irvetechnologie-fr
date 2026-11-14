@@ -13,6 +13,7 @@ import { template as rappelRdvTemplate } from './rappel-rdv'
 import { template as ensioDocumentInfoTemplate } from './ensio-document-info'
 import { template as rapportEcartTemplate } from './rapport-ecart-commande'
 import { template as chantierEchecTemplate } from './chantier-echec'
+import { template as bilanReceptionTemplate } from './bilan-reception'
 
 
 
@@ -35,6 +36,7 @@ export interface TemplateEntry {
  */
 export const TEMPLATES: Record<string, TemplateEntry> = {
   'rapport-ecart-commande': rapportEcartTemplate,
+  'bilan-reception': bilanReceptionTemplate,
   'devis-client': devisClientTemplate,
   'devis-signe': devisSigneTemplate,
   'chantier-termine': chantierTermineTemplate,

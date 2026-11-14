@@ -650,3 +650,15 @@ export const marquerSuiviFacturation = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+/** Attachements envoyés au client en dehors de la plateforme : sort des brouillons sans envoyer d'email. */
+export const marquerAttachementsEnvoyes = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: rows, error } = await context.supabase.from("attachements_travaux")
+      .update({ statut: "envoye", sent_at: new Date().toISOString() })
+      .in("id", data.ids).eq("statut", "brouillon").is("sent_at", null).select("id");
+    if (error) throw new Error(error.message);
+    return { nb: rows?.length ?? 0 };
+  });
