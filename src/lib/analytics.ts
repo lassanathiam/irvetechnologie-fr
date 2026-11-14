@@ -19,6 +19,7 @@ const PREFIXES_PUBLICS = [
   "/calculateur-irve",
   "/confidentialite",
   "/demande",
+  "/devis-borne-recharge",
   "/installation-borne-recharge",
   "/zones-intervention",
 ];

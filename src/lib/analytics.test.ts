@@ -5,6 +5,7 @@ describe("suivi Google limité aux pages publiques", () => {
   it("mesure l'accueil, la demande et les pages ville", () => {
     expect(estPagePubliqueMesuree("/")).toEqual(true);
     expect(estPagePubliqueMesuree("/demande")).toEqual(true);
+    expect(estPagePubliqueMesuree("/devis-borne-recharge")).toEqual(true);
     expect(estPagePubliqueMesuree("/installation-borne-recharge-nantes")).toEqual(true);
     expect(estPagePubliqueMesuree("/installation-borne-recharge/rennes")).toEqual(true);
   });

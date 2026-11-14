@@ -18,6 +18,7 @@ import { Route as BornesRouteImport } from './routes/bornes'
 import { Route as CalculateurIrveRouteImport } from './routes/calculateur-irve'
 import { Route as ConfidentialiteRouteImport } from './routes/confidentialite'
 import { Route as DemandeRouteImport } from './routes/demande'
+import { Route as DevisBorneRechargeRouteImport } from './routes/devis-borne-recharge'
 import { Route as InstallationBorneRechargeNantesRouteImport } from './routes/installation-borne-recharge-nantes'
 import { Route as InstallerRouteImport } from './routes/installer'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
@@ -113,6 +114,11 @@ const ConfidentialiteRoute = ConfidentialiteRouteImport.update({
 const DemandeRoute = DemandeRouteImport.update({
   id: '/demande',
   path: '/demande',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DevisBorneRechargeRoute = DevisBorneRechargeRouteImport.update({
+  id: '/devis-borne-recharge',
+  path: '/devis-borne-recharge',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstallationBorneRechargeNantesRoute =
@@ -408,6 +414,7 @@ export interface FileRoutesByFullPath {
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
+  '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -469,6 +476,7 @@ export interface FileRoutesByTo {
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
+  '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -532,6 +540,7 @@ export interface FileRoutesById {
   '/calculateur-irve': typeof CalculateurIrveRoute
   '/confidentialite': typeof ConfidentialiteRoute
   '/demande': typeof DemandeRoute
+  '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
@@ -595,6 +604,7 @@ export interface FileRouteTypes {
     | '/calculateur-irve'
     | '/confidentialite'
     | '/demande'
+    | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
@@ -656,6 +666,7 @@ export interface FileRouteTypes {
     | '/calculateur-irve'
     | '/confidentialite'
     | '/demande'
+    | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/calculateur-irve'
     | '/confidentialite'
     | '/demande'
+    | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
     | '/sitemap.xml'
@@ -781,6 +793,7 @@ export interface RootRouteChildren {
   CalculateurIrveRoute: typeof CalculateurIrveRoute
   ConfidentialiteRoute: typeof ConfidentialiteRoute
   DemandeRoute: typeof DemandeRoute
+  DevisBorneRechargeRoute: typeof DevisBorneRechargeRoute
   InstallationBorneRechargeNantesRoute: typeof InstallationBorneRechargeNantesRoute
   InstallerRoute: typeof InstallerRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
@@ -867,6 +880,13 @@ declare module '@tanstack/react-router' {
       path: '/demande'
       fullPath: '/demande'
       preLoaderRoute: typeof DemandeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/devis-borne-recharge': {
+      id: '/devis-borne-recharge'
+      path: '/devis-borne-recharge'
+      fullPath: '/devis-borne-recharge'
+      preLoaderRoute: typeof DevisBorneRechargeRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/installation-borne-recharge-nantes': {
@@ -1312,6 +1332,7 @@ const rootRouteChildren: RootRouteChildren = {
   CalculateurIrveRoute: CalculateurIrveRoute,
   ConfidentialiteRoute: ConfidentialiteRoute,
   DemandeRoute: DemandeRoute,
+  DevisBorneRechargeRoute: DevisBorneRechargeRoute,
   InstallationBorneRechargeNantesRoute: InstallationBorneRechargeNantesRoute,
   InstallerRoute: InstallerRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
