@@ -479,7 +479,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
       ) : (
         <ul className="max-h-[480px] divide-y divide-dashboard-rule overflow-y-auto">
           {rows.map((chantier) => (
-            <li key={chantier.id} className="flex flex-wrap items-center gap-3 py-3 sm:flex-nowrap">
+            <li key={chantier.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 py-3">
               <Link to="/planning" search={{ rdv: chantier.id }} className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-dashboard-copy">{chantier.client_nom}</span>
                 <span className="block truncate text-xs text-dashboard-copy-muted">
@@ -496,7 +496,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                   {chantier.partenaire}
                 </span>
               )}
-              <span className="grid min-w-[150px] text-right text-[11px] leading-tight text-dashboard-copy-muted">
+              <span className="order-last flex basis-full flex-wrap gap-x-4 text-[11px] text-dashboard-copy-muted">
                 <span>Attachement <strong className="text-dashboard-copy">{Number(chantier.montant_ht ?? 0) > 0 ? euro(Number(chantier.montant_ht)) : "—"}</strong></span>
                 <span>Devis <strong className="text-dashboard-copy">{Number(chantier.montant_devis_ht ?? 0) > 0 ? euro(Number(chantier.montant_devis_ht)) : "—"}</strong></span>
                 <span>Facturé <strong className="text-dashboard-copy">{Number(chantier.montant_facture_ht ?? 0) > 0 ? euro(Number(chantier.montant_facture_ht)) : "—"}</strong></span>
