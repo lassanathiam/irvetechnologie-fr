@@ -13,7 +13,7 @@ export type LigneBilan = {
   envoyeLe: string | null;
   facture: string | null;
   commande: string | null;
-  chantiers: { id: string; nom: string; ville: string | null; date: string | null; receptionneLe: string | null }[];
+  chantiers: { id: string; nom: string; ville: string | null; date: string | null; receptionneLe: string | null; montantHt?: number | null; statut?: string | null }[];
 };
 
 export type CleBilan = "recu_commande" | "commande_non_recu" | "recu_sans_commande" | "envoye_sans_commande" | "non_envoye";
