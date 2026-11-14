@@ -1,4 +1,11 @@
-import { FilterXSS, safeAttrValue } from "xss";
+import xss from "xss";
+import type { FilterXSS as TypeFilterXSS, safeAttrValue as TypeSafeAttrValue } from "xss";
+
+// « xss » est un module CommonJS : on passe par son export par défaut.
+const { FilterXSS, safeAttrValue } = xss as unknown as {
+  FilterXSS: typeof TypeFilterXSS;
+  safeAttrValue: typeof TypeSafeAttrValue;
+};
 
 /**
  * Nettoyage serveur du HTML reçu de Sorank : on garde titres, paragraphes, listes,
@@ -25,7 +32,7 @@ const filtre = new FilterXSS({
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "noscript", "object", "embed", "form", "svg", "math"],
   allowCommentTag: false,
-  safeAttrValue(tag, name, value, cssFilter) {
+  safeAttrValue(tag: string, name: string, value: string, cssFilter: Parameters<typeof safeAttrValue>[3]) {
     if ((name === "href" || name === "src") && !/^(https?:|mailto:|tel:|\/|#)/i.test(value.trim())) {
       return "";
     }
