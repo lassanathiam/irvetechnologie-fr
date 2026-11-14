@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { composerArticle, type ArticleAffiche, type SurchargeSeo } from "@/lib/sorank/rendu";
+import { CHEMINS_PAGES_CODEES, normaliserChemin } from "@/lib/sorank/pages-publiques";
 
 /** Lecture publique (clé publiable, sans session) : les articles sont des pages publiques. */
 async function clientPublic() {
@@ -8,6 +9,22 @@ async function clientPublic() {
   return createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_PUBLISHABLE_KEY"]!, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
+}
+
+/**
+ * Correction SEO d'une seule page, lue côté serveur uniquement (la table n'est pas
+ * lisible par les visiteurs) : jamais de liste, seulement le chemin demandé.
+ */
+async function lireSurchargeServeur(path: string): Promise<SurchargeSeo | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const { versSurcharge } = await import("@/lib/sorank/store.server");
+  const { data, error } = await supabaseAdmin
+    .from("seo_page_overrides")
+    .select("path, title, h1, meta_description, content_html, images, json_ld, json_ld_mode, updated_at")
+    .eq("path", path)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  return versSurcharge(data);
 }
 
 export type ArticleResume = {
@@ -42,23 +59,15 @@ export const lireArticleBlog = createServerFn({ method: "GET" })
       .maybeSingle();
     if (error) throw new Error(error.message);
     if (!article) return null;
-    const { versSurcharge } = await import("@/lib/sorank/store.server");
-    const { data: sur, error: e2 } = await db
-      .from("seo_page_overrides")
-      .select("*")
-      .eq("path", `/blog/${article.slug}`)
-      .maybeSingle();
-    if (e2) throw new Error(e2.message);
-    return composerArticle(article, versSurcharge(sur));
+    return composerArticle(article, await lireSurchargeServeur(`/blog/${article.slug}`));
   });
 
 /** Correction SEO d'une page codée du site (titre, description, JSON-LD), ou null. */
 export const lireSurchargeSeo = createServerFn({ method: "GET" })
   .inputValidator((d: unknown) => z.object({ path: z.string().min(1).max(300) }).parse(d))
   .handler(async ({ data }): Promise<SurchargeSeo | null> => {
-    const db = await clientPublic();
-    const { data: row, error } = await db.from("seo_page_overrides").select("*").eq("path", data.path).maybeSingle();
-    if (error) throw new Error(error.message);
-    const { versSurcharge } = await import("@/lib/sorank/store.server");
-    return versSurcharge(row);
+    // Seules les pages publiques du site peuvent être interrogées.
+    const path = normaliserChemin(data.path);
+    if (!CHEMINS_PAGES_CODEES.has(path)) return null;
+    return lireSurchargeServeur(path);
   });
