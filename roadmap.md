@@ -156,3 +156,5 @@
 - [ ] Optimiser /demande : bloc de contenu, fil d'Ariane, titre principal corrigé
 - [ ] Compléter les liens officiels manquants (fiche Google Maps, Pappers, annuaires) dans `sameAs`
 - [ ] Publier, puis indiquer les démarches Search Console (validation de la propriété, soumission du sitemap)
+
+- [ ] Brancher Sorank : réception des articles, pages /blog, plan du site, corrections SEO
