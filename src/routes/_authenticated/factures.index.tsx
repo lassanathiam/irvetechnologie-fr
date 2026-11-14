@@ -337,18 +337,20 @@ function FacturesPage() {
         )}
         {rows.map((f) => (
           <div key={f.id} className="p-4 flex flex-wrap items-center gap-x-4 gap-y-2 hover:bg-muted/30 transition">
-            <div className="flex min-w-0 flex-1 items-center gap-3">
-              <Link to="/factures/$id" params={{ id: f.id }} className="shrink-0 text-mono text-xs text-primary hover:underline">
-                {f.numero}
+            <div className="min-w-0 flex-1">
+              <Link to="/factures/$id" params={{ id: f.id }} className="block truncate text-lg font-extrabold hover:underline">
+                {nomClientFacture(f)}
               </Link>
-              <span className="min-w-0 truncate font-medium">{f.client_nom}</span>
-              <span className="hidden min-w-0 truncate text-sm text-muted-foreground sm:block">{f.objet}</span>
-              <span className="shrink-0 text-mono text-xs text-muted-foreground whitespace-nowrap">
-                {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
+              <span className="block truncate text-xs text-muted-foreground">
+                <span className="text-mono text-primary">{f.numero}</span>
+                {nomClientFacture(f) !== f.client_nom ? ` · ${f.client_nom}` : ""} · {dateFr(f.date_emission)} → {dateFr(f.date_echeance)}
               </span>
             </div>
             <div className="flex shrink-0 items-center gap-3">
-              <span className="text-mono">{euro(Number(f.total_ttc))}</span>
+              <span className="text-right">
+                <strong className="block text-xl font-extrabold text-dashboard-green">{euro(Number(f.total_ht))} <span className="text-xs font-normal text-muted-foreground">HT</span></strong>
+                <span className="block text-[11px] text-muted-foreground">{euro(Number(f.total_ttc))} TTC</span>
+              </span>
               <DepotChip
                 f={{
                   id: f.id,
@@ -441,6 +443,12 @@ function DepotChip({
       {deposee ? `Déposée ${f.depose_reference ? `· ${f.depose_reference}` : ""}` : "Déposer"}
     </button>
   );
+}
+
+/** Nom du client final : pour une facture de donneur d'ordre, le nom après « — » dans l'objet. */
+function nomClientFacture(f: { client_nom: string; objet?: string | null }): string {
+  const fin = String(f.objet ?? "").split(" — ").slice(1).join(" — ").trim();
+  return fin || f.client_nom;
 }
 
 function Stat({ label, value, accent }: { label: string; value: string; accent?: boolean }) {

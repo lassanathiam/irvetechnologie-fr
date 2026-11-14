@@ -188,6 +188,7 @@ function ReceptionChantiers({ chantiers, items, libelles, onDone }: { chantiers:
     try {
       const r = await receptionner({ data: { ids, receptionne } });
       toast.success(receptionne ? `${r.nb} chantier(s) réceptionné(s)` : `Réception retirée sur ${r.nb} chantier(s)`);
+      if (r.sansCommande) toast.warning(`${r.sansCommande} chantier(s) sans commande reçue : pas réceptionné(s).`);
       setCoches([]);
       onDone();
     } catch (e) {

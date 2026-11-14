@@ -1,3 +1,5 @@
+import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
+import { ETAPES_CHANTIER, resumeEtapes } from "@/lib/etape-chantier";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -152,7 +154,7 @@ function EspacePage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
-                <ReceptionTracking rendezvous={[...rendezvous, ...((q.data?.rendezvousFacturesArchives ?? []) as typeof rendezvous)]} />
+                <SuiviResume />
                 <QuickOverview factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
                   <NextAppointments rendezvous={aVenir.slice(0, 1)} />
@@ -340,6 +342,31 @@ type ChantierReception = {
 };
 
 const STATUT_PLANNING: Record<string, string> = { planifie: "planifié", en_pause: "en pause", en_cours: "en cours", annule: "annulé", a_planifier: "à planifier" };
+
+function SuiviResume() {
+  const q = useQuery({ queryKey: ["suivi-chantiers"], queryFn: useServerFn(getSuiviChantiers) });
+  const resume = resumeEtapes(q.data?.lignes ?? []);
+  return (
+    <DashboardPanel title="Suivi chantiers" icon={CheckCircle2} action={{ to: "/suivi", label: "Tout voir" }}>
+      {q.isLoading ? <Loader2 className="animate-spin text-dashboard-blue" /> : (
+        <ol className="grid gap-2">
+          {ETAPES_CHANTIER.map((e) => (
+            <li key={e.n}>
+              <Link to="/suivi" search={{ etape: e.n }} className="flex items-center gap-3 rounded-md border border-dashboard-rule px-3 py-2 hover:bg-dashboard-subtle">
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-dashboard-subtle text-sm font-bold text-dashboard-copy">{e.n}</span>
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-bold text-dashboard-copy">{e.label}</span>
+                  <span className="block text-[11px] text-dashboard-copy-muted">{resume[e.n].nb} chantier(s)</span>
+                </span>
+                <strong className="text-lg font-extrabold text-dashboard-green">{euro(resume[e.n].ht)} <span className="text-[10px] font-normal text-dashboard-copy-muted">HT</span></strong>
+              </Link>
+            </li>
+          ))}
+        </ol>
+      )}
+    </DashboardPanel>
+  );
+}
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
   const [tab, setTab] = useState<"recus" | "attente" | "mois" | "factu">("attente");

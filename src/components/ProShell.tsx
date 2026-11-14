@@ -10,6 +10,7 @@ import {
   ChevronRight,
   ClipboardCheck,
   ClipboardList,
+  ListChecks,
   Download,
   FileText,
   FolderLock,
@@ -68,6 +69,7 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
   {
     label: "Opérations",
     links: [
+      { to: "/suivi", label: "Suivi chantiers", icon: ListChecks },
       { to: "/attachements", label: "Attachements travaux", icon: ClipboardList },
       { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
       { to: "/stock", label: "Stock matériel", icon: Package },

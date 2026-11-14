@@ -546,10 +546,11 @@ function DevisPage() {
               <Link to="/devis/$id" params={{ id: d.id }} className="text-mono text-xs text-primary hover:underline">
                 {d.numero}
               </Link>
-              <span className="font-medium">{d.client_nom}</span>
-              <span className="text-sm text-muted-foreground hidden sm:block">{d.objet}</span>
-              <span className="text-mono text-xs text-muted-foreground">{dateFr(d.date_emission)}</span>
-              <span className="ml-auto text-mono">{euro(Number(d.total_ttc))}</span>
+              <span className="min-w-0">
+                <Link to="/devis/$id" params={{ id: d.id }} className="block text-lg font-extrabold hover:underline">{d.client_nom}</Link>
+                <span className="block text-xs text-muted-foreground">{[d.objet, dateFr(d.date_emission)].filter(Boolean).join(" · ")}</span>
+              </span>
+              <strong className="ml-auto text-xl font-extrabold text-dashboard-green">{euro(Number(d.total_ttc))} <span className="text-xs font-normal text-muted-foreground">TTC</span></strong>
               <span className="text-mono text-[11px] px-2 py-1 rounded-sm border border-border text-muted-foreground">
                 {STATUT_LABEL[d.statut] ?? d.statut}
               </span>
