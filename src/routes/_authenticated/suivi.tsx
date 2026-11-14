@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { csvSuivi, ETAPES_CHANTIER, resumeEtapes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
+import { csvSuivi, ETAPES_CHANTIER, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
@@ -79,7 +79,7 @@ function SuiviPage() {
   }), [toutes, donneur, du, au, recherche]);
   const resume = resumeEtapes(filtrees);
   const recus = filtrees.filter((l) => l.receptionneLe);
-  const totalRecus = recus.reduce((t, l) => t + l.montantHt, 0);
+  const totalRecus = totalReceptionnes(filtrees).ht;
   const lignes = vueRecus
     ? [...recus].sort((a, b) => (b.receptionneLe ?? "").localeCompare(a.receptionneLe ?? ""))
     : filtrees.filter((l) => l.etape === etape);
