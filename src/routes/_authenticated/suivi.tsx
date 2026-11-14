@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { csvSuivi, ETAPES_CHANTIER, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
+import { csvSuivi, doublonsChantier, ETAPES_CHANTIER, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
@@ -79,7 +79,14 @@ function SuiviPage() {
   }), [toutes, donneur, du, au, recherche]);
   const resume = resumeEtapes(filtrees);
   const recus = filtrees.filter((l) => l.receptionneLe);
-  const totalRecus = totalReceptionnes(filtrees).ht;
+  const totauxRecus = totalReceptionnes(filtrees);
+  const totalRecus = totauxRecus.ht;
+  const doublons = useMemo(() => doublonsChantier(toutes), [toutes]);
+  const groupesRecus = useMemo(() => {
+    const m = new Map<string, LigneSuivi[]>();
+    for (const l of recus) { const k = l.rdvId ?? l.cle; m.set(k, [...(m.get(k) ?? []), l]); }
+    return [...m.values()].sort((a, b) => (b[0].receptionneLe ?? "").localeCompare(a[0].receptionneLe ?? ""));
+  }, [recus]);
   const lignes = vueRecus
     ? [...recus].sort((a, b) => (b.receptionneLe ?? "").localeCompare(a.receptionneLe ?? ""))
     : filtrees.filter((l) => l.etape === etape);
@@ -185,7 +192,7 @@ function SuiviPage() {
         </span>
         <span className="text-right">
           <span className="block text-2xl font-extrabold text-dashboard-green">{euro(totalRecus)}</span>
-          <span className="block text-xs text-muted-foreground">{recus.length} chantier(s) · HT</span>
+          <span className="block text-xs text-muted-foreground">{totauxRecus.nb} chantier(s) · HT</span>
         </span>
       </button>
 
@@ -213,7 +220,7 @@ function SuiviPage() {
           {!vueRecus && etape === 2 && <Button asChild size="sm" variant="outline"><Link to="/attachements/commandes"><Upload /> Importer les commandes</Link></Button>}
         </div>
         <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-card p-3 text-sm">
-          <label className="flex items-center gap-2 font-semibold"><input type="checkbox" className="h-5 w-5" checked={lignes.length > 0 && lignes.every((l) => coches.includes(l.cle))} onChange={(e) => basculer(lignes.map((l) => l.cle), e.target.checked)} /> Tout cocher ({lignes.length})</label>
+          <label className="flex items-center gap-2 font-semibold"><input type="checkbox" className="h-5 w-5" checked={lignes.length > 0 && lignes.every((l) => coches.includes(l.cle))} onChange={(e) => basculer(lignes.map((l) => l.cle), e.target.checked)} /> Tout cocher ({vueRecus ? `${groupesRecus.length} chantiers` : lignes.length})</label>
           <span>{selection.length} coché(s) · <strong className="text-base text-dashboard-green">{euro(totalSel)} HT</strong></span>
           <div className="ml-auto flex flex-wrap gap-2">
             {!vueRecus && ACTION[etape] && etape !== 2 && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
@@ -224,14 +231,53 @@ function SuiviPage() {
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) réceptionné(s) mais commande à recevoir.</strong> Ils restent ici tant que la commande n’est pas importée.</span></p>}
         {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.{!vueRecus && etape === 4 && recus.length > 0 && <> Vos {recus.length} chantier(s) réceptionné(s) sont déjà facturés : <button type="button" className="font-semibold text-primary underline" onClick={voirRecus}>voir tous les réceptionnés</button>.</>}</p> :
-          <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} montrerEtape={vueRecus} />)}</ul>}
+          vueRecus
+            ? <ul className="divide-y divide-border">{groupesRecus.map((g) => <GroupeRecu key={g[0].cle} g={g} doublons={doublons} coche={g.every((l) => coches.includes(l.cle))} onCoche={(v) => basculer(g.map((l) => l.cle), v)} enCours={enCours === g[0].cle} onRetirer={() => void retirerReception(g[0])} />)}</ul>
+            : <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} doublon={doublons.get(l.cle)} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} />)}</ul>}
       </section>
       <p className="text-xs text-muted-foreground">Montants HT issus des attachements. Un attachement hebdomadaire est réparti par chantier ; créer sa facture ou la déposer traite tout l’attachement en une seule fois. Cette page ne modifie rien sans clic de votre part et n’envoie rien sans confirmation.</p>
     </>}
   </div></ProShell>;
 }
 
-function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, montrerEtape }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void; montrerEtape?: boolean }) {
+function AlerteDoublon({ autres }: { autres?: string[] }) {
+  if (!autres?.length) return null;
+  return <span className="mt-1 flex items-start gap-1 text-xs font-semibold text-destructive"><AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" />Doublon possible : ce chantier est aussi dans {autres.join(", ")} (pas un TS). Vérifiez qu’il n’est pas facturé deux fois.</span>;
+}
+
+/** Vue « Tous les réceptionnés » : un chantier = une ligne, avec tous ses documents (attachement initial, TS). */
+function GroupeRecu({ g, doublons, coche, onCoche, enCours, onRetirer }: { g: LigneSuivi[]; doublons: Map<string, string[]>; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onRetirer: () => void }) {
+  const l = g[0];
+  const total = g.reduce((t, x) => t + x.montantHt, 0);
+  return <li className="flex flex-wrap items-start gap-3 p-3">
+    <input type="checkbox" aria-label={`Cocher ${l.client}`} className="mt-1.5 h-5 w-5" checked={coche} onChange={(e) => onCoche(e.target.checked)} />
+    <div className="min-w-0 flex-1">
+      {l.rdvId ? <Link to="/planning" search={{ rdv: l.rdvId }} className="text-lg font-extrabold hover:underline">{l.client}</Link> : <strong className="text-lg font-extrabold">{l.client}</strong>}
+      <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+        {l.donneur && <span className="font-semibold">{l.donneur}</span>}
+        {l.ville && <span>{l.ville}</span>}
+        {l.date && <span>Chantier du {dateFr(l.date)}</span>}
+        <span className="text-primary">Réceptionné le {dateFr(l.receptionneLe)} {!enCours && <button type="button" className="underline" onClick={onRetirer}>retirer</button>}</span>
+      </div>
+      <ul className="mt-2 space-y-1">
+        {g.map((x) => <li key={x.cle} className="rounded-md border border-border px-2 py-1 text-xs">
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
+            {x.attId ? <Link to="/attachements/$id" params={{ id: x.attId }} className="inline-flex items-center gap-1 font-semibold hover:underline"><FileText className="h-3 w-3" />{x.attNumero}</Link> : <span>Pas d’attachement</span>}
+            {x.ts && <span className="rounded border border-amber-500/60 px-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">TS</span>}
+            {x.commande ? <span>Commande {x.commande}</span> : <span className="text-amber-600 dark:text-amber-400">Commande à recevoir</span>}
+            {x.factureId && <Link to="/factures/$id" params={{ id: x.factureId }} className="inline-flex items-center gap-1 hover:underline"><Receipt className="h-3 w-3" />{x.factureNumero}</Link>}
+            <span className="rounded-full bg-muted px-2 py-0.5 font-bold">Étape {x.etape} · {ETAPES_CHANTIER[x.etape - 1].court}</span>
+            <strong className="ml-auto text-sm text-dashboard-green">{euro(x.montantHt)} HT</strong>
+          </span>
+          <AlerteDoublon autres={doublons.get(x.cle)} />
+        </li>)}
+      </ul>
+    </div>
+    <strong className="text-xl font-extrabold text-dashboard-green">{euro(total)} <span className="text-xs font-normal text-muted-foreground">HT</span></strong>
+  </li>;
+}
+
+function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, doublon }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void; doublon?: string[] }) {
   const pasTermine = l.statutPlanning && l.statutPlanning !== "termine" && l.statutPlanning !== "realise";
   const action = ACTION[l.etape];
   return <li className="flex flex-wrap items-center gap-3 p-3">
@@ -239,7 +285,6 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, montrerEtape 
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-baseline gap-x-3">
         {l.rdvId ? <Link to="/planning" search={{ rdv: l.rdvId }} className="text-lg font-extrabold hover:underline">{l.client}</Link> : <strong className="text-lg font-extrabold">{l.client}</strong>}
-        {montrerEtape && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold">Étape {l.etape} · {ETAPES_CHANTIER[l.etape - 1].court}</span>}
         {l.ts && <span className="rounded border border-amber-500/60 px-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">TS</span>}
       </div>
       <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
@@ -255,6 +300,7 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, montrerEtape 
         {l.payeLe && <span className="text-primary">Payée le {dateFr(l.payeLe)}</span>}
       </div>
       {pasTermine && <span className="mt-0.5 block text-xs font-semibold text-amber-600 dark:text-amber-400">Encore « {STATUT_PLANNING[l.statutPlanning!] ?? l.statutPlanning} » au Planning</span>}
+      <AlerteDoublon autres={doublon} />
       {l.recuSansCommande && <span className="mt-0.5 block text-xs font-semibold text-amber-600 dark:text-amber-400">Réceptionné mais commande à recevoir</span>}
     </div>
     <strong className="text-xl font-extrabold text-dashboard-green">{euro(l.montantHt)} <span className="text-xs font-normal text-muted-foreground">HT</span></strong>
