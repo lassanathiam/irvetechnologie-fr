@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { attachementEnvoye, etapeChantier, recuSansCommande, type LigneSuivi } from "./etape-chantier";
 
@@ -101,17 +100,4 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
     }
     lignes.sort((x, y) => String(y.date ?? "").localeCompare(String(x.date ?? "")));
     return { lignes };
-  });
-
-/** Crée les factures des attachements réceptionnés cochés (un attachement = une facture, jamais deux). */
-export const facturerAttachementsReceptionnes = createServerFn({ method: "POST" })
-  .middleware([requireSupabaseAuth])
-  .inputValidator((d: unknown) => z.object({ ids: z.array(z.string().uuid()).min(1).max(100) }).parse(d))
-  .handler(async ({ data, context }) => {
-    const { convertirEnFacture } = await import("./attachements.functions");
-    const ok: string[] = []; const echecs: string[] = [];
-    for (const id of [...new Set(data.ids)]) {
-      try { await convertirEnFacture(context, { id }); ok.push(id); } catch (e) { echecs.push(e instanceof Error ? e.message : String(e)); }
-    }
-    return { ok: ok.length, echecs };
   });
