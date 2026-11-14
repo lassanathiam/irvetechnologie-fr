@@ -484,7 +484,7 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                   {enCours === chantier.id ? <Loader2 className="animate-spin" /> : null} Annuler
                 </Button>
               ) : (
-                <Button type="button" size="sm" disabled={enCours === chantier.id} onClick={() => void basculer(chantier, true)} className="min-h-10 bg-dashboard-green font-bold text-dashboard-bg hover:bg-dashboard-green/90">
+                <Button type="button" size="sm" variant="outline" disabled={enCours === chantier.id} onClick={() => void basculer(chantier, true)} className="min-h-10 border-2 border-dashboard-green font-bold text-dashboard-green hover:bg-dashboard-green-soft">
                   {enCours === chantier.id ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner
                 </Button>
               )}

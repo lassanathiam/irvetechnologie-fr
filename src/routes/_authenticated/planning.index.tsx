@@ -1424,6 +1424,11 @@ function PlanningPage() {
                     ? <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => pauser.mutate({ id: missionTerrain.id, pause: false })}><Play className="shrink-0" /> <span className="min-w-0">Reprendre les travaux</span></Button>
                     : <Button variant="outline" className="mt-3 min-h-12 h-auto w-full min-w-0 whitespace-normal border-amber-500 px-3 py-3 text-center text-sm font-bold leading-tight text-amber-700 dark:text-amber-300" disabled={pauser.isPending} onClick={() => { if (window.confirm(`Mettre en pause le chantier de ${missionTerrain.client_nom} ?\n\nAucun email ne sera envoyé. Photos et métrage sont conservés, et le chantier reviendra en tête de votre mission jusqu'à sa clôture.`)) pauser.mutate({ id: missionTerrain.id, pause: true }); }}><Pause className="shrink-0" /> <span className="min-w-0">Mettre en pause (pas fini)</span></Button>)}
                   {missionTerrain.statut === "en_pause" && <p className="mt-2 text-xs font-semibold text-amber-700 dark:text-amber-300">En pause — aucun retour de travaux envoyé.</p>}
+                  {(missionTerrain.statut === "termine" || missionTerrain.statut === "realise" || missionTerrain.receptionne_at) && (
+                    <Button variant="outline" className={`mt-3 min-h-12 h-auto w-full whitespace-normal font-bold ${missionTerrain.receptionne_at ? "border-emerald-500 bg-emerald-500/15 text-emerald-700 dark:text-emerald-300" : "border-2 border-emerald-500 text-emerald-700 dark:text-emerald-300"}`} disabled={majOptions.isPending} onClick={() => { const recu = Boolean(missionTerrain.receptionne_at); if (recu && !window.confirm(`Retirer la réception du chantier de ${missionTerrain.client_nom} ?`)) return; majOptions.mutate({ id: missionTerrain.id, receptionne: !recu }, { onSuccess: () => toast.success(recu ? "Réception retirée" : "Chantier réceptionné") }); }}>
+                      <CheckCircle2 /> {missionTerrain.receptionne_at ? `Réceptionné le ${new Date(missionTerrain.receptionne_at).toLocaleDateString("fr-FR")} — annuler` : "Réceptionner ce chantier (validé par le client)"}
+                    </Button>
+                  )}
                   <button type="button" className="mt-3 flex w-full items-center justify-center gap-1 rounded-lg border border-border py-2 text-sm font-semibold text-muted-foreground" aria-expanded={autresPour === missionTerrain.id} onClick={() => setAutresPour((v) => v === missionTerrain.id ? null : missionTerrain.id)}>
                     {autresPour === missionTerrain.id ? <>Masquer les autres actions <ChevronUp className="h-4 w-4" /></> : <>Un souci ? Autres actions <ChevronDown className="h-4 w-4" /></>}
                   </button>
@@ -2420,6 +2425,21 @@ function PlanningPage() {
                               {r.technicien ? `Affecté à ${r.technicien}` : "Non affecté"}
                               {r.receptionne_at && <span className="ml-2 text-emerald-600">· Réceptionné</span>}
                             </p>
+                            {/* Réception validée par l'équipe (point client ENSIO en direct). */}
+                            {(r.statut === "termine" || r.statut === "realise" || r.receptionne_at) && (<div><button
+                              type="button"
+                              disabled={majOptions.isPending}
+                              onClick={() => majOptions.mutate({ id: r.id, receptionne: !r.receptionne_at }, { onSuccess: () => toast.success(r.receptionne_at ? "Réception retirée" : "Chantier marqué réceptionné") })}
+                              className={`mt-2 text-mono text-[11px] font-bold min-h-[34px] px-3 rounded-full border inline-flex items-center gap-1.5 transition disabled:opacity-60 ${
+                                r.receptionne_at
+                                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-600"
+                                  : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
+                              }`}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {r.receptionne_at ? `Réceptionné le ${new Date(r.receptionne_at).toLocaleDateString("fr-FR")}` : "Marquer comme réceptionné"}
+                            </button></div>)}
+
                             {toutOuvert && (<>
                             <button
                               type="button"
@@ -2440,21 +2460,6 @@ function PlanningPage() {
                               }`}
                             >
                               <TriangleAlert className="h-3.5 w-3.5" /> {Boolean((r as { probleme?: boolean | null }).probleme) ? "Problème signalé — retirer" : "Signaler un problème"}
-                            </button>
-
-                            {/* Réception validée par l'équipe (point client ENSIO en direct). */}
-                            <button
-                              type="button"
-                              disabled={majOptions.isPending}
-                              onClick={() => majOptions.mutate({ id: r.id, receptionne: !r.receptionne_at }, { onSuccess: () => toast.success(r.receptionne_at ? "Réception retirée" : "Chantier marqué réceptionné") })}
-                              className={`mt-2 text-mono text-[11px] font-bold min-h-[34px] px-3 rounded-full border inline-flex items-center gap-1.5 transition disabled:opacity-60 ${
-                                r.receptionne_at
-                                  ? "border-emerald-500 bg-emerald-500/15 text-emerald-600"
-                                  : "border-border text-muted-foreground hover:border-emerald-500 hover:text-emerald-600"
-                              }`}
-                            >
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              {r.receptionne_at ? `Réceptionné le ${new Date(r.receptionne_at).toLocaleDateString("fr-FR")}` : "Marquer comme réceptionné"}
                             </button>
 
                             {/* Affectation possible directement depuis la liste du planning complet. */}
