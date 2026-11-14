@@ -67,6 +67,7 @@ import { Route as ApiPublicBornePhotoSplatRouteImport } from './routes/api/publi
 import { Route as ApiPublicHooksRappelsRdvRouteImport } from './routes/api/public/hooks/rappels-rdv'
 import { Route as ApiPublicPhotoSplatRouteImport } from './routes/api/public/photo.$'
 import { Route as ApiPublicRetourSplatRouteImport } from './routes/api/public/retour/$'
+import { Route as ApiPublicSorankWebhookRouteImport } from './routes/api/public/sorank/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -388,6 +389,11 @@ const ApiPublicRetourSplatRoute = ApiPublicRetourSplatRouteImport.update({
   path: '/api/public/retour/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiPublicSorankWebhookRoute = ApiPublicSorankWebhookRouteImport.update({
+  id: '/api/public/sorank/webhook',
+  path: '/api/public/sorank/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
   id: '/lovable/email/auth/preview',
   path: '/lovable/email/auth/preview',
@@ -463,6 +469,7 @@ export interface FileRoutesByFullPath {
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
+  '/api/public/sorank/webhook': typeof ApiPublicSorankWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -525,6 +532,7 @@ export interface FileRoutesByTo {
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
+  '/api/public/sorank/webhook': typeof ApiPublicSorankWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -589,6 +597,7 @@ export interface FileRoutesById {
   '/api/public/hooks/rappels-rdv': typeof ApiPublicHooksRappelsRdvRoute
   '/api/public/photo/$': typeof ApiPublicPhotoSplatRoute
   '/api/public/retour/$': typeof ApiPublicRetourSplatRoute
+  '/api/public/sorank/webhook': typeof ApiPublicSorankWebhookRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
   '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
@@ -653,6 +662,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
+    | '/api/public/sorank/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -715,6 +725,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
+    | '/api/public/sorank/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -778,6 +789,7 @@ export interface FileRouteTypes {
     | '/api/public/hooks/rappels-rdv'
     | '/api/public/photo/$'
     | '/api/public/retour/$'
+    | '/api/public/sorank/webhook'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
     | '/lovable/email/transactional/preview'
@@ -812,6 +824,7 @@ export interface RootRouteChildren {
   ApiPublicHooksRappelsRdvRoute: typeof ApiPublicHooksRappelsRdvRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
   ApiPublicRetourSplatRoute: typeof ApiPublicRetourSplatRoute
+  ApiPublicSorankWebhookRoute: typeof ApiPublicSorankWebhookRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -1225,6 +1238,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiPublicRetourSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/public/sorank/webhook': {
+      id: '/api/public/sorank/webhook'
+      path: '/api/public/sorank/webhook'
+      fullPath: '/api/public/sorank/webhook'
+      preLoaderRoute: typeof ApiPublicSorankWebhookRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/lovable/email/auth/preview': {
       id: '/lovable/email/auth/preview'
       path: '/lovable/email/auth/preview'
@@ -1351,6 +1371,7 @@ const rootRouteChildren: RootRouteChildren = {
   ApiPublicHooksRappelsRdvRoute: ApiPublicHooksRappelsRdvRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,
   ApiPublicRetourSplatRoute: ApiPublicRetourSplatRoute,
+  ApiPublicSorankWebhookRoute: ApiPublicSorankWebhookRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
