@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { csvSuivi, doublonsChantier, ETAPES_CHANTIER, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
+import { csvSuivi, doublonsChantier, ETAPES_CHANTIER, receptionnesSansCommande, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
@@ -59,6 +59,7 @@ function SuiviPage() {
   const [donneur, setDonneur] = useState("");
   const [du, setDu] = useState(""); const [au, setAu] = useState("");
   const [recherche, setRecherche] = useState("");
+  const [sansCommande, setSansCommande] = useState(false);
   const [coches, setCoches] = useState<string[]>([]);
   const [enCours, setEnCours] = useState<string | null>(null);
   const [message, setMessage] = useState("");
@@ -79,7 +80,8 @@ function SuiviPage() {
     return true;
   }), [toutes, donneur, du, au, recherche]);
   const resume = resumeEtapes(filtrees);
-  const recus = filtrees.filter((l) => l.receptionneLe);
+  const idsSansCommande = useMemo(() => receptionnesSansCommande(filtrees), [filtrees]);
+  const recus = filtrees.filter((l) => l.receptionneLe && (!sansCommande || (l.rdvId && idsSansCommande.has(l.rdvId))));
   const totauxRecus = totalReceptionnes(filtrees);
   const totalRecus = totauxRecus.ht;
   const doublons = useMemo(() => doublonsChantier(toutes), [toutes]);
@@ -227,6 +229,9 @@ function SuiviPage() {
             <h2 className="text-lg font-bold">{vueRecus ? "" : `${etape}. `}{info.label} <span className="text-dashboard-green">· {euro(totalEtape)} HT</span></h2>
             <p className="text-xs text-muted-foreground">{info.aide}</p>
           </div>
+          {vueRecus && <Button size="sm" variant={sansCommande ? "default" : "outline"} aria-pressed={sansCommande} onClick={() => { setSansCommande((v) => !v); setCoches([]); }}>
+            <AlertTriangle /> Réceptionnés sans commande ({idsSansCommande.size})
+          </Button>}
           {!vueRecus && etape === 2 && <Button asChild size="sm" variant="outline"><Link to="/attachements/commandes"><Upload /> Importer les commandes</Link></Button>}
         </div>
         <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-card p-3 text-sm">
@@ -241,7 +246,8 @@ function SuiviPage() {
           {selection.length > 0 && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) réceptionné(s) mais commande à recevoir.</strong> Ils restent ici tant que la commande n’est pas importée.</span></p>}
-        {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.{!vueRecus && etape === 4 && recus.length > 0 && <> Vos {totauxRecus.nb} chantier(s) réceptionné(s) sont déjà facturés : <button type="button" className="font-semibold text-primary underline" onClick={voirRecus}>voir tous les réceptionnés</button>.</>}</p> :
+        {vueRecus && sansCommande && !lignes.length ? <p className="p-6 text-center text-sm font-semibold text-dashboard-green">Aucun chantier réceptionné sans commande{donneur ? ` chez ${donneur}` : ""} : chaque réception a bien sa commande.</p> :
+          !lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.{!vueRecus && etape === 4 && recus.length > 0 && <> Vos {totauxRecus.nb} chantier(s) réceptionné(s) sont déjà facturés : <button type="button" className="font-semibold text-primary underline" onClick={voirRecus}>voir tous les réceptionnés</button>.</>}</p> :
           vueRecus
             ? <ul className="divide-y divide-border">{groupesRecus.map((g) => <GroupeRecu key={g[0].cle} g={g} doublons={doublons} coche={g.every((l) => coches.includes(l.cle))} onCoche={(v) => basculer(g.map((l) => l.cle), v)} enCours={enCours === g[0].cle} onRetirer={() => void retirerReception(g[0])} />)}</ul>
             : <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} doublon={doublons.get(l.cle)} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} />)}</ul>}
@@ -260,6 +266,7 @@ function AlerteDoublon({ autres }: { autres?: string[] }) {
 function GroupeRecu({ g, doublons, coche, onCoche, enCours, onRetirer }: { g: LigneSuivi[]; doublons: Map<string, string[]>; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onRetirer: () => void }) {
   const l = g[0];
   const total = g.reduce((t, x) => t + x.montantHt, 0);
+  const commandeChantier = g.find((x) => x.commande)?.commande ?? null;
   return <li className="flex flex-wrap items-start gap-3 p-3">
     <input type="checkbox" aria-label={`Cocher ${l.client}`} className="mt-1.5 h-5 w-5" checked={coche} onChange={(e) => onCoche(e.target.checked)} />
     <div className="min-w-0 flex-1">
@@ -275,7 +282,7 @@ function GroupeRecu({ g, doublons, coche, onCoche, enCours, onRetirer }: { g: Li
           <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {x.attId ? <Link to="/attachements/$id" params={{ id: x.attId }} className="inline-flex items-center gap-1 font-semibold hover:underline"><FileText className="h-3 w-3" />{x.attNumero}</Link> : <span>Pas d’attachement</span>}
             {x.ts && <span className="rounded border border-amber-500/60 px-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">TS</span>}
-            {x.commande ? <span>Commande {x.commande}</span> : <span className="text-amber-600 dark:text-amber-400">Commande à recevoir</span>}
+            {x.commande ? <span>Commande {x.commande}</span> : x.ts && commandeChantier ? <span>TS · commande du chantier {commandeChantier}</span> : <span className="font-bold text-destructive">Sans commande</span>}
             {x.factureId && <Link to="/factures/$id" params={{ id: x.factureId }} className="inline-flex items-center gap-1 hover:underline"><Receipt className="h-3 w-3" />{x.factureNumero}</Link>}
             <span className="rounded-full bg-muted px-2 py-0.5 font-bold">Étape {x.etape} · {ETAPES_CHANTIER[x.etape - 1].court}</span>
             <strong className="ml-auto text-sm text-dashboard-green">{euro(x.montantHt)} HT</strong>

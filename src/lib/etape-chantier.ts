@@ -133,3 +133,29 @@ export function csvSuivi(lignes: LigneSuivi[]): string {
   ]);
   return "\uFEFF" + [entete, ...rows].map((r) => r.map(cell).join(";")).join("\n");
 }
+
+const FORMES_JURIDIQUES = /\b(SAS|SASU|SARL|SA|EURL|SNC|SCI)\b/g;
+
+/**
+ * Nom unique d'un donneur d'ordre pour regrouper ses chantiers : « ENSIO SAS », « Ensio » et « ENSIO » = « ENSIO ».
+ * Ignore majuscules, accents, ponctuation et forme juridique. Affichage seulement, ne modifie aucune fiche.
+ */
+export function nomDonneur(nom: string | null | undefined): string {
+  const v = String(nom ?? "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toUpperCase()
+    .replace(/[^A-Z0-9]+/g, " ").replace(FORMES_JURIDIQUES, " ").replace(/\s+/g, " ").trim();
+  return v;
+}
+
+/**
+ * Chantiers réceptionnés sans aucune commande : un chantier a sa commande si au moins un de ses documents en porte une
+ * (son TS hérite de la commande de l'attachement initial). Une ligne sans chantier du Planning n'est jamais comptée.
+ */
+export function receptionnesSansCommande<T extends Pick<LigneSuivi, "rdvId" | "receptionneLe" | "commande">>(lignes: T[]): Set<string> {
+  const avec = new Set<string>(); const recus = new Set<string>();
+  for (const l of lignes) {
+    if (!l.rdvId || !l.receptionneLe) continue;
+    recus.add(l.rdvId);
+    if (l.commande) avec.add(l.rdvId);
+  }
+  return new Set([...recus].filter((id) => !avec.has(id)));
+}
