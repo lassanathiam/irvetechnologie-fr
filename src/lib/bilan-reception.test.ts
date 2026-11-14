@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it } from "bun:test";
 import { categorieBilan, resumeBilan, type LigneBilan } from "./bilan-reception";
 
 const ligne = (p: Partial<LigneBilan>): LigneBilan => ({ id: "a", numero: "AT-1", donneur: "ENSIO SAS", objet: null, ticket: null, totalHt: 100, envoyeLe: null, facture: null, commande: null, chantiers: [], ...p });
