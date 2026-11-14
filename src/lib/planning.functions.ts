@@ -881,6 +881,16 @@ export const getDashboard = createServerFn({ method: "GET" })
         .not("rendezvous_id", "is", null),
       s.from("attachements_travaux").select("id, numero, statut, depose_at, envoye_facturation_at, paye_at, facture_id"),
     ]);
+    // Devis rattachés à un chantier : montant HT affiché à côté de l'attachement et de la facture.
+    const { data: devisChantiers } = await s
+      .from("devis")
+      .select("rendezvous_id, total_ht, statut")
+      .not("rendezvous_id", "is", null);
+    const devisParRdv = new Map<string, number>();
+    for (const d of devisChantiers ?? []) {
+      if (!d.rendezvous_id || ["refuse", "annule", "expire"].includes(String(d.statut))) continue;
+      devisParRdv.set(d.rendezvous_id, (devisParRdv.get(d.rendezvous_id) ?? 0) + Number(d.total_ht ?? 0));
+    }
 
     const now = Date.now();
     const annules = new Set(
@@ -896,6 +906,14 @@ export const getDashboard = createServerFn({ method: "GET" })
       );
     }
     const enteteParId = new Map((attEntetes.data ?? []).map((a: any) => [a.id, a]));
+    // Part facturée d'un chantier = ses lignes d'attachement déjà transformées en facture
+    // (une facture hebdomadaire couvre plusieurs chantiers : on ne répète jamais son total).
+    const factures_ = new Map<string, number>();
+    for (const ligne of attLignes.data ?? []) {
+      if (!ligne.rendezvous_id || annules.has(ligne.attachement_id)) continue;
+      if (!enteteParId.get(ligne.attachement_id)?.facture_id) continue;
+      factures_.set(ligne.rendezvous_id, (factures_.get(ligne.rendezvous_id) ?? 0) + Number(ligne.quantite ?? 0) * Number(ligne.prix_unitaire ?? 0));
+    }
     const attParRdv = new Map<string, any>();
     for (const ligne of attLignes.data ?? []) {
       if (!ligne.rendezvous_id || annules.has(ligne.attachement_id)) continue;
@@ -908,6 +926,8 @@ export const getDashboard = createServerFn({ method: "GET" })
     const rows = (rdv.data ?? []).map((r) => ({
       ...r,
       montant_ht: Math.round((montants.get(r.id) ?? 0) * 100) / 100,
+      montant_facture_ht: Math.round((factures_.get(r.id) ?? 0) * 100) / 100,
+      montant_devis_ht: Math.round((devisParRdv.get(r.id) ?? 0) * 100) / 100,
       attachement: (attParRdv.get(r.id) ?? null) as { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id: string | null } | null,
     }));
     const aVenir = rows.filter(
