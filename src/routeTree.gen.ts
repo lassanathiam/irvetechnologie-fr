@@ -41,6 +41,7 @@ import { Route as SignerPvTokenRouteImport } from './routes/signer-pv.$token'
 import { Route as SignerTokenRouteImport } from './routes/signer.$token'
 import { Route as AuthenticatedAttachementsIndexRouteImport } from './routes/_authenticated/attachements.index'
 import { Route as AuthenticatedAttachementsIdRouteImport } from './routes/_authenticated/attachements.$id'
+import { Route as AuthenticatedAttachementsBilanRouteImport } from './routes/_authenticated/attachements.bilan'
 import { Route as AuthenticatedAttachementsBordereauRouteImport } from './routes/_authenticated/attachements.bordereau'
 import { Route as AuthenticatedAttachementsCommandesRouteImport } from './routes/_authenticated/attachements.commandes'
 import { Route as AuthenticatedChantierCriTotalRdvIdRouteImport } from './routes/_authenticated/chantier-cri-total.$rdvId'
@@ -238,6 +239,12 @@ const AuthenticatedAttachementsIdRoute =
   AuthenticatedAttachementsIdRouteImport.update({
     id: '/attachements/$id',
     path: '/attachements/$id',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedAttachementsBilanRoute =
+  AuthenticatedAttachementsBilanRouteImport.update({
+    id: '/attachements/bilan',
+    path: '/attachements/bilan',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
 const AuthenticatedAttachementsBordereauRoute =
@@ -454,6 +461,7 @@ export interface FileRoutesByFullPath {
   '/signer/$token': typeof SignerTokenRoute
   '/blog/': typeof BlogIndexRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/attachements/bilan': typeof AuthenticatedAttachementsBilanRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
   '/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
@@ -519,6 +527,7 @@ export interface FileRoutesByTo {
   '/signer/$token': typeof SignerTokenRoute
   '/blog': typeof BlogIndexRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/attachements/bilan': typeof AuthenticatedAttachementsBilanRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
   '/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
@@ -586,6 +595,7 @@ export interface FileRoutesById {
   '/signer/$token': typeof SignerTokenRoute
   '/blog/': typeof BlogIndexRoute
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
+  '/_authenticated/attachements/bilan': typeof AuthenticatedAttachementsBilanRoute
   '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/_authenticated/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
   '/_authenticated/chantier-cri-total/$rdvId': typeof AuthenticatedChantierCriTotalRdvIdRoute
@@ -653,6 +663,7 @@ export interface FileRouteTypes {
     | '/signer/$token'
     | '/blog/'
     | '/attachements/$id'
+    | '/attachements/bilan'
     | '/attachements/bordereau'
     | '/attachements/commandes'
     | '/chantier-cri-total/$rdvId'
@@ -718,6 +729,7 @@ export interface FileRouteTypes {
     | '/signer/$token'
     | '/blog'
     | '/attachements/$id'
+    | '/attachements/bilan'
     | '/attachements/bordereau'
     | '/attachements/commandes'
     | '/chantier-cri-total/$rdvId'
@@ -784,6 +796,7 @@ export interface FileRouteTypes {
     | '/signer/$token'
     | '/blog/'
     | '/_authenticated/attachements/$id'
+    | '/_authenticated/attachements/bilan'
     | '/_authenticated/attachements/bordereau'
     | '/_authenticated/attachements/commandes'
     | '/_authenticated/chantier-cri-total/$rdvId'
@@ -1082,6 +1095,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAttachementsIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/attachements/bilan': {
+      id: '/_authenticated/attachements/bilan'
+      path: '/attachements/bilan'
+      fullPath: '/attachements/bilan'
+      preLoaderRoute: typeof AuthenticatedAttachementsBilanRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/attachements/bordereau': {
       id: '/_authenticated/attachements/bordereau'
       path: '/attachements/bordereau'
@@ -1315,6 +1335,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProspectsRoute: typeof AuthenticatedProspectsRoute
   AuthenticatedTarifsSiteRoute: typeof AuthenticatedTarifsSiteRoute
   AuthenticatedAttachementsIdRoute: typeof AuthenticatedAttachementsIdRoute
+  AuthenticatedAttachementsBilanRoute: typeof AuthenticatedAttachementsBilanRoute
   AuthenticatedAttachementsBordereauRoute: typeof AuthenticatedAttachementsBordereauRoute
   AuthenticatedAttachementsCommandesRoute: typeof AuthenticatedAttachementsCommandesRoute
   AuthenticatedChantierCriTotalRdvIdRoute: typeof AuthenticatedChantierCriTotalRdvIdRoute
@@ -1348,6 +1369,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProspectsRoute: AuthenticatedProspectsRoute,
   AuthenticatedTarifsSiteRoute: AuthenticatedTarifsSiteRoute,
   AuthenticatedAttachementsIdRoute: AuthenticatedAttachementsIdRoute,
+  AuthenticatedAttachementsBilanRoute: AuthenticatedAttachementsBilanRoute,
   AuthenticatedAttachementsBordereauRoute:
     AuthenticatedAttachementsBordereauRoute,
   AuthenticatedAttachementsCommandesRoute:
