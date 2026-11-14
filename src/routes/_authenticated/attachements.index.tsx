@@ -4,7 +4,7 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown, ChevronRight, ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
+import { CheckCircle2, ChevronDown, ChevronRight, ClipboardList, Euro, FileText, Loader2, Plus, Search, Sparkles } from "lucide-react";
 import { LignesAttachement, nouvelleLigne, type LigneAtt } from "@/components/LignesAttachement";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,8 @@ import { convertirAttachementEnFacture, copieEquipeAttachements, marquerSuiviFac
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { euro } from "@/lib/company";
+import { receptionnerChantiers } from "@/lib/planning.functions";
+import { toast } from "sonner";
 import { precisionReseauClient } from "@/lib/reseau-client";
 import { supplementsEnsio } from "@/lib/supplements-ensio";
 import { ReseauClientBadge } from "@/components/ReseauClientBadge";
