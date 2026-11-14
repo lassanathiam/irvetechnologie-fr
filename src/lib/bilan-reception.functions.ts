@@ -82,6 +82,8 @@ export const envoyerBilanReception = createServerFn({ method: "POST" })
     ids: z.array(z.string().uuid()).min(1).max(300),
     envoiId: z.string().uuid(),
     message: z.string().trim().max(2000).default(""),
+    /** Copie pour l'équipe seulement : le client ne reçoit rien. */
+    pourMoi: z.boolean().default(false),
   }).parse(raw))
   .handler(async ({ data, context }) => {
     const { data: atts, error } = await context.supabase.from("attachements_travaux").select("client_email, client_nom").in("id", data.ids).neq("statut", "annule");
@@ -93,6 +95,11 @@ export const envoyerBilanReception = createServerFn({ method: "POST" })
     const donneur = atts?.[0]?.client_nom ?? "";
     const { sendTemplateEmail } = await import("./email-templates/send-email");
     const { resoudreCopieEnsio } = await import("./copie-ensio.server");
+    const templateData = { donneur, date: new Date().toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }), lignes, resume: resumeBilan(lignes), message: data.message };
+    if (data.pourMoi) {
+      const { COMPANY } = await import("./company");
+      return sendTemplateEmail("bilan-reception", COMPANY.email, { templateData, idempotencyKey: `bilan-reception-${data.envoiId}-moi` });
+    }
     return sendTemplateEmail("bilan-reception", email, {
       templateData: { donneur, date: new Date().toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }), lignes, resume: resumeBilan(lignes), message: data.message },
       copieEnsio: await resoudreCopieEnsio(context.supabase, email, donneur),
