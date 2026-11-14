@@ -213,5 +213,14 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
         const l = anciens.get(it.rendezvous_id) ?? []; if (!l.some((x) => x.id === a.id)) l.push({ id: a.id, numero: a.numero, statut: a.statut }); anciens.set(it.rendezvous_id, l);
       }
     }
+    // Attachements reliés directement au chantier (sans ligne) : même règle, hors TS.
+    if (ids.length) {
+      const { data: directs } = await context.supabase.from("attachements_travaux").select("id, numero, statut, facture_id, rendezvous_id, attachement_initial_id").in("rendezvous_id", ids);
+      for (const a of (directs ?? []) as any[]) {
+        if (!a.rendezvous_id || a.statut === "annule" || a.attachement_initial_id) continue;
+        if (a.facture_id || a.statut !== "brouillon") { deja.add(a.rendezvous_id); continue; }
+        const l = anciens.get(a.rendezvous_id) ?? []; if (!l.some((x) => x.id === a.id)) l.push({ id: a.id, numero: a.numero, statut: a.statut }); anciens.set(a.rendezvous_id, l);
+      }
+    }
     return (rows ?? []).filter((r) => !deja.has(r.id) && !/annul/i.test(r.statut ?? "")).map((r) => ({ ...r, anciens_attachements: anciens.get(r.id) ?? [] }));
   });

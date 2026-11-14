@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { attachementEnvoye, etapeChantier, recuSansCommande, type LigneSuivi } from "./etape-chantier";
+import { attachementEnvoye, etapeChantier, numeroCommandeValide, recuSansCommande, type LigneSuivi } from "./etape-chantier";
 
 const arrondi = (n: number) => Math.round(n * 100) / 100;
 
@@ -29,7 +29,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
       parts.set(i.attachement_id, m);
     }
     const commandeParAtt = new Map<string, string>();
-    for (const c of (commandes.data ?? []) as any[]) { const sa = c.saisie as any; if (sa?.attId && sa?.lu?.numero) commandeParAtt.set(sa.attId, String(sa.lu.numero)); }
+    for (const c of (commandes.data ?? []) as any[]) { const sa = c.saisie as any; const n = numeroCommandeValide(sa?.lu?.numero); if (sa?.attId && n) commandeParAtt.set(sa.attId, n); }
 
     const rdvIds = new Set<string>((termines.data ?? []).map((r: any) => r.id));
     for (const a of listeAtt) if (a.rendezvous_id) rdvIds.add(a.rendezvous_id);

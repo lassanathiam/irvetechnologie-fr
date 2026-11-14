@@ -307,6 +307,8 @@ export const createAttachement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => attachmentSchema.parse(data))
   .handler(async ({ data, context }) => {
     const items = data.items.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
+    const doublons = await autresAttachementsDesChantiers(context.supabase, [data.rendezvous_id, ...items.map((i) => i.rendezvous_id)]);
+    if (doublons.bloquants.length) throw new Error(`Déjà dans un attachement envoyé ou facturé : ${listeDoublons(doublons.bloquants)}. Pour un supplément, créez un TS depuis cet attachement.`);
     const totals = computeTotals(items, 0);
     const numero = await nextNumber(context.supabase, Number(data.date_emission.slice(0, 4)));
     const { items: _items, ...attachmentData } = data;
@@ -335,6 +337,35 @@ export const createAttachement = createServerFn({ method: "POST" })
     return { id: row.id };
   });
 
+/**
+ * Anti-doublon : autres attachements ordinaires (pas TS, pas annulés) qui contiennent déjà ces chantiers.
+ * `bloquants` = déjà envoyés, acceptés ou facturés (un brouillon reste refaisable) ; `factures` = déjà facturés.
+ */
+async function autresAttachementsDesChantiers(supabase: any, rdvIds: (string | null | undefined)[], saufId?: string) {
+  const ids = [...new Set(rdvIds.filter(Boolean) as string[])];
+  const vide = { bloquants: [] as { numero: string; client: string }[], factures: [] as { numero: string; client: string }[] };
+  if (!ids.length) return vide;
+  const [direct, lignes, rdvs] = await Promise.all([
+    supabase.from("attachements_travaux").select("id, numero, statut, facture_id, attachement_initial_id, rendezvous_id").in("rendezvous_id", ids),
+    supabase.from("attachement_items").select("rendezvous_id, attachements_travaux!inner(id, numero, statut, facture_id, attachement_initial_id)").in("rendezvous_id", ids),
+    supabase.from("rendezvous").select("id, client_nom").in("id", ids),
+  ]);
+  for (const q of [direct, lignes, rdvs]) if (q.error) throw new Error(q.error.message);
+  const nom = new Map((rdvs.data ?? []).map((r: any) => [r.id, r.client_nom || "ce chantier"]));
+  const vus = new Set<string>();
+  const ajouter = (a: any, rdv: string) => {
+    if (!a || a.id === saufId || a.statut === "annule" || a.attachement_initial_id) return;
+    const k = `${a.id}|${rdv}`; if (vus.has(k)) return; vus.add(k);
+    const e = { numero: a.numero, client: String(nom.get(rdv) ?? "ce chantier") };
+    if (a.facture_id || a.statut !== "brouillon") vide.bloquants.push(e);
+    if (a.facture_id) vide.factures.push(e);
+  };
+  for (const a of direct.data ?? []) ajouter(a, a.rendezvous_id);
+  for (const l of lignes.data ?? []) ajouter((l as any).attachements_travaux, (l as any).rendezvous_id);
+  return vide;
+}
+const listeDoublons = (l: { numero: string; client: string }[]) => [...new Set(l.map((x) => `${x.client} (${x.numero})`))].join(", ");
+
 /** Lignes saisies à la main : si l'attachement ne concerne qu'un seul chantier, elles y sont rattachées. */
 function chantierUnique(items: { rendezvous_id?: string | null }[], extra: (string | null | undefined)[] = []) {
   const ids = new Set([...items.map((i) => i.rendezvous_id), ...extra].filter(Boolean) as string[]);
@@ -351,6 +382,8 @@ export const updateAttachement = createServerFn({ method: "POST" })
     if (!existing.data) throw new Error("Attachement introuvable.");
     if (existing.data.facture_id) throw new Error("Cet attachement est déjà facturé : modifiez la facture.");
     const items = rawItems.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
+    const doublons = await autresAttachementsDesChantiers(context.supabase, [data.rendezvous_id, ...items.map((i) => i.rendezvous_id)], id);
+    if (doublons.bloquants.length) throw new Error(`Déjà dans un autre attachement envoyé ou facturé : ${listeDoublons(doublons.bloquants)}. Pour un supplément, créez un TS depuis cet attachement.`);
     const totals = computeTotals(items, 0);
     const { error } = await context.supabase.from("attachements_travaux").update({
       ...attachmentData,
@@ -437,6 +470,11 @@ async function convertirEnFacture(context: { supabase: any; userId: string }, da
     if (attachment.facture_id) return { id: attachment.facture_id, existing: true };
     const { data: items, error: itemsError } = await context.supabase.from("attachement_items").select("*").eq("attachement_id", data.id).order("ordre");
     if (itemsError) throw new Error(itemsError.message);
+    if (!attachment.attachement_initial_id) {
+      // Un chantier ne se facture qu'une fois : un supplément passe par un TS.
+      const doublons = await autresAttachementsDesChantiers(context.supabase, [attachment.rendezvous_id, ...(items ?? []).map((i: any) => i.rendezvous_id)], attachment.id);
+      if (doublons.factures.length) throw new Error(`${attachment.numero} non facturé : déjà facturé dans ${listeDoublons(doublons.factures)}. Annulez le doublon ou passez par un TS.`);
+    }
     const today = new Date();
     const year = today.getFullYear();
     const prefix = `F-${year}-`;

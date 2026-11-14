@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { resumeBilan, type LigneBilan } from "./bilan-reception";
+import { numeroCommandeValide } from "./etape-chantier";
 
 /** Relit sous l'identité de l'utilisateur les attachements, chantiers, commandes et factures. */
 async function chargerBilan(supabase: any, ids?: string[]): Promise<LigneBilan[]> {
@@ -37,7 +38,7 @@ async function chargerBilan(supabase: any, ids?: string[]): Promise<LigneBilan[]
   const rdv = new Map((rdvs ?? []).map((r: any) => [r.id, r]));
   // Commande importée la plus récente pour chaque attachement (une commande corrigée remplace l'ancienne).
   const commandeParAtt = new Map<string, string>();
-  for (const c of commandes ?? []) { const s = c.saisie as any; if (s?.attId && s?.lu?.numero) commandeParAtt.set(s.attId, String(s.lu.numero)); }
+  for (const c of commandes ?? []) { const s = c.saisie as any; const n = numeroCommandeValide(s?.lu?.numero); if (s?.attId && n) commandeParAtt.set(s.attId, n); }
   const factureIds = [...new Set(liste.map((a) => a.facture_id).filter(Boolean))];
   const { data: factures, error: e4 } = factureIds.length
     ? await supabase.from("factures").select("id, numero").in("id", factureIds)
