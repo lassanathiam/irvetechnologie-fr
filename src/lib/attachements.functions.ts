@@ -108,7 +108,7 @@ async function messageAdaptif(supabase: any, attachment: any) {
 }
 
 /** Chantier du Planning tel qu'affiché dans le détail d'un attachement. */
-export type ChantierRdv = { id: string; statut: string; client_nom: string | null; adresse: string | null; cp_ville: string | null; date_debut: string | null; termine_at: string | null; reseau_client: string | null };
+export type ChantierRdv = { id: string; statut: string; client_nom: string | null; adresse: string | null; cp_ville: string | null; date_debut: string | null; termine_at: string | null; reseau_client: string | null; receptionne_at?: string | null };
 /** Chantier avec le montant HT qui lui est rattaché dans un attachement. */
 export type ChantierLigne = ChantierRdv & { etat: "fait" | "a_faire"; montant_ht: number };
 /** Ligne d'un attachement qui n'est reliée à aucun chantier du Planning. */
@@ -141,7 +141,7 @@ export const listAttachements = createServerFn({ method: "GET" })
       : { data: [] as { attachement_id: string; libelle: string; description: string | null; quantite: number; prix_unitaire: number; rendezvous_id: string | null }[] };
     // Avancement réel : montant HT des lignes selon l'état du chantier lié (fait / à faire / sans chantier).
     const rdvIds = [...new Set([...(toutesLignes ?? []).map((l) => l.rendezvous_id), ...(data ?? []).map((a) => a.rendezvous_id)].filter((v): v is string => !!v))];
-    const { data: rdvs } = rdvIds.length ? await context.supabase.from("rendezvous").select("id, statut, client_nom, adresse, cp_ville, date_debut, termine_at, reseau_client").in("id", rdvIds) : { data: [] as ChantierRdv[] };
+    const { data: rdvs } = rdvIds.length ? await context.supabase.from("rendezvous").select("id, statut, client_nom, adresse, cp_ville, date_debut, termine_at, reseau_client, receptionne_at").in("id", rdvIds) : { data: [] as ChantierRdv[] };
     const rdv = new Map((rdvs ?? []).map((r) => [r.id, r]));
     const attRdv = new Map((data ?? []).map((a) => [a.id, a.rendezvous_id as string | null]));
     const avancement = new Map<string, { fait: number; a_faire: number; sans: number; sansLignes: { libelle: string; montant: number }[]; parRdv: Map<string, ChantierLigne> }>();
@@ -223,7 +223,15 @@ export const getAttachement = createServerFn({ method: "GET" })
       if (f.error) throw new Error(f.error.message);
       facture = (f.data ?? null) as typeof facture;
     }
-    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture };
+    // Chantiers du Planning présents dans l'attachement : permet de les réceptionner depuis la fiche.
+    const rdvIds = [...new Set([result.data.rendezvous_id, ...(lines.data ?? []).map((l) => l.rendezvous_id)].filter((v): v is string => Boolean(v)))];
+    let chantiers: { id: string; client_nom: string; adresse: string | null; cp_ville: string | null; date_debut: string; termine_at: string | null; statut: string; receptionne_at: string | null }[] = [];
+    if (rdvIds.length) {
+      const r = await context.supabase.from("rendezvous").select("id, client_nom, adresse, cp_ville, date_debut, termine_at, statut, receptionne_at").in("id", rdvIds);
+      if (r.error) throw new Error(r.error.message);
+      chantiers = (r.data ?? []) as typeof chantiers;
+    }
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture, chantiers };
   });
 
 export const creerAttachementTs = createServerFn({ method: "POST" })

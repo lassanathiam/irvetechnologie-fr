@@ -18,6 +18,8 @@ import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttache
 import { euro } from "@/lib/company";
 import { totalTes } from "@/lib/attachement-tes";
 import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
+import { receptionnerChantiers } from "@/lib/planning.functions";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/_authenticated/attachements/$id")({
   head: () => ({ meta: [{ title: "Attachement de travaux — IRVE Technologie" }, { name: "description", content: "Consulter, modifier, envoyer et convertir un attachement de pose de bornes ou de travaux." }, { name: "robots", content: "noindex" }, { property: "og:title", content: "Attachement de travaux — IRVE Technologie" }, { property: "og:description", content: "Consultation d’un attachement de pose de bornes ou de travaux." }, { property: "og:type", content: "website" }, { name: "twitter:card", content: "summary" }] }),
@@ -108,13 +110,7 @@ function AttachementDetail() {
     {a.attachement_initial_id && <section className="space-y-2"><h2 className="font-semibold text-primary">TS · Travaux supplémentaires séparés</h2><Button asChild variant="outline"><Link to="/attachements/$id" params={{ id: a.attachement_initial_id }}><ArrowLeft /> Attachement initial {a.attachement_initial_numero}</Link></Button></section>}
     {(query.data.supplements ?? []).length > 0 && <section className="space-y-2"><h2 className="text-sm font-semibold">Documents TS séparés</h2><div className="flex flex-wrap gap-2">{query.data.supplements.map((ts) => <Button key={ts.id} asChild variant="outline"><Link to="/attachements/$id" params={{ id: ts.id }}>{ts.numero} · {euro(Number(ts.total_ht))} HT · {statutAttachement(ts)}</Link></Button>)}</div></section>}
 
-    <section className="space-y-2">
-      <h2 className="text-sm font-semibold">Chantiers dans le Planning</h2>
-      <div className="flex flex-wrap gap-2">
-        {[...chantiers].map(([rdv, label]) => <Button asChild key={rdv} variant="outline" className="h-auto min-h-10 max-w-full whitespace-normal text-left"><Link to="/planning" search={{ rdv }}><CalendarClock className="h-4 w-4 shrink-0" /><span className="min-w-0 break-words">{label}</span></Link></Button>)}
-        {!chantiers.size && <p className="text-sm text-muted-foreground">Aucun chantier lié à cet attachement.</p>}
-      </div>
-    </section>
+    <ReceptionChantiers chantiers={query.data.chantiers ?? []} items={items ?? []} libelles={chantiers} onDone={refresh} />
 
     {tesHt > 0 ? <section className="rounded-md border-2 border-amber-500/60 bg-amber-500/10 p-4">
       <strong className="text-amber-600 dark:text-amber-400">Travaux en supplément (TES) : {euro(tesHt)} HT</strong>
@@ -171,3 +167,66 @@ function AttachementDetail() {
 function Stat({ label, value }: { label: string; value: string }) { return <div className="rounded-md border border-border bg-card p-4"><div className="text-[10px] font-bold uppercase text-muted-foreground">{label}</div><div className="mt-1 font-semibold">{value}</div></div>; }
 function Field({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) { return <label className="text-xs text-muted-foreground">{label}<Input className="mt-1.5" type={type} value={value} onChange={(e) => onChange(e.target.value)} /></label>; }
 function Check({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) { return <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} className="h-4 w-4" />{label}</label>; }
+
+type ChantierAtt = { id: string; client_nom: string; adresse: string | null; cp_ville: string | null; date_debut: string; termine_at: string | null; statut: string; receptionne_at: string | null };
+/** Point client : vérifier les tarifs de chaque chantier de l'attachement puis tout réceptionner en une fois. */
+function ReceptionChantiers({ chantiers, items, libelles, onDone }: { chantiers: ChantierAtt[]; items: any[]; libelles: Map<string, string>; onDone: () => void }) {
+  const receptionner = useServerFn(receptionnerChantiers);
+  const [coches, setCoches] = useState<string[]>([]);
+  const [enCours, setEnCours] = useState(false);
+  const liste = [...chantiers].sort((x, y) => String(x.termine_at ?? x.date_debut).localeCompare(String(y.termine_at ?? y.date_debut)));
+  if (!liste.length) return <section className="space-y-2"><h2 className="text-sm font-semibold">Réception des chantiers</h2><p className="text-sm text-muted-foreground">Aucun chantier du Planning n’est relié à cet attachement.</p></section>;
+  const lignesDe = (rdv: string) => items.filter((i) => i.rendezvous_id === rdv);
+  const montantDe = (rdv: string) => lignesDe(rdv).reduce((t, i) => t + Number(i.quantite ?? 0) * Number(i.prix_unitaire ?? 0), 0);
+  const nonRecus = liste.filter((c) => !c.receptionne_at);
+  const nbRecus = liste.length - nonRecus.length;
+  const totalCoche = coches.reduce((t, id) => t + montantDe(id), 0);
+  const appliquer = async (ids: string[], receptionne: boolean) => {
+    if (!ids.length) return;
+    if (!receptionne && !window.confirm(`Retirer la réception de ${ids.length} chantier(s) ?`)) return;
+    setEnCours(true);
+    try {
+      const r = await receptionner({ data: { ids, receptionne } });
+      toast.success(receptionne ? `${r.nb} chantier(s) réceptionné(s)` : `Réception retirée sur ${r.nb} chantier(s)`);
+      setCoches([]);
+      onDone();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Réception impossible, réessayez.");
+    } finally {
+      setEnCours(false);
+    }
+  };
+  return <section className="space-y-3 rounded-md border-2 border-primary/40 bg-card p-4">
+    <div className="flex flex-wrap items-center gap-2">
+      <h2 className="font-bold text-primary">Réception des chantiers avec le client</h2>
+      <span className="rounded-full border border-border px-2 py-0.5 text-xs">{nbRecus} / {liste.length} réceptionnés</span>
+    </div>
+    <p className="text-xs text-muted-foreground">Vérifiez les prix de chaque chantier, cochez ceux que le client valide, puis cliquez sur « Réceptionner ». Cela ne change ni l’attachement ni la facture.</p>
+    <div className="flex flex-wrap items-center gap-2 rounded-md border border-border bg-muted/40 p-2">
+      <label className="flex items-center gap-2 text-sm font-semibold"><input type="checkbox" className="h-5 w-5" disabled={!nonRecus.length} checked={nonRecus.length > 0 && nonRecus.every((c) => coches.includes(c.id))} onChange={(e) => setCoches(e.target.checked ? nonRecus.map((c) => c.id) : [])} /> Tout cocher ({nonRecus.length} à réceptionner)</label>
+      <span className="ml-auto text-sm">Sélection : <strong>{euro(totalCoche)} HT</strong></span>
+      <Button disabled={!coches.length || enCours} onClick={() => void appliquer(coches, true)}>{enCours ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner ({coches.length})</Button>
+    </div>
+    <ul className="divide-y divide-border rounded-md border border-border">
+      {liste.map((c) => {
+        const recu = Boolean(c.receptionne_at);
+        return <li key={c.id} className={`flex flex-wrap items-start gap-3 p-3 text-sm ${recu ? "bg-primary/5" : ""}`}>
+          {recu ? <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" /> : <input type="checkbox" aria-label={`Cocher ${c.client_nom}`} className="mt-0.5 h-5 w-5 shrink-0" checked={coches.includes(c.id)} onChange={(e) => setCoches((v) => e.target.checked ? [...v, c.id] : v.filter((x) => x !== c.id))} />}
+          <div className="min-w-0 flex-1">
+            <Link to="/planning" search={{ rdv: c.id }} className="font-semibold hover:underline">{c.client_nom || libelles.get(c.id) || "Chantier"}</Link>
+            <span className="block text-xs text-muted-foreground">{[c.adresse, c.cp_ville].filter(Boolean).join(", ")} · {c.termine_at ? `terminé le ${new Date(c.termine_at).toLocaleDateString("fr-FR")}` : `prévu le ${new Date(c.date_debut).toLocaleDateString("fr-FR")}`}</span>
+            <ul className="mt-1 space-y-0.5 text-xs">
+              {lignesDe(c.id).map((l, i) => <li key={i} className="flex gap-2"><span className="min-w-0 flex-1 break-words">{l.libelle}{l.tes ? " (TES)" : ""}</span><span className="whitespace-nowrap font-mono text-muted-foreground">{Number(l.quantite)} × {euro(Number(l.prix_unitaire))}</span></li>)}
+            </ul>
+          </div>
+          <div className="flex flex-col items-end gap-1">
+            <strong className="font-mono">{euro(montantDe(c.id))} HT</strong>
+            {recu
+              ? <button type="button" disabled={enCours} onClick={() => void appliquer([c.id], false)} className="text-xs text-muted-foreground underline-offset-2 hover:underline">Réceptionné le {new Date(c.receptionne_at!).toLocaleDateString("fr-FR")} · retirer la réception</button>
+              : <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">À réceptionner</span>}
+          </div>
+        </li>;
+      })}
+    </ul>
+  </section>;
+}
