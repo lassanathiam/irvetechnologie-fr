@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
-import { ArrowLeft, CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, Mail } from "lucide-react";
+import { ArrowLeft, CheckCircle2, ChevronDown, ChevronRight, Download, Loader2, Mail, Search } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { CATEGORIES_BILAN, categorieBilan, csvBilan, estReceptionne, resumeBilan, type CleBilan, type LigneBilan } from "@/lib/bilan-reception";
+import { CATEGORIES_BILAN, categorieBilan, csvBilan, resumeBilan, type CleBilan, type LigneBilan } from "@/lib/bilan-reception";
 import { envoyerBilanReception, getBilanReception } from "@/lib/bilan-reception.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 
@@ -57,14 +57,19 @@ function BilanPage() {
   const [ouverts, setOuverts] = useState<Partial<Record<CleBilan, boolean>>>({});
   const [message, setMessage] = useState("");
   const [enCours, setEnCours] = useState<string | null>(null);
+  const [recherche, setRecherche] = useState("");
 
   const visibles = useMemo(() => lignes.filter((l) => {
     if (l.donneur !== donneur) return false;
     const jour = (l.chantiers[0]?.date ?? l.envoyeLe ?? "").slice(0, 10);
     if (du && (!jour || jour < du)) return false;
     if (au && (!jour || jour > au)) return false;
+    const t = recherche.trim().toLowerCase();
+    if (t && ![l.numero, l.objet, l.commande, l.facture, ...l.chantiers.flatMap((c) => [c.nom, c.ville])].filter(Boolean).join(" ").toLowerCase().includes(t)) return false;
     return true;
-  }), [lignes, donneur, du, au]);
+  }), [lignes, donneur, du, au, recherche]);
+  const toutOuvert = CATEGORIES_BILAN.every((c) => ouverts[c.cle]);
+  const basculerTout = () => setOuverts(Object.fromEntries(CATEGORIES_BILAN.map((c) => [c.cle, !toutOuvert])));
   const resume = resumeBilan(visibles);
   const selection = visibles.filter((l) => coches.includes(l.id));
   const totalSel = selection.reduce((t, l) => t + l.totalHt, 0);
@@ -89,6 +94,18 @@ function BilanPage() {
       toast.error(e instanceof Error ? e.message : "Envoi impossible.");
     } finally { setEnCours(null); }
   };
+  const receptionnerUn = async (id: string, nom: string, oui: boolean) => {
+    if (!oui && !window.confirm(`Retirer la réception du chantier ${nom} ?`)) return;
+    setEnCours(id);
+    try {
+      await receptionner({ data: { ids: [id], receptionne: oui } });
+      toast.success(oui ? `${nom} : réceptionné` : `${nom} : réception retirée`);
+      await qc.invalidateQueries({ queryKey: ["bilan-reception"] });
+      void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["dashboard"] });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Réception impossible.");
+    } finally { setEnCours(null); }
+  };
   const receptionnerSelection = async () => {
     setEnCours("reception");
     try {
@@ -107,6 +124,14 @@ function BilanPage() {
       <h1 className="text-xl font-bold">Bilan réceptions et commandes</h1>
     </header>
     {q.isLoading ? <Loader2 className="animate-spin text-primary" /> : q.error ? <p className="text-destructive">Bilan indisponible, rechargez la page.</p> : <>
+    <section className="rounded-md border border-primary/40 bg-primary/5 p-3 text-sm">
+      <strong className="block">Où trouver quoi ?</strong>
+      <ol className="mt-1 grid gap-1 text-xs sm:grid-cols-3">
+        <li><strong>1. Noms et montants</strong> : cliquez sur une catégorie ci-dessous (ou « Tout déplier ») — chaque chantier apparaît avec nom, ville, date et montant HT.</li>
+        <li><strong>2. Un chantier</strong> : bouton vert « Réceptionner » à droite de son nom.</li>
+        <li><strong>3. Plusieurs</strong> : cochez les attachements puis « Réceptionner », « Télécharger » ou « Envoyer au client ».</li>
+      </ol>
+    </section>
     <section className="flex flex-wrap items-end gap-3 rounded-md border border-border bg-card p-4">
       <label className="text-xs text-muted-foreground">Donneur d’ordre
         <select className="mt-1.5 block min-w-[200px] rounded-md border border-input bg-background px-3 py-2 text-sm" value={donneur} onChange={(e) => { setDonneur(e.target.value); setCoches([]); }}>
@@ -116,6 +141,10 @@ function BilanPage() {
       <label className="text-xs text-muted-foreground">Chantiers du<Input className="mt-1.5" type="date" value={du} onChange={(e) => setDu(e.target.value)} /></label>
       <label className="text-xs text-muted-foreground">au<Input className="mt-1.5" type="date" value={au} onChange={(e) => setAu(e.target.value)} /></label>
       {(du || au) && <Button variant="ghost" size="sm" onClick={() => { setDu(""); setAu(""); }}>Toute la période</Button>}
+      <label className="min-w-[220px] flex-1 text-xs text-muted-foreground">Chercher un nom, une ville, une facture, une commande
+        <span className="relative mt-1.5 block"><Search className="absolute left-2.5 top-2.5 h-4 w-4" /><Input className="pl-8" type="search" value={recherche} onChange={(e) => setRecherche(e.target.value)} placeholder="Ex. MALEZIEUX, F-2026-0047, CST…" /></span>
+      </label>
+      <Button variant="outline" size="sm" onClick={basculerTout}>{toutOuvert ? "Tout replier" : "Tout déplier"}</Button>
     </section>
 
     <section className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
@@ -140,7 +169,7 @@ function BilanPage() {
 
     {CATEGORIES_BILAN.map((cat) => {
       const rs = visibles.filter((l) => categorieBilan(l) === cat.cle);
-      const ouvert = ouverts[cat.cle] ?? false;
+      const ouvert = (ouverts[cat.cle] ?? false) || (recherche.trim() !== "" && rs.length > 0);
       return <section key={cat.cle} className="overflow-hidden rounded-md border border-border bg-card">
         <div className="flex flex-wrap items-center gap-3 p-3">
           <input type="checkbox" aria-label={`Cocher ${cat.label}`} className="h-5 w-5" disabled={!rs.length} checked={rs.length > 0 && rs.every((l) => coches.includes(l.id))} onChange={(e) => basculer(rs.map((l) => l.id), e.target.checked)} />
@@ -151,7 +180,7 @@ function BilanPage() {
           </button>
           <strong className="font-mono text-sm">{euro(resume.parCategorie[cat.cle].ht)} HT</strong>
         </div>
-        {ouvert && rs.length > 0 && <ul className="divide-y divide-border border-t border-border">{rs.map((l) => <LigneBilanVue key={l.id} l={l} coche={coches.includes(l.id)} onCoche={(v) => basculer([l.id], v)} />)}</ul>}
+        {ouvert && rs.length > 0 && <ul className="divide-y divide-border border-t border-border">{rs.map((l) => <LigneBilanVue key={l.id} l={l} coche={coches.includes(l.id)} onCoche={(v) => basculer([l.id], v)} enCours={enCours} onReception={(id, nom, oui) => void receptionnerUn(id, nom, oui)} />)}</ul>}
         {ouvert && !rs.length && <p className="border-t border-border p-3 text-sm text-muted-foreground">Aucun attachement dans cette catégorie.</p>}
       </section>;
     })}
@@ -162,23 +191,36 @@ function BilanPage() {
   </div></ProShell>;
 }
 
-function LigneBilanVue({ l, coche, onCoche }: { l: LigneBilan; coche: boolean; onCoche: (v: boolean) => void }) {
+const STATUT_PLANNING: Record<string, string> = { planifie: "planifié", en_pause: "en pause", en_cours: "en cours", annule: "annulé", a_planifier: "à planifier" };
+
+function LigneBilanVue({ l, coche, onCoche, enCours, onReception }: { l: LigneBilan; coche: boolean; onCoche: (v: boolean) => void; enCours: string | null; onReception: (id: string, nom: string, oui: boolean) => void }) {
   return <li className="flex flex-wrap items-start gap-3 p-3 text-sm">
     <input type="checkbox" aria-label={`Cocher ${l.numero}`} className="mt-0.5 h-5 w-5" checked={coche} onChange={(e) => onCoche(e.target.checked)} />
     <div className="min-w-0 flex-1">
-      <Link to="/attachements/$id" params={{ id: l.id }} className="font-semibold hover:underline">{l.numero}</Link>
-      <span className="ml-2">{l.chantiers.map((c) => c.nom).join(" / ") || l.objet || "Sans chantier"}</span>
-      <span className="block text-xs text-muted-foreground">
-        {l.chantiers.map((c) => [c.ville, dateFr(c.date)].filter(Boolean).join(" · ")).join(" / ") || "aucun chantier du Planning relié"}
-      </span>
+      <div className="flex flex-wrap items-center gap-2">
+        <Link to="/attachements/$id" params={{ id: l.id }} className="font-semibold hover:underline">{l.numero}</Link>
+        <span className="text-xs text-muted-foreground">{l.chantiers.length > 1 ? `${l.chantiers.length} chantiers` : l.chantiers.length ? "1 chantier" : l.objet || "aucun chantier du Planning relié"}</span>
+        <strong className="ml-auto font-mono">{euro(l.totalHt)} HT</strong>
+      </div>
       <span className="mt-1 flex flex-wrap gap-1 text-xs">
         <span className="rounded-full border border-border px-2 py-0.5">{l.envoyeLe ? `Envoyé le ${dateFr(l.envoyeLe)}` : "Pas envoyé"}</span>
         <span className={`rounded-full border px-2 py-0.5 ${l.commande ? "border-primary/50 text-primary" : "border-amber-500/60 text-amber-600 dark:text-amber-400"}`}>{l.commande ? `Commande ${l.commande}` : "Commande manquante"}</span>
-        <span className={`rounded-full border px-2 py-0.5 ${estReceptionne(l) ? "border-primary/50 text-primary" : "border-amber-500/60 text-amber-600 dark:text-amber-400"}`}>{estReceptionne(l) ? `Réceptionné le ${dateFr(l.chantiers[0]?.receptionneLe ?? null)}` : "Non réceptionné"}</span>
-        {l.facture ? <span className="rounded-full border border-primary/50 px-2 py-0.5 text-primary">Facture {l.facture}</span> : null}
+        {l.facture ? <span className="rounded-full border border-primary/50 px-2 py-0.5 text-primary">Facture {l.facture}</span> : <span className="rounded-full border border-border px-2 py-0.5 text-muted-foreground">Pas encore facturé</span>}
       </span>
+      {l.chantiers.length > 0 && <ul className="mt-2 divide-y divide-border rounded-md border border-border">
+        {l.chantiers.map((c) => <li key={c.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 px-3 py-2">
+          <span className="min-w-0 flex-1">
+            <strong className="block">{c.nom}</strong>
+            <span className="block text-xs text-muted-foreground">{[c.ville, dateFr(c.date)].filter(Boolean).join(" · ")}</span>
+            {c.statut && c.statut !== "termine" && c.statut !== "realise" && <span className="block text-xs font-semibold text-amber-600 dark:text-amber-400">Encore « {STATUT_PLANNING[c.statut] ?? c.statut} » au Planning</span>}
+          </span>
+          <span className="font-mono text-sm">{c.montantHt != null ? `${euro(c.montantHt)} HT` : "—"}</span>
+          {c.receptionneLe
+            ? <span className="flex items-center gap-2 text-xs text-primary">Réceptionné le {dateFr(c.receptionneLe)}<button type="button" className="text-muted-foreground underline" disabled={enCours === c.id} onClick={() => onReception(c.id, c.nom, false)}>retirer</button></span>
+            : <Button size="sm" variant="outline" className="border-2 border-primary font-bold text-primary" disabled={enCours === c.id} onClick={() => onReception(c.id, c.nom, true)}>{enCours === c.id ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner</Button>}
+        </li>)}
+      </ul>}
     </div>
-    <strong className="font-mono">{euro(l.totalHt)} HT</strong>
   </li>;
 }
 

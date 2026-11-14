@@ -15,17 +15,23 @@ async function chargerBilan(supabase: any, ids?: string[]): Promise<LigneBilan[]
   const attIds = liste.map((a) => a.id);
   if (!attIds.length) return [];
   const [{ data: items, error: e1 }, { data: commandes, error: e2 }] = await Promise.all([
-    supabase.from("attachement_items").select("attachement_id, rendezvous_id").in("attachement_id", attIds).not("rendezvous_id", "is", null),
+    supabase.from("attachement_items").select("attachement_id, rendezvous_id, quantite, prix_unitaire").in("attachement_id", attIds).not("rendezvous_id", "is", null),
     supabase.from("commandes_importees").select("saisie, created_at").order("created_at", { ascending: true }),
   ]);
   if (e1) throw new Error(e1.message);
   if (e2) throw new Error(e2.message);
   const rdvParAtt = new Map<string, Set<string>>();
   for (const a of liste) if (a.rendezvous_id) rdvParAtt.set(a.id, new Set([a.rendezvous_id]));
-  for (const i of items ?? []) { const s = rdvParAtt.get(i.attachement_id) ?? new Set<string>(); s.add(i.rendezvous_id); rdvParAtt.set(i.attachement_id, s); }
+  // Montant HT de chaque chantier dans son attachement (un attachement hebdomadaire couvre plusieurs chantiers).
+  const montantParAttRdv = new Map<string, number>();
+  for (const i of items ?? []) {
+    const s = rdvParAtt.get(i.attachement_id) ?? new Set<string>(); s.add(i.rendezvous_id); rdvParAtt.set(i.attachement_id, s);
+    const cle = `${i.attachement_id}|${i.rendezvous_id}`;
+    montantParAttRdv.set(cle, (montantParAttRdv.get(cle) ?? 0) + Number(i.quantite ?? 0) * Number(i.prix_unitaire ?? 0));
+  }
   const rdvIds = [...new Set([...rdvParAtt.values()].flatMap((s) => [...s]))];
   const { data: rdvs, error: e3 } = rdvIds.length
-    ? await supabase.from("rendezvous").select("id, client_nom, cp_ville, date_debut, termine_at, receptionne_at").in("id", rdvIds)
+    ? await supabase.from("rendezvous").select("id, client_nom, cp_ville, date_debut, termine_at, receptionne_at, statut").in("id", rdvIds)
     : { data: [], error: null };
   if (e3) throw new Error(e3.message);
   const rdv = new Map((rdvs ?? []).map((r: any) => [r.id, r]));
@@ -50,6 +56,10 @@ async function chargerBilan(supabase: any, ids?: string[]): Promise<LigneBilan[]
     commande: commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null),
     chantiers: [...(rdvParAtt.get(a.id) ?? [])].map((id) => rdv.get(id)).filter(Boolean).map((r: any) => ({
       id: r.id, nom: r.client_nom ?? "Chantier", ville: r.cp_ville ?? null, date: r.termine_at ?? r.date_debut ?? null, receptionneLe: r.receptionne_at ?? null,
+      statut: r.statut ?? null,
+      montantHt: montantParAttRdv.has(`${a.id}|${r.id}`)
+        ? Math.round(montantParAttRdv.get(`${a.id}|${r.id}`)! * 100) / 100
+        : (rdvParAtt.get(a.id)?.size === 1 ? Number(a.total_ht ?? 0) : null),
     })),
   }));
 }

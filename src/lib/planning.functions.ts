@@ -930,6 +930,19 @@ export const getDashboard = createServerFn({ method: "GET" })
       montant_devis_ht: Math.round((devisParRdv.get(r.id) ?? 0) * 100) / 100,
       attachement: (attParRdv.get(r.id) ?? null) as { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id: string | null } | null,
     }));
+    // Chantiers archivés mais déjà facturés : restent visibles dans la réception (jamais comptés ailleurs).
+    const presents = new Set(rows.map((r) => r.id));
+    const archivesFactures = [...factures_.keys()].filter((id) => !presents.has(id));
+    const { data: archivesRdv } = archivesFactures.length
+      ? await s.from("rendezvous").select("*").in("id", archivesFactures)
+      : { data: [] as any[] };
+    const rendezvousFacturesArchives = (archivesRdv ?? []).map((r: any) => ({
+      ...r,
+      montant_ht: Math.round((montants.get(r.id) ?? 0) * 100) / 100,
+      montant_facture_ht: Math.round((factures_.get(r.id) ?? 0) * 100) / 100,
+      montant_devis_ht: Math.round((devisParRdv.get(r.id) ?? 0) * 100) / 100,
+      attachement: (attParRdv.get(r.id) ?? null) as { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id: string | null } | null,
+    }));
     const aVenir = rows.filter(
       (r) => new Date(r.date_debut).getTime() >= now && r.statut !== "annule",
     );
@@ -963,6 +976,7 @@ export const getDashboard = createServerFn({ method: "GET" })
       devis: devisRows,
       rapports: rapports.data ?? [],
       rendezvous: rows,
+      rendezvousFacturesArchives,
       factures: factureRows.slice(0, 6),
       aEncaisser,
       encaissees,
