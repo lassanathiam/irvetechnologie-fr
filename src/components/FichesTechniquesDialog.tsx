@@ -3,13 +3,12 @@ import { useServerFn } from "@tanstack/react-start";
 import { FileText, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
 import { enregistrerFicheTechnique, type FicheExtraite } from "@/lib/fiches-techniques.functions";
-import { SEUIL_SUR, classerChantiers } from "@/lib/fiche-match";
+import { SEUIL_SUR, chantiersAFicher, classerChantiers } from "@/lib/fiche-match";
 import { lireFicheSansIA } from "@/lib/import-chantier-local";
 import { texteFichierSansIA } from "@/lib/fichier-chantier-local";
 import { compressImage } from "@/lib/image-compress";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { chantiersAFicher } from "@/lib/fiche-match";
 
 type Chantier = { id: string; client_nom: string; cp_ville: string | null; date_debut: string; statut?: string | null };
 type Ligne = { nom: string; data_url: string; fiche: FicheExtraite; rdv: string; suggestions: { id: string; score: number }[]; fait: boolean };

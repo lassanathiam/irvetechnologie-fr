@@ -29,6 +29,8 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
   const [lignes, setLignes] = useState<Ligne[]>([]);
   const [partenaire, setPartenaire] = useState("");
   const [texte, setTexte] = useState("");
+  // Chantiers déjà présents (planning ou même import) : jamais reproposés, gardés à part au cas où.
+  const [ecartes, setEcartes] = useState<Ligne[]>([]);
 
   const onTexte = async () => {
     const t = texte.trim();
@@ -69,13 +71,16 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
     }
   };
 
-  // Les doublons (planning existant ou même import) sont retirés d'office ; on peut les recocher.
+  // Les chantiers déjà créés ne sont pas reproposés : seuls les nouveaux restent dans la liste.
   const ajouter = (res: RdvExtrait[]) => setLignes((l) => {
-    const toutes = [...l, ...res.map((r) => ({ ...r, client_telephone: telephoneClient(r.client_telephone), garder: true }) as Ligne)];
-    const raisons = reperesDoublons(toutes, existants);
-    const n = raisons.slice(l.length).filter(Boolean).length;
-    if (n) toast.info(`${n} doublon(s) retiré(s) de l'import.`);
-    return toutes.map((x, i) => (i < l.length ? x : { ...x, doublon: raisons[i], garder: !raisons[i] }));
+    const nouvelles = res.map((r) => ({ ...r, client_telephone: telephoneClient(r.client_telephone), garder: true }) as Ligne);
+    const raisons = reperesDoublons([...l, ...nouvelles], existants).slice(l.length);
+    const doublons = nouvelles.flatMap((x, i) => (raisons[i] ? [{ ...x, doublon: raisons[i], garder: true }] : []));
+    if (doublons.length) {
+      setEcartes((e) => [...e, ...doublons]);
+      toast.info(`${doublons.length} chantier(s) déjà créé(s), non reproposé(s).`);
+    }
+    return [...l, ...nouvelles.filter((_, i) => !raisons[i])];
   });
 
   const maj = (i: number, p: Partial<Ligne>) => setLignes((l) => l.map((x, j) => (j === i ? { ...x, ...p } : x)));
@@ -188,6 +193,20 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
         {busy && <p className="text-sm text-primary flex items-center gap-2 mb-3"><Loader2 className="h-4 w-4 animate-spin" /> {busy}</p>}
         {erreur && <p className="text-sm text-destructive mb-3">{erreur}</p>}
 
+        {ecartes.length > 0 && (
+          <details className="mb-3 rounded-md border border-border bg-muted/40 p-2 text-xs">
+            <summary className="cursor-pointer font-semibold">{ecartes.length} chantier(s) déjà créé(s), non reproposé(s)</summary>
+            <ul className="mt-2 space-y-1">
+              {ecartes.map((e, i) => (
+                <li key={i} className="flex flex-wrap items-center justify-between gap-2">
+                  <span><span className="font-semibold">{e.client_nom}</span>{e.adresse ? ` · ${e.adresse}` : ""} — {e.doublon}</span>
+                  <button type="button" className="text-primary underline" onClick={() => { setEcartes((x) => x.filter((_, j) => j !== i)); setLignes((x) => [...x, { ...e, garder: true }]); }}>Importer quand même</button>
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
+
         <div className="space-y-3">
           {lignes.map((l, i) => (
             <div key={i} className={`border rounded-lg p-3 ${l.garder ? "border-border" : "border-border opacity-50"}`}>
@@ -195,7 +214,7 @@ export function ImportRdvDialog({ partenaires, existants = [], onClose, onDone }
                 <label className="text-sm font-semibold flex items-center gap-2">
                   <input type="checkbox" checked={l.garder} onChange={(e) => maj(i, { garder: e.target.checked })} />
                   Intervention {i + 1}{l.numero_dossier ? ` · ${l.numero_dossier}` : ""}
-                  {l.doublon && <span className="rounded-sm bg-destructive/15 text-destructive px-1.5 py-0.5 text-[11px] font-bold">Doublon, retiré · {l.doublon}</span>}
+                  {l.doublon && <span className="rounded-sm bg-destructive/15 text-destructive px-1.5 py-0.5 text-[11px] font-bold">Déjà créé · {l.doublon}</span>}
                 </label>
                 <Button type="button" onClick={() => setLignes((x) => x.filter((_, j) => j !== i))} aria-label="Retirer" className="text-muted-foreground hover:text-destructive"><Trash2 className="h-4 w-4" /></Button>
               </div>
