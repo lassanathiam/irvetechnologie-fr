@@ -14,7 +14,8 @@ describe("bilan de réception", () => {
   it("un attachement sans chantier n'est jamais compté réceptionné", () => expect(categorieBilan(ligne({ envoyeLe: "2026-11-01" }))).toBe("envoye_sans_commande"));
   it("compte chantiers réceptionnés et commandes manquantes", () => {
     const r = resumeBilan([ligne({ id: "1", chantiers: recu, commande: "CST 1", totalHt: 150 }), ligne({ id: "2", chantiers: nonRecu, totalHt: 120 })]);
-    expect(r).toMatchObject({ attachements: 2, chantiers: 2, receptionnes: 1, nonReceptionnes: 1, commandesRecues: 1, commandesManquantes: 1, totalHt: 270 });
+    const { attachements, chantiers, receptionnes, nonReceptionnes, commandesRecues, commandesManquantes, totalHt } = r;
+    expect({ attachements, chantiers, receptionnes, nonReceptionnes, commandesRecues, commandesManquantes, totalHt }).toEqual({ attachements: 2, chantiers: 2, receptionnes: 1, nonReceptionnes: 1, commandesRecues: 1, commandesManquantes: 1, totalHt: 270 });
     expect(r.parCategorie.recu_commande).toEqual({ nb: 1, ht: 150 });
   });
 });
