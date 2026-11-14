@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { CATEGORIES_BILAN, categorieBilan, csvBilan, estReceptionne, resumeBilan, type CleBilan, type LigneBilan } from "@/lib/bilan-reception";
+import { CATEGORIES_BILAN, categorieBilan, csvBilan, resumeBilan, type CleBilan, type LigneBilan } from "@/lib/bilan-reception";
 import { envoyerBilanReception, getBilanReception } from "@/lib/bilan-reception.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 
