@@ -54,7 +54,7 @@ function SuiviPage() {
   const deposer = useServerFn(updateFactureDepot);
   const payer = useServerFn(updateFactureStatut);
   const envoyerBilan = useEnvoiConfirme(envoyerBilanReception, "Envoyer ce bilan au donneur d’ordre par email ? Vous en recevez une copie.");
-  const bilanPourMoi = useServerFn(envoyerBilanReception);
+  const bilanPourMoi = useEnvoiConfirme(envoyerBilanReception, "M’envoyer une copie de ce bilan ? Le client ne reçoit rien.");
 
   const [donneur, setDonneur] = useState("");
   const [du, setDu] = useState(""); const [au, setAu] = useState("");
