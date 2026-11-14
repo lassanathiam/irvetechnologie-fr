@@ -4,8 +4,20 @@ import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { getTarifsSitePublic, TARIFS_SITE_DEFAUT } from "@/lib/tarifs-site.functions";
 import { trouverVille, VILLES_ZONE } from "@/lib/zones-intervention";
+import { trouverContenuVille } from "@/lib/contenu-villes";
+import { COMPANY_CONFIG, operatingBaseLine } from "@/config/company";
 
 const BASE = "https://irvetechnologie.fr";
+
+/** Une page ville peut être mise en avant alors qu'elle a sa propre route (ex. Nantes). */
+function lienVoisine(slug: string) {
+  if (slug === "nantes") {
+    return { href: `${BASE}/installation-borne-recharge-nantes`, nom: "Nantes" };
+  }
+  const v = trouverVille(slug);
+  if (!v) return null;
+  return { href: `${BASE}/installation-borne-recharge/${v.slug}`, nom: v.nom };
+}
 
 export const Route = createFileRoute("/installation-borne-recharge/$ville")({
   loader: async ({ params }) => {
@@ -17,14 +29,19 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
     } catch {
       /* tarifs par défaut */
     }
-    return { ville, tarifs };
+    return { ville, tarifs, contenu: trouverContenuVille(params.ville) };
   },
   head: ({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Ville introuvable | Borne de l'Ouest" }] };
     const v = loaderData.ville;
+    const c = loaderData.contenu;
     const url = `${BASE}/installation-borne-recharge/${v.slug}`;
-    const titre = `Installation borne de recharge à ${v.nom} (${v.numero}) | Borne de l'Ouest`;
-    const desc = `Installateur de borne de recharge à ${v.nom} et en ${v.departement} : particuliers, copropriétés et entreprises. Devis gratuit, électricien qualifié IRVE P1 P2 P3.`;
+    const titre = c?.titreSeo
+      ? `${c.titreSeo} | Borne de l'Ouest`
+      : `Installation borne de recharge à ${v.nom} (${v.numero}) | Borne de l'Ouest`;
+    const desc =
+      c?.descriptionSeo ??
+      `Installateur de borne de recharge à ${v.nom} et en ${v.departement} : particuliers, copropriétés et entreprises. Devis gratuit, électricien qualifié IRVE P1 P2 P3.`;
     return {
       links: [{ rel: "canonical", href: url }],
       meta: [
@@ -43,9 +60,45 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
             "@context": "https://schema.org",
             "@type": "Service",
             serviceType: "Installation de borne de recharge pour véhicule électrique",
-            provider: { "@type": "Electrician", name: "Borne de l'Ouest", url: BASE, telephone: "+33768084367" },
-            areaServed: [{ "@type": "City", name: v.nom }, ...v.communes.map((c) => ({ "@type": "City", name: c }))],
+            name: `Installation de borne de recharge à ${v.nom}`,
+            description: desc,
+            provider: {
+              "@type": "Electrician",
+              name: COMPANY_CONFIG.brandName,
+              legalName: COMPANY_CONFIG.legalName,
+              url: BASE,
+              telephone: "+33768084367",
+              address: {
+                "@type": "PostalAddress",
+                streetAddress: COMPANY_CONFIG.operatingBase.street,
+                postalCode: COMPANY_CONFIG.operatingBase.postalCode,
+                addressLocality: COMPANY_CONFIG.operatingBase.city,
+                addressRegion: "Pays de la Loire",
+                addressCountry: "FR",
+              },
+            },
+            areaServed: [
+              { "@type": "City", name: v.nom },
+              ...v.communes.map((c2) => ({ "@type": "City", name: c2 })),
+            ],
             url,
+          }),
+        },
+        {
+          type: "application/ld+json",
+          children: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "BreadcrumbList",
+            itemListElement: [
+              { "@type": "ListItem", position: 1, name: "Accueil", item: BASE },
+              {
+                "@type": "ListItem",
+                position: 2,
+                name: "Zones d'intervention",
+                item: `${BASE}/zones-intervention`,
+              },
+              { "@type": "ListItem", position: 3, name: v.nom, item: url },
+            ],
           }),
         },
       ],
@@ -65,24 +118,32 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
 });
 
 function PageVille() {
-  const { ville: v, tarifs: t } = Route.useLoaderData();
+  const { ville: v, tarifs: t, contenu: c } = Route.useLoaderData();
   const eur = (n: number) => `${n.toLocaleString("fr-FR")} €`;
-  const voisines = VILLES_ZONE.filter((x) => x.region === v.region && x.slug !== v.slug).slice(0, 6);
+  const voisines = (c?.voisines ?? [])
+    .map((s) => lienVoisine(s))
+    .filter((x): x is { href: string; nom: string } => Boolean(x));
+  const voisinesDefaut = VILLES_ZONE.filter(
+    (x) => x.region === v.region && x.slug !== v.slug && !c?.voisines.includes(x.slug),
+  ).slice(0, 6);
+
   return (
     <div className="public-premium min-h-screen bg-background text-foreground">
       <SiteNav />
       <main className="pt-28">
         <section className="border-b border-border">
           <div className="mx-auto max-w-5xl px-6 py-14 sm:py-20">
-            <p className="text-primary font-medium">{v.nom} · {v.departement} ({v.numero})</p>
+            <p className="text-primary font-medium">{c?.surtitre ?? `${v.nom} · ${v.departement} (${v.numero})`}</p>
             <h1 className="mt-4 text-4xl md:text-5xl font-medium tracking-tight">
-              Installation de borne de recharge à {v.nom}
+              {c?.h1 ?? `Installation de borne de recharge à ${v.nom}`}
             </h1>
-            <p className="mt-6 max-w-3xl text-muted-foreground leading-relaxed">
-              Borne de l&apos;Ouest installe et entretient des bornes de recharge pour voitures électriques à {v.nom} et
-              aux alentours ({v.communes.join(", ")}). Particuliers, copropriétés, entreprises et commerces : un
-              électricien qualifié IRVE P1 · P2 · P3 étudie votre projet et vous remet un devis clair.
-            </p>
+            {(c?.intro ?? [
+              `Borne de l'Ouest installe et entretient des bornes de recharge pour voitures électriques à ${v.nom} et aux alentours (${v.communes.join(", ")}). Particuliers, copropriétés, entreprises et commerces : un électricien qualifié IRVE P1 · P2 · P3 étudie votre projet et vous remet un devis clair.`,
+            ]).map((p) => (
+              <p key={p} className="mt-6 max-w-3xl text-muted-foreground leading-relaxed">
+                {p}
+              </p>
+            ))}
             <div className="mt-8 flex flex-wrap gap-3">
               <Link to="/demande" search={{ profil: "particulier" }} className="inline-flex items-center gap-2 rounded-md px-5 py-3 bg-primary text-primary-foreground hover:opacity-90 transition">
                 <Home className="h-4 w-4" /> Devis particulier gratuit
@@ -90,12 +151,35 @@ function PageVille() {
               <Link to="/demande" search={{ profil: "professionnel" }} className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
                 <Building2 className="h-4 w-4" /> Devis professionnel
               </Link>
-              <a href="tel:+33768084367" className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
-                <Phone className="h-4 w-4" /> 07 68 08 43 67
+              <a href={COMPANY_CONFIG.phoneHref} className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
+                <Phone className="h-4 w-4" /> {COMPANY_CONFIG.phoneDisplay}
               </a>
             </div>
           </div>
         </section>
+
+        {c?.sections.map((s) => (
+          <section key={s.titre} className="border-b border-border">
+            <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+              <h2 className="text-3xl font-medium">{s.titre}</h2>
+              {s.paragraphes.map((p) => (
+                <p key={p} className="mt-5 max-w-3xl text-muted-foreground leading-relaxed">
+                  {p}
+                </p>
+              ))}
+              {s.points && (
+                <ul className="mt-6 grid gap-3 sm:grid-cols-3">
+                  {s.points.map((p) => (
+                    <li key={p} className="rounded-xl border border-border bg-card p-4 text-sm text-muted-foreground">
+                      <CheckCircle2 className="h-4 w-4 text-primary" />
+                      <span className="mt-2 block">{p}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        ))}
 
         <section className="border-b border-border">
           <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16 grid gap-6 lg:grid-cols-2">
@@ -152,18 +236,41 @@ function PageVille() {
           </div>
         </section>
 
+        {c?.faq && c.faq.length > 0 && (
+          <section className="border-b border-border">
+            <div className="mx-auto max-w-5xl px-6 py-12 sm:py-16">
+              <h2 className="text-3xl font-medium">Vos questions sur la recharge à {v.nom}</h2>
+              <div className="mt-8 space-y-4">
+                {c.faq.map((f) => (
+                  <article key={f.question} className="rounded-xl border border-border bg-card p-5 sm:p-6">
+                    <h3 className="font-medium text-foreground">{f.question}</h3>
+                    <p className="mt-2 text-sm text-muted-foreground leading-relaxed">{f.reponse}</p>
+                  </article>
+                ))}
+              </div>
+            </div>
+          </section>
+        )}
+
         <section className="border-b border-border">
           <div className="mx-auto max-w-5xl px-6 py-12">
             <h2 className="text-xl font-medium">Nous intervenons aussi à</h2>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link to="/installation-borne-recharge-nantes" className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">Nantes</Link>
               {voisines.map((x) => (
+                <a key={x.href} href={x.href} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
+                  {x.nom}
+                </a>
+              ))}
+              {voisinesDefaut.map((x) => (
                 <Link key={x.slug} to="/installation-borne-recharge/$ville" params={{ ville: x.slug }} className="rounded-full border border-border px-3 py-1.5 text-sm hover:border-primary">
                   {x.nom}
                 </Link>
               ))}
               <Link to="/zones-intervention" className="rounded-full border border-primary/50 text-primary px-3 py-1.5 text-sm">Toutes les villes</Link>
             </div>
+            <p className="mt-6 text-xs text-muted-foreground">
+              Base opérationnelle : {operatingBaseLine} — {COMPANY_CONFIG.openingHoursDisplay}.
+            </p>
           </div>
         </section>
 
