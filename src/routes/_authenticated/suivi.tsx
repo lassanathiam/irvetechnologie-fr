@@ -105,6 +105,7 @@ function SuiviPage() {
         if (!ids.length) { toast.error("Aucun chantier du Planning relié."); return; }
         const r = await receptionner({ data: { ids, receptionne: true } });
         toast.success(`${r.nb} chantier(s) réceptionné(s).`);
+        if (r.sansCommande) toast.warning(`${r.sansCommande} chantier(s) sans commande reçue : pas réceptionné(s).`);
       } else if (n === 4) {
         const ids = [...new Set(ls.map((l) => l.attId).filter(Boolean))] as string[];
         let ok = 0; const echecs: string[] = [];
