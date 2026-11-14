@@ -44,7 +44,7 @@ const RE_PAR_TECH = /(?:(?:visite(?:\s+technique)?|vt)\s+(?:r[ée]alis[ée]e?|ef
 
 /** Keeps a short person name; sentences, numbers and emails are rejected so a paragraph never becomes a name. */
 export function nomPersonne(v: string | null | undefined): string | null {
-  const t = (v ?? "").split(/[,;|—–(]|\s(?:t[ée]l|tel|mail|email|portable)\b|\s(?:\+33|0[1-9])/i)[0]?.replace(/[.:]+$/, "").trim() ?? "";
+  const t = (v ?? "").split(/[,;|—–(]|\s(?:t[ée]l|tel|mail|email|portable)\b|\s(?:\+33|0[1-9])|\s(?:le|du|en date du)\s+\d/i)[0]?.replace(/[.:]+$/, "").trim() ?? "";
   if (!t || /\d|@/.test(t)) return null;
   const mots = t.split(/\s+/);
   if (mots.length > 5 || t.length > 70) return null;
