@@ -80,7 +80,7 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
             },
             areaServed: [
               { "@type": "City", name: v.nom },
-              ...v.communes.map((c2) => ({ "@type": "City", name: c2 })),
+              ...v.communes.map((c2: string) => ({ "@type": "City", name: c2 })),
             ],
             url,
           }),
