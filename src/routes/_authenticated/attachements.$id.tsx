@@ -222,7 +222,7 @@ function ReceptionChantiers({ chantiers, items, libelles, onDone }: { chantiers:
           <div className="flex flex-col items-end gap-1">
             <strong className="font-mono">{euro(montantDe(c.id))} HT</strong>
             {recu
-              ? <button type="button" disabled={enCours} onClick={() => void appliquer([c.id], false)} className="text-xs text-muted-foreground underline-offset-2 hover:underline">Réceptionné le {new Date(c.receptionne_at!).toLocaleDateString("fr-FR")} · annuler</button>
+              ? <button type="button" disabled={enCours} onClick={() => void appliquer([c.id], false)} className="text-xs text-muted-foreground underline-offset-2 hover:underline">Réceptionné le {new Date(c.receptionne_at!).toLocaleDateString("fr-FR")} · retirer la réception</button>
               : <span className="text-xs font-semibold text-amber-600 dark:text-amber-400">À réceptionner</span>}
           </div>
         </li>;
