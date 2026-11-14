@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { attachementEnvoye, etapeChantier, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
+import { attachementEnvoye, doublonsChantier, etapeChantier, numeroCommandeValide, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
 
 const base = { attachement: true, envoye: true, commande: false, receptionne: false, facture: false, depose: false, paye: false };
 
@@ -35,12 +35,33 @@ describe("circuit unique du chantier", () => {
 });
 
 describe("tous les chantiers réceptionnés", () => {
-  it("compte les réceptionnés déjà facturés ou payés, pas les autres", () => {
+  it("compte les réceptionnés déjà facturés ou payés, pas les autres ; un chantier et son TS = 1 chantier", () => {
     const r = totalReceptionnes([
-      { receptionneLe: "2026-11-14", montantHt: 150 },
-      { receptionneLe: "2026-11-10", montantHt: 365 },
-      { receptionneLe: null, montantHt: 900 },
+      { cle: "a", rdvId: "r1", receptionneLe: "2026-11-14", montantHt: 300 },
+      { cle: "b", rdvId: "r1", receptionneLe: "2026-11-14", montantHt: 65 },
+      { cle: "c", rdvId: "r2", receptionneLe: "2026-11-10", montantHt: 150 },
+      { cle: "d", rdvId: "r3", receptionneLe: null, montantHt: 900 },
     ]);
     expect(r).toEqual({ nb: 2, ht: 515 });
+  });
+});
+
+describe("doublons de chantier", () => {
+  const l = (cle: string, rdvId: string, attId: string, ts = false) => ({ cle, rdvId, attId, attNumero: attId, ts });
+  it("un attachement + son TS n'est pas un doublon", () => {
+    expect(doublonsChantier([l("1", "r1", "AT-22"), l("2", "r1", "AT-76", true)]).size).toBe(0);
+  });
+  it("deux attachements ordinaires du même chantier = doublon signalé des deux côtés", () => {
+    const d = doublonsChantier([l("1", "r1", "AT-70"), l("2", "r1", "AT-71")]);
+    expect(d.get("1")).toEqual(["AT-71"]);
+    expect(d.get("2")).toEqual(["AT-70"]);
+  });
+});
+
+describe("numéro de commande", () => {
+  it("garde un vrai numéro", () => expect(numeroCommandeValide(" CST 02048152 ")).toBe("CST 02048152"));
+  it("écarte un nom ou un numéro d'attachement mal lu", () => {
+    expect(numeroCommandeValide("GLAIS")).toBeNull();
+    expect(numeroCommandeValide("AT-2026-0082")).toBeNull();
   });
 });
