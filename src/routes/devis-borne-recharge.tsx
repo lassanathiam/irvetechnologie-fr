@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useRef, useState, type FormEvent } from "react";
@@ -32,7 +33,7 @@ export const Route = createFileRoute("/devis-borne-recharge")({
       return TARIFS_SITE_DEFAUT;
     }
   },
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: URL_PAGE }],
     meta: [
       { title: TITRE },
@@ -43,7 +44,7 @@ export const Route = createFileRoute("/devis-borne-recharge")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: PageDevisExpress,
 });
 

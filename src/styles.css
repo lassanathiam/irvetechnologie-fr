@@ -1006,3 +1006,24 @@ input[type="datetime-local"]::-webkit-calendar-picker-indicator {
 }
 .rapport-original [data-report-page] { background: var(--rapport-paper); }
 .rapport-original [data-report-page] > .absolute { color: var(--rapport-ink); }
+
+/* Corps des articles du blog (HTML reçu de Sorank, déjà nettoyé). */
+.article-contenu { color: rgb(51 65 85); line-height: 1.75; font-size: 1.0625rem; overflow-wrap: anywhere; }
+.article-contenu > * + * { margin-top: 1.15em; }
+.article-contenu h2 { margin-top: 2.2em; font-size: 1.6rem; line-height: 1.3; font-weight: 600; color: rgb(15 23 42); }
+.article-contenu h3 { margin-top: 1.8em; font-size: 1.3rem; line-height: 1.35; font-weight: 600; color: rgb(15 23 42); }
+.article-contenu h4, .article-contenu h5, .article-contenu h6 { margin-top: 1.5em; font-weight: 600; color: rgb(15 23 42); }
+.article-contenu a { color: rgb(4 120 87); text-decoration: underline; text-underline-offset: 3px; }
+.article-contenu ul { list-style: disc; padding-left: 1.4em; }
+.article-contenu ol { list-style: decimal; padding-left: 1.4em; }
+.article-contenu li + li { margin-top: 0.4em; }
+.article-contenu strong, .article-contenu b { color: rgb(15 23 42); font-weight: 600; }
+.article-contenu img { max-width: 100%; height: auto; border-radius: 1rem; }
+.article-contenu figure figcaption { margin-top: 0.5em; font-size: 0.875rem; color: rgb(100 116 139); text-align: center; }
+.article-contenu blockquote { border-left: 4px solid rgb(16 185 129); background: rgb(236 253 245); padding: 0.9em 1.2em; border-radius: 0 0.75rem 0.75rem 0; color: rgb(30 41 59); }
+.article-contenu table { display: block; width: 100%; overflow-x: auto; border-collapse: collapse; font-size: 0.95rem; }
+.article-contenu th, .article-contenu td { border: 1px solid rgb(226 232 240); padding: 0.6em 0.8em; text-align: left; vertical-align: top; }
+.article-contenu th { background: rgb(248 250 252); font-weight: 600; color: rgb(15 23 42); }
+.article-contenu code { background: rgb(241 245 249); padding: 0.1em 0.35em; border-radius: 0.3rem; font-size: 0.9em; }
+.article-contenu pre { overflow-x: auto; background: rgb(15 23 42); color: rgb(241 245 249); padding: 1em; border-radius: 0.75rem; }
+.article-contenu hr { border-color: rgb(226 232 240); margin: 2em 0; }

@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link, notFound } from "@tanstack/react-router";
 import { ArrowRight, Building2, CheckCircle2, Home, Phone } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
     }
     return { ville, tarifs, contenu: trouverContenuVille(params.ville) };
   },
-  head: ({ loaderData }) => {
+  head: avecSurchargeSeo(({ loaderData }) => {
     if (!loaderData) return { meta: [{ title: "Ville introuvable | Borne de l'Ouest" }] };
     const v = loaderData.ville;
     const c = loaderData.contenu;
@@ -79,7 +80,7 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
             },
             areaServed: [
               { "@type": "City", name: v.nom },
-              ...v.communes.map((c2) => ({ "@type": "City", name: c2 })),
+              ...v.communes.map((c2: string) => ({ "@type": "City", name: c2 })),
             ],
             url,
           }),
@@ -103,7 +104,7 @@ export const Route = createFileRoute("/installation-borne-recharge/$ville")({
         },
       ],
     };
-  },
+  }),
   component: PageVille,
   notFoundComponent: () => (
     <div className="public-premium min-h-screen bg-background text-foreground">

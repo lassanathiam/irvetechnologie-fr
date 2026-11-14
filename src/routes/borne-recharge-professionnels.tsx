@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { ArrowRight, Building, Car, CheckCircle2, Hotel, Phone, Warehouse } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
@@ -9,7 +10,7 @@ const DESC =
   "Bornes de recharge pour syndics, copropriétés, entreprises avec parking, hôtels, restaurants, commerces, garages et concessions en Bretagne et Pays de la Loire. Aide Advenir.";
 
 export const Route = createFileRoute("/borne-recharge-professionnels")({
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: URL }],
     meta: [
       { title: TITRE },
@@ -20,7 +21,7 @@ export const Route = createFileRoute("/borne-recharge-professionnels")({
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
-  }),
+  })),
   component: Pros,
 });
 

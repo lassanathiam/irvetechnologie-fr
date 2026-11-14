@@ -1,3 +1,4 @@
+import { avecSurchargeSeo } from "@/lib/sorank/rendu";
 import { createFileRoute } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useState, useRef, type ChangeEvent } from "react";
@@ -55,7 +56,7 @@ export const Route = createFileRoute("/demande")({
     if (SECTEURS_PRO.includes(str("secteur") ?? "")) out.secteur = str("secteur");
     return out;
   },
-  head: () => ({
+  head: avecSurchargeSeo(() => ({
     links: [{ rel: "canonical", href: "https://irvetechnologie.fr/demande" }],
     meta: [
       { property: "og:url", content: "https://irvetechnologie.fr/demande" },
@@ -89,7 +90,7 @@ export const Route = createFileRoute("/demande")({
         }),
       },
     ],
-  }),
+  })),
   component: Demande,
 });
 

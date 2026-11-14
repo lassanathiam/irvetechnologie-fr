@@ -290,6 +290,54 @@ export type Database = {
           },
         ]
       }
+      blog_articles: {
+        Row: {
+          content_html: string
+          created_at: string
+          featured_image_alt: string | null
+          featured_image_url: string | null
+          id: string
+          language: string
+          meta_description: string
+          published_at: string
+          revision: number
+          slug: string
+          sorank_article_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_html?: string
+          created_at?: string
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          language?: string
+          meta_description?: string
+          published_at: string
+          revision?: number
+          slug: string
+          sorank_article_id: string
+          title: string
+          updated_at: string
+        }
+        Update: {
+          content_html?: string
+          created_at?: string
+          featured_image_alt?: string | null
+          featured_image_url?: string | null
+          id?: string
+          language?: string
+          meta_description?: string
+          published_at?: string
+          revision?: number
+          slug?: string
+          sorank_article_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bordereau_prestations: {
         Row: {
           actif: boolean
@@ -2336,6 +2384,99 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      seo_page_override_history: {
+        Row: {
+          after: Json
+          before: Json | null
+          created_at: string
+          id: string
+          idempotency_key: string | null
+          path: string
+        }
+        Insert: {
+          after: Json
+          before?: Json | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          path: string
+        }
+        Update: {
+          after?: Json
+          before?: Json | null
+          created_at?: string
+          id?: string
+          idempotency_key?: string | null
+          path?: string
+        }
+        Relationships: []
+      }
+      seo_page_overrides: {
+        Row: {
+          content_html: string | null
+          h1: string | null
+          images: Json
+          json_ld: Json | null
+          json_ld_mode: string
+          meta_description: string | null
+          path: string
+          title: string | null
+          updated_at: string
+        }
+        Insert: {
+          content_html?: string | null
+          h1?: string | null
+          images?: Json
+          json_ld?: Json | null
+          json_ld_mode?: string
+          meta_description?: string | null
+          path: string
+          title?: string | null
+          updated_at?: string
+        }
+        Update: {
+          content_html?: string | null
+          h1?: string | null
+          images?: Json
+          json_ld?: Json | null
+          json_ld_mode?: string
+          meta_description?: string | null
+          path?: string
+          title?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      sorank_webhook_deliveries: {
+        Row: {
+          created_at: string
+          event: string
+          idempotency_key: string
+          response_body: Json | null
+          response_status: number | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          event: string
+          idempotency_key: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          event?: string
+          idempotency_key?: string
+          response_body?: Json | null
+          response_status?: number | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       stock_bon_chantiers: {
         Row: {
