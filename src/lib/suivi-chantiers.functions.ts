@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { attachementEnvoye, etapeChantier, numeroCommandeValide, recuSansCommande, type LigneSuivi } from "./etape-chantier";
+import { attachementEnvoye, etapeChantier, nomDonneur, numeroCommandeValide, recuSansCommande, type LigneSuivi } from "./etape-chantier";
 
 const arrondi = (n: number) => Math.round(n * 100) / 100;
 
@@ -77,7 +77,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
         lignes.push({
           cle: `${a.id}|${k ?? "-"}`, rdvId: k, attId: a.id, attNumero: a.numero, ts: Boolean(a.attachement_initial_id),
           client: r?.client_nom || (k ? "Chantier" : chantiers.length ? `Autres lignes de ${a.numero}` : a.objet || a.numero),
-          donneur: a.client_nom ?? "", ville: r?.cp_ville ?? null, date: r ? r.termine_at ?? r.date_debut : a.date_emission,
+          donneur: nomDonneur(a.client_nom), ville: r?.cp_ville ?? null, date: r ? r.termine_at ?? r.date_debut : a.date_emission,
           montantHt: arrondi(montant), commande, receptionneLe: r?.receptionne_at ?? null,
           factureId: factureActive?.id ?? null, factureNumero: factureActive?.numero ?? null,
           deposeLe: factureActive?.depose_at ?? a.depose_at ?? null, payeLe: factureActive?.paid_at ?? a.paye_at ?? null,
@@ -93,7 +93,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
       if (!r) continue;
       lignes.push({
         cle: `-|${id}`, rdvId: id, attId: null, attNumero: null, ts: false, client: r.client_nom || "Chantier",
-        donneur: r.partenaire ?? "", ville: r.cp_ville ?? null, date: r.termine_at ?? r.date_debut, montantHt: arrondi(Number(r.montant_ht ?? 0)),
+        donneur: nomDonneur(r.partenaire), ville: r.cp_ville ?? null, date: r.termine_at ?? r.date_debut, montantHt: arrondi(Number(r.montant_ht ?? 0)),
         commande: null, receptionneLe: r.receptionne_at ?? null, factureId: null, factureNumero: null, deposeLe: null, payeLe: null, envoyeLe: null,
         statutPlanning: r.statut, etape: 1, recuSansCommande: false,
       });

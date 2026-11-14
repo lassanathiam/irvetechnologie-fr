@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { attachementEnvoye, doublonsChantier, etapeChantier, numeroCommandeValide, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
+import { attachementEnvoye, doublonsChantier, etapeChantier, numeroCommandeValide, nomDonneur, receptionnesSansCommande, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
 
 const base = { attachement: true, envoye: true, commande: false, receptionne: false, facture: false, depose: false, paye: false };
 
