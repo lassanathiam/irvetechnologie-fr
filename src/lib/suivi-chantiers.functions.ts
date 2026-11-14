@@ -44,7 +44,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
     const rdv = new Map(rdvs.map((r) => [r.id, r]));
     const factureIds = [...new Set(listeAtt.map((a) => a.facture_id).filter(Boolean))];
     const { data: facs, error: ef } = factureIds.length
-      ? await s.from("factures").select("id, numero, statut, depose_at, paid_at").in("id", factureIds)
+      ? await s.from("factures").select("id, numero, statut, depose_at, paid_at, bon_commande").in("id", factureIds)
       : { data: [], error: null };
     if (ef) throw new Error(ef.message);
     const fac = new Map((facs ?? []).map((f: any) => [f.id, f]));
@@ -54,7 +54,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
     for (const a of listeAtt) {
       const f = a.facture_id ? fac.get(a.facture_id) : null;
       const factureActive = f && f.statut !== "annulee" ? f : null;
-      const commande = commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null);
+      const commande = commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null) || (factureActive ? String(factureActive.bon_commande ?? "").trim() || null : null);
       const m = new Map(parts.get(a.id) ?? []);
       if (a.rendezvous_id && !m.has(a.rendezvous_id)) {
         // Attachement d'un seul chantier : sa part = le total hors lignes déjà réparties.
