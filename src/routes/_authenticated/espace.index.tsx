@@ -152,7 +152,7 @@ function EspacePage() {
               </div>
 
               <div className="grid gap-4 xl:grid-cols-[minmax(0,1.55fr)_minmax(250px,.84fr)_minmax(240px,.82fr)]">
-                <ReceptionTracking rendezvous={rendezvous} />
+                <ReceptionTracking rendezvous={[...rendezvous, ...((q.data?.rendezvousFacturesArchives ?? []) as typeof rendezvous)]} />
                 <QuickOverview factures={facturesEnAttente.length} rendezvous={q.data?.stats.rdvAVenir ?? 0} termines={q.data?.stats.chantiersValides ?? 0} />
                 <div className="grid gap-4">
                   <NextAppointments rendezvous={aVenir.slice(0, 1)} />
@@ -339,6 +339,8 @@ type ChantierReception = {
   attachement?: { id: string; numero: string; depose_at: string | null; envoye_facturation_at: string | null; paye_at: string | null; facture_id?: string | null } | null;
 };
 
+const STATUT_PLANNING: Record<string, string> = { planifie: "planifié", en_pause: "en pause", en_cours: "en cours", annule: "annulé", a_planifier: "à planifier" };
+
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
   const [tab, setTab] = useState<"recus" | "attente" | "mois" | "factu">("attente");
   const [recherche, setRecherche] = useState("");
@@ -372,7 +374,8 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
       rendezvous
         .filter(
           (chantier) =>
-            !chantier.receptionne_at && (chantier.statut === "termine" || chantier.statut === "realise"),
+            !chantier.receptionne_at &&
+            (chantier.statut === "termine" || chantier.statut === "realise" || Number(chantier.montant_facture_ht ?? 0) > 0),
         )
         .sort((a, b) =>
           String(b.termine_at ?? b.date_debut).localeCompare(String(a.termine_at ?? a.date_debut)),
@@ -490,6 +493,11 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
                       : `Intervention du ${dateFr(chantier.date_debut)}`}
                   {` · ${chantier.cp_ville || chantier.adresse}`}
                 </span>
+                {chantier.statut !== "termine" && chantier.statut !== "realise" && (
+                  <span className="mt-0.5 block text-[11px] font-semibold text-dashboard-orange">
+                    Déjà facturé · encore « {STATUT_PLANNING[chantier.statut] ?? chantier.statut} » au Planning
+                  </span>
+                )}
               </Link>
               {chantier.partenaire && (
                 <span className="rounded bg-dashboard-subtle px-2 py-1 text-[10px] font-bold uppercase text-dashboard-copy-muted">
