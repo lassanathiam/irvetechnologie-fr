@@ -106,6 +106,8 @@ export async function sendTemplateEmail(
     "rdv-confirme",
     "rdv-proposition",
     "document-a-signer",
+    "bilan-reception",
+    "chantier-archive",
   ]);
   const copieEnsioAdresse = options.copieEnsio?.trim().toLowerCase() ?? null;
   const equipe = "contacts@irvetechnologie.fr";

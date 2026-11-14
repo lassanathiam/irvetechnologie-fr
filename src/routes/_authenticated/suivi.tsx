@@ -53,7 +53,8 @@ function SuiviPage() {
   const envoyes = useServerFn(marquerAttachementsEnvoyes);
   const deposer = useServerFn(updateFactureDepot);
   const payer = useServerFn(updateFactureStatut);
-  const envoyerBilan = useEnvoiConfirme(envoyerBilanReception, "Envoyer ce bilan au donneur d’ordre par email ?");
+  const envoyerBilan = useEnvoiConfirme(envoyerBilanReception, "Envoyer ce bilan au donneur d’ordre par email ? Vous en recevez une copie.");
+  const bilanPourMoi = useEnvoiConfirme(envoyerBilanReception, "M’envoyer une copie de ce bilan ? Le client ne reçoit rien.");
 
   const [donneur, setDonneur] = useState("");
   const [du, setDu] = useState(""); const [au, setAu] = useState("");
@@ -153,6 +154,15 @@ function SuiviPage() {
     a.download = `suivi-chantiers-${(donneur || "tous").toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click(); URL.revokeObjectURL(a.href);
   };
+  const envoyerPourMoi = async () => {
+    const ids = [...new Set(selection.map((l) => l.attId).filter(Boolean))] as string[];
+    if (!ids.length) { toast.error("Cochez des chantiers qui ont un attachement."); return; }
+    setEnCours("moi");
+    try {
+      const r = await bilanPourMoi({ data: { ids, envoiId: crypto.randomUUID(), message, pourMoi: true } });
+      if (r.sent) toast.success("Copie du bilan envoyée sur votre boîte (le client ne reçoit rien)."); else toast.error("L’email n’est pas parti.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
+  };
   const envoyerAuClient = async () => {
     const ids = [...new Set(selection.map((l) => l.attId).filter(Boolean))] as string[];
     if (!ids.length) { toast.error("Cochez des chantiers qui ont un attachement."); return; }
@@ -226,6 +236,7 @@ function SuiviPage() {
             {!vueRecus && ACTION[etape] && etape !== 2 && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
             <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Télécharger {selection.length ? `(${selection.length})` : "tout"}</Button>
             <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>
+            <Button size="sm" variant="ghost" disabled={!selection.length || !!enCours} onClick={() => void envoyerPourMoi()}>{enCours === "moi" ? <Loader2 className="animate-spin" /> : <Mail />} M’envoyer une copie</Button>
           </div>
           {selection.length > 0 && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
         </div>
