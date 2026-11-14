@@ -42,6 +42,7 @@ export function SiteFooter() {
               <Link to="/zones-intervention" className="transition hover:text-emerald-600">Zones d&apos;intervention</Link>
               <Link to="/borne-recharge-professionnels" className="transition hover:text-emerald-600">Professionnels</Link>
               <Link to="/calculateur-irve" className="transition hover:text-emerald-600">Calculateur IRVE</Link>
+              <Link to="/blog" className="transition hover:text-emerald-600">Blog</Link>
               <Link to="/demande" className="transition hover:text-emerald-600">Demande de devis</Link>
             </div>
             <div>Nantes · Grand Ouest élargi · jusqu&apos;à ~250 km (selon projet)</div>

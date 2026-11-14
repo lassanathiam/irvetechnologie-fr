@@ -1,59 +1,42 @@
 import { createFileRoute } from "@tanstack/react-router";
 import type {} from "@tanstack/react-start";
-import { VILLES_ZONE } from "@/lib/zones-intervention";
-
-const BASE_URL = "https://irvetechnologie.fr";
-
-interface SitemapEntry {
-  path: string;
-  changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
-  priority?: string;
-}
+import { PAGES_PUBLIQUES, SITE_URL, urlArticle } from "@/lib/sorank/pages-publiques";
+import { construirePlanDuSite, type EntreePlan } from "@/lib/sorank/plan-du-site";
 
 export const Route = createFileRoute("/sitemap.xml")({
   server: {
     handlers: {
       GET: async () => {
-        const entries: SitemapEntry[] = [
-          { path: "/", changefreq: "weekly", priority: "1.0" },
-          { path: "/bornes", changefreq: "weekly", priority: "0.8" },
-          { path: "/devis-borne-recharge", changefreq: "monthly", priority: "0.8" },
-          { path: "/a-propos", changefreq: "monthly", priority: "0.6" },
-          { path: "/installation-borne-recharge-nantes", changefreq: "monthly", priority: "0.8" },
-          { path: "/zones-intervention", changefreq: "monthly", priority: "0.7" },
-          { path: "/borne-recharge-professionnels", changefreq: "monthly", priority: "0.8" },
-          ...VILLES_ZONE.map((v) => ({
-            path: `/installation-borne-recharge/${v.slug}`,
-            changefreq: "monthly" as const,
-            priority: "0.7",
-          })),
-          { path: "/calculateur-irve", changefreq: "monthly", priority: "0.7" },
-          { path: "/demande", changefreq: "monthly", priority: "0.8" },
+        const { createClient } = await import("@supabase/supabase-js");
+        const db = createClient(process.env["SUPABASE_URL"]!, process.env["SUPABASE_PUBLISHABLE_KEY"]!, {
+          auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
+        });
+
+        // Articles du blog : tous, par pages de 1 000 ; un échec renvoie une erreur, jamais un plan partiel.
+        const articles: { slug: string; updated_at: string }[] = [];
+        for (let debut = 0; ; debut += 1000) {
+          const { data, error } = await db
+            .from("blog_articles")
+            .select("slug, updated_at")
+            .order("published_at", { ascending: false })
+            .range(debut, debut + 999);
+          if (error) {
+            console.error("Sitemap: lecture des articles impossible", error.message);
+            return new Response("Sitemap temporarily unavailable", { status: 503, headers: { "Retry-After": "60" } });
+          }
+          articles.push(...(data ?? []));
+          if (!data || data.length < 1000) break;
+        }
+
+        const entrees: EntreePlan[] = [
+          ...PAGES_PUBLIQUES.map((p) => ({ ...p, loc: `${SITE_URL}${p.path === "/" ? "" : p.path}` })),
+          ...articles.map((a) => ({ loc: urlArticle(a.slug), lastmod: a.updated_at })),
         ];
 
-        const urls = entries.map((e) =>
-          [
-            `  <url>`,
-            `    <loc>${BASE_URL}${e.path}</loc>`,
-            e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
-            e.priority ? `    <priority>${e.priority}</priority>` : null,
-            `  </url>`,
-          ]
-            .filter(Boolean)
-            .join("\n"),
-        );
-
-        const xml = [
-          `<?xml version="1.0" encoding="UTF-8"?>`,
-          `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">`,
-          ...urls,
-          `</urlset>`,
-        ].join("\n");
-
-        return new Response(xml, {
+        return new Response(construirePlanDuSite(entrees), {
           headers: {
-            "Content-Type": "application/xml",
-            "Cache-Control": "public, max-age=3600",
+            "Content-Type": "application/xml; charset=utf-8",
+            "Cache-Control": "public, max-age=300",
           },
         });
       },

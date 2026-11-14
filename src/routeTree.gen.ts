@@ -29,6 +29,8 @@ import { Route as AuthenticatedProspectsRouteImport } from './routes/_authentica
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
 import { Route as AttachementTokenRouteImport } from './routes/attachement.$token'
 import { Route as AttachementsLotTokensRouteImport } from './routes/attachements-lot.$tokens'
+import { Route as BlogIndexRouteImport } from './routes/blog.index'
+import { Route as BlogSlugRouteImport } from './routes/blog.$slug'
 import { Route as DevisClientTokenRouteImport } from './routes/devis-client.$token'
 import { Route as FactureClientTokenRouteImport } from './routes/facture-client.$token'
 import { Route as InstallationBorneRechargeVilleRouteImport } from './routes/installation-borne-recharge.$ville'
@@ -173,6 +175,16 @@ const AttachementTokenRoute = AttachementTokenRouteImport.update({
 const AttachementsLotTokensRoute = AttachementsLotTokensRouteImport.update({
   id: '/attachements-lot/$tokens',
   path: '/attachements-lot/$tokens',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogIndexRoute = BlogIndexRouteImport.update({
+  id: '/blog/',
+  path: '/blog/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DevisClientTokenRoute = DevisClientTokenRouteImport.update({
@@ -431,6 +443,7 @@ export interface FileRoutesByFullPath {
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
@@ -439,6 +452,7 @@ export interface FileRoutesByFullPath {
   '/rdv/$token': typeof RdvTokenRoute
   '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
+  '/blog/': typeof BlogIndexRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
@@ -494,6 +508,7 @@ export interface FileRoutesByTo {
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
@@ -502,6 +517,7 @@ export interface FileRoutesByTo {
   '/rdv/$token': typeof RdvTokenRoute
   '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
+  '/blog': typeof BlogIndexRoute
   '/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
@@ -559,6 +575,7 @@ export interface FileRoutesById {
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
   '/attachement/$token': typeof AttachementTokenRoute
   '/attachements-lot/$tokens': typeof AttachementsLotTokensRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/devis-client/$token': typeof DevisClientTokenRoute
   '/facture-client/$token': typeof FactureClientTokenRoute
   '/installation-borne-recharge/$ville': typeof InstallationBorneRechargeVilleRoute
@@ -567,6 +584,7 @@ export interface FileRoutesById {
   '/rdv/$token': typeof RdvTokenRoute
   '/signer-pv/$token': typeof SignerPvTokenRoute
   '/signer/$token': typeof SignerTokenRoute
+  '/blog/': typeof BlogIndexRoute
   '/_authenticated/attachements/$id': typeof AuthenticatedAttachementsIdRoute
   '/_authenticated/attachements/bordereau': typeof AuthenticatedAttachementsBordereauRoute
   '/_authenticated/attachements/commandes': typeof AuthenticatedAttachementsCommandesRoute
@@ -624,6 +642,7 @@ export interface FileRouteTypes {
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
+    | '/blog/$slug'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/installation-borne-recharge/$ville'
@@ -632,6 +651,7 @@ export interface FileRouteTypes {
     | '/rdv/$token'
     | '/signer-pv/$token'
     | '/signer/$token'
+    | '/blog/'
     | '/attachements/$id'
     | '/attachements/bordereau'
     | '/attachements/commandes'
@@ -687,6 +707,7 @@ export interface FileRouteTypes {
     | '/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
+    | '/blog/$slug'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/installation-borne-recharge/$ville'
@@ -695,6 +716,7 @@ export interface FileRouteTypes {
     | '/rdv/$token'
     | '/signer-pv/$token'
     | '/signer/$token'
+    | '/blog'
     | '/attachements/$id'
     | '/attachements/bordereau'
     | '/attachements/commandes'
@@ -751,6 +773,7 @@ export interface FileRouteTypes {
     | '/_authenticated/tarifs-site'
     | '/attachement/$token'
     | '/attachements-lot/$tokens'
+    | '/blog/$slug'
     | '/devis-client/$token'
     | '/facture-client/$token'
     | '/installation-borne-recharge/$ville'
@@ -759,6 +782,7 @@ export interface FileRouteTypes {
     | '/rdv/$token'
     | '/signer-pv/$token'
     | '/signer/$token'
+    | '/blog/'
     | '/_authenticated/attachements/$id'
     | '/_authenticated/attachements/bordereau'
     | '/_authenticated/attachements/commandes'
@@ -812,6 +836,7 @@ export interface RootRouteChildren {
   ZonesInterventionRoute: typeof ZonesInterventionRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
   AttachementsLotTokensRoute: typeof AttachementsLotTokensRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   DevisClientTokenRoute: typeof DevisClientTokenRoute
   FactureClientTokenRoute: typeof FactureClientTokenRoute
   InstallationBorneRechargeVilleRoute: typeof InstallationBorneRechargeVilleRoute
@@ -820,6 +845,7 @@ export interface RootRouteChildren {
   RdvTokenRoute: typeof RdvTokenRoute
   SignerPvTokenRoute: typeof SignerPvTokenRoute
   SignerTokenRoute: typeof SignerTokenRoute
+  BlogIndexRoute: typeof BlogIndexRoute
   ApiPublicBornePhotoSplatRoute: typeof ApiPublicBornePhotoSplatRoute
   ApiPublicHooksRappelsRdvRoute: typeof ApiPublicHooksRappelsRdvRoute
   ApiPublicPhotoSplatRoute: typeof ApiPublicPhotoSplatRoute
@@ -970,6 +996,20 @@ declare module '@tanstack/react-router' {
       path: '/attachements-lot/$tokens'
       fullPath: '/attachements-lot/$tokens'
       preLoaderRoute: typeof AttachementsLotTokensRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/': {
+      id: '/blog/'
+      path: '/blog'
+      fullPath: '/blog/'
+      preLoaderRoute: typeof BlogIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/devis-client/$token': {
@@ -1359,6 +1399,7 @@ const rootRouteChildren: RootRouteChildren = {
   ZonesInterventionRoute: ZonesInterventionRoute,
   AttachementTokenRoute: AttachementTokenRoute,
   AttachementsLotTokensRoute: AttachementsLotTokensRoute,
+  BlogSlugRoute: BlogSlugRoute,
   DevisClientTokenRoute: DevisClientTokenRoute,
   FactureClientTokenRoute: FactureClientTokenRoute,
   InstallationBorneRechargeVilleRoute: InstallationBorneRechargeVilleRoute,
@@ -1367,6 +1408,7 @@ const rootRouteChildren: RootRouteChildren = {
   RdvTokenRoute: RdvTokenRoute,
   SignerPvTokenRoute: SignerPvTokenRoute,
   SignerTokenRoute: SignerTokenRoute,
+  BlogIndexRoute: BlogIndexRoute,
   ApiPublicBornePhotoSplatRoute: ApiPublicBornePhotoSplatRoute,
   ApiPublicHooksRappelsRdvRoute: ApiPublicHooksRappelsRdvRoute,
   ApiPublicPhotoSplatRoute: ApiPublicPhotoSplatRoute,

@@ -17,6 +17,8 @@ import { memoriserOrigineLead } from "../lib/lead-source";
 import { suivrePageVue } from "../lib/analytics";
 import { BandeauConsentement } from "../components/BandeauConsentement";
 import { COMPANY_CONFIG, operatingBaseGeo } from "../config/company";
+import { CHEMINS_PAGES_CODEES, normaliserChemin } from "../lib/sorank/pages-publiques";
+import { lireSurchargeSeo } from "../lib/blog.functions";
 
 function NotFoundComponent() {
   return (
@@ -119,6 +121,22 @@ function ErrorComponent({ error, reset }: { error: unknown; reset: () => void })
 
 
 export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()({
+  // Corrections SEO Sorank des pages publiques codées (titre, description, JSON-LD).
+  // Jamais bloquant : en cas d'échec, la page garde ses balises d'origine.
+  loader: async ({ location, context }) => {
+    const path = normaliserChemin(location.pathname);
+    if (!CHEMINS_PAGES_CODEES.has(path)) return { seoSurcharge: null };
+    try {
+      const seoSurcharge = await context.queryClient.ensureQueryData({
+        queryKey: ["seo-surcharge", path],
+        queryFn: () => lireSurchargeSeo({ data: { path } }),
+        staleTime: 5 * 60_000,
+      });
+      return { seoSurcharge };
+    } catch {
+      return { seoSurcharge: null };
+    }
+  },
   head: () => ({
     meta: [
       { charSet: "utf-8" },
@@ -250,8 +268,18 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
 });
 
 function RootShell({ children }: { children: ReactNode }) {
+  // Langue de la page : celle de l'article de blog affiché, sinon le français.
+  const lang = useRouterState({
+    select: (s) => {
+      for (const m of s.matches) {
+        const l = (m.loaderData as { htmlLang?: unknown } | undefined)?.htmlLang;
+        if (typeof l === "string" && /^[a-z]{2,3}(-[A-Za-z0-9]{2,8})*$/.test(l)) return l;
+      }
+      return "fr";
+    },
+  });
   return (
-    <html lang="fr">
+    <html lang={lang}>
       <head>
         <HeadContent />
       </head>

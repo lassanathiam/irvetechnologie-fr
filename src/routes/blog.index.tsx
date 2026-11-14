@@ -4,8 +4,7 @@ import { ArrowRight } from "lucide-react";
 import { SiteFooter } from "@/components/SiteFooter";
 import { SiteNav } from "@/components/SiteNav";
 import { listerArticlesBlog } from "@/lib/blog.functions";
-import { formaterDateArticle, isoAvecFuseau } from "@/lib/sorank/rendu";
-import { avecSurchargeSeo } from "@/lib/sorank/rendu";
+import { avecSurchargeSeo, formaterDateArticle, isoAvecFuseau } from "@/lib/sorank/rendu";
 
 const URL_BLOG = "https://irvetechnologie.fr/blog";
 const articlesQuery = queryOptions({ queryKey: ["blog", "articles"], queryFn: () => listerArticlesBlog() });
@@ -32,9 +31,9 @@ export const Route = createFileRoute("/blog/")({
     ],
   })),
   component: BlogIndex,
-  errorComponent: ({ error }) => (
+  errorComponent: () => (
     <div role="alert" className="p-10 text-center text-slate-600">
-      Le blog est momentanément indisponible. {error instanceof Error ? "" : ""}
+      Le blog est momentanément indisponible.
     </div>
   ),
   notFoundComponent: () => <div className="p-10 text-center">Aucun article.</div>,
