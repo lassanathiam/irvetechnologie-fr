@@ -28,7 +28,7 @@ const filtre = new FilterXSS({
   stripIgnoreTag: true,
   stripIgnoreTagBody: ["script", "style", "iframe", "noscript", "object", "embed", "form", "svg", "math"],
   allowCommentTag: false,
-  safeAttrValue(tag, name, value, cssFilter) {
+  safeAttrValue(tag: string, name: string, value: string, cssFilter: Parameters<typeof safeAttrValue>[3]) {
     if ((name === "href" || name === "src") && !/^(https?:|mailto:|tel:|\/|#)/i.test(value.trim())) {
       return "";
     }
