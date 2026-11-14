@@ -23,6 +23,8 @@ export const VILLES_ZONE: VilleZone[] = [
   { slug: "laval", nom: "Laval", departement: "Mayenne", numero: "53", region: "Pays de la Loire", communes: ["Changé", "Bonchamp-lès-Laval", "Saint-Berthevin", "Château-Gontier", "Mayenne"] },
   { slug: "la-roche-sur-yon", nom: "La Roche-sur-Yon", departement: "Vendée", numero: "85", region: "Pays de la Loire", communes: ["Mouilleron-le-Captif", "La Ferrière", "Aizenay", "Les Herbiers", "Challans"] },
   { slug: "les-sables-d-olonne", nom: "Les Sables-d'Olonne", departement: "Vendée", numero: "85", region: "Pays de la Loire", communes: ["Talmont-Saint-Hilaire", "Saint-Gilles-Croix-de-Vie", "Brem-sur-Mer", "Olonne-sur-Mer"] },
+  { slug: "mesanger", nom: "Mésanger", departement: "Loire-Atlantique", numero: "44", region: "Pays de la Loire", communes: ["Ancenis-Saint-Géréon", "Couffé", "Mouzeil", "Teillé", "Pannecé", "Pouillé-les-Côteaux"] },
+  { slug: "ancenis", nom: "Ancenis-Saint-Géréon", departement: "Loire-Atlantique", numero: "44", region: "Pays de la Loire", communes: ["Mésanger", "Couffé", "Ligné", "Teillé", "Mouzeil", "Pouillé-les-Côteaux"] },
 ];
 
 export function trouverVille(slug: string): VilleZone | undefined {

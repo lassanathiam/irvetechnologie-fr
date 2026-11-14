@@ -1,5 +1,22 @@
 import { Link } from "@tanstack/react-router";
 import { ouvrirReglagesConsentement } from "@/lib/consentement";
+import { COMPANY_CONFIG, operatingBaseLine, headOfficeLine } from "@/config/company";
+import { VILLES_ZONE } from "@/lib/zones-intervention";
+
+const bretons = VILLES_ZONE.filter((v) => v.region === "Bretagne");
+const ligeriens = VILLES_ZONE.filter((v) => v.region === "Pays de la Loire");
+
+function LienVille({ slug, nom }: { slug: string; nom: string }) {
+  return (
+    <Link
+      to="/installation-borne-recharge/$ville"
+      params={{ ville: slug }}
+      className="transition hover:text-emerald-600"
+    >
+      Borne à {nom}
+    </Link>
+  );
+}
 
 export function SiteFooter() {
   return (
@@ -12,11 +29,12 @@ export function SiteFooter() {
               Installation et maintenance de bornes de recharge pour particuliers,
               copropriétés et professionnels, dans tout le Grand Ouest.
             </p>
+            <p className="mt-3 text-slate-600">{COMPANY_CONFIG.openingHoursDisplay}</p>
           </div>
           <div className="flex flex-col gap-2 md:items-end">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
-              <a href="mailto:contacts@irvetechnologie.fr" className="font-medium text-slate-700 transition hover:text-emerald-600">contacts@irvetechnologie.fr</a>
-              <a href="tel:+33768084367" className="font-medium text-slate-700 transition hover:text-emerald-600">07 68 08 43 67</a>
+              <a href={`mailto:${COMPANY_CONFIG.email}`} className="font-medium text-slate-700 transition hover:text-emerald-600">{COMPANY_CONFIG.email}</a>
+              <a href={COMPANY_CONFIG.phoneHref} className="font-medium text-slate-700 transition hover:text-emerald-600">{COMPANY_CONFIG.phoneDisplay}</a>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               <Link to="/a-propos" className="transition hover:text-emerald-600">À propos</Link>
@@ -30,10 +48,31 @@ export function SiteFooter() {
           </div>
         </div>
 
+        <nav aria-label="Pages d'installation par ville" className="grid gap-6 border-t border-slate-200 pt-6 text-xs md:grid-cols-2">
+          <div>
+            <div className="font-semibold text-slate-700">Bretagne</div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              <Link to="/installation-borne-recharge-nantes" className="transition hover:text-emerald-600">Borne à Nantes</Link>
+              {bretons.map((v) => (
+                <LienVille key={v.slug} slug={v.slug} nom={v.nom} />
+              ))}
+            </div>
+          </div>
+          <div>
+            <div className="font-semibold text-slate-700">Pays de la Loire</div>
+            <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+              {ligeriens.map((v) => (
+                <LienVille key={v.slug} slug={v.slug} nom={v.nom} />
+              ))}
+            </div>
+          </div>
+        </nav>
+
         <div className="grid gap-3 border-t border-slate-200 pt-6 text-xs md:grid-cols-2">
           <div>
             <div className="font-semibold text-slate-700">IRVE Technologie</div>
-            <div>Siège social : 60 rue François Ier, 75008 Paris</div>
+            <div>Siège social : {headOfficeLine}</div>
+            <div>Établissement et base opérationnelle : {operatingBaseLine}</div>
           </div>
           <div className="md:text-right">
             <div>SIRET 989 533 724 00013</div>

@@ -16,6 +16,7 @@ import { reportLovableError } from "../lib/lovable-error-reporting";
 import { memoriserOrigineLead } from "../lib/lead-source";
 import { suivrePageVue } from "../lib/analytics";
 import { BandeauConsentement } from "../components/BandeauConsentement";
+import { COMPANY_CONFIG, operatingBaseGeo } from "../config/company";
 
 function NotFoundComponent() {
   return (
@@ -159,19 +160,47 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         type: "application/ld+json",
         children: JSON.stringify({
           "@context": "https://schema.org",
-          "@type": "Organization",
-          name: "IRVE Technologie",
-          alternateName: "Borne de l'Ouest",
+          "@type": "Electrician",
+          name: COMPANY_CONFIG.brandName,
+          alternateName: COMPANY_CONFIG.legalName,
+          legalName: COMPANY_CONFIG.legalName,
           url: "https://irvetechnologie.fr",
           telephone: "+33768084367",
+          email: COMPANY_CONFIG.email,
           vatID: "FR89989533724",
           taxID: "98953372400013",
+          priceRange: "€€",
           address: {
             "@type": "PostalAddress",
-            streetAddress: "60 rue François Ier",
-            postalCode: "75008",
-            addressLocality: "Paris",
+            streetAddress: COMPANY_CONFIG.operatingBase.street,
+            postalCode: COMPANY_CONFIG.operatingBase.postalCode,
+            addressLocality: COMPANY_CONFIG.operatingBase.city,
+            addressRegion: "Pays de la Loire",
             addressCountry: "FR",
+          },
+          geo: {
+            "@type": "GeoCoordinates",
+            latitude: operatingBaseGeo.lat,
+            longitude: operatingBaseGeo.lng,
+          },
+          openingHoursSpecification: COMPANY_CONFIG.openingHours.map((h) => ({
+            "@type": "OpeningHoursSpecification",
+            dayOfWeek: [...h.days],
+            opens: h.opens,
+            closes: h.closes,
+          })),
+          hasCredential: COMPANY_CONFIG.qualifications,
+          ...(COMPANY_CONFIG.sameAs.length > 0 ? { sameAs: [...COMPANY_CONFIG.sameAs] } : {}),
+          subOrganization: {
+            "@type": "Organization",
+            name: COMPANY_CONFIG.legalName,
+            address: {
+              "@type": "PostalAddress",
+              streetAddress: COMPANY_CONFIG.headOffice.street,
+              postalCode: COMPANY_CONFIG.headOffice.postalCode,
+              addressLocality: COMPANY_CONFIG.headOffice.city,
+              addressCountry: "FR",
+            },
           },
           areaServed: [
             "Nantes et son bassin",

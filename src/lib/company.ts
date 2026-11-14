@@ -1,23 +1,31 @@
 import logoAsset from "@/assets/logo-irve.png.asset.json";
+import { COMPANY_CONFIG, headOfficeLine, operatingBaseLine } from "@/config/company";
 
 export const COMPANY = {
-  raisonSociale: "IRVE Technologie",
-  forme: "SAS",
-  baseline: "Penser pour demain, installer aujourd'hui.",
-  adresse: "60 rue François 1er",
-  cpVille: "75008 Paris, FR",
-  email: "contacts@irvetechnologie.fr",
+  raisonSociale: COMPANY_CONFIG.legalName,
+  marque: COMPANY_CONFIG.brandName,
+  forme: COMPANY_CONFIG.formeJuridique,
+  baseline: COMPANY_CONFIG.baseline,
+  /** Adresse de facturation et d'envoi : le siège. */
+  adresse: COMPANY_CONFIG.headOffice.street,
+  cpVille: `${COMPANY_CONFIG.headOffice.postalCode} ${COMPANY_CONFIG.headOffice.city}, FR`,
+  /** Établissement et base opérationnelle, affiché sur le site. */
+  adresseExploitation: operatingBaseLine,
+  ligneSiege: headOfficeLine,
+  email: COMPANY_CONFIG.email,
   telephone: "+33 7 68 08 43 67",
+  telephoneHref: COMPANY_CONFIG.phoneHref,
+  telephoneAffiche: COMPANY_CONFIG.phoneDisplay,
+  horaires: COMPANY_CONFIG.openingHoursDisplay,
   /** Ancien numéro (06 … 40), retiré du site : gardé seulement pour l'écarter des imports de fiches. */
   ancienTelephone: "+33 6 33 65 78 40",
   site: "www.irvetechnologie.fr",
-  siteUrl: "https://www.irvetechnologie.fr",
-  siret: "98953372400013",
-  tva: "FR89989533724",
+  siteUrl: "https://irvetechnologie.fr",
+  siret: COMPANY_CONFIG.siret.replace(/\s/g, ""),
+  tva: COMPANY_CONFIG.tva.replace(/\s/g, ""),
   /** Qualifications IRVE de l'entreprise, affichées sur tous les documents générés. */
-  qualifications: "Qualifications IRVE P1 · P2 · P3",
-  qualificationsDetail:
-    "Installateur qualifié IRVE P1 (≤ 22 kW sans supervision), P2 (≤ 22 kW avec supervision) et P3 (recharge rapide > 22 kW).",
+  qualifications: COMPANY_CONFIG.qualifications,
+  qualificationsDetail: COMPANY_CONFIG.qualificationsDetail,
 };
 
 /** Cadre légal des garanties applicables à une installation de borne de recharge (France). */

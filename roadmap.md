@@ -147,3 +147,12 @@
 - [x] Réponse express : prix automatiques selon la distance, 1 à 3 bornes au choix dans un seul e-mail, saisie du prix d'achat et prix conseillé sur place
 - [ ] Saisir les vrais prix d'achat, coûts de référence et prix des options (attente : factures fournisseurs, coût horaire et temps de pose du gérant)
 - [ ] Étape 2 (si validée) : tableau de rentabilité, séparation vente directe / sous-traitance, recherche des photos officielles
+
+## Référencement local (demande du 14/11/2026)
+- [x] Coordonnées uniques dans `src/config/company.ts` : établissement Rue du Stade, 44522 Mésanger + siège Paris, horaires lun-sam 8 h-18 h, un seul numéro ; 5 tests réussis
+- [x] Pages Mésanger (904 mots) et Ancenis-Saint-Géréon (920 mots) avec contenu local, FAQ, titres et canonical propres ; 25 URLs au sitemap
+- [x] Schéma Electrician sur toutes les pages (adresse Mésanger, coordonnées, horaires, zone) + fil d'Ariane sur les pages villes ; pied de page avec les 17 pages villes
+- [ ] Réécrire les 14 autres pages villes (600+ mots uniques chacune) via `src/lib/contenu-villes.ts`
+- [ ] Optimiser /demande : bloc de contenu, fil d'Ariane, titre principal corrigé
+- [ ] Compléter les liens officiels manquants (fiche Google Maps, Pappers, annuaires) dans `sameAs`
+- [ ] Publier, puis indiquer les démarches Search Console (validation de la propriété, soumission du sitemap)

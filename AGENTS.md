@@ -35,5 +35,5 @@
 - Platform-deposit steps come only from `src/lib/suivi-facturation.ts` and never change status or payment state (why: trustworthy billing).
 - Imported client phones pass through the browser-safe telephone-client helper, which discards the company's own numbers (printed as subcontractor on partner sheets), so a client can never receive the company number.
 - PV signatures merge through the browser-safe `src/lib/signatures-pv.ts` rule in every PV save handler: a stored signature and its original signed date are never cleared by a later save (why: signatures must survive dossier closure).
-- Lead origin: `lib/lead-source.ts`; city pages+sitemap: `lib/zones-intervention.ts`; Google tags only via `lib/analytics.ts` after `lib/consentement.ts` consent (why: one source; French consent law).
+- Lead origin: `lib/lead-source.ts`; city pages+sitemap: `lib/zones-intervention.ts`; NAP: `config/company.ts`; Google tags via `lib/analytics.ts` after `lib/consentement.ts` consent (why: one source; consent law).
 - Direct-sale pricing math: only `lib/tarification.ts`; purchase prices, costs and margins stay in admin-only tables via `is_admin()` (why: staff quote without supplier prices).
