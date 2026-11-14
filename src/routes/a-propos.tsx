@@ -97,6 +97,7 @@ function AboutPage() {
               <p>IRVE Technologie — SIRET 989 533 724 00013 — TVA FR89 989533724.</p>
               <p>Qualifications IRVE P1 · P2 · P3.</p>
               <p>Siège social : 60 rue François Ier, 75008 Paris.</p>
+              <p>Établissement et base opérationnelle : Rue du Stade, 44522 Mésanger.</p>
               <p>
                 Intervention principale dans le Grand Ouest, avec extension autour de Nantes selon
                 distance, temps de trajet, montant du chantier et faisabilité économique.
