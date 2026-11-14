@@ -1,3 +1,5 @@
+import { numeroCommandeValide } from "./etape-chantier";
+
 /**
  * Chantiers dont la commande du donneur d'ordre est reçue (même règle que « Suivi chantiers ») :
  * commande importée, bon de commande saisi sur l'attachement ou sur sa facture.
@@ -25,7 +27,7 @@ export async function chantiersAvecCommande(supabase: any, rdvIds: string[]): Pr
   if (atts.error) throw new Error(atts.error.message);
   if (commandes.error) throw new Error(commandes.error.message);
   const importees = new Set<string>();
-  for (const c of commandes.data ?? []) { const s = c.saisie as any; if (s?.attId && s?.lu?.numero) importees.add(String(s.attId)); }
+  for (const c of commandes.data ?? []) { const s = c.saisie as any; if (s?.attId && numeroCommandeValide(s?.lu?.numero)) importees.add(String(s.attId)); }
   const factureIds = (atts.data ?? []).map((a: any) => a.facture_id).filter(Boolean);
   const { data: facs, error: ef } = factureIds.length
     ? await supabase.from("factures").select("id, bon_commande, statut").in("id", factureIds)

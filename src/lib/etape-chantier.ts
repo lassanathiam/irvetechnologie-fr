@@ -82,11 +82,41 @@ export function resumeEtapes(lignes: Pick<LigneSuivi, "etape" | "montantHt">[]):
   return r;
 }
 
-/** Tous les chantiers réceptionnés, quelle que soit leur étape actuelle (facturés, déposés et payés compris). */
-export function totalReceptionnes(lignes: Pick<LigneSuivi, "receptionneLe" | "montantHt">[]): { nb: number; ht: number } {
-  let nb = 0; let ht = 0;
-  for (const l of lignes) if (l.receptionneLe) { nb += 1; ht = arrondi(ht + l.montantHt); }
-  return { nb, ht };
+/**
+ * Tous les chantiers réceptionnés, quelle que soit leur étape actuelle (facturés, déposés et payés compris).
+ * nb = chantiers distincts (un chantier avec son TS compte une fois) ; ht = somme de tous ses documents.
+ */
+export function totalReceptionnes(lignes: Pick<LigneSuivi, "receptionneLe" | "montantHt" | "rdvId" | "cle">[]): { nb: number; ht: number } {
+  const chantiers = new Set<string>(); let ht = 0;
+  for (const l of lignes) if (l.receptionneLe) { chantiers.add(l.rdvId ?? l.cle); ht = arrondi(ht + l.montantHt); }
+  return { nb: chantiers.size, ht };
+}
+
+/**
+ * Doublons possibles : un même chantier présent dans plusieurs attachements qui ne sont pas des TS.
+ * Renvoie, pour chaque ligne concernée, les numéros des autres attachements du même chantier.
+ */
+export function doublonsChantier(lignes: Pick<LigneSuivi, "cle" | "rdvId" | "attId" | "attNumero" | "ts">[]): Map<string, string[]> {
+  const parRdv = new Map<string, { cle: string; att: string; num: string }[]>();
+  for (const l of lignes) {
+    if (!l.rdvId || !l.attId || l.ts) continue;
+    const liste = parRdv.get(l.rdvId) ?? [];
+    if (!liste.some((x) => x.att === l.attId)) liste.push({ cle: l.cle, att: l.attId, num: l.attNumero ?? "" });
+    parRdv.set(l.rdvId, liste);
+  }
+  const r = new Map<string, string[]>();
+  for (const liste of parRdv.values()) {
+    if (liste.length < 2) continue;
+    for (const x of liste) r.set(x.cle, liste.filter((y) => y.att !== x.att).map((y) => y.num));
+  }
+  return r;
+}
+
+/** Numéro de commande crédible : contient un chiffre et n'est pas un numéro d'attachement mal lu (ex. « AT-2026-0082 », « GLAIS »). */
+export function numeroCommandeValide(n: unknown): string | null {
+  const v = String(n ?? "").trim();
+  if (!v || !/\d/.test(v) || /^AT-\d/i.test(v)) return null;
+  return v;
 }
 
 const dateFr = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }) : "");
