@@ -223,7 +223,7 @@ function SuiviPage() {
           {selection.length > 0 && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) réceptionné(s) mais commande à recevoir.</strong> Ils restent ici tant que la commande n’est pas importée.</span></p>}
-        {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.</p> :
+        {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.{!vueRecus && etape === 4 && recus.length > 0 && <> Vos {recus.length} chantier(s) réceptionné(s) sont déjà facturés : <button type="button" className="font-semibold text-primary underline" onClick={voirRecus}>voir tous les réceptionnés</button>.</>}</p> :
           <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} montrerEtape={vueRecus} />)}</ul>}
       </section>
       <p className="text-xs text-muted-foreground">Montants HT issus des attachements. Un attachement hebdomadaire est réparti par chantier ; créer sa facture ou la déposer traite tout l’attachement en une seule fois. Cette page ne modifie rien sans clic de votre part et n’envoie rien sans confirmation.</p>
