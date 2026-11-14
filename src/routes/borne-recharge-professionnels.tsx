@@ -86,8 +86,8 @@ function Pros() {
               <Link to="/demande" search={{ profil: "professionnel" }} className="inline-flex items-center gap-2 rounded-md px-5 py-3 bg-primary text-primary-foreground hover:opacity-90 transition">
                 Demander une étude gratuite <ArrowRight className="h-4 w-4" />
               </Link>
-              <a href="tel:+33633657840" className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
-                <Phone className="h-4 w-4" /> 06 33 65 78 40
+              <a href="tel:+33768084367" className="inline-flex items-center gap-2 rounded-md px-5 py-3 border border-border bg-card hover:border-primary transition">
+                <Phone className="h-4 w-4" /> 07 68 08 43 67
               </a>
             </div>
           </div>

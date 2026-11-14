@@ -167,7 +167,7 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
   for (const ligne of [
     `${COMPANY.adresse} — ${COMPANY.cpVille}`,
     COMPANY.email,
-    `${COMPANY.telephone} · ${COMPANY.telephone2}`,
+    COMPANY.telephone,
     `SIRET ${COMPANY.siret} · TVA ${COMPANY.tva}`,
     COMPANY.site,
   ]) {

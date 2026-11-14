@@ -43,7 +43,7 @@ function RendezVousConfirmeEmail(data: RendezVousConfirmeData) {
           </Section>
           <Hr />
           <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>
-            Besoin de nous joindre ? {COMPANY.telephone} · {COMPANY.telephone2}
+            Besoin de nous joindre ? {COMPANY.telephone}
           </Text>
           <Text style={{ fontSize: 12, color: "#667", margin: "8px 0 0" }}>
             {COMPANY.raisonSociale} — {COMPANY.siteUrl}

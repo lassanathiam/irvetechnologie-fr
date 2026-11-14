@@ -66,8 +66,7 @@ function PageRdvClient() {
           <div className={cadre}>
             <h1 className="text-lg font-bold">Lien indisponible</h1>
             <p className="mt-2 text-sm text-muted-foreground">
-              Ce lien de rendez-vous n&apos;est plus valide. Contactez-nous au {COMPANY.telephone} ou
-              au {COMPANY.telephone2}.
+              Ce lien de rendez-vous n&apos;est plus valide. Contactez-nous au {COMPANY.telephone}.
             </p>
           </div>
         )}
@@ -168,7 +167,6 @@ function PageRdvClient() {
               <span className="inline-flex items-center gap-1">
                 <Phone className="h-3.5 w-3.5" /> {COMPANY.telephone}
               </span>
-              <span>{COMPANY.telephone2}</span>
               <span>{COMPANY.site}</span>
             </p>
           </div>

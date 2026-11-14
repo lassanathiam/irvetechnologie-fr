@@ -39,7 +39,7 @@ export function AttachementTravauxEmail(data: Props) {
               {data.validation_requise ? "Consulter et valider l’attachement" : "Consulter l’attachement"}
             </a>
           </Section>
-          <Text style={{ color: "#5d6d68", fontSize: 11, lineHeight: "18px" }}>{COMPANY.raisonSociale} · {COMPANY.adresse}, {COMPANY.cpVille}<br />{COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2}</Text>
+          <Text style={{ color: "#5d6d68", fontSize: 11, lineHeight: "18px" }}>{COMPANY.raisonSociale} · {COMPANY.adresse}, {COMPANY.cpVille}<br />{COMPANY.email} · {COMPANY.telephone}</Text>
         </Section>
       </Container>
     </Body>

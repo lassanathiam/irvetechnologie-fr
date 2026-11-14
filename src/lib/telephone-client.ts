@@ -3,7 +3,7 @@ import { COMPANY } from "./company";
 const chiffres = (s: string) => s.replace(/\D/g, "").replace(/^33/, "0").replace(/^0033/, "0");
 
 /** Numéros de l'entreprise : imprimés sur les fiches donneur d'ordre (« SST IRVE TECHNOLOGIE »), jamais ceux du client. */
-const NUMEROS_ENTREPRISE = new Set([COMPANY.telephone, COMPANY.telephone2].map(chiffres));
+const NUMEROS_ENTREPRISE = new Set([COMPANY.telephone, COMPANY.ancienTelephone].map(chiffres));
 
 export function estNumeroEntreprise(tel: string | null | undefined): boolean {
   return !!tel && NUMEROS_ENTREPRISE.has(chiffres(tel));

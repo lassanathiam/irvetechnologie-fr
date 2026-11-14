@@ -221,7 +221,7 @@ export function DevisClientEmail(data: DevisEmailData) {
             <Text style={{ color: muted, fontSize: 11, lineHeight: "18px", margin: 0 }}>
               {COMPANY.raisonSociale} ({COMPANY.forme}) · {COMPANY.adresse}, {COMPANY.cpVille}
               <br />
-              {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2} · SIRET {COMPANY.siret} · TVA {COMPANY.tva}
+              {COMPANY.email} · {COMPANY.telephone} · SIRET {COMPANY.siret} · TVA {COMPANY.tva}
               <br />
               {COMPANY.qualifications}
               <br />

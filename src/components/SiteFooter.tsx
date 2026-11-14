@@ -16,7 +16,7 @@ export function SiteFooter() {
           <div className="flex flex-col gap-2 md:items-end">
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               <a href="mailto:contacts@irvetechnologie.fr" className="font-medium text-slate-700 transition hover:text-emerald-600">contacts@irvetechnologie.fr</a>
-              <a href="tel:+33633657840" className="font-medium text-slate-700 transition hover:text-emerald-600">06 33 65 78 40</a>
+              <a href="tel:+33768084367" className="font-medium text-slate-700 transition hover:text-emerald-600">07 68 08 43 67</a>
             </div>
             <div className="flex flex-wrap gap-x-4 gap-y-2">
               <Link to="/a-propos" className="transition hover:text-emerald-600">À propos</Link>

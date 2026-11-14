@@ -46,7 +46,7 @@ function ChantierEchecEmail(data: ChantierEchecData) {
             Dès que la situation est régularisée, nous reprogrammons l&apos;intervention.
           </Text>
           <Hr />
-          <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>Une question ? {COMPANY.telephone} · {COMPANY.telephone2}</Text>
+          <Text style={{ fontSize: 13, color: "#334", margin: "12px 0 0" }}>Une question ? {COMPANY.telephone}</Text>
           <Text style={{ fontSize: 12, color: "#667", margin: "8px 0 0" }}>{COMPANY.raisonSociale} — Qualifications IRVE P1 · P2 · P3 — {COMPANY.siteUrl}</Text>
         </Container>
       </Body>

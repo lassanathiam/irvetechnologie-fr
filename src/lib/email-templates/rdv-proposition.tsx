@@ -80,7 +80,7 @@ function RdvPropositionEmail(data: RdvPropositionData) {
           </Text>
           <Hr />
           <Text style={{ fontSize: 13, color: "#333", margin: "12px 0 0" }}>
-            Une question ? {COMPANY.telephone} · {COMPANY.telephone2}
+            Une question ? {COMPANY.telephone}
           </Text>
           <Text style={{ fontSize: 12, color: "#666", margin: "8px 0 0" }}>
             Borne de l&apos;Ouest — marque de {COMPANY.raisonSociale} · {COMPANY.adresse},{" "}

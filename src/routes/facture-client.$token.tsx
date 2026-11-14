@@ -130,7 +130,7 @@ function FactureClientPage() {
         />
 
         <p className="print:hidden text-center text-[12px] text-muted-foreground">
-          Une question ? {COMPANY.email} · {COMPANY.telephone} · {COMPANY.telephone2}
+          Une question ? {COMPANY.email} · {COMPANY.telephone}
         </p>
       </div>
     </main>
