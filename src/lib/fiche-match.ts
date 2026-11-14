@@ -38,3 +38,11 @@ export function classerChantiers(fiche: Parameters<typeof scoreFiche>[0], chanti
     .sort((a, b) => b.score - a.score)
     .slice(0, 5);
 }
+
+const CLOS = new Set(["termine", "realise", "annule"]);
+
+/** Chantiers proposés pour ranger une fiche : seulement ceux en cours ; la liste manuelle écarte ceux qui ont déjà une fiche. */
+export function chantiersAFicher<T extends { id: string; statut?: string | null }>(chantiers: T[], avecFiche: Set<string>) {
+  const ouverts = chantiers.filter((c) => !CLOS.has(c.statut ?? ""));
+  return { ouverts, aChoisir: ouverts.filter((c) => !avecFiche.has(c.id)) };
+}

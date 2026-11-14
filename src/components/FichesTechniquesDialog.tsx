@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { FileText, Loader2, X } from "lucide-react";
 import { toast } from "sonner";
@@ -8,8 +8,10 @@ import { lireFicheSansIA } from "@/lib/import-chantier-local";
 import { texteFichierSansIA } from "@/lib/fichier-chantier-local";
 import { compressImage } from "@/lib/image-compress";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { chantiersAFicher } from "@/lib/fiche-match";
 
-type Chantier = { id: string; client_nom: string; cp_ville: string | null; date_debut: string };
+type Chantier = { id: string; client_nom: string; cp_ville: string | null; date_debut: string; statut?: string | null };
 type Ligne = { nom: string; data_url: string; fiche: FicheExtraite; rdv: string; suggestions: { id: string; score: number }[]; fait: boolean };
 
 const lire = (f: File) => new Promise<string>((ok, ko) => { const r = new FileReader(); r.onload = () => ok(String(r.result)); r.onerror = () => ko(new Error("Lecture impossible.")); r.readAsDataURL(f); });
@@ -20,6 +22,12 @@ export function FichesTechniquesDialog({ chantiers, onClose, onDone }: { chantie
   const enregistrer = useServerFn(enregistrerFicheTechnique);
   const [busy, setBusy] = useState<string | null>(null);
   const [lignes, setLignes] = useState<Ligne[]>([]);
+  const [avecFiche, setAvecFiche] = useState<Set<string>>(new Set());
+  useEffect(() => {
+    void supabase.from("rendezvous_fiches").select("rendezvous_id").then(({ data }) => setAvecFiche(new Set((data ?? []).map((f) => f.rendezvous_id))));
+  }, []);
+  // Seuls les chantiers en cours (pas terminés ni annulés) sont proposés ; ceux qui ont déjà leur fiche sont retirés de la liste.
+  const { ouverts, aChoisir } = chantiersAFicher(chantiers, avecFiche);
   const parId = new Map(chantiers.map((c) => [c.id, c]));
 
   const onFile = async (f: File) => {
@@ -31,7 +39,7 @@ export function FichesTechniquesDialog({ chantiers, onClose, onDone }: { chantie
       const fichier = f.type.startsWith("image/") ? await compressImage(f, 2000, 0.85) : await lire(f);
       if (fichier.length > 14_000_000) throw new Error("Fichier trop lourd (10 Mo maximum).");
       const fiche = lireFicheSansIA(texteLu);
-      const suggestions = classerChantiers(fiche, chantiers.map((c) => ({ ...c, adresse: null })));
+      const suggestions = classerChantiers(fiche, ouverts.map((c) => ({ ...c, adresse: null })));
       const r = { fiche, suggestions };
       const meilleur = r.suggestions[0];
       setLignes((l) => [...l, { nom: f.name, data_url: fichier, fiche: r.fiche, suggestions: r.suggestions, rdv: meilleur && meilleur.score >= SEUIL_SUR ? meilleur.id : "", fait: false }]);
@@ -69,6 +77,7 @@ export function FichesTechniquesDialog({ chantiers, onClose, onDone }: { chantie
           <div>
             <h2 className="text-lg font-bold">Fiches techniques / visites techniques</h2>
             <p className="text-sm text-muted-foreground">Import sans IA · 0 crédit d’analyse</p>
+            <p className="text-xs text-muted-foreground">Seuls les chantiers en cours sans fiche sont proposés ({aChoisir.length}). La fiche complète reste jointe au chantier : seul un court résumé est ajouté au dossier.</p>
           </div>
           <Button type="button" onClick={onClose} aria-label="Fermer" className="p-1 hover:text-primary"><X className="h-5 w-5" /></Button>
         </div>
@@ -81,17 +90,18 @@ export function FichesTechniquesDialog({ chantiers, onClose, onDone }: { chantie
         <div className="space-y-3">
           {lignes.map((l, i) => {
             const proposes = l.suggestions.map((s) => parId.get(s.id)).filter(Boolean) as Chantier[];
-            const autres = chantiers.filter((c) => !l.suggestions.some((s) => s.id === c.id));
+            const autres = aChoisir.filter((c) => !l.suggestions.some((s) => s.id === c.id));
             return (
               <div key={i} className={`border rounded-lg p-3 ${l.fait ? "border-emerald-500/60 opacity-70" : "border-border"}`}>
                 <p className="text-sm font-semibold break-words">{l.nom}</p>
-                <p className="text-xs text-muted-foreground">Lu : {l.fiche.client_nom ?? "client non trouvé"}{l.fiche.cp_ville ? ` · ${l.fiche.cp_ville}` : ""}{l.fiche.puissance_borne ? ` · ${l.fiche.puissance_borne}` : ""}{l.fiche.metrage_m ? ` · ${l.fiche.metrage_m} m` : ""}</p>
+                <p className="text-xs text-muted-foreground">Client lu : <span className="font-semibold text-foreground">{l.fiche.client_nom ?? "non trouvé"}</span>{l.fiche.cp_ville ? ` · ${l.fiche.cp_ville}` : ""}{l.fiche.puissance_borne ? ` · ${l.fiche.puissance_borne}` : ""}{l.fiche.metrage_m ? ` · ${l.fiche.metrage_m} m` : ""}</p>
+                {l.fiche.technicien && <p className="text-xs text-muted-foreground">Visite technique faite par : {l.fiche.technicien}</p>}
                 {l.fait ? <p className="mt-2 text-sm font-semibold text-emerald-600">Rangée sur le chantier ✓</p> : (
                   <label className="mt-2 block text-xs text-muted-foreground">Chantier
                     <select className={`${champ} mt-1`} value={l.rdv} onChange={(e) => setLignes((x) => x.map((y, j) => (j === i ? { ...y, rdv: e.target.value } : y)))}>
                       <option value="">— À choisir —</option>
-                      {proposes.length > 0 && <optgroup label="Proposés">{proposes.map((c) => <option key={c.id} value={c.id}>{c.client_nom} · {c.cp_ville ?? ""} · {jour(c.date_debut)}</option>)}</optgroup>}
-                      <optgroup label="Tous les chantiers">{autres.map((c) => <option key={c.id} value={c.id}>{c.client_nom} · {c.cp_ville ?? ""} · {jour(c.date_debut)}</option>)}</optgroup>
+                      {proposes.length > 0 && <optgroup label="Proposés">{proposes.map((c) => <option key={c.id} value={c.id}>{c.client_nom} · {c.cp_ville ?? ""} · {jour(c.date_debut)}{avecFiche.has(c.id) ? " · fiche déjà rangée" : ""}</option>)}</optgroup>}
+                      <optgroup label="Chantiers en cours sans fiche">{autres.map((c) => <option key={c.id} value={c.id}>{c.client_nom} · {c.cp_ville ?? ""} · {jour(c.date_debut)}</option>)}</optgroup>
                     </select>
                     {!l.rdv && <span className="mt-1 block text-amber-600">Chantier pas trouvé avec certitude : choisissez-le.</span>}
                   </label>
