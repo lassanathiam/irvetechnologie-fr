@@ -8,7 +8,7 @@ export type EtapeChantier = 1 | 2 | 3 | 4 | 5 | 6;
 export const ETAPES_CHANTIER: { n: EtapeChantier; label: string; court: string; aide: string }[] = [
   { n: 1, label: "Fait", court: "Fait", aide: "Chantier terminé : attachement à faire ou à envoyer au client." },
   { n: 2, label: "Attachement envoyé", court: "Envoyé", aide: "Envoyé au client, on attend sa commande." },
-  { n: 3, label: "Commande reçue", court: "Commande", aide: "La commande est là : réceptionnez le chantier avec le client." },
+  { n: 3, label: "Commande reçue · à réceptionner", court: "À réceptionner", aide: "La commande est là : réceptionnez le chantier avec le client (même s’il est déjà facturé)." },
   { n: 4, label: "Réceptionné", court: "Réceptionné", aide: "Chantier validé avec commande : créez la facture." },
   { n: 5, label: "Facturé", court: "Facturé", aide: "Facture créée : déposez-la sur la plateforme du client." },
   { n: 6, label: "Déposé / payé", court: "Déposé / payé", aide: "Facture déposée chez le client ou payée." },
@@ -22,18 +22,23 @@ export type EtatChantier = {
   facture: boolean;
   depose: boolean;
   paye: boolean;
+  /** Ligne sans chantier du Planning (ex. fibre) : rien à réceptionner. */
+  sansReception?: boolean;
 };
 
 /** Étape unique d'une ligne de suivi. Sans commande, un chantier n'entre jamais en réception. */
 export function etapeChantier(e: EtatChantier): EtapeChantier {
-  if (e.facture) return e.depose || e.paye ? 6 : 5;
+  const recu = e.receptionne || Boolean(e.sansReception);
+  if (e.paye) return 6;
+  // Facturé avant la réception : il reste à réceptionner dès que la commande est là.
+  if (e.facture) return e.commande && !recu ? 3 : e.depose ? 6 : 5;
   if (!e.attachement || !e.envoye) {
     // Une commande déjà reçue prouve que l'attachement est parti chez le client.
-    if (e.attachement && e.commande) return e.receptionne ? 4 : 3;
+    if (e.attachement && e.commande) return recu ? 4 : 3;
     return 1;
   }
   if (!e.commande) return 2;
-  return e.receptionne ? 4 : 3;
+  return recu ? 4 : 3;
 }
 
 /** Réceptionné alors que la commande manque : reste à l'étape 2, signalé pour ne rien perdre. */

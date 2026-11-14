@@ -72,7 +72,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
         const montant = k ? m.get(k) ?? 0 : chantiers.length ? reste : Number(a.total_ht ?? 0);
         const etat = {
           attachement: true, envoye: attachementEnvoye(a), commande: Boolean(commande), receptionne: Boolean(r?.receptionne_at),
-          facture: Boolean(factureActive), depose: Boolean(factureActive?.depose_at || a.depose_at), paye: Boolean(factureActive?.paid_at || factureActive?.statut === "payee" || a.paye_at),
+          facture: Boolean(factureActive), sansReception: !k, depose: Boolean(factureActive?.depose_at || a.depose_at), paye: Boolean(factureActive?.paid_at || factureActive?.statut === "payee" || a.paye_at),
         };
         lignes.push({
           cle: `${a.id}|${k ?? "-"}`, rdvId: k, attId: a.id, attNumero: a.numero, ts: Boolean(a.attachement_initial_id),

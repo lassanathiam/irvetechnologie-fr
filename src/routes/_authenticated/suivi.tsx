@@ -225,7 +225,8 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer }: { l: LigneS
         {l.date && <span>{dateFr(l.date)}</span>}
         {l.attId ? <Link to="/attachements/$id" params={{ id: l.attId }} className="inline-flex items-center gap-1 hover:underline"><FileText className="h-3 w-3" />{l.attNumero}</Link> : <span className="text-amber-600 dark:text-amber-400">Pas d’attachement</span>}
         {l.commande && <span>Commande {l.commande}</span>}
-        {l.receptionneLe && <span className="text-primary">Réceptionné le {dateFr(l.receptionneLe)} {l.etape <= 4 && <button type="button" className="underline" onClick={onRetirer}>retirer</button>}</span>}
+        {l.receptionneLe && <span className="text-primary">Réceptionné le {dateFr(l.receptionneLe)} {l.etape <= 5 && <button type="button" className="underline" onClick={onRetirer}>retirer</button>}</span>}
+        {l.factureId && l.etape === 3 && <span className="font-semibold text-primary">Déjà facturé</span>}
         {l.factureId && <Link to="/factures/$id" params={{ id: l.factureId }} className="inline-flex items-center gap-1 hover:underline"><Receipt className="h-3 w-3" />{l.factureNumero}</Link>}
         {l.deposeLe && <span>Déposée le {dateFr(l.deposeLe)}</span>}
         {l.payeLe && <span className="text-primary">Payée le {dateFr(l.payeLe)}</span>}

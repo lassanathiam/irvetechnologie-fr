@@ -14,9 +14,13 @@ describe("circuit unique du chantier", () => {
   });
   it("commande reçue = étape 3 (à réceptionner)", () => expect(etapeChantier({ ...base, commande: true })).toBe(3));
   it("commande reçue + réceptionné = étape 4", () => expect(etapeChantier({ ...base, commande: true, receptionne: true })).toBe(4));
+  it("facturé avec commande mais pas réceptionné = étape 3 (à réceptionner)", () => expect(etapeChantier({ ...base, commande: true, facture: true })).toBe(3));
+  it("facturé sans commande ne passe jamais en réception", () => expect(etapeChantier({ ...base, facture: true })).toBe(5));
+  it("payé = étape 6 même sans réception", () => expect(etapeChantier({ ...base, commande: true, facture: true, paye: true })).toBe(6));
+  it("ligne sans chantier : rien à réceptionner", () => expect(etapeChantier({ ...base, commande: true, sansReception: true })).toBe(4));
   it("facturé = étape 5", () => expect(etapeChantier({ ...base, commande: true, receptionne: true, facture: true })).toBe(5));
   it("facture déposée ou payée = étape 6", () => {
-    expect(etapeChantier({ ...base, facture: true, depose: true })).toBe(6);
+    expect(etapeChantier({ ...base, receptionne: true, commande: true, facture: true, depose: true })).toBe(6);
     expect(etapeChantier({ ...base, facture: true, paye: true })).toBe(6);
   });
   it("une commande reçue prouve l'envoi d'un attachement resté en brouillon", () => expect(etapeChantier({ ...base, envoye: false, commande: true })).toBe(3));
