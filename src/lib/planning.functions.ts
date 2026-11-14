@@ -2506,7 +2506,14 @@ export const majOptionsChantier = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const patch: { retour_repartiteur?: boolean; metrage_m?: number; metrage_reel_m?: number; partenaire?: string | null; origine?: string; nature_dossier?: NatureIntervention | null; checklist_materiel?: Record<string, boolean>; probleme?: boolean; probleme_note?: string | null; receptionne_at?: string | null } = {};
-    if (data.receptionne !== undefined) patch.receptionne_at = data.receptionne ? new Date().toISOString() : null;
+    if (data.receptionne !== undefined) {
+      if (data.receptionne) {
+        // Réception uniquement une fois la commande du donneur d'ordre reçue.
+        const { chantiersAvecCommande, MESSAGE_SANS_COMMANDE } = await import("./commande-chantier");
+        if (!(await chantiersAvecCommande(context.supabase, [data.id])).has(data.id)) throw new Error(MESSAGE_SANS_COMMANDE);
+      }
+      patch.receptionne_at = data.receptionne ? new Date().toISOString() : null;
+    }
     if (data.retour_repartiteur !== undefined) patch.retour_repartiteur = data.retour_repartiteur;
     if (data.nature_dossier !== undefined) patch.nature_dossier = data.nature_dossier;
     if (data.checklist_materiel !== undefined) patch.checklist_materiel = data.checklist_materiel;
@@ -2561,10 +2568,20 @@ export const receptionnerChantiers = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const q = context.supabase.from("rendezvous");
+    let ids = data.ids;
+    let sansCommande = 0;
+    if (data.receptionne) {
+      // Réception uniquement une fois la commande du donneur d'ordre reçue.
+      const { chantiersAvecCommande, MESSAGE_SANS_COMMANDE } = await import("./commande-chantier");
+      const ok = await chantiersAvecCommande(context.supabase, data.ids);
+      ids = data.ids.filter((id) => ok.has(id));
+      sansCommande = data.ids.length - ids.length;
+      if (!ids.length) throw new Error(MESSAGE_SANS_COMMANDE);
+    }
     // Une date de réception déjà posée est conservée : on ne la réécrit jamais.
     const { data: rows, error } = data.receptionne
-      ? await q.update({ receptionne_at: new Date().toISOString() }).in("id", data.ids).is("receptionne_at", null).select("id")
-      : await q.update({ receptionne_at: null }).in("id", data.ids).select("id");
+      ? await q.update({ receptionne_at: new Date().toISOString() }).in("id", ids).is("receptionne_at", null).select("id")
+      : await q.update({ receptionne_at: null }).in("id", ids).select("id");
     if (error) throw new Error(error.message);
-    return { nb: rows?.length ?? 0 };
+    return { nb: rows?.length ?? 0, sansCommande };
   });
