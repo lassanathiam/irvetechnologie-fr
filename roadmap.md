@@ -160,6 +160,6 @@
 - [x] Brancher Sorank : réception des articles, pages /blog, plan du site, corrections SEO
 
 ## Bilan réception / commandes (14/11/2026)
-- [ ] Bilan client : réceptionnés avec/sans commande, commandes non réceptionnées, attachements envoyés sans commande, non envoyés ; compteurs comparatifs
-- [ ] Sélection (une ligne ou tout), téléchargement tableur et envoi au donneur d'ordre avec confirmation
-- [ ] Page Attachements : sections pliables, liste regroupée par donneur d'ordre, brouillons expliqués (« déjà envoyé »), réception depuis le détail par client
+- [x] Bilan client : réceptionnés avec/sans commande, commandes non réceptionnées, attachements envoyés sans commande, non envoyés ; compteurs comparatifs
+- [x] Sélection (une ligne ou tout), téléchargement tableur et envoi au donneur d'ordre avec confirmation
+- [x] Page Attachements : sections pliables, liste regroupée par donneur d'ordre, brouillons expliqués (« déjà envoyé »), réception depuis le détail par client
