@@ -223,7 +223,15 @@ export const getAttachement = createServerFn({ method: "GET" })
       if (f.error) throw new Error(f.error.message);
       facture = (f.data ?? null) as typeof facture;
     }
-    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture };
+    // Chantiers du Planning présents dans l'attachement : permet de les réceptionner depuis la fiche.
+    const rdvIds = [...new Set([result.data.rendezvous_id, ...(lines.data ?? []).map((l) => l.rendezvous_id)].filter((v): v is string => Boolean(v)))];
+    let chantiers: { id: string; client_nom: string; adresse: string | null; cp_ville: string | null; date_debut: string; termine_at: string | null; statut: string; receptionne_at: string | null }[] = [];
+    if (rdvIds.length) {
+      const r = await context.supabase.from("rendezvous").select("id, client_nom, adresse, cp_ville, date_debut, termine_at, statut, receptionne_at").in("id", rdvIds);
+      if (r.error) throw new Error(r.error.message);
+      chantiers = (r.data ?? []) as typeof chantiers;
+    }
+    return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture, chantiers };
   });
 
 export const creerAttachementTs = createServerFn({ method: "POST" })

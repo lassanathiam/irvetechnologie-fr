@@ -2538,3 +2538,19 @@ export const pvSigneChantier = createServerFn({ method: "POST" })
       source: (totalSigne ? "total" : rapportSigne ? "rapport" : null) as "total" | "rapport" | null,
     };
   });
+
+/** Réception groupée (point client) : ne change ni le statut opérationnel ni la facturation. */
+export const receptionnerChantiers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((raw: { ids: string[]; receptionne: boolean }) =>
+    z.object({ ids: z.array(z.string().uuid()).min(1).max(200), receptionne: z.boolean() }).parse(raw),
+  )
+  .handler(async ({ data, context }) => {
+    const q = context.supabase.from("rendezvous");
+    // Une date de réception déjà posée est conservée : on ne la réécrit jamais.
+    const { data: rows, error } = data.receptionne
+      ? await q.update({ receptionne_at: new Date().toISOString() }).in("id", data.ids).is("receptionne_at", null).select("id")
+      : await q.update({ receptionne_at: null }).in("id", data.ids).select("id");
+    if (error) throw new Error(error.message);
+    return { nb: rows?.length ?? 0 };
+  });
