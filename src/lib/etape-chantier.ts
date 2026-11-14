@@ -82,6 +82,13 @@ export function resumeEtapes(lignes: Pick<LigneSuivi, "etape" | "montantHt">[]):
   return r;
 }
 
+/** Tous les chantiers réceptionnés, quelle que soit leur étape actuelle (facturés, déposés et payés compris). */
+export function totalReceptionnes(lignes: Pick<LigneSuivi, "receptionneLe" | "montantHt">[]): { nb: number; ht: number } {
+  let nb = 0; let ht = 0;
+  for (const l of lignes) if (l.receptionneLe) { nb += 1; ht = arrondi(ht + l.montantHt); }
+  return { nb, ht };
+}
+
 const dateFr = (v: string | null) => (v ? new Date(v).toLocaleDateString("fr-FR", { timeZone: "Europe/Paris" }) : "");
 
 /** Tableur (« ; », ouvrable dans Excel) des lignes de suivi, dans l'ordre des étapes. */

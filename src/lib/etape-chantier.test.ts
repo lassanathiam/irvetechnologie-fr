@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { attachementEnvoye, etapeChantier, recuSansCommande, resumeEtapes } from "./etape-chantier";
+import { attachementEnvoye, etapeChantier, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
 
 const base = { attachement: true, envoye: true, commande: false, receptionne: false, facture: false, depose: false, paye: false };
 
@@ -31,5 +31,16 @@ describe("circuit unique du chantier", () => {
     expect(r[3]).toEqual({ nb: 2, ht: 365.5 });
     expect(r[5]).toEqual({ nb: 1, ht: 100 });
     expect(r[1]).toEqual({ nb: 0, ht: 0 });
+  });
+});
+
+describe("tous les chantiers réceptionnés", () => {
+  it("compte les réceptionnés déjà facturés ou payés, pas les autres", () => {
+    const r = totalReceptionnes([
+      { receptionneLe: "2026-11-14", montantHt: 150 },
+      { receptionneLe: "2026-11-10", montantHt: 365 },
+      { receptionneLe: null, montantHt: 900 },
+    ]);
+    expect(r).toEqual({ nb: 2, ht: 515 });
   });
 });

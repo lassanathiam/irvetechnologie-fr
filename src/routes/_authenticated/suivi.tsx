@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { csvSuivi, ETAPES_CHANTIER, resumeEtapes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
+import { csvSuivi, ETAPES_CHANTIER, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
@@ -18,7 +18,8 @@ import { updateFactureDepot, updateFactureStatut } from "@/lib/factures.function
 import { envoyerBilanReception } from "@/lib/bilan-reception.functions";
 
 export const Route = createFileRoute("/_authenticated/suivi")({
-  validateSearch: (s: Record<string, unknown>): { etape?: number } => {
+  validateSearch: (s: Record<string, unknown>): { etape?: number; vue?: "receptionnes" } => {
+    if (s.vue === "receptionnes") return { vue: "receptionnes" };
     const n = Number(s.etape);
     return n >= 1 && n <= 6 ? { etape: n } : {};
   },
@@ -43,6 +44,7 @@ const ACTION: Record<EtapeChantier, string | null> = { 1: "Marquer envoyé", 2: 
 function SuiviPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
+  const vueRecus = search.vue === "receptionnes";
   const etape = (search.etape ?? 3) as EtapeChantier;
   const qc = useQueryClient();
   const q = useQuery({ queryKey: ["suivi-chantiers"], queryFn: useServerFn(getSuiviChantiers) });
@@ -76,13 +78,18 @@ function SuiviPage() {
     return true;
   }), [toutes, donneur, du, au, recherche]);
   const resume = resumeEtapes(filtrees);
-  const lignes = filtrees.filter((l) => l.etape === etape);
-  const alertes = etape === 2 ? lignes.filter((l) => l.recuSansCommande) : [];
+  const recus = filtrees.filter((l) => l.receptionneLe);
+  const totalRecus = totalReceptionnes(filtrees).ht;
+  const lignes = vueRecus
+    ? [...recus].sort((a, b) => (b.receptionneLe ?? "").localeCompare(a.receptionneLe ?? ""))
+    : filtrees.filter((l) => l.etape === etape);
+  const alertes = !vueRecus && etape === 2 ? lignes.filter((l) => l.recuSansCommande) : [];
   const selection = lignes.filter((l) => coches.includes(l.cle));
   const totalSel = selection.reduce((t, l) => t + l.montantHt, 0);
   const totalEtape = lignes.reduce((t, l) => t + l.montantHt, 0);
   const basculer = (cles: string[], oui: boolean) => setCoches((c) => (oui ? [...new Set([...c, ...cles])] : c.filter((x) => !cles.includes(x))));
   const changerEtape = (n: EtapeChantier) => { setCoches([]); void navigate({ search: { etape: n } }); };
+  const voirRecus = () => { setCoches([]); void navigate({ search: { vue: "receptionnes" } }); };
 
   const rafraichir = async () => {
     await qc.invalidateQueries({ queryKey: ["suivi-chantiers"] });
@@ -149,7 +156,9 @@ function SuiviPage() {
     } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
   };
 
-  const info = ETAPES_CHANTIER[etape - 1];
+  const info = vueRecus
+    ? { label: "Tous les chantiers réceptionnés", aide: "Liste complète des réceptions, de la plus récente à la plus ancienne. L’étape actuelle de chaque chantier est indiquée." }
+    : ETAPES_CHANTIER[etape - 1];
   return <ProShell><div className="space-y-4">
     <header>
       <h1 className="text-2xl font-bold">Suivi chantiers</h1>
@@ -158,7 +167,7 @@ function SuiviPage() {
     {q.isLoading ? <Loader2 className="animate-spin text-primary" /> : q.error ? <p className="text-destructive">Suivi indisponible, rechargez la page.</p> : <>
       <nav aria-label="Étapes" className="grid grid-cols-2 gap-2 sm:grid-cols-3 xl:grid-cols-6">
         {ETAPES_CHANTIER.map((e) => {
-          const actif = e.n === etape;
+          const actif = !vueRecus && e.n === etape;
           return <button key={e.n} type="button" onClick={() => changerEtape(e.n)} aria-current={actif ? "step" : undefined}
             className={`rounded-lg border-2 p-3 text-left transition ${actif ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
             <span className="flex items-center gap-2 text-sm font-bold"><span className={`flex h-6 w-6 items-center justify-center rounded-full text-xs ${actif ? "bg-primary text-primary-foreground" : "bg-muted"}`}>{e.n}</span>{e.label}</span>
@@ -167,6 +176,18 @@ function SuiviPage() {
           </button>;
         })}
       </nav>
+      <button type="button" onClick={voirRecus} aria-current={vueRecus ? "page" : undefined}
+        className={`flex w-full flex-wrap items-center gap-3 rounded-lg border-2 p-3 text-left transition ${vueRecus ? "border-primary bg-primary/10" : "border-border bg-card hover:border-primary/50"}`}>
+        <CheckCircle2 className="h-6 w-6 text-primary" />
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-bold">Tous les chantiers réceptionnés</span>
+          <span className="block text-xs text-muted-foreground">Tous ceux qui ont été réceptionnés, quelle que soit l’étape où ils sont maintenant (facturés, déposés ou payés compris).</span>
+        </span>
+        <span className="text-right">
+          <span className="block text-2xl font-extrabold text-dashboard-green">{euro(totalRecus)}</span>
+          <span className="block text-xs text-muted-foreground">{recus.length} chantier(s) · HT</span>
+        </span>
+      </button>
 
       <section className="flex flex-wrap items-end gap-3 rounded-md border border-border bg-card p-3">
         <label className="text-xs text-muted-foreground">Client
@@ -186,31 +207,31 @@ function SuiviPage() {
       <section className="rounded-md border-2 border-primary/40 bg-card">
         <div className="flex flex-wrap items-center gap-3 border-b border-border p-3">
           <div className="min-w-0 flex-1">
-            <h2 className="text-lg font-bold">{etape}. {info.label} <span className="text-dashboard-green">· {euro(totalEtape)} HT</span></h2>
+            <h2 className="text-lg font-bold">{vueRecus ? "" : `${etape}. `}{info.label} <span className="text-dashboard-green">· {euro(totalEtape)} HT</span></h2>
             <p className="text-xs text-muted-foreground">{info.aide}</p>
           </div>
-          {etape === 2 && <Button asChild size="sm" variant="outline"><Link to="/attachements/commandes"><Upload /> Importer les commandes</Link></Button>}
+          {!vueRecus && etape === 2 && <Button asChild size="sm" variant="outline"><Link to="/attachements/commandes"><Upload /> Importer les commandes</Link></Button>}
         </div>
         <div className="sticky top-2 z-10 flex flex-wrap items-center gap-2 border-b border-border bg-card p-3 text-sm">
           <label className="flex items-center gap-2 font-semibold"><input type="checkbox" className="h-5 w-5" checked={lignes.length > 0 && lignes.every((l) => coches.includes(l.cle))} onChange={(e) => basculer(lignes.map((l) => l.cle), e.target.checked)} /> Tout cocher ({lignes.length})</label>
           <span>{selection.length} coché(s) · <strong className="text-base text-dashboard-green">{euro(totalSel)} HT</strong></span>
           <div className="ml-auto flex flex-wrap gap-2">
-            {ACTION[etape] && etape !== 2 && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
+            {!vueRecus && ACTION[etape] && etape !== 2 && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
             <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Télécharger {selection.length ? `(${selection.length})` : "tout"}</Button>
             <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>
           </div>
           {selection.length > 0 && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) réceptionné(s) mais commande à recevoir.</strong> Ils restent ici tant que la commande n’est pas importée.</span></p>}
-        {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.</p> :
-          <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} />)}</ul>}
+        {!lignes.length ? <p className="p-6 text-center text-sm text-muted-foreground">Aucun chantier à cette étape.{!vueRecus && etape === 4 && recus.length > 0 && <> Vos {recus.length} chantier(s) réceptionné(s) sont déjà facturés : <button type="button" className="font-semibold text-primary underline" onClick={voirRecus}>voir tous les réceptionnés</button>.</>}</p> :
+          <ul className="divide-y divide-border">{lignes.map((l) => <Ligne key={l.cle} l={l} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} montrerEtape={vueRecus} />)}</ul>}
       </section>
       <p className="text-xs text-muted-foreground">Montants HT issus des attachements. Un attachement hebdomadaire est réparti par chantier ; créer sa facture ou la déposer traite tout l’attachement en une seule fois. Cette page ne modifie rien sans clic de votre part et n’envoie rien sans confirmation.</p>
     </>}
   </div></ProShell>;
 }
 
-function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void }) {
+function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, montrerEtape }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void; montrerEtape?: boolean }) {
   const pasTermine = l.statutPlanning && l.statutPlanning !== "termine" && l.statutPlanning !== "realise";
   const action = ACTION[l.etape];
   return <li className="flex flex-wrap items-center gap-3 p-3">
@@ -218,6 +239,7 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer }: { l: LigneS
     <div className="min-w-0 flex-1">
       <div className="flex flex-wrap items-baseline gap-x-3">
         {l.rdvId ? <Link to="/planning" search={{ rdv: l.rdvId }} className="text-lg font-extrabold hover:underline">{l.client}</Link> : <strong className="text-lg font-extrabold">{l.client}</strong>}
+        {montrerEtape && <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-bold">Étape {l.etape} · {ETAPES_CHANTIER[l.etape - 1].court}</span>}
         {l.ts && <span className="rounded border border-amber-500/60 px-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">TS</span>}
       </div>
       <div className="mt-0.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">

@@ -1,5 +1,5 @@
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
-import { ETAPES_CHANTIER, resumeEtapes } from "@/lib/etape-chantier";
+import { ETAPES_CHANTIER, resumeEtapes, totalReceptionnes } from "@/lib/etape-chantier";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useMemo, useState } from "react";
@@ -346,6 +346,7 @@ const STATUT_PLANNING: Record<string, string> = { planifie: "planifié", en_paus
 function SuiviResume() {
   const q = useQuery({ queryKey: ["suivi-chantiers"], queryFn: useServerFn(getSuiviChantiers) });
   const resume = resumeEtapes(q.data?.lignes ?? []);
+  const recus = totalReceptionnes(q.data?.lignes ?? []);
   return (
     <DashboardPanel title="Suivi chantiers" icon={CheckCircle2} action={{ to: "/suivi", label: "Tout voir" }}>
       {q.isLoading ? <Loader2 className="animate-spin text-dashboard-blue" /> : (
@@ -362,6 +363,16 @@ function SuiviResume() {
               </Link>
             </li>
           ))}
+          <li>
+            <Link to="/suivi" search={{ vue: "receptionnes" }} className="flex items-center gap-3 rounded-md border-2 border-dashboard-green/40 px-3 py-2 hover:bg-dashboard-subtle">
+              <CheckCircle2 className="h-7 w-7 shrink-0 text-dashboard-green" />
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-bold text-dashboard-copy">Tous les réceptionnés</span>
+                <span className="block text-[11px] text-dashboard-copy-muted">{recus.nb} chantier(s), facturés compris</span>
+              </span>
+              <strong className="text-lg font-extrabold text-dashboard-green">{euro(recus.ht)} <span className="text-[10px] font-normal text-dashboard-copy-muted">HT</span></strong>
+            </Link>
+          </li>
         </ol>
       )}
     </DashboardPanel>
