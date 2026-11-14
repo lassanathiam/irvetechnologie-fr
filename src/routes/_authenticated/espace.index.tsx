@@ -20,7 +20,8 @@ import {
   TrendingUp,
 } from "lucide-react";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { getDashboard } from "@/lib/planning.functions";
+import { getDashboard, majOptionsChantier } from "@/lib/planning.functions";
+import { toast } from "sonner";
 import { getFacture, updateFactureStatut } from "@/lib/factures.functions";
 import { creerFacturePdf } from "@/lib/facture-pdf";
 import { ProShell } from "@/components/ProShell";
@@ -337,7 +338,24 @@ type ChantierReception = {
 };
 
 function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) {
-  const [tab, setTab] = useState<"recus" | "attente" | "mois" | "factu">("recus");
+  const [tab, setTab] = useState<"recus" | "attente" | "mois" | "factu">("attente");
+  const [recherche, setRecherche] = useState("");
+  const qc = useQueryClient();
+  const majOptions = useServerFn(majOptionsChantier);
+  const [enCours, setEnCours] = useState<string | null>(null);
+  const basculer = async (chantier: ChantierReception, receptionne: boolean) => {
+    if (!receptionne && !window.confirm(`Retirer la réception du chantier de ${chantier.client_nom} ?`)) return;
+    setEnCours(chantier.id);
+    try {
+      await majOptions({ data: { id: chantier.id, receptionne } });
+      await qc.invalidateQueries({ queryKey: ["dashboard"] });
+      toast.success(receptionne ? `${chantier.client_nom} : réceptionné` : `${chantier.client_nom} : réception retirée`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Réception impossible, réessayez.");
+    } finally {
+      setEnCours(null);
+    }
+  };
 
   const recus = useMemo(
     () =>
@@ -363,7 +381,10 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
   const parMois = useMemo(() => grouperReceptionParMois(recus), [recus]);
   const totalRecu = useMemo(() => totalReceptionne(recus), [recus]);
 
-  const rows = tab === "recus" ? recus : aReceptionner;
+  const terme = recherche.trim().toLowerCase();
+  const rows = (tab === "recus" ? recus : aReceptionner).filter(
+    (c) => !terme || `${c.client_nom} ${c.adresse} ${c.cp_ville ?? ""} ${c.partenaire ?? ""}`.toLowerCase().includes(terme),
+  );
   const [ouvert, setOuvert] = useState(false);
 
   return (
@@ -374,9 +395,14 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         className="mb-3 flex w-full items-center justify-between gap-2 rounded-md border border-dashboard-rule px-3 py-2 text-left text-sm font-semibold text-dashboard-copy"
       >
         <span>{recus.length} réceptionnés · {aReceptionner.length} à réceptionner</span>
-        <span className="text-xs text-dashboard-blue">{ouvert ? "Replier ▲" : "Déplier ▼"}</span>
+        <span className="text-xs text-dashboard-blue">{ouvert ? "Replier ▲" : "Réceptionner mes chantiers ▼"}</span>
       </button>
       {ouvert && (<>
+      <ol className="mb-3 grid gap-1 rounded-md border border-dashboard-rule bg-dashboard-subtle px-3 py-2 text-xs text-dashboard-copy sm:grid-cols-3">
+        <li><strong>1. Ici</strong> : avec le client, cliquez « Réceptionner » sur chaque chantier validé.</li>
+        <li><strong>2. Attachements</strong> : créez l’attachement des chantiers réceptionnés.</li>
+        <li><strong>3. Factures</strong> : transformez l’attachement en facture.</li>
+      </ol>
       <Button type="button" variant="outline" size="sm" className="mb-3" disabled={!recus.length} onClick={() => telechargerReceptionnes(recus)}>
         Télécharger les chantiers réceptionnés ({recus.length})
       </Button>
@@ -419,8 +445,17 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
         <SuiviFacturation chantiers={recus} />
       ) : tab === "mois" ? (
         <MontantParMois mois={parMois} total={totalRecu} nbChantiers={recus.length} />
-      ) : !rows.length ? (
-        <Empty>{tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
+      ) : (<>
+        <input
+          type="search"
+          value={recherche}
+          onChange={(e) => setRecherche(e.target.value)}
+          placeholder="Chercher un client, une ville…"
+          aria-label="Chercher un chantier"
+          className="mb-2 h-10 w-full rounded-md border border-dashboard-rule bg-transparent px-3 text-sm text-dashboard-copy"
+        />
+        {!rows.length ? (
+        <Empty>{terme ? "Aucun chantier ne correspond à cette recherche." : tab === "recus" ? "Aucun chantier réceptionné pour l’instant." : "Aucun chantier terminé en attente de réception."}</Empty>
       ) : (
         <ul className="max-h-[480px] divide-y divide-dashboard-rule overflow-y-auto">
           {rows.map((chantier) => (
@@ -444,13 +479,20 @@ function ReceptionTracking({ rendezvous }: { rendezvous: ChantierReception[] }) 
               {tab === "recus" && Number(chantier.montant_ht ?? 0) > 0 && (
                 <span className="whitespace-nowrap text-xs font-bold text-dashboard-copy">{euro(Number(chantier.montant_ht))}</span>
               )}
-              <strong className={`whitespace-nowrap text-xs font-bold ${tab === "recus" ? "text-dashboard-green" : "text-dashboard-orange"}`}>
-                {tab === "recus" ? "Réceptionné" : "En attente"}
-              </strong>
+              {tab === "recus" ? (
+                <Button type="button" size="sm" variant="ghost" disabled={enCours === chantier.id} onClick={() => void basculer(chantier, false)} className="text-xs text-dashboard-copy-muted">
+                  {enCours === chantier.id ? <Loader2 className="animate-spin" /> : null} Annuler
+                </Button>
+              ) : (
+                <Button type="button" size="sm" disabled={enCours === chantier.id} onClick={() => void basculer(chantier, true)} className="min-h-10 bg-dashboard-green font-bold text-dashboard-bg hover:bg-dashboard-green/90">
+                  {enCours === chantier.id ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Réceptionner
+                </Button>
+              )}
             </li>
           ))}
         </ul>
       )}
+      </>)}
       </>)}
     </DashboardPanel>
   );
