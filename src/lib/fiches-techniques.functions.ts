@@ -5,6 +5,8 @@ import { classerChantiers } from "@/lib/fiche-match";
 
 export type FicheExtraite = {
   client_nom: string | null;
+  /** Personne qui a réalisé la visite technique, jamais confondue avec le client. */
+  technicien?: string | null;
   adresse: string | null;
   cp_ville: string | null;
   puissance_borne: string | null;
@@ -17,7 +19,7 @@ export type FicheExtraite = {
 
 const PROMPT = `Tu reçois une fiche technique ou un compte rendu de visite technique d'un chantier de borne de recharge.
 Réponds UNIQUEMENT avec un JSON, sans texte autour :
-{"client_nom":"nom du client particulier ou null","adresse":"numéro et rue ou null","cp_ville":"code postal et ville ou null","puissance_borne":"ex. 7,4 kW ou null","phase_installation":"Monophasé|Triphasé ou null","type_pose":"Murale|Sur pied ou null","metrage_m":nombre de mètres de câble prévu ou null,"repartiteur":true si la fiche prévoit la pose d'un répartiteur, coffret, tableau secondaire, sous-distributeur ou départ dans un tableau divisionnaire sinon false (false si la fiche dit sans/aucun tableau divisionnaire),"resume":"résumé utile pour le technicien en 2 à 6 lignes : tableau, protections, cheminement, accès, contraintes, matériel ; ou null"}
+{"client_nom":"nom du client particulier (jamais celui du technicien ou de la personne qui a fait la visite) ou null","technicien":"nom de la personne qui a réalisé la visite technique ou null","adresse":"numéro et rue ou null","cp_ville":"code postal et ville ou null","puissance_borne":"ex. 7,4 kW ou null","phase_installation":"Monophasé|Triphasé ou null","type_pose":"Murale|Sur pied ou null","metrage_m":nombre de mètres de câble prévu ou null,"repartiteur":true si la fiche prévoit la pose d'un répartiteur, coffret, tableau secondaire, sous-distributeur ou départ dans un tableau divisionnaire sinon false (false si la fiche dit sans/aucun tableau divisionnaire),"resume":"résumé utile pour le technicien en 2 à 6 lignes : tableau, protections, cheminement, accès, contraintes, matériel ; ou null"}
 N'invente rien, mets null si absent.`;
 
 const s = (v: unknown, max = 300) => (typeof v === "string" && v.trim() ? v.trim().slice(0, max) : null);
@@ -79,6 +81,7 @@ export const analyserFicheTechnique = createServerFn({ method: "POST" })
     const metrage = Number(o["metrage_m"]);
     const fiche: FicheExtraite = {
       client_nom: s(o["client_nom"], 160),
+      technicien: s(o["technicien"], 120),
       adresse: s(o["adresse"]),
       cp_ville: s(o["cp_ville"], 160),
       puissance_borne: s(o["puissance_borne"], 40),
