@@ -198,6 +198,11 @@ ${facture.client_adresse ? `        <cbc:StreetName>${xmlEscape(facture.client_a
   </cac:AccountingCustomerParty>
   <cac:PaymentMeans>
     <cbc:PaymentMeansCode>30</cbc:PaymentMeansCode>
+    <cac:PayeeFinancialAccount>
+      <cbc:ID>${COMPANY.rib.iban.replace(/\s/g, "")}</cbc:ID>
+      <cbc:Name>${xmlEscape(COMPANY.rib.titulaire)}</cbc:Name>
+      <cac:FinancialInstitutionBranch><cbc:ID>${COMPANY.rib.bic}</cbc:ID></cac:FinancialInstitutionBranch>
+    </cac:PayeeFinancialAccount>
   </cac:PaymentMeans>
   <cac:TaxTotal>
     <cbc:TaxAmount currencyID="EUR">${montant(facture.total_tva)}</cbc:TaxAmount>
