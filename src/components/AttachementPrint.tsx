@@ -1,4 +1,5 @@
 import { BrandLogo } from "@/components/BrandLogo";
+import { RibBloc } from "@/components/RibBloc";
 import { COMPANY, dateFr, euro } from "@/lib/company";
 import { totalTes } from "@/lib/attachement-tes";
 import { clientFinalAttachement } from "@/lib/attachement-titre";
@@ -29,6 +30,7 @@ export function AttachementPrint({ doc, items }: { doc: Attachment; items: Line[
     <div className="mt-5 ml-auto w-full space-y-2 sm:w-80"><Total label="Total HT" value={Number(doc.total_ht)} />{totalTes(items) > 0 ? <Total label="dont travaux en supplément (TES)" value={totalTes(items)} /> : null}<Total label={doc.autoliquidation ? "TVA autoliquidée" : "TVA"} value={Number(doc.total_tva)} /><Total label="Total TTC" value={Number(doc.total_ttc)} strong /></div>
     {doc.autoliquidation ? <div className="mt-5 rounded-sm border-2 border-primary p-4 font-bold">Autoliquidation — TVA due par le preneur. Autoliquidation de la TVA en application de l’article 283-2 nonies du CGI.</div> : null}
     {doc.notes ? <div className="mt-5 whitespace-pre-line text-[12px]"><strong>Notes : </strong>{doc.notes}</div> : null}
+    <RibBloc className="mt-5" />
   </div>;
 }
 

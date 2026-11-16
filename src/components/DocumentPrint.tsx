@@ -3,6 +3,7 @@ import { COMPANY, dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, MENTIONS_DEVIS, MENTIONS_FACTURE } from "@/lib/billing";
 import { BrandLogo } from "@/components/BrandLogo";
 import { CompanySeal } from "@/components/CompanySeal";
+import { RibBloc } from "@/components/RibBloc";
 
 export type DocLine = {
   libelle: string;
@@ -234,6 +235,7 @@ export function DocumentPrint({
               {doc.notes}
             </p>
           )}
+          <RibBloc className="my-1.5" />
           <ul className="text-[9px] leading-snug text-muted-foreground grid grid-cols-2 gap-x-4 gap-y-0.5">
             {(isFacture ? MENTIONS_FACTURE : MENTIONS_DEVIS).map((m) => (
               <li key={m}>

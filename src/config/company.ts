@@ -40,6 +40,15 @@ export const COMPANY_CONFIG = {
     country: "FR",
   },
 
+  /** Coordonnées bancaires (RIB Qonto) imprimées sur les devis, factures et attachements. */
+  bank: {
+    banque: "Qonto",
+    titulaire: "IRVE Technologie",
+    iban: "FR76 1695 8000 0141 4208 6673 245",
+    bic: "QNTOFRP1XXX",
+    domiciliation: "Qonto (Olinda SAS), 18 rue de Navarin, 75009 Paris",
+  },
+
   /** Horaires communiqués par l'entreprise. */
   openingHours: [
     { days: ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"], opens: "08:00", closes: "18:00" },

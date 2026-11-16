@@ -369,6 +369,16 @@ export async function creerFacturePdf(doc: DocHeader, items: DocLine[]) {
   if (doc.notes) texte(ctx, `Notes : ${doc.notes}`, { size: 8.5 });
   for (const mention of MENTIONS_FACTURE) texte(ctx, `· ${mention}`, { size: 7.5, color: GRIS, interligne: 1.3 });
 
+  // ---- RIB ----
+  ctx.y -= 6;
+  const ribH = 40;
+  ensure(ctx, ribH + 4);
+  ctx.page.drawRectangle({ x: MARGE, y: ctx.y - ribH + 10, width: LARGEUR, height: ribH, borderColor: BORDURE, borderWidth: 0.8 });
+  ctx.page.drawText("RÈGLEMENT PAR VIREMENT · COORDONNÉES BANCAIRES", { x: MARGE + 8, y: ctx.y, size: 7.5, font: bold, color: NOIR });
+  ctx.page.drawText(nettoyer(`IBAN ${COMPANY.rib.iban}   ·   BIC ${COMPANY.rib.bic}   ·   Titulaire ${COMPANY.rib.titulaire}`), { x: MARGE + 8, y: ctx.y - 12, size: 9, font: bold, color: NOIR });
+  ctx.page.drawText(nettoyer(`Banque : ${COMPANY.rib.domiciliation}`), { x: MARGE + 8, y: ctx.y - 23, size: 7.5, font: normal, color: GRIS });
+  ctx.y -= ribH + 4;
+
   // ---- Pied de page ----
   const pages = pdf.getPages();
   for (const [index, p] of pages.entries()) {

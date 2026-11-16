@@ -26,7 +26,12 @@ export const COMPANY = {
   /** Qualifications IRVE de l'entreprise, affichées sur tous les documents générés. */
   qualifications: COMPANY_CONFIG.qualifications,
   qualificationsDetail: COMPANY_CONFIG.qualificationsDetail,
+  /** RIB affiché sur les devis, factures et attachements. */
+  rib: COMPANY_CONFIG.bank,
 };
+
+/** "IBAN FR76 … · BIC QNTOFRP1XXX" — ligne courte pour les documents. */
+export const ligneRib = `IBAN ${COMPANY_CONFIG.bank.iban} · BIC ${COMPANY_CONFIG.bank.bic}`;
 
 /** Cadre légal des garanties applicables à une installation de borne de recharge (France). */
 export const GARANTIES = [
