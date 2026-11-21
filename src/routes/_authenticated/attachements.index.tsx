@@ -23,6 +23,8 @@ import { AttachementsPeriode } from "@/components/AttachementsPeriode";
 import { TelechargerAttachements } from "@/components/TelechargerAttachements";
 import { CreerAttachementTs } from "@/components/CreerAttachementTs";
 import { RechercheDocuments } from "@/components/RechercheDocuments";
+import { DoublonsAttachements } from "@/components/DoublonsAttachements";
+import type { DoublonTrouve } from "@/lib/attachements.functions";
 import { CHOIX_PERIODE_DEFAUT, correspondTexte, dateDansPeriode, periodeRecherche, type ChoixPeriode } from "@/lib/recherche-periode";
 
 export const Route = createFileRoute("/_authenticated/attachements/")({
@@ -42,6 +44,8 @@ const addDays = (date: string, days: number) => { const d = new Date(`${date}T00
 const plusJours = (n: number) => addDays(today(), n);
 const diffDays = (from: string, to: string) => { const n = Math.round((new Date(`${to}T00:00:00`).getTime() - new Date(`${from}T00:00:00`).getTime()) / 864e5); return Number.isFinite(n) && n > 0 ? n : 60; };
 type Line = LigneAtt;
+/** Texte de confirmation quand un attachement semblable existe déjà. */
+const messageDoublon = (quoi: string, d: DoublonTrouve[]) => `Attention, doublon possible pour ${quoi} :\n\n${d.map((x) => `• ${x.numero} — ${x.noms.length ? x.noms.join(", ") : "aucun chantier relié"} — ${euro(x.total_ht)} HT (${x.facture ? "facturé" : x.envoye ? "envoyé" : "pas encore envoyé"})`).join("\n")}\n\nCréer quand même ce nouvel attachement ?`;
 const newLine = nouvelleLigne;
 const estFini = (r: any) => Boolean(r.termine_at || r.chantier_valide || ["termine", "realise"].includes(r.statut));
 /** Précision affichée sur la feuille et dans la liste. */
@@ -227,13 +231,19 @@ function AttachementsPage() {
         const items = g.lines.filter((l) => l.libelle.trim() && Number(l.quantite) > 0);
         if (!items.length) continue;
         try {
-          await createFn({ data: { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${g.r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: g.r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? g.r.id, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } });
+          const donnees = { client_nom: d.raison_sociale || d.nom, client_email: d.charge_affaires_email || null, client_telephone: d.charge_affaires_telephone || null, client_adresse: d.adresse || null, client_cp_ville: d.cp_ville || null, numero_ticket: `S${String(n).padStart(2, "0")}-${lundi.slice(0, 4)}`, numero_affaire: null, bon_commande: null, objet: `Semaine ${n} (${fr(lundi)} au ${fr(dimanche)}) — ${g.r.client_nom}`, date_emission: emission, date_echeance: ech, autoliquidation: Boolean(d.autoliquidation), validation_requise: true, proposition_autorisee: true, notes: null, rendezvous_id: g.r.id, items: items.map((l) => ({ rendezvous_id: l.rendezvous_id ?? g.r.id, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) };
+          let r = await createFn({ data: donnees });
+          if (!r.id && r.doublons.length) {
+            if (!window.confirm(messageDoublon(g.r.client_nom || "ce chantier", r.doublons))) { restants.push(g); continue; }
+            r = await createFn({ data: { ...donnees, confirmer_doublon: true } });
+          }
+          if (!r.id) { restants.push(g); continue; }
           nb++;
         } catch { restants.push(g); }
       }
       // Jamais d'annulation automatique : les anciens attachements restent modifiables, on n'écrase rien.
       setPrep(restants.length ? { lundi, groupes: restants } : null);
-      void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] });
+      void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); void qc.invalidateQueries({ queryKey: ["attachements-doublons"] });
       setLotInfo(`${nb} attachement(s) en brouillon. Rien n’a été envoyé : cochez-les plus bas puis « Valider et envoyer ».${restants.length ? ` ${restants.length} n’ont pas pu être créés, ils restent à l’écran.` : ""}`);
     } catch (e) { setError(e instanceof Error ? e.message : "Création impossible."); } finally { setLot(null); }
   }
@@ -255,7 +265,7 @@ function AttachementsPage() {
     setCatalogue("");
   };
 
-  const create = useMutation({ mutationFn: () => createFn({ data: { ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } }), onSuccess: (r) => { void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); void qc.invalidateQueries({ queryKey: ["chantiers-a-relier"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
+  const create = useMutation({ mutationFn: (confirmer: boolean) => createFn({ data: { ...form, confirmer_doublon: confirmer, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } }), onSuccess: (r) => { if (!r.id) { if (r.doublons.length && window.confirm(messageDoublon("cet attachement", r.doublons))) create.mutate(true); return; } void qc.invalidateQueries({ queryKey: ["attachements"] }); void qc.invalidateQueries({ queryKey: ["attachements-doublons"] }); void qc.invalidateQueries({ queryKey: ["ensio-a-attacher"] }); void qc.invalidateQueries({ queryKey: ["chantiers-a-relier"] }); navigate({ to: "/attachements/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Création impossible.") });
   const rows = useMemo(() => (list.data ?? []).filter((a) => vue === "tous" || (vue === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).filter((a) => filtreEnvoi === "tous" || etatEnvoi(a) === filtreEnvoi).filter((a) => dateDansPeriode(a.date_emission, periodeRecherche(choixPeriode)) && correspondTexte(search, [a.numero, a.client_nom, a.objet, a.numero_ticket, a.numero_affaire, a.bon_commande, a.attachement_initial_numero, (a as any).recherche])), [list.data, search, vue, choixPeriode, filtreEnvoi]);
   /** Bordereau adapté au client de l'attachement (ENSIO / NCO ou Axians), pour la fenêtre de document TS. */
   const cataloguePour = (a: any) => (bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(String(a.client_nom ?? "")) ? "ensio" : "axians"));
@@ -391,7 +401,8 @@ function AttachementsPage() {
       </select>
     </label>
     <LignesAttachement lines={lines} setLines={setLines} catalogue={catalogueOptions} chantiers={chantiersLignes} />
-    <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /><div className="flex items-center justify-between"><strong>Total HT : {euro(total)}</strong><Button disabled={create.isPending || !form.numero_ticket.trim() || !form.client_nom.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => create.mutate()}>{create.isPending && <Loader2 className="animate-spin" />} Créer l’attachement</Button></div>{error && <p className="text-sm text-destructive">{error}</p>}</section>}
+    <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /><div className="flex items-center justify-between"><strong>Total HT : {euro(total)}</strong><Button disabled={create.isPending || !form.numero_ticket.trim() || !form.client_nom.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => create.mutate(false)}>{create.isPending && <Loader2 className="animate-spin" />} Créer l’attachement</Button></div>{error && <p className="text-sm text-destructive">{error}</p>}</section>}
+  <DoublonsAttachements />
   <AttachementsPeriode attachements={list.data ?? []} />
   <div className="flex flex-wrap gap-2" role="group" aria-label="Classement des attachements">{(["actifs", "archives", "tous"] as const).map((v) => <Button key={v} variant={vue === v ? "default" : "outline"} aria-pressed={vue === v} onClick={() => setVue(v)}>{v === "actifs" ? "En cours" : v === "archives" ? "Archives · Facturés / clôturés" : "Tous"} ({(list.data ?? []).filter((a) => v === "tous" || (v === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))).length})</Button>)}</div>
   <div className="flex flex-wrap items-center gap-2" role="group" aria-label="État d’envoi"><span className="text-sm font-semibold">État d’envoi :</span>{(["tous", "a_envoyer", "envoye", "valide", "facture"] as const).map((k) => { const nb = (list.data ?? []).filter((a) => (vue === "tous" || (vue === "archives" ? estAttachementCloture(a) : !estAttachementCloture(a))) && (k === "tous" || etatEnvoi(a) === k)).length; return <Button key={k} size="sm" variant={filtreEnvoi === k ? "default" : "outline"} aria-pressed={filtreEnvoi === k} onClick={() => setFiltreEnvoi(k)}>{k === "tous" ? "Tous" : LIBELLE_ENVOI[k]} ({nb})</Button>; })}</div>

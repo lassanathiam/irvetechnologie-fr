@@ -5,6 +5,8 @@ import { computeTotals } from "@/lib/billing";
 import { cleCommande } from "@/lib/attachement-suivi";
 import { blocageAnnulation } from "@/lib/attachement-statut";
 import { preparerLignesTs } from "@/lib/attachement-ts";
+import { chantiersDe, doublonsPour, pairesDoublons, type AttPourDoublon, type RaisonDoublon } from "@/lib/doublons-attachement";
+import { nomDonneur } from "@/lib/etape-chantier";
 
 const lineSchema = z.object({
   libelle: z.string().trim().min(1).max(200),
@@ -34,6 +36,44 @@ const attachmentSchema = z.object({
   notes: z.string().trim().max(2000).optional().nullable(),
   rendezvous_id: z.string().uuid().optional().nullable(),
   items: z.array(lineSchema).min(1).max(100),
+  /** Vrai quand l'utilisateur a confirmé vouloir créer malgré un doublon possible. */
+  confirmer_doublon: z.boolean().optional(),
+});
+
+/** Doublon possible renvoyé à l'écran, avec les noms des chantiers concernés. */
+export type DoublonTrouve = { id: string; numero: string; total_ht: number; statut: string; envoye: boolean; facture: boolean; raison: RaisonDoublon["type"]; noms: string[] };
+
+/** Attachements ordinaires non annulés (avec leurs lignes) pour comparer, éventuellement d'un seul client. */
+async function chargerPourDoublons(supabase: any, client?: string) {
+  const { data, error } = await supabase.from("attachements_travaux")
+    .select("id, numero, client_nom, statut, total_ht, numero_ticket, date_emission, facture_id, sent_at, attachement_initial_id, rendezvous_id, created_at")
+    .neq("statut", "annule").is("attachement_initial_id", null).order("created_at", { ascending: false }).limit(1000);
+  if (error) throw new Error(error.message);
+  const cle = client === undefined ? null : nomDonneur(client);
+  const atts = (data ?? []).filter((a: any) => cle === null || nomDonneur(a.client_nom) === cle);
+  const ids = atts.map((a: any) => a.id);
+  const lignes: any[] = [];
+  for (let i = 0; i < ids.length; i += 200) {
+    const q = await supabase.from("attachement_items").select("attachement_id, libelle, quantite, prix_unitaire, rendezvous_id").in("attachement_id", ids.slice(i, i + 200));
+    if (q.error) throw new Error(q.error.message);
+    lignes.push(...(q.data ?? []));
+  }
+  const parAtt = new Map<string, AttPourDoublon["lignes"]>();
+  for (const l of lignes) parAtt.set(l.attachement_id, [...(parAtt.get(l.attachement_id) ?? []), { libelle: l.libelle ?? "", quantite: Number(l.quantite), prix_unitaire: Number(l.prix_unitaire), rendezvous_id: l.rendezvous_id ?? null }]);
+  const liste: AttPourDoublon[] = atts.map((a: any) => ({ ...a, total_ht: Number(a.total_ht ?? 0), lignes: parAtt.get(a.id) ?? [] }));
+  const rdvIds = [...new Set(liste.flatMap((a) => chantiersDe(a)))];
+  const noms = new Map<string, string>();
+  for (let i = 0; i < rdvIds.length; i += 200) {
+    const q = await supabase.from("rendezvous").select("id, client_nom").in("id", rdvIds.slice(i, i + 200));
+    if (q.error) throw new Error(q.error.message);
+    for (const r of q.data ?? []) noms.set(r.id, r.client_nom || "Chantier sans nom");
+  }
+  return { liste, noms };
+}
+
+const versEcran = (a: AttPourDoublon, raison: RaisonDoublon, noms: Map<string, string>): DoublonTrouve => ({
+  id: a.id, numero: a.numero, total_ht: Number(a.total_ht ?? 0), statut: a.statut ?? "brouillon", envoye: Boolean(a.sent_at), facture: Boolean(a.facture_id), raison: raison.type,
+  noms: chantiersDe(a).map((c) => noms.get(c) ?? "Chantier").filter((v, i, t) => t.indexOf(v) === i),
 });
 
 async function nextNumber(supabase: any, year: number) {
@@ -309,9 +349,15 @@ export const createAttachement = createServerFn({ method: "POST" })
     const items = data.items.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
     const doublons = await autresAttachementsDesChantiers(context.supabase, [data.rendezvous_id, ...items.map((i) => i.rendezvous_id)]);
     if (doublons.bloquants.length) throw new Error(`Déjà dans un attachement envoyé ou facturé : ${listeDoublons(doublons.bloquants)}. Pour un supplément, créez un TS depuis cet attachement.`);
+    if (!data.confirmer_doublon) {
+      const { liste, noms } = await chargerPourDoublons(context.supabase, data.client_nom);
+      const candidat: AttPourDoublon = { id: "nouveau", numero: "nouveau", client_nom: data.client_nom, statut: "brouillon", total_ht: computeTotals(items, 0).total_ht, numero_ticket: data.numero_ticket, date_emission: data.date_emission, facture_id: null, sent_at: null, attachement_initial_id: null, rendezvous_id: data.rendezvous_id ?? null, lignes: items.map((i) => ({ libelle: i.libelle, quantite: i.quantite, prix_unitaire: i.prix_unitaire, rendezvous_id: i.rendezvous_id ?? null })) };
+      const trouves = doublonsPour(candidat, liste);
+      if (trouves.length) return { id: null, doublons: trouves.map((t) => versEcran(t.attachement, t.raison, noms)) };
+    }
     const totals = computeTotals(items, 0);
     const numero = await nextNumber(context.supabase, Number(data.date_emission.slice(0, 4)));
-    const { items: _items, ...attachmentData } = data;
+    const { items: _items, confirmer_doublon: _confirme, ...attachmentData } = data;
     const { data: row, error } = await context.supabase.from("attachements_travaux").insert({
       ...attachmentData,
       numero,
@@ -334,7 +380,15 @@ export const createAttachement = createServerFn({ method: "POST" })
       ordre: index + 1,
     })));
     if (lineError) throw new Error(lineError.message);
-    return { id: row.id };
+    return { id: row.id as string, doublons: [] as DoublonTrouve[] };
+  });
+
+/** Doublons possibles parmi les attachements : celui à garder et celui proposé à la suppression. */
+export const listDoublonsAttachements = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => {
+    const { liste, noms } = await chargerPourDoublons(context.supabase);
+    return pairesDoublons(liste).map((p) => ({ garder: versEcran(p.garder, p.raison, noms), doublon: versEcran(p.doublon, p.raison, noms), client: p.doublon.client_nom ?? "" }));
   });
 
 /**
@@ -376,7 +430,7 @@ export const updateAttachement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => attachmentSchema.extend({ id: z.string().uuid() }).parse(data))
   .handler(async ({ data, context }) => {
-    const { id, items: rawItems, ...attachmentData } = data;
+    const { id, items: rawItems, confirmer_doublon: _confirme, ...attachmentData } = data;
     const existing = await context.supabase.from("attachements_travaux").select("facture_id").eq("id", id).maybeSingle();
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) throw new Error("Attachement introuvable.");
