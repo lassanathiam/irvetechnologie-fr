@@ -10,7 +10,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { euro } from "@/lib/company";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
-import { csvSuivi, doublonsChantier, ETAPE_TERMINEE, ETAPES_CHANTIER, receptionnesSansCommande, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
+import { csvSuivi, doublonsChantier, ETAPE_TERMINEE, ETAPES_CHANTIER, ligneReceptionnee, receptionnesSansCommande, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, enregistrerCommandeAttachement, envoyerAttachementsGroupes, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
@@ -87,7 +87,8 @@ function SuiviPage() {
   }), [toutes, donneur, du, au, recherche]);
   const resume = resumeEtapes(filtrees);
   const idsSansCommande = useMemo(() => receptionnesSansCommande(filtrees), [filtrees]);
-  const recus = filtrees.filter((l) => l.receptionneLe && (!sansCommande || (l.rdvId && idsSansCommande.has(l.rdvId))));
+  // Réceptionné = chantier réceptionné + document avec sa commande ; « sans commande » liste les chantiers réceptionnés sans aucune commande.
+  const recus = filtrees.filter((l) => (sansCommande ? Boolean(l.receptionneLe && l.rdvId && idsSansCommande.has(l.rdvId)) : ligneReceptionnee(l)));
   const totauxRecus = totalReceptionnes(filtrees);
   const totalRecus = totauxRecus.ht;
   const doublons = useMemo(() => doublonsChantier(toutes), [toutes]);
@@ -245,7 +246,7 @@ function SuiviPage() {
         <CheckCircle2 className="h-6 w-6 text-primary" />
         <span className="min-w-0 flex-1">
           <span className="block text-sm font-bold">Tous les chantiers réceptionnés</span>
-          <span className="block text-xs text-muted-foreground">Tous ceux qui ont été réceptionnés, quelle que soit l’étape où ils sont maintenant (facturés, déposés ou payés compris).</span>
+          <span className="block text-xs text-muted-foreground">Tous ceux qui ont été réceptionnés, quelle que soit l’étape où ils sont maintenant (facturés, déposés ou payés compris). Un TS sans sa propre commande n’y figure pas : il attend sa commande.</span>
         </span>
         <span className="text-right">
           <span className="block text-2xl font-extrabold text-dashboard-green">{euro(totalRecus)}</span>

@@ -105,12 +105,20 @@ export function resumeEtapes(lignes: Pick<LigneSuivi, "etape" | "montantHt">[]):
 }
 
 /**
- * Tous les chantiers réceptionnés, quelle que soit leur étape actuelle (facturés, déposés et payés compris).
- * nb = chantiers distincts (un chantier avec son TS compte une fois) ; ht = somme de tous ses documents.
+ * Document réellement réceptionné par le client : chantier réceptionné ET document portant sa propre commande.
+ * Un TS ou une facture en double sans commande n'est pas réceptionné, même si son chantier l'est : il attend sa commande.
  */
-export function totalReceptionnes(lignes: Pick<LigneSuivi, "receptionneLe" | "montantHt" | "rdvId" | "cle">[]): { nb: number; ht: number } {
+export function ligneReceptionnee(l: Pick<LigneSuivi, "receptionneLe" | "commande">): boolean {
+  return Boolean(l.receptionneLe && l.commande);
+}
+
+/**
+ * Tous les chantiers réceptionnés, quelle que soit leur étape actuelle (facturés, déposés et payés compris).
+ * Seuls les documents avec commande comptent ; nb = chantiers distincts ; ht = somme de leurs documents commandés.
+ */
+export function totalReceptionnes(lignes: Pick<LigneSuivi, "receptionneLe" | "commande" | "montantHt" | "rdvId" | "cle">[]): { nb: number; ht: number } {
   const chantiers = new Set<string>(); let ht = 0;
-  for (const l of lignes) if (l.receptionneLe) { chantiers.add(l.rdvId ?? l.cle); ht = arrondi(ht + l.montantHt); }
+  for (const l of lignes) if (ligneReceptionnee(l)) { chantiers.add(l.rdvId ?? l.cle); ht = arrondi(ht + l.montantHt); }
   return { nb: chantiers.size, ht };
 }
 

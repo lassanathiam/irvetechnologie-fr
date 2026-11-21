@@ -1,5 +1,5 @@
 import { describe, expect, it } from "bun:test";
-import { attachementConsulte, attachementEnvoye, doublonsChantier, etapeChantier, numeroCommandeValide, nomDonneur, receptionnesSansCommande, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
+import { attachementConsulte, attachementEnvoye, doublonsChantier, etapeChantier, ligneReceptionnee, numeroCommandeValide, nomDonneur, receptionnesSansCommande, recuSansCommande, resumeEtapes, totalReceptionnes } from "./etape-chantier";
 
 const base = { attachement: true, envoye: true, commande: false, receptionne: false, facture: false, depose: false, paye: false };
 
@@ -41,14 +41,25 @@ describe("circuit unique du chantier en 7 étapes", () => {
 });
 
 describe("tous les chantiers réceptionnés", () => {
-  it("compte les réceptionnés déjà facturés ou payés, pas les autres ; un chantier et son TS = 1 chantier", () => {
+  it("compte les réceptionnés déjà facturés ou payés, pas les autres ; un chantier et son TS commandé = 1 chantier", () => {
     const r = totalReceptionnes([
-      { cle: "a", rdvId: "r1", receptionneLe: "2026-11-14", montantHt: 300 },
-      { cle: "b", rdvId: "r1", receptionneLe: "2026-11-14", montantHt: 65 },
-      { cle: "c", rdvId: "r2", receptionneLe: "2026-11-10", montantHt: 150 },
-      { cle: "d", rdvId: "r3", receptionneLe: null, montantHt: 900 },
+      { cle: "a", rdvId: "r1", receptionneLe: "2026-11-14", commande: "CST 02048140", montantHt: 300 },
+      { cle: "b", rdvId: "r1", receptionneLe: "2026-11-14", commande: "CST 02048748", montantHt: 100 },
+      { cle: "c", rdvId: "r2", receptionneLe: "2026-11-10", commande: "CST 02048734", montantHt: 150 },
+      { cle: "d", rdvId: "r3", receptionneLe: null, commande: "CST 02048746", montantHt: 900 },
     ]);
-    expect(r).toEqual({ nb: 2, ht: 515 });
+    expect(r).toEqual({ nb: 2, ht: 550 });
+  });
+  it("un TS sans sa propre commande n'est pas compté comme réceptionné", () => {
+    const r = totalReceptionnes([
+      { cle: "a", rdvId: "r1", receptionneLe: "2026-11-21", commande: "CST 02048150", montantHt: 300 },
+      { cle: "b", rdvId: "r1", receptionneLe: "2026-11-21", commande: null, montantHt: 100 },
+    ]);
+    expect(r).toEqual({ nb: 1, ht: 300 });
+  });
+  it("une facture en double sans commande n'ajoute rien au total réceptionné", () => {
+    expect(ligneReceptionnee({ receptionneLe: "2026-11-21", commande: null })).toBe(false);
+    expect(ligneReceptionnee({ receptionneLe: "2026-11-21", commande: "CST 02048749" })).toBe(true);
   });
 });
 
