@@ -163,3 +163,8 @@
 - [x] Bilan client : réceptionnés avec/sans commande, commandes non réceptionnées, attachements envoyés sans commande, non envoyés ; compteurs comparatifs
 - [x] Sélection (une ligne ou tout), téléchargement tableur et envoi au donneur d'ordre avec confirmation
 - [x] Page Attachements : sections pliables, liste regroupée par donneur d'ordre, brouillons expliqués (« déjà envoyé »), réception depuis le détail par client
+
+## 21/11/2026 — ENSIO / plateforme
+- [x] Lister les attachements envoyés à Antoni depuis le 1er octobre
+- [x] Télécharger en un seul bloc les dossiers de la capture ENSIO (facture + commande + attachement), sans GELPI, REBILLARD 50FIVES (CST 02048140) ni JAUNIN
+- [x] Attachements : noms des clients sur les brouillons, état d'envoi clair (pas envoyé / envoyé / validé / facturé)

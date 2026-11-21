@@ -20,6 +20,7 @@ import { commandesAValider, erreurValidationCommande } from "@/lib/commande-vali
 import { cleCommande, rapprocherAttachement } from "@/lib/attachement-suivi";
 import { texteDuPdf } from "@/lib/pdf-texte";
 import { SuiviAttachementsCommandes } from "@/components/SuiviAttachementsCommandes";
+import { BlocDossiersPlateforme } from "@/components/BlocDossiersPlateforme";
 
 export const Route = createFileRoute("/_authenticated/attachements/commandes")({
   loader: async () => ({ commandes: await listerCommandesImportees(), atts: await trouverAttachementsCommandes({ data: { numeros: [] } }) }),
@@ -218,6 +219,8 @@ function Page() {
         </header>
 
         <SuiviAttachementsCommandes atts={atts} />
+
+        {!chargementErreur && lignes.length > 0 && <BlocDossiersPlateforme commandes={lignes} atts={atts} />}
 
         <div
           onDragOver={(e) => e.preventDefault()}
