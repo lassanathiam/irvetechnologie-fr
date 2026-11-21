@@ -32,6 +32,7 @@ import {
   Settings,
   UserRound,
   Users,
+  CopyX,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { BrandLogo } from "@/components/BrandLogo";
@@ -70,6 +71,7 @@ const NAVIGATION_GROUPS: NavigationGroup[] = [
     label: "Opérations",
     links: [
       { to: "/suivi", label: "Suivi chantiers", icon: ListChecks },
+      { to: "/doublons", label: "Doublons", icon: CopyX },
       { to: "/attachements", label: "Attachements travaux", icon: ClipboardList },
       { to: "/rapports", label: "Rapports", icon: ClipboardCheck },
       { to: "/stock", label: "Stock matériel", icon: Package },

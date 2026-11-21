@@ -1,4 +1,5 @@
 import { creneauTexte } from "@/lib/creneau";
+import { BandeauDoublons } from "@/components/BandeauDoublons";
 import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
@@ -1214,6 +1215,7 @@ function PlanningPage() {
           </div>
         </div>
       )}
+      <BandeauDoublons type="chantier" className="mx-auto mb-3 w-full max-w-full" />
       <section id="mission-terrain" className="mx-auto mb-6 w-full min-w-0 max-w-full scroll-mt-4">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
           <div className="min-w-0">

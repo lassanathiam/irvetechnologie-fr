@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { BandeauDoublons } from "@/components/BandeauDoublons";
 import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useMemo, useState } from "react";
@@ -236,6 +237,7 @@ function DevisPage() {
 
   return (
     <ProShell>
+      <BandeauDoublons type="devis" className="mb-4" />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">

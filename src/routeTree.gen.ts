@@ -25,6 +25,7 @@ import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ZonesInterventionRouteImport } from './routes/zones-intervention'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
 import { Route as AuthenticatedCatalogueCommercialRouteImport } from './routes/_authenticated/catalogue-commercial'
+import { Route as AuthenticatedDoublonsRouteImport } from './routes/_authenticated/doublons'
 import { Route as AuthenticatedProspectsRouteImport } from './routes/_authenticated/prospects'
 import { Route as AuthenticatedSuiviRouteImport } from './routes/_authenticated/suivi'
 import { Route as AuthenticatedTarifsSiteRouteImport } from './routes/_authenticated/tarifs-site'
@@ -159,6 +160,11 @@ const AuthenticatedCatalogueCommercialRoute =
     path: '/catalogue-commercial',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedDoublonsRoute = AuthenticatedDoublonsRouteImport.update({
+  id: '/doublons',
+  path: '/doublons',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedProspectsRoute = AuthenticatedProspectsRouteImport.update({
   id: '/prospects',
   path: '/prospects',
@@ -452,6 +458,7 @@ export interface FileRoutesByFullPath {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/doublons': typeof AuthenticatedDoublonsRoute
   '/prospects': typeof AuthenticatedProspectsRoute
   '/suivi': typeof AuthenticatedSuiviRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
@@ -519,6 +526,7 @@ export interface FileRoutesByTo {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/doublons': typeof AuthenticatedDoublonsRoute
   '/prospects': typeof AuthenticatedProspectsRoute
   '/suivi': typeof AuthenticatedSuiviRoute
   '/tarifs-site': typeof AuthenticatedTarifsSiteRoute
@@ -588,6 +596,7 @@ export interface FileRoutesById {
   '/zones-intervention': typeof ZonesInterventionRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
   '/_authenticated/catalogue-commercial': typeof AuthenticatedCatalogueCommercialRoute
+  '/_authenticated/doublons': typeof AuthenticatedDoublonsRoute
   '/_authenticated/prospects': typeof AuthenticatedProspectsRoute
   '/_authenticated/suivi': typeof AuthenticatedSuiviRoute
   '/_authenticated/tarifs-site': typeof AuthenticatedTarifsSiteRoute
@@ -657,6 +666,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/bornes-catalogue'
     | '/catalogue-commercial'
+    | '/doublons'
     | '/prospects'
     | '/suivi'
     | '/tarifs-site'
@@ -724,6 +734,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/bornes-catalogue'
     | '/catalogue-commercial'
+    | '/doublons'
     | '/prospects'
     | '/suivi'
     | '/tarifs-site'
@@ -792,6 +803,7 @@ export interface FileRouteTypes {
     | '/zones-intervention'
     | '/_authenticated/bornes-catalogue'
     | '/_authenticated/catalogue-commercial'
+    | '/_authenticated/doublons'
     | '/_authenticated/prospects'
     | '/_authenticated/suivi'
     | '/_authenticated/tarifs-site'
@@ -993,6 +1005,13 @@ declare module '@tanstack/react-router' {
       path: '/catalogue-commercial'
       fullPath: '/catalogue-commercial'
       preLoaderRoute: typeof AuthenticatedCatalogueCommercialRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/doublons': {
+      id: '/_authenticated/doublons'
+      path: '/doublons'
+      fullPath: '/doublons'
+      preLoaderRoute: typeof AuthenticatedDoublonsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/prospects': {
@@ -1351,6 +1370,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedBornesCatalogueRoute: typeof AuthenticatedBornesCatalogueRoute
   AuthenticatedCatalogueCommercialRoute: typeof AuthenticatedCatalogueCommercialRoute
+  AuthenticatedDoublonsRoute: typeof AuthenticatedDoublonsRoute
   AuthenticatedProspectsRoute: typeof AuthenticatedProspectsRoute
   AuthenticatedSuiviRoute: typeof AuthenticatedSuiviRoute
   AuthenticatedTarifsSiteRoute: typeof AuthenticatedTarifsSiteRoute
@@ -1386,6 +1406,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedBornesCatalogueRoute: AuthenticatedBornesCatalogueRoute,
   AuthenticatedCatalogueCommercialRoute: AuthenticatedCatalogueCommercialRoute,
+  AuthenticatedDoublonsRoute: AuthenticatedDoublonsRoute,
   AuthenticatedProspectsRoute: AuthenticatedProspectsRoute,
   AuthenticatedSuiviRoute: AuthenticatedSuiviRoute,
   AuthenticatedTarifsSiteRoute: AuthenticatedTarifsSiteRoute,

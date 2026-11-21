@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { BandeauDoublons } from "@/components/BandeauDoublons";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { useState } from "react";
@@ -163,6 +164,7 @@ function PartenairesAdmin() {
             modification, pensez à publier pour que vos partenaires voient la dernière version.
           </p>
         </header>
+        <BandeauDoublons type="fiche" />
 
         <section className="bg-card border border-border rounded-xl p-5 grid gap-4 sm:grid-cols-2">
           <div className="sm:col-span-2 flex flex-wrap gap-2">

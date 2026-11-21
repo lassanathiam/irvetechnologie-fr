@@ -1,4 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
+import { BandeauDoublons } from "@/components/BandeauDoublons";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Fragment, useMemo, useState } from "react";
@@ -115,6 +116,7 @@ function FacturesPage() {
   return (
     <ProShell>
       <div className="pro-workspace">
+      <BandeauDoublons type="facture" className="mb-4" />
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <div className="text-mono text-[11px] uppercase tracking-[0.2em] text-primary">
