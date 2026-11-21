@@ -15,6 +15,8 @@ export function FichesChantier({ rendezvousId }: { rendezvousId: string }) {
     queryKey: ["fiches-techniques", rendezvousId],
     queryFn: () => lister({ data: { rendezvous_id: rendezvousId } }),
     staleTime: 5 * 60 * 1000,
+    // Les liens signés durent 1 h : on les renouvelle avant expiration.
+    refetchInterval: 30 * 60 * 1000,
     refetchOnWindowFocus: false,
     retry: 2,
     throwOnError: false,
@@ -29,6 +31,10 @@ export function FichesChantier({ rendezvousId }: { rendezvousId: string }) {
     </div>
   );
   if (!q.data?.length) return null;
+
+  // Lien direct (ouverture immédiate, fiable sur téléphone et application installée)
+  // tant que le lien signé est frais ; sinon on demande un lien neuf.
+  const lienFrais = Date.now() - q.dataUpdatedAt < 45 * 60 * 1000;
 
   async function ouvrir(id: string) {
     // Fenêtre ouverte tout de suite (sinon bloquée sur téléphone), puis lien frais.
@@ -52,9 +58,15 @@ export function FichesChantier({ rendezvousId }: { rendezvousId: string }) {
       <ul className="mt-1 space-y-1">
         {q.data.map((f) => (
           <li key={f.id}>
-            <button type="button" onClick={() => ouvrir(f.id)} disabled={ouverture === f.id} className="inline-flex items-center gap-1.5 text-left text-sm font-semibold text-primary underline-offset-2 hover:underline break-all">
-              {ouverture === f.id ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FileText className="h-4 w-4 shrink-0" />} {f.nom}
-            </button>
+            {f.url && lienFrais ? (
+              <a href={f.url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-left text-sm font-semibold text-primary underline-offset-2 hover:underline break-all">
+                <FileText className="h-4 w-4 shrink-0" /> {f.nom}
+              </a>
+            ) : (
+              <button type="button" onClick={() => ouvrir(f.id)} disabled={ouverture === f.id} className="inline-flex items-center gap-1.5 text-left text-sm font-semibold text-primary underline-offset-2 hover:underline break-all">
+                {ouverture === f.id ? <Loader2 className="h-4 w-4 shrink-0 animate-spin" /> : <FileText className="h-4 w-4 shrink-0" />} {f.nom}
+              </button>
+            )}
           </li>
         ))}
       </ul>
