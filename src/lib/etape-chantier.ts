@@ -88,6 +88,9 @@ export type LigneSuivi = {
   derniereConsultation: string | null;
   vues: number;
   valideLe: string | null;
+  /** Dernier rappel envoyé au client pour cet attachement, et nombre de rappels. */
+  rappelLe?: string | null;
+  rappels?: number;
   statutPlanning: string | null;
   etape: EtapeChantier;
   recuSansCommande: boolean;

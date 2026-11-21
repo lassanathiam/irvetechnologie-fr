@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, CheckCircle2, ChevronDown, Download, Eye, EyeOff, FileText, Loader2, Mail, Receipt, Search, Send, Upload } from "lucide-react";
+import { AlertTriangle, BellRing, CheckCircle2, ChevronDown, Download, Eye, EyeOff, FileText, Loader2, Mail, Receipt, Search, Send, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { ProShell } from "@/components/ProShell";
 import { Button } from "@/components/ui/button";
@@ -16,6 +16,8 @@ import { receptionnerChantiers } from "@/lib/planning.functions";
 import { convertirAttachementEnFacture, enregistrerCommandeAttachement, envoyerAttachementsGroupes, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
 import { updateFactureDepot, updateFactureStatut } from "@/lib/factures.functions";
 import { envoyerBilanReception } from "@/lib/bilan-reception.functions";
+import { envoyerRappelClient } from "@/lib/rappel-client.functions";
+import { motifRappel } from "@/lib/rappel-client";
 
 export const Route = createFileRoute("/_authenticated/suivi")({
   validateSearch: (s: Record<string, unknown>): { etape?: number; vue?: "receptionnes" } => {
@@ -56,6 +58,7 @@ function SuiviPage() {
   const integrerCommande = useServerFn(enregistrerCommandeAttachement);
   const envoyerBilan = useEnvoiConfirme(envoyerBilanReception, "Envoyer ce bilan au donneur d’ordre par email ? Vous en recevez une copie.");
   const envoyerAtts = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant les attachements cochés au donneur d’ordre, en un seul email avec un lien par chantier ? Vous en recevez une copie.");
+  const rappelClient = useEnvoiConfirme(envoyerRappelClient, "Envoyer un rappel au donneur d’ordre pour les chantiers cochés (commande ou réception attendue) ? Vous et le chargé d’affaires êtes en copie.");
   const bilanPourMoi = useEnvoiConfirme(envoyerBilanReception, "M’envoyer une copie de ce bilan ? Le client ne reçoit rien.");
 
   const [donneur, setDonneur] = useState("");
@@ -191,6 +194,21 @@ function SuiviPage() {
       else toast.error("L’email n’est pas parti.");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
   };
+  /** Rappel au client : commande attendue (étapes 3-4) ou réception attendue (étape 6). */
+  const envoyerRappel = async () => {
+    const ls = selection.filter((l) => l.attId && motifRappel(l));
+    if (!ls.length) { toast.error("Cochez des chantiers en attente de commande ou de réception."); return; }
+    if (new Set(ls.map((l) => l.donneur)).size > 1) { toast.error("Cochez les chantiers d’un seul donneur d’ordre à la fois."); return; }
+    setEnCours("rappel");
+    try {
+      const r = await rappelClient({ data: { cles: ls.map((l) => l.cle), envoiId: crypto.randomUUID(), message } });
+      if (r.sent) {
+        toast.success(`Rappel envoyé : ${[r.commandes ? `${r.commandes} commande(s) attendue(s)` : "", r.receptions ? `${r.receptions} réception(s) attendue(s)` : ""].filter(Boolean).join(", ")}.`);
+        setCoches([]); setMessage(""); await rafraichir();
+      } else toast.error("L’email n’est pas parti.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
+  };
+  const etapeRappel = !vueRecus && (etape === 3 || etape === 4 || etape === 6);
   const envoyerAuClient = async () => {
     const ids = [...new Set(selection.map((l) => l.attId).filter(Boolean))] as string[];
     if (!ids.length) { toast.error("Cochez des chantiers qui ont un attachement."); return; }
@@ -268,10 +286,11 @@ function SuiviPage() {
             {!vueRecus && ACTION[etape] && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
             <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Télécharger {selection.length ? `(${selection.length})` : "tout"}</Button>
             {!vueRecus && etape >= 2 && etape <= 4 && <Button size="sm" className="font-bold" disabled={!selection.some((l) => l.attId) || !!enCours} onClick={() => void envoyerAttachements(selection, "atts")}>{enCours === "atts" ? <Loader2 className="animate-spin" /> : <Send />} {etape === 2 ? "Envoyer les attachements" : "Renvoyer les attachements"} ({new Set(selection.map((l) => l.attId).filter(Boolean)).size})</Button>}
+            {etapeRappel && <Button size="sm" className="font-bold" variant="secondary" disabled={!selection.length || !!enCours} onClick={() => void envoyerRappel()}>{enCours === "rappel" ? <Loader2 className="animate-spin" /> : <BellRing />} Faire un rappel au client ({selection.length})</Button>}
             {(vueRecus || etape >= 5) && <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>}
             {(vueRecus || etape >= 5) && <Button size="sm" variant="ghost" disabled={!selection.length || !!enCours} onClick={() => void envoyerPourMoi()}>{enCours === "moi" ? <Loader2 className="animate-spin" /> : <Mail />} M’envoyer une copie du bilan</Button>}
           </div>
-          {selection.length > 0 && (vueRecus || etape >= 5) && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
+          {selection.length > 0 && (vueRecus || etape >= 5 || etapeRappel) && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder={etapeRappel ? "Message pour le client (facultatif) — la liste des chantiers en attente est ajoutée automatiquement" : "Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement"} />}
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) déjà réceptionné(s) avant la commande ou la facture.</strong> Ils restent ici tant que l’étape n’est pas faite.</span></p>}
         {vueRecus && sansCommande && !lignes.length ? <p className="p-6 text-center text-sm font-semibold text-dashboard-green">Aucun chantier réceptionné sans commande{donneur ? ` chez ${donneur}` : ""} : chaque réception a bien sa commande.</p> :
@@ -373,6 +392,7 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, onCommande, o
         {l.date && <span>{dateFr(l.date)}</span>}
         {l.attId ? <Link to="/attachements/$id" params={{ id: l.attId }} className="inline-flex items-center gap-1 hover:underline"><FileText className="h-3 w-3" />{l.attNumero}</Link> : <span className="text-amber-600 dark:text-amber-400">Pas d’attachement</span>}
         <Consultation l={l} />
+        {l.rappelLe && motifRappel(l) && <span className="inline-flex items-center gap-1 font-semibold text-amber-600 dark:text-amber-400"><BellRing className="h-3 w-3" />Rappel envoyé le {dateFr(l.rappelLe)}{(l.rappels ?? 0) > 1 ? ` · ${l.rappels} rappels` : ""}</span>}
         {l.commande && <span>Commande {l.commande}</span>}
         {l.receptionneLe && <span className="text-primary">Réceptionné le {dateFr(l.receptionneLe)} {l.etape < ETAPE_TERMINEE && <button type="button" className="underline" onClick={onRetirer}>retirer</button>}</span>}
         {l.factureId && l.etape <= 4 && <span className="font-semibold text-destructive">Déjà facturé · commande manquante</span>}

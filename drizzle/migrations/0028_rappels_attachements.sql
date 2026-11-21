@@ -1,0 +1,1 @@
+ALTER TABLE public.attachements_travaux ADD COLUMN IF NOT EXISTS rappel_at timestamptz, ADD COLUMN IF NOT EXISTS nb_rappels integer NOT NULL DEFAULT 0;

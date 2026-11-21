@@ -4,13 +4,10 @@ import { attachementConsulte, attachementEnvoye, etapeChantier, nomDonneur, nume
 
 const arrondi = (n: number) => Math.round(n * 100) / 100;
 
-/** Une ligne = la part d'un chantier dans un attachement (ou un chantier terminé sans attachement). Lecture seule, sous l'identité de l'utilisateur. */
-export const getSuiviChantiers = createServerFn({ method: "GET" })
-  .middleware([requireSupabaseAuth])
-  .handler(async ({ context }) => {
-    const s = context.supabase;
+/** Calcule les lignes du Suivi (partagé par la page et par les rappels, pour que le serveur ne croie jamais le navigateur). */
+export async function chargerSuivi(s: any): Promise<LigneSuivi[]> {
     const [atts, items, commandes, termines] = await Promise.all([
-      s.from("attachements_travaux").select("id, numero, client_nom, objet, total_ht, sent_at, accepted_at, statut, facture_id, bon_commande, rendezvous_id, depose_at, paye_at, attachement_initial_id, date_emission, viewed_at, last_viewed_at, view_count").neq("statut", "annule"),
+      s.from("attachements_travaux").select("id, numero, client_nom, objet, total_ht, sent_at, accepted_at, statut, facture_id, bon_commande, rendezvous_id, depose_at, paye_at, attachement_initial_id, date_emission, viewed_at, last_viewed_at, view_count, rappel_at, nb_rappels").neq("statut", "annule"),
       s.from("attachement_items").select("attachement_id, rendezvous_id, quantite, prix_unitaire"),
       s.from("commandes_importees").select("saisie, created_at").order("created_at", { ascending: true }),
       s.from("rendezvous").select("id").in("statut", ["termine", "realise"]).eq("archive", false),
@@ -47,7 +44,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
       ? await s.from("factures").select("id, numero, statut, depose_at, paid_at, bon_commande").in("id", factureIds)
       : { data: [], error: null };
     if (ef) throw new Error(ef.message);
-    const fac = new Map((facs ?? []).map((f: any) => [f.id, f]));
+    const fac = new Map<string, any>((facs ?? []).map((f: any) => [f.id, f]));
 
     const factureDe = (a: any) => { const f = a.facture_id ? fac.get(a.facture_id) : null; return f && f.statut !== "annulee" ? f : null; };
     const commandeDe = (a: any): string | null => { const f = factureDe(a); return commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null) || (f ? String(f.bon_commande ?? "").trim() || null : null); };
@@ -91,7 +88,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
           montantHt: arrondi(montant), commande, receptionneLe: r?.receptionne_at ?? null,
           factureId: factureActive?.id ?? null, factureNumero: factureActive?.numero ?? null,
           deposeLe: factureActive?.depose_at ?? a.depose_at ?? null, payeLe: factureActive?.paid_at ?? a.paye_at ?? null,
-          envoyeLe: a.sent_at ?? null, consulteLe: a.viewed_at ?? null, derniereConsultation: a.last_viewed_at ?? null, vues: Number(a.view_count ?? 0), valideLe: a.accepted_at ?? null,
+          envoyeLe: a.sent_at ?? null, consulteLe: a.viewed_at ?? null, derniereConsultation: a.last_viewed_at ?? null, vues: Number(a.view_count ?? 0), valideLe: a.accepted_at ?? null, rappelLe: a.rappel_at ?? null, rappels: Number(a.nb_rappels ?? 0),
           statutPlanning: r?.statut ?? null,
           etape: etapeChantier(etat), recuSansCommande: recuSansCommande(etat),
         });
@@ -110,5 +107,10 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
       });
     }
     lignes.sort((x, y) => String(y.date ?? "").localeCompare(String(x.date ?? "")));
-    return { lignes };
-  });
+    return lignes;
+}
+
+/** Une ligne = la part d'un chantier dans un attachement (ou un chantier terminé sans attachement). Lecture seule, sous l'identité de l'utilisateur. */
+export const getSuiviChantiers = createServerFn({ method: "GET" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }) => ({ lignes: await chargerSuivi(context.supabase) }));

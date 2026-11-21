@@ -161,6 +161,7 @@ export type Database = {
           facture_id: string | null
           id: string
           last_viewed_at: string | null
+          nb_rappels: number
           notes: string | null
           numero: string
           numero_affaire: string | null
@@ -169,6 +170,7 @@ export type Database = {
           paye_at: string | null
           proposition_autorisee: boolean
           public_token: string
+          rappel_at: string | null
           refused_at: string | null
           rendezvous_id: string | null
           sent_at: string | null
@@ -203,6 +205,7 @@ export type Database = {
           facture_id?: string | null
           id?: string
           last_viewed_at?: string | null
+          nb_rappels?: number
           notes?: string | null
           numero: string
           numero_affaire?: string | null
@@ -211,6 +214,7 @@ export type Database = {
           paye_at?: string | null
           proposition_autorisee?: boolean
           public_token?: string
+          rappel_at?: string | null
           refused_at?: string | null
           rendezvous_id?: string | null
           sent_at?: string | null
@@ -245,6 +249,7 @@ export type Database = {
           facture_id?: string | null
           id?: string
           last_viewed_at?: string | null
+          nb_rappels?: number
           notes?: string | null
           numero?: string
           numero_affaire?: string | null
@@ -253,6 +258,7 @@ export type Database = {
           paye_at?: string | null
           proposition_autorisee?: boolean
           public_token?: string
+          rappel_at?: string | null
           refused_at?: string | null
           rendezvous_id?: string | null
           sent_at?: string | null
