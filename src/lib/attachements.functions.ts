@@ -274,6 +274,30 @@ export const getAttachement = createServerFn({ method: "GET" })
     return { attachement: result.data, items: lines.data ?? [], propositions: props.data ?? [], message_suggestion, supplements: supplements.data ?? [], facture, chantiers };
   });
 
+
+/**
+ * Un numéro de commande ne sert qu'une fois : ni sur un autre attachement (TS compris), ni sur une autre facture,
+ * ni sur une commande importée rattachée à un autre attachement. Renvoie où il est déjà utilisé, sinon null.
+ */
+async function commandeDejaUtilisee(supabase: any, numero: string | null | undefined, sauf: { attId?: string | null; factureId?: string | null } = {}): Promise<string | null> {
+  const cle = cleCommande(numero);
+  if (cle.length < 3) return null;
+  const [atts, facs, imps] = await Promise.all([
+    supabase.from("attachements_travaux").select("id, numero, bon_commande").neq("statut", "annule").not("bon_commande", "is", null),
+    supabase.from("factures").select("id, numero, bon_commande, attachement_id").neq("statut", "annulee").not("bon_commande", "is", null),
+    supabase.from("commandes_importees").select("saisie"),
+  ]);
+  for (const q of [atts, facs, imps]) if (q.error) throw new Error(q.error.message);
+  const a = (atts.data ?? []).find((x: any) => x.id !== sauf.attId && cleCommande(x.bon_commande) === cle);
+  if (a) return `l’attachement ${a.numero}`;
+  const f = (facs.data ?? []).find((x: any) => x.id !== sauf.factureId && (!sauf.attId || x.attachement_id !== sauf.attId) && cleCommande(x.bon_commande) === cle);
+  if (f) return `la facture ${f.numero}`;
+  const i = (imps.data ?? []).find((x: any) => { const sa = x.saisie as any; return sa?.attId && sa.attId !== sauf.attId && cleCommande(sa?.lu?.numero) === cle; });
+  if (i) return "une commande importée rattachée à un autre attachement";
+  return null;
+}
+const erreurCommande = (numero: string, ou: string) => `Le numéro de commande ${numero} est déjà utilisé sur ${ou}. Une commande ne peut servir qu’à une seule facture : un TS attend sa propre commande.`;
+
 export const creerAttachementTs = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({
@@ -282,6 +306,8 @@ export const creerAttachementTs = createServerFn({ method: "POST" })
     items: z.array(lineSchema).min(1).max(100),
   }).parse(data))
   .handler(async ({ data, context }) => {
+    const pris = await commandeDejaUtilisee(context.supabase, data.bon_commande);
+    if (pris) throw new Error(erreurCommande(data.bon_commande!, pris));
     const result = await context.supabase.rpc("creer_attachement_ts", {
       _initial_id: data.initial_id, _document_id: data.document_id,
       _bon_commande: data.bon_commande ?? "", _lignes: preparerLignesTs(data.items),
@@ -347,6 +373,8 @@ export const createAttachement = createServerFn({ method: "POST" })
   .inputValidator((data: unknown) => attachmentSchema.parse(data))
   .handler(async ({ data, context }) => {
     const items = data.items.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
+    const prisC = await commandeDejaUtilisee(context.supabase, data.bon_commande);
+    if (prisC) throw new Error(erreurCommande(data.bon_commande!, prisC));
     const doublons = await autresAttachementsDesChantiers(context.supabase, [data.rendezvous_id, ...items.map((i) => i.rendezvous_id)]);
     if (doublons.bloquants.length) throw new Error(`Déjà dans un attachement envoyé ou facturé : ${listeDoublons(doublons.bloquants)}. Pour un supplément, créez un TS depuis cet attachement.`);
     if (!data.confirmer_doublon) {
@@ -435,6 +463,8 @@ export const updateAttachement = createServerFn({ method: "POST" })
     if (existing.error) throw new Error(existing.error.message);
     if (!existing.data) throw new Error("Attachement introuvable.");
     if (existing.data.facture_id) throw new Error("Cet attachement est déjà facturé : modifiez la facture.");
+    const prisC = await commandeDejaUtilisee(context.supabase, data.bon_commande, { attId: id });
+    if (prisC) throw new Error(erreurCommande(data.bon_commande!, prisC));
     const items = rawItems.map((item) => ({ ...item, tva: data.autoliquidation ? 0 : 20 }));
     const doublons = await autresAttachementsDesChantiers(context.supabase, [data.rendezvous_id, ...items.map((i) => i.rendezvous_id)], id);
     if (doublons.bloquants.length) throw new Error(`Déjà dans un autre attachement envoyé ou facturé : ${listeDoublons(doublons.bloquants)}. Pour un supplément, créez un TS depuis cet attachement.`);
@@ -524,6 +554,8 @@ async function convertirEnFacture(context: { supabase: any; userId: string }, da
     if (attachment.facture_id) return { id: attachment.facture_id, existing: true };
     const { data: items, error: itemsError } = await context.supabase.from("attachement_items").select("*").eq("attachement_id", data.id).order("ordre");
     if (itemsError) throw new Error(itemsError.message);
+    const prisC = await commandeDejaUtilisee(context.supabase, attachment.bon_commande, { attId: attachment.id });
+    if (prisC) throw new Error(`${attachment.numero} non facturé : ${erreurCommande(attachment.bon_commande, prisC)}`);
     if (!attachment.attachement_initial_id) {
       // Un chantier ne se facture qu'une fois : un supplément passe par un TS.
       const doublons = await autresAttachementsDesChantiers(context.supabase, [attachment.rendezvous_id, ...(items ?? []).map((i: any) => i.rendezvous_id)], attachment.id);
@@ -614,9 +646,8 @@ export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
     const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, total_ht, autoliquidation, client_nom, bon_commande").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!att) throw new Error("Attachement introuvable.");
-    const autres = await context.supabase.from("attachements_travaux").select("id, bon_commande").eq("client_nom", att.client_nom).neq("id", att.id).neq("statut", "annule");
-    if (autres.error) throw new Error(autres.error.message);
-    if (autres.data.some((a) => cleCommande(a.bon_commande) === cleCommande(data.bon_commande))) throw new Error("Ce numéro de commande est déjà rattaché à un autre attachement de ce donneur d’ordre.");
+    const prisC = await commandeDejaUtilisee(context.supabase, data.bon_commande, { attId: att.id, factureId: att.facture_id });
+    if (prisC) throw new Error(erreurCommande(data.bon_commande, prisC));
     if (att.facture_id && att.bon_commande && cleCommande(att.bon_commande) !== cleCommande(data.bon_commande)) throw new Error("Cet attachement est déjà facturé avec un autre numéro de commande.");
     if (att.facture_id) {
       await context.supabase.from("attachements_travaux").update({ bon_commande: data.bon_commande }).eq("id", att.id);
@@ -648,10 +679,8 @@ export const enregistrerCommandeAttachement = createServerFn({ method: "POST" })
     const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, client_nom, bon_commande, statut").eq("id", data.id).maybeSingle();
     if (error) throw new Error(error.message);
     if (!att || att.statut === "annule") throw new Error("Attachement introuvable.");
-    const autres = await context.supabase.from("attachements_travaux").select("id, numero, bon_commande").eq("client_nom", att.client_nom).neq("id", att.id).neq("statut", "annule");
-    if (autres.error) throw new Error(autres.error.message);
-    const pris = autres.data.find((a) => cleCommande(a.bon_commande) === cleCommande(data.bon_commande));
-    if (pris) throw new Error(`Ce numéro de commande est déjà sur ${pris.numero}.`);
+    const prisC = await commandeDejaUtilisee(context.supabase, data.bon_commande, { attId: att.id, factureId: att.facture_id });
+    if (prisC) throw new Error(erreurCommande(data.bon_commande, prisC));
     if (att.bon_commande && cleCommande(att.bon_commande) !== cleCommande(data.bon_commande) && att.facture_id) throw new Error("Cet attachement est déjà facturé avec un autre numéro de commande.");
     const up = await context.supabase.from("attachements_travaux").update({ bon_commande: data.bon_commande }).eq("id", att.id);
     if (up.error) throw new Error(up.error.message);

@@ -317,7 +317,6 @@ function AlerteDoublon({ autres }: { autres?: string[] }) {
 function GroupeRecu({ g, doublons, coche, onCoche, enCours, onRetirer }: { g: LigneSuivi[]; doublons: Map<string, string[]>; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onRetirer: () => void }) {
   const l = g[0];
   const total = g.reduce((t, x) => t + x.montantHt, 0);
-  const commandeChantier = g.find((x) => x.commande)?.commande ?? null;
   return <li className="flex flex-wrap items-start gap-3 p-3">
     <input type="checkbox" aria-label={`Cocher ${l.client}`} className="mt-1.5 h-5 w-5" checked={coche} onChange={(e) => onCoche(e.target.checked)} />
     <div className="min-w-0 flex-1">
@@ -333,7 +332,7 @@ function GroupeRecu({ g, doublons, coche, onCoche, enCours, onRetirer }: { g: Li
           <span className="flex flex-wrap items-center gap-x-3 gap-y-0.5">
             {x.attId ? <Link to="/attachements/$id" params={{ id: x.attId }} className="inline-flex items-center gap-1 font-semibold hover:underline"><FileText className="h-3 w-3" />{x.attNumero}</Link> : <span>Pas d’attachement</span>}
             {x.ts && <span className="rounded border border-amber-500/60 px-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">TS</span>}
-            {x.commande ? <span>Commande {x.commande}</span> : x.ts && commandeChantier ? <span>TS · commande du chantier {commandeChantier}</span> : <span className="font-bold text-destructive">Sans commande</span>}
+            {x.commande ? <span>Commande {x.commande}</span> : <span className="font-bold text-destructive">{x.ts ? "TS · commande TS pas encore reçue" : "Sans commande"}</span>}
             {x.factureId && <Link to="/factures/$id" params={{ id: x.factureId }} className="inline-flex items-center gap-1 hover:underline"><Receipt className="h-3 w-3" />{x.factureNumero}</Link>}
             <span className="rounded-full bg-muted px-2 py-0.5 font-bold">{x.etape === ETAPE_TERMINEE ? "" : `Étape ${x.etape} · `}{ETAPES_CHANTIER[x.etape - 1]?.court}</span>
             <strong className="ml-auto text-sm text-dashboard-green">{euro(x.montantHt)} HT</strong>

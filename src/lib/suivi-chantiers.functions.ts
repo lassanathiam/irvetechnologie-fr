@@ -48,14 +48,6 @@ export async function chargerSuivi(s: any): Promise<LigneSuivi[]> {
 
     const factureDe = (a: any) => { const f = a.facture_id ? fac.get(a.facture_id) : null; return f && f.statut !== "annulee" ? f : null; };
     const commandeDe = (a: any): string | null => { const f = factureDe(a); return commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null) || (f ? String(f.bon_commande ?? "").trim() || null : null); };
-    // Un TS sans commande à lui suit la commande de l'attachement initial du même chantier.
-    const commandeChantier = new Map<string, string>();
-    for (const a of listeAtt) {
-      if (a.attachement_initial_id) continue;
-      const c = commandeDe(a); if (!c) continue;
-      for (const k of [a.rendezvous_id, ...(parts.get(a.id)?.keys() ?? [])]) if (k && !commandeChantier.has(k)) commandeChantier.set(k, c);
-    }
-
     const lignes: LigneSuivi[] = [];
     const avecAttachement = new Set<string>();
     for (const a of listeAtt) {
@@ -75,7 +67,8 @@ export async function chargerSuivi(s: any): Promise<LigneSuivi[]> {
       for (const k of cibles) {
         const r = k ? rdv.get(k) : null;
         if (k) avecAttachement.add(k);
-        const commande = commandePropre ?? (a.attachement_initial_id && k ? commandeChantier.get(k) ?? null : null);
+        // Un TS est facturé à part : il n’a de commande que la sienne, jamais celle de l’attachement initial.
+        const commande = commandePropre;
         const montant = k ? m.get(k) ?? 0 : chantiers.length ? reste : Number(a.total_ht ?? 0);
         const etat = {
           attachement: true, envoye: attachementEnvoye(a), consulte: attachementConsulte(a), commande: Boolean(commande), receptionne: Boolean(r?.receptionne_at),
