@@ -18,6 +18,14 @@ import {
 import { ProShell } from "@/components/ProShell";
 import { ClientPicker } from "@/components/ClientPicker";
 import { ReponseExpressButton } from "@/components/ReponseExpress";
+import { RechercheDocuments } from "@/components/RechercheDocuments";
+import {
+  CHOIX_PERIODE_DEFAUT,
+  correspondTexte,
+  dateDansPeriode,
+  periodeRecherche,
+  type ChoixPeriode,
+} from "@/lib/recherche-periode";
 import { dateFr, euro } from "@/lib/company";
 import { acompteAmount, computeTotals, CONDITIONS_DEFAUT } from "@/lib/billing";
 import { createDevis, deleteDevis, listDevis, listPrestations } from "@/lib/devis.functions";
@@ -214,6 +222,17 @@ function DevisPage() {
   );
 
   const list = devis.data ?? [];
+  // Recherche des devis : texte + semaine / mois / dates saisies (date d'émission).
+  const [texteRecherche, setTexteRecherche] = useState("");
+  const [choixPeriode, setChoixPeriode] = useState<ChoixPeriode>(CHOIX_PERIODE_DEFAUT);
+  const trouves = useMemo(() => {
+    const periode = periodeRecherche(choixPeriode);
+    return list.filter(
+      (d) =>
+        dateDansPeriode(d.date_emission, periode) &&
+        correspondTexte(texteRecherche, [d.numero, d.client_nom, d.objet, STATUT_LABEL[d.statut]]),
+    );
+  }, [list, choixPeriode, texteRecherche]);
 
   return (
     <ProShell>
@@ -537,11 +556,23 @@ function DevisPage() {
 
       <section className="mt-16">
         <h2 className="text-2xl font-extrabold tracking-tight">Devis</h2>
-        <div className="mt-5 border border-border rounded-sm bg-card divide-y divide-border overflow-hidden">
-          {list.length === 0 && (
-            <p className="p-6 text-sm text-muted-foreground">Aucun devis pour le moment.</p>
+        <div className="mt-5">
+          <RechercheDocuments
+            texte={texteRecherche}
+            onTexte={setTexteRecherche}
+            choix={choixPeriode}
+            onChoix={setChoixPeriode}
+            placeholder="Rechercher un devis : numéro, client, objet…"
+            resultat={`${trouves.length} devis · ${euro(trouves.reduce((s, d) => s + Number(d.total_ttc), 0))} TTC`}
+          />
+        </div>
+        <div className="mt-4 border border-border rounded-sm bg-card divide-y divide-border overflow-hidden">
+          {trouves.length === 0 && (
+            <p className="p-6 text-sm text-muted-foreground">
+              {list.length === 0 ? "Aucun devis pour le moment." : "Aucun devis pour cette recherche."}
+            </p>
           )}
-          {list.map((d) => (
+          {trouves.map((d) => (
             <div key={d.id} className="p-4 flex items-center gap-4 flex-wrap hover:bg-muted/30 transition">
               <Link to="/devis/$id" params={{ id: d.id }} className="text-mono text-xs text-primary hover:underline">
                 {d.numero}

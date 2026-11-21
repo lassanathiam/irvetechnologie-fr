@@ -6,11 +6,15 @@ import { ChevronDown, ChevronRight, FileText, Loader2, Trash2 } from "lucide-rea
 import { ProShell } from "@/components/ProShell";
 import { dateFr, euro } from "@/lib/company";
 import { deleteFacture, listFactures, updateFactureDepot } from "@/lib/factures.functions";
+import { totauxParClient } from "@/lib/factures-par-client";
+import { RechercheDocuments } from "@/components/RechercheDocuments";
 import {
-  periodeDepuisCle,
-  totauxParClient,
-  type PeriodeCle,
-} from "@/lib/factures-par-client";
+  CHOIX_PERIODE_DEFAUT,
+  correspondTexte,
+  dateDansPeriode,
+  periodeRecherche,
+  type ChoixPeriode,
+} from "@/lib/recherche-periode";
 import { etapeDepotFacture, peutDeposerFacture, type EtapeDepotFacture } from "@/lib/suivi-facturation";
 
 export const Route = createFileRoute("/_authenticated/factures/")({
@@ -45,13 +49,6 @@ const FILTRES: { cle: FiltreDepot; label: string }[] = [
   { cle: "payee", label: "Payées" },
 ];
 
-const PERIODES: { cle: PeriodeCle; label: string }[] = [
-  { cle: "tout", label: "Depuis le début" },
-  { cle: "mois_courant", label: "Ce mois-ci" },
-  { cle: "mois_precedent", label: "Mois dernier" },
-  { cle: "personnalise", label: "Dates choisies" },
-];
-
 function FacturesPage() {
   const qc = useQueryClient();
   const fetchFactures = useServerFn(listFactures);
@@ -59,24 +56,30 @@ function FacturesPage() {
   const factures = useQuery({ queryKey: ["factures"], queryFn: () => fetchFactures() });
 
   const list = factures.data ?? [];
-  const total = list.reduce((s, f) => s + Number(f.total_ttc), 0);
-  const impaye = list
-    .filter((f) => f.statut !== "payee" && f.statut !== "annulee")
-    .reduce((s, f) => s + Number(f.total_ttc), 0);
 
   const [filtre, setFiltre] = useState<FiltreDepot>("toutes");
 
-  // Total par client : période choisie + client dont on a déplié la liste.
-  const [periode, setPeriode] = useState<PeriodeCle>("tout");
-  const [duPerso, setDuPerso] = useState("");
-  const [auPerso, setAuPerso] = useState("");
+  // Recherche commune : texte + semaine / mois / dates saisies (date d'émission).
+  const [texte, setTexte] = useState("");
+  const [choix, setChoix] = useState<ChoixPeriode>(CHOIX_PERIODE_DEFAUT);
+  const periode = useMemo(() => periodeRecherche(choix), [choix]);
   const [clientOuvert, setClientOuvert] = useState<string | null>(null);
-
-  const parClient = useMemo(
-    () => totauxParClient(list, periodeDepuisCle(periode, new Date(), duPerso, auPerso)),
-    [list, periode, duPerso, auPerso],
+  const trouvees = useMemo(
+    () =>
+      list.filter(
+        (f) =>
+          dateDansPeriode(f.date_emission, periode) &&
+          correspondTexte(texte, [f.numero, f.client_nom, f.objet, f.depose_reference, STATUT_LABEL[f.statut]]),
+      ),
+    [list, periode, texte],
   );
-  const libellePeriode = periodeDepuisCle(periode, new Date(), duPerso, auPerso).libelle;
+
+  const parClient = useMemo(() => totauxParClient(trouvees, periode), [trouvees, periode]);
+  const total = trouvees.reduce((s, f) => s + Number(f.total_ttc), 0);
+  const impaye = trouvees
+    .filter((f) => f.statut !== "payee" && f.statut !== "annulee")
+    .reduce((s, f) => s + Number(f.total_ttc), 0);
+  const libellePeriode = periode.libelle;
 
 
   const parEtape = useMemo(() => {
@@ -85,28 +88,28 @@ function FacturesPage() {
       ["deposee", 0],
       ["payee", 0],
     ]);
-    for (const f of list) {
+    for (const f of trouvees) {
       if (!peutDeposerFacture(f)) continue;
       const e = etapeDepotFacture(f);
       m.set(e, (m.get(e) ?? 0) + 1);
     }
     return m;
-  }, [list]);
+  }, [trouvees]);
 
   const aDeposer = useMemo(
     () =>
-      list
+      trouvees
         .filter((f) => peutDeposerFacture(f) && etapeDepotFacture(f) === "a_deposer")
         .reduce((s, f) => s + Number(f.total_ttc), 0),
-    [list],
+    [trouvees],
   );
 
   const rows = useMemo(
     () =>
       filtre === "toutes"
-        ? list
-        : list.filter((f) => peutDeposerFacture(f) && etapeDepotFacture(f) === filtre),
-    [list, filtre],
+        ? trouvees
+        : trouvees.filter((f) => peutDeposerFacture(f) && etapeDepotFacture(f) === filtre),
+    [trouvees, filtre],
   );
 
   return (
@@ -137,13 +140,24 @@ function FacturesPage() {
       </div>
       </div>
 
+      <div className="mt-8">
+        <RechercheDocuments
+          texte={texte}
+          onTexte={setTexte}
+          choix={choix}
+          onChoix={setChoix}
+          placeholder="Rechercher une facture : numéro, client, objet, commande…"
+          resultat={`${trouvees.length} facture${trouvees.length > 1 ? "s" : ""} · ${euro(trouvees.filter((f) => f.statut !== "annulee").reduce((s, f) => s + Number(f.total_ht), 0))} HT`}
+        />
+      </div>
+
       <div className="mt-8 grid sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        <Stat label="Factures" value={String(list.length)} />
+        <Stat label="Factures" value={String(trouvees.length)} />
         <Stat label="Total facturé TTC" value={euro(total)} />
         <Stat label="À déposer" value={`${parEtape.get("a_deposer") ?? 0} · ${euro(aDeposer)}`} accent />
         <Stat
           label="Consultées par le client"
-          value={String(list.filter((f) => f.viewed_at).length)}
+          value={String(trouvees.filter((f) => f.viewed_at).length)}
         />
         <Stat label="Reste à encaisser" value={euro(impaye)} accent />
       </div>
@@ -152,46 +166,6 @@ function FacturesPage() {
         <h2 className="border-b border-border p-4 text-sm font-bold uppercase tracking-wide text-primary">
           Montant total par client · {libellePeriode}
         </h2>
-        <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">
-          {PERIODES.map((p) => (
-            <button
-              key={p.cle}
-              type="button"
-              aria-pressed={periode === p.cle}
-              onClick={() => setPeriode(p.cle)}
-              className={`text-mono text-xs rounded-sm border px-3 py-2 ${
-                periode === p.cle
-                  ? "border-primary bg-primary/15 text-primary"
-                  : "border-border text-muted-foreground hover:border-primary hover:text-primary"
-              }`}
-            >
-              {p.label}
-            </button>
-          ))}
-          {periode === "personnalise" && (
-            <span className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-              <label className="flex items-center gap-1.5">
-                Du
-                <input
-                  type="date"
-                  value={duPerso}
-                  onChange={(e) => setDuPerso(e.target.value)}
-                  className="rounded-sm border border-border bg-background px-2 py-1.5"
-                />
-              </label>
-              <label className="flex items-center gap-1.5">
-                au
-                <input
-                  type="date"
-                  value={auPerso}
-                  onChange={(e) => setAuPerso(e.target.value)}
-                  className="rounded-sm border border-border bg-background px-2 py-1.5"
-                />
-              </label>
-            </span>
-          )}
-        </div>
-
         {parClient.length === 0 ? (
           <p className="p-6 text-sm text-muted-foreground">
             Aucune facture sur cette période. Les factures annulées ne sont jamais comptées.
@@ -317,7 +291,7 @@ function FacturesPage() {
             }`}
           >
             {f.label}
-            {f.cle !== "toutes" ? ` (${parEtape.get(f.cle) ?? 0})` : ` (${list.length})`}
+            {f.cle !== "toutes" ? ` (${parEtape.get(f.cle) ?? 0})` : ` (${trouvees.length})`}
           </button>
         ))}
       </div>
@@ -332,7 +306,7 @@ function FacturesPage() {
           <p className="p-6 text-sm text-muted-foreground">
             {list.length === 0
               ? "Aucune facture. Ouvrez un devis puis « Convertir en facture »."
-              : "Aucune facture dans ce filtre."}
+              : "Aucune facture pour cette recherche."}
           </p>
         )}
         {rows.map((f) => (
