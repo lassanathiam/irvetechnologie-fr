@@ -13,7 +13,7 @@ import { useEnvoiConfirme } from "@/lib/confirm-envoi";
 import { csvSuivi, doublonsChantier, ETAPE_TERMINEE, ETAPES_CHANTIER, receptionnesSansCommande, resumeEtapes, totalReceptionnes, type EtapeChantier, type LigneSuivi } from "@/lib/etape-chantier";
 import { getSuiviChantiers } from "@/lib/suivi-chantiers.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
-import { convertirAttachementEnFacture, enregistrerCommandeAttachement, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
+import { convertirAttachementEnFacture, enregistrerCommandeAttachement, envoyerAttachementsGroupes, marquerAttachementsEnvoyes } from "@/lib/attachements.functions";
 import { updateFactureDepot, updateFactureStatut } from "@/lib/factures.functions";
 import { envoyerBilanReception } from "@/lib/bilan-reception.functions";
 
@@ -55,6 +55,7 @@ function SuiviPage() {
   const payer = useServerFn(updateFactureStatut);
   const integrerCommande = useServerFn(enregistrerCommandeAttachement);
   const envoyerBilan = useEnvoiConfirme(envoyerBilanReception, "Envoyer ce bilan au donneur d’ordre par email ? Vous en recevez une copie.");
+  const envoyerAtts = useEnvoiConfirme(envoyerAttachementsGroupes, "Envoyer maintenant les attachements cochés au donneur d’ordre, en un seul email avec un lien par chantier ? Vous en recevez une copie.");
   const bilanPourMoi = useEnvoiConfirme(envoyerBilanReception, "M’envoyer une copie de ce bilan ? Le client ne reçoit rien.");
 
   const [donneur, setDonneur] = useState("");
@@ -178,6 +179,18 @@ function SuiviPage() {
       if (r.sent) toast.success("Copie du bilan envoyée sur votre boîte (le client ne reçoit rien)."); else toast.error("L’email n’est pas parti.");
     } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
   };
+  /** Envoie directement les attachements (un seul email par donneur d'ordre), sans bilan. */
+  const envoyerAttachements = async (ls: LigneSuivi[], cle: string) => {
+    const ids = [...new Set(ls.map((l) => l.attId).filter(Boolean))] as string[];
+    if (!ids.length) { toast.error("Cochez des chantiers qui ont un attachement."); return; }
+    if (new Set(ls.filter((l) => l.attId).map((l) => l.donneur)).size > 1) { toast.error("Cochez les chantiers d’un seul donneur d’ordre à la fois."); return; }
+    setEnCours(cle);
+    try {
+      const r = await envoyerAtts({ data: { ids } });
+      if (r.sent) { toast.success(`${ids.length} attachement(s) envoyé(s) au donneur d’ordre en un seul email.`); setCoches([]); await rafraichir(); }
+      else toast.error("L’email n’est pas parti.");
+    } catch (e) { toast.error(e instanceof Error ? e.message : "Envoi impossible."); } finally { setEnCours(null); }
+  };
   const envoyerAuClient = async () => {
     const ids = [...new Set(selection.map((l) => l.attId).filter(Boolean))] as string[];
     if (!ids.length) { toast.error("Cochez des chantiers qui ont un attachement."); return; }
@@ -254,10 +267,11 @@ function SuiviPage() {
           <div className="ml-auto flex flex-wrap gap-2">
             {!vueRecus && ACTION[etape] && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
             <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Télécharger {selection.length ? `(${selection.length})` : "tout"}</Button>
-            <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>
-            <Button size="sm" variant="ghost" disabled={!selection.length || !!enCours} onClick={() => void envoyerPourMoi()}>{enCours === "moi" ? <Loader2 className="animate-spin" /> : <Mail />} M’envoyer une copie</Button>
+            {!vueRecus && etape >= 2 && etape <= 4 && <Button size="sm" className="font-bold" disabled={!selection.some((l) => l.attId) || !!enCours} onClick={() => void envoyerAttachements(selection, "atts")}>{enCours === "atts" ? <Loader2 className="animate-spin" /> : <Send />} {etape === 2 ? "Envoyer les attachements" : "Renvoyer les attachements"} ({new Set(selection.map((l) => l.attId).filter(Boolean)).size})</Button>}
+            {(vueRecus || etape >= 5) && <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>}
+            {(vueRecus || etape >= 5) && <Button size="sm" variant="ghost" disabled={!selection.length || !!enCours} onClick={() => void envoyerPourMoi()}>{enCours === "moi" ? <Loader2 className="animate-spin" /> : <Mail />} M’envoyer une copie du bilan</Button>}
           </div>
-          {selection.length > 0 && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
+          {selection.length > 0 && (vueRecus || etape >= 5) && <Textarea rows={2} className="basis-full" value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Message pour le client (facultatif) — le bilan détaillé est ajouté automatiquement" />}
         </div>
         {alertes.length > 0 && <p className="flex items-start gap-2 border-b border-border bg-amber-500/10 p-3 text-sm"><AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" /><span><strong>{alertes.length} chantier(s) déjà réceptionné(s) avant la commande ou la facture.</strong> Ils restent ici tant que l’étape n’est pas faite.</span></p>}
         {vueRecus && sansCommande && !lignes.length ? <p className="p-6 text-center text-sm font-semibold text-dashboard-green">Aucun chantier réceptionné sans commande{donneur ? ` chez ${donneur}` : ""} : chaque réception a bien sa commande.</p> :
@@ -265,7 +279,7 @@ function SuiviPage() {
           vueRecus
             ? <ul className="divide-y divide-border">{groupesRecus.map((g) => <GroupeRecu key={g[0].cle} g={g} doublons={doublons} coche={g.every((l) => coches.includes(l.cle))} onCoche={(v) => basculer(g.map((l) => l.cle), v)} enCours={enCours === g[0].cle} onRetirer={() => void retirerReception(g[0])} />)}</ul>
             : <div className="divide-y-2 divide-border">{groupes.map(([nom, ls]) => <GroupeClient key={nom} nom={nom} ls={ls} ouvertParDefaut={groupes.length <= 3} coche={ls.every((l) => coches.includes(l.cle))} onCoche={(v) => basculer(ls.map((l) => l.cle), v)}>
-                {ls.map((l) => <Ligne key={l.cle} l={l} doublon={doublons.get(l.cle)} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} onCommande={(n) => void saisirCommande(l, n)} />)}
+                {ls.map((l) => <Ligne key={l.cle} l={l} doublon={doublons.get(l.cle)} coche={coches.includes(l.cle)} onCoche={(v) => basculer([l.cle], v)} enCours={enCours === l.cle} onAvancer={() => void avancer([l], l.cle)} onRetirer={() => void retirerReception(l)} onCommande={(n) => void saisirCommande(l, n)} onEnvoyer={() => void envoyerAttachements([l], l.cle)} />)}
               </GroupeClient>)}</div>}
       </section>
       <p className="text-xs text-muted-foreground">Montants HT issus des attachements. « Consulté » = le client a ouvert le lien de l’attachement. Un attachement hebdomadaire est réparti par chantier ; sa commande, sa facture ou son dépôt traitent tout l’attachement en une seule fois. Cette page ne modifie rien sans clic de votre part et n’envoie rien sans confirmation.</p>
@@ -344,7 +358,7 @@ function SaisieCommande({ enCours, onCommande }: { enCours: boolean; onCommande:
   </form>;
 }
 
-function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, onCommande, doublon }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void; onCommande: (n: string) => void; doublon?: string[] }) {
+function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, onCommande, onEnvoyer, doublon }: { l: LigneSuivi; coche: boolean; onCoche: (v: boolean) => void; enCours: boolean; onAvancer: () => void; onRetirer: () => void; onCommande: (n: string) => void; onEnvoyer: () => void; doublon?: string[] }) {
   const pasTermine = l.statutPlanning && l.statutPlanning !== "termine" && l.statutPlanning !== "realise";
   const action = ACTION[l.etape];
   return <li className="flex flex-wrap items-center gap-3 p-3">
@@ -374,7 +388,7 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, onCommande, d
     <strong className="text-xl font-extrabold text-dashboard-green">{euro(l.montantHt)} <span className="text-xs font-normal text-muted-foreground">HT</span></strong>
     {l.etape === 1 ? (l.rdvId ? <Button asChild size="sm" className="min-h-10 font-bold"><Link to="/attachements" search={{ rdv: l.rdvId }}><FileText /> Faire l’attachement</Link></Button> : null)
       : l.etape === 2 ? <span className="flex flex-wrap gap-2">
-          {l.attId && <Button asChild size="sm" className="min-h-10 font-bold"><Link to="/attachements/$id" params={{ id: l.attId }}><Send /> Envoyer au client</Link></Button>}
+          {l.attId && <Button size="sm" className="min-h-10 font-bold" disabled={enCours} onClick={onEnvoyer}>{enCours ? <Loader2 className="animate-spin" /> : <Send />} Envoyer au client</Button>}
           <Button size="sm" variant="outline" className="min-h-10" disabled={enCours} onClick={onAvancer}>{enCours ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} Déjà envoyé</Button>
         </span>
       : (l.etape === 3 || l.etape === 4) && l.attId ? <SaisieCommande enCours={enCours} onCommande={onCommande} />
