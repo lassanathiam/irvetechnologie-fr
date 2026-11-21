@@ -186,7 +186,7 @@ export const listChantiersPeriode = createServerFn({ method: "POST" })
 export const listChantiersAAttacher = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) =>
-    z.object({ au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), motcle: z.string().trim().min(2).max(80).optional(), ids: z.array(z.string().uuid()).max(100).optional() }).parse(data),
+    z.object({ au: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(), motcle: z.string().trim().min(2).max(80).optional(), ids: z.array(z.string().uuid()).max(100).optional(), tous: z.boolean().optional() }).parse(data),
   )
   .handler(async ({ data, context }) => {
     let q = context.supabase
@@ -194,6 +194,8 @@ export const listChantiersAAttacher = createServerFn({ method: "POST" })
       .select("id, client_nom, reseau_client, adresse, cp_ville, date_debut, termine_at, chantier_valide, statut, montant_ht, puissance_borne, metrage_m, metrage_reel_m, metrage_inclus_m, retour_repartiteur, partenaire")
       .order("date_debut");
     if (data.ids?.length) q = q.in("id", data.ids);
+    // Tous donneurs d'ordre : seulement les chantiers réellement terminés (choix du chantier sur une ligne).
+    else if (data.tous) q = q.in("statut", ["termine", "realise"]).eq("archive", false);
     else { q = q.lte("date_debut", `${data.au ?? "2999-12-31"}T23:59:59`).ilike("partenaire", `%${data.motcle ?? "ensio"}%`); }
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);

@@ -366,6 +366,7 @@ function Ligne({ l, coche, onCoche, enCours, onAvancer, onRetirer, onCommande, d
         {l.deposeLe && <span>Déposée le {dateFr(l.deposeLe)}</span>}
         {l.payeLe && <span className="text-primary">Payée le {dateFr(l.payeLe)}</span>}
       </div>
+      {l.attId && !l.rdvId && <Link to="/attachements/$id" params={{ id: l.attId }} className="mt-0.5 block text-xs font-semibold text-destructive underline">Aucun chantier relié à {l.attNumero} : ouvrez-le, « Modifier », puis choisissez le chantier de chaque ligne.</Link>}
       {pasTermine && <span className="mt-0.5 block text-xs font-semibold text-amber-600 dark:text-amber-400">Encore « {STATUT_PLANNING[l.statutPlanning!] ?? l.statutPlanning} » au Planning</span>}
       <AlerteDoublon autres={doublon} />
       {l.recuSansCommande && <span className="mt-0.5 block text-xs font-semibold text-amber-600 dark:text-amber-400">Déjà réceptionné, commande à intégrer</span>}

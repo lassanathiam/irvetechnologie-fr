@@ -6,7 +6,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useEffect, useState } from "react";
 import { ArrowLeft, Ban, CalendarClock, CheckCircle2, ChevronDown, ChevronUp, Copy, Loader2, Mail, Pencil, Plus, Printer, Receipt, RotateCcw, Save, Trash2, X } from "lucide-react";
-import { LignesAttachement } from "@/components/LignesAttachement";
+import { LignesAttachement, optionsChantiers } from "@/components/LignesAttachement";
 import { CreerAttachementTs } from "@/components/CreerAttachementTs";
 import { ProShell } from "@/components/ProShell";
 import { AttachementPrint } from "@/components/AttachementPrint";
@@ -17,7 +17,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { changerStatutAttachement, convertirAttachementEnFacture, envoyerAttachement, getAttachement, supprimerAttachement, traiterPropositionAttachement, updateAttachement } from "@/lib/attachements.functions";
 import { euro } from "@/lib/company";
 import { totalTes } from "@/lib/attachement-tes";
-import { listBordereau, listDonneurs } from "@/lib/bordereau.functions";
+import { listBordereau, listChantiersAAttacher, listDonneurs } from "@/lib/bordereau.functions";
 import { receptionnerChantiers } from "@/lib/planning.functions";
 import { toast } from "sonner";
 
@@ -42,6 +42,9 @@ function AttachementDetail() {
   const query = useQuery({ queryKey: ["attachement", id], queryFn: () => getFn({ data: { id } }), retry: 1 });
   const [message, setMessage] = useState(""); const [feedback, setFeedback] = useState<string | null>(null); const [error, setError] = useState<string | null>(null);
   const [edit, setEdit] = useState(false); const [confirmFermer, setConfirmFermer] = useState(false); const [delai, setDelai] = useState(60);
+  const chantiersFn = useServerFn(listChantiersAAttacher);
+  /** Chantiers terminés pas encore attachés, proposés sur chaque ligne en modification. */
+  const aRelier = useQuery({ queryKey: ["chantiers-a-relier"], queryFn: () => chantiersFn({ data: { tous: true } }), enabled: edit });
   const [form, setForm] = useState<any>(null); const [lines, setLines] = useState<Line[]>([newLine()]);
 
   useEffect(() => {
@@ -64,7 +67,7 @@ function AttachementDetail() {
   const convert = useMutation({ mutationFn: () => convertFn({ data: { id } }), onSuccess: (r) => { refresh(); navigate({ to: "/factures/$id", params: { id: r.id } }); }, onError: (e) => setError(e instanceof Error ? e.message : "Conversion impossible.") });
   const save = useMutation({
     mutationFn: () => updateFn({ data: { id, ...form, client_email: form.client_email || null, client_telephone: form.client_telephone || null, client_adresse: form.client_adresse || null, client_cp_ville: form.client_cp_ville || null, numero_affaire: form.numero_affaire || null, bon_commande: form.bon_commande || null, objet: form.objet || null, notes: form.notes || null, rendezvous_id: null, items: lines.map((l: any) => ({ rendezvous_id: l.rendezvous_id ?? null, libelle: l.libelle, description: l.description || null, quantite: Number(l.quantite), prix_unitaire: Number(l.prix), tes: Boolean(l.tes) })) } }),
-    onSuccess: () => { setError(null); setFeedback("Modifications enregistrées."); setEdit(false); refresh(); },
+    onSuccess: () => { setError(null); setFeedback("Modifications enregistrées."); setEdit(false); refresh(); void qc.invalidateQueries({ queryKey: ["chantiers-a-relier"] }); void qc.invalidateQueries({ queryKey: ["suivi-chantiers"] }); },
     onError: (e) => setError(e instanceof Error ? e.message : "Enregistrement impossible."),
   });
   const remove = useMutation({ mutationFn: () => deleteFn({ data: { id } }), onSuccess: () => { void qc.invalidateQueries({ queryKey: ["attachements"] }); navigate({ to: "/attachements" }); }, onError: (e) => setError(e instanceof Error ? e.message : "Suppression impossible.") });
@@ -155,7 +158,7 @@ function AttachementDetail() {
         <Check label="Demander une validation en ligne" checked={form.validation_requise} onChange={(v) => setForm({ ...form, validation_requise: v })} />
         <Check label="Autoriser le client à proposer une valorisation" checked={form.proposition_autorisee !== false} onChange={(v) => setForm({ ...form, proposition_autorisee: v })} />
       </div>
-      <LignesAttachement lines={lines} setLines={setLines} catalogue={(bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(`${form?.client_nom ?? ""} ${a.client_nom ?? ""}`) ? "ensio" : "axians"))} />
+      <LignesAttachement lines={lines} setLines={setLines} chantiers={[...[...chantiers].map(([cid, nom]) => ({ id: cid, nom })), ...optionsChantiers((aRelier.data ?? []) as any[])]} catalogue={(bordereau.data ?? []).filter((l: any) => l.actif && (l.donneur_ordre ?? "axians") === (/ensio|nco/i.test(`${form?.client_nom ?? ""} ${a.client_nom ?? ""}`) ? "ensio" : "axians"))} />
       <Textarea placeholder="Notes (facultatif)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
       <div className="flex flex-wrap items-center justify-between gap-3"><strong>Total HT : {euro(total)}</strong><div className="flex flex-col items-end gap-1"><Button disabled={save.isPending || !form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)} onClick={() => save.mutate()}>{save.isPending ? <Loader2 className="animate-spin" /> : <Save />} Enregistrer</Button>{(!form.client_nom.trim() || !form.numero_ticket.trim() || lines.some((l) => !l.libelle.trim() || Number(l.quantite) <= 0)) && <p className="text-xs text-destructive">Enregistrement bloqué : le ticket est obligatoire et chaque ligne doit avoir un nom de travaux et une quantité supérieure à 0.</p>}</div></div>
     </section> : <section className="grid gap-4 sm:grid-cols-3"><Stat label="Ticket obligatoire" value={a.numero_ticket} /><Stat label="Numéro d’affaire" value={a.numero_affaire || "Non renseigné"} /><Stat label="Bon de commande" value={a.bon_commande || "Non renseigné"} /></section>}
