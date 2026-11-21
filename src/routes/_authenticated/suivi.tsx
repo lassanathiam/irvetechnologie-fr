@@ -18,6 +18,7 @@ import { updateFactureDepot, updateFactureStatut } from "@/lib/factures.function
 import { envoyerBilanReception } from "@/lib/bilan-reception.functions";
 import { envoyerRappelClient } from "@/lib/rappel-client.functions";
 import { motifRappel } from "@/lib/rappel-client";
+import { TelechargerPdfSuivi } from "@/components/TelechargerPdfSuivi";
 
 export const Route = createFileRoute("/_authenticated/suivi")({
   validateSearch: (s: Record<string, unknown>): { etape?: number; vue?: "receptionnes" } => {
@@ -284,7 +285,8 @@ function SuiviPage() {
           <span>{selection.length} coché(s) · <strong className="text-base text-dashboard-green">{euro(totalSel)} HT</strong></span>
           <div className="ml-auto flex flex-wrap gap-2">
             {!vueRecus && ACTION[etape] && <Button size="sm" disabled={!selection.length || !!enCours} onClick={() => void avancer(selection, "lot")}>{enCours === "lot" ? <Loader2 className="animate-spin" /> : <CheckCircle2 />} {ACTION[etape]} ({selection.length})</Button>}
-            <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Télécharger {selection.length ? `(${selection.length})` : "tout"}</Button>
+            <TelechargerPdfSuivi lignes={selection.length ? selection : lignes} disabled={!!enCours} />
+            <Button size="sm" variant="outline" disabled={!filtrees.length} onClick={telecharger}><Download /> Liste Excel {selection.length ? `(${selection.length})` : "(tout)"}</Button>
             {!vueRecus && etape >= 2 && etape <= 4 && <Button size="sm" className="font-bold" disabled={!selection.some((l) => l.attId) || !!enCours} onClick={() => void envoyerAttachements(selection, "atts")}>{enCours === "atts" ? <Loader2 className="animate-spin" /> : <Send />} {etape === 2 ? "Envoyer les attachements" : "Renvoyer les attachements"} ({new Set(selection.map((l) => l.attId).filter(Boolean)).size})</Button>}
             {etapeRappel && <Button size="sm" className="font-bold" variant="secondary" disabled={!selection.length || !!enCours} onClick={() => void envoyerRappel()}>{enCours === "rappel" ? <Loader2 className="animate-spin" /> : <BellRing />} Faire un rappel au client ({selection.length})</Button>}
             {(vueRecus || etape >= 5) && <Button size="sm" variant="outline" disabled={!selection.length || !!enCours} onClick={() => void envoyerAuClient()}>{enCours === "envoi" ? <Loader2 className="animate-spin" /> : <Mail />} Envoyer le bilan au client</Button>}
