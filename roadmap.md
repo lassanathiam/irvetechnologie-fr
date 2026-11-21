@@ -168,3 +168,4 @@
 - [x] Lister les attachements envoyés à Antoni depuis le 1er octobre
 - [x] Télécharger en un seul bloc les dossiers de la capture ENSIO (facture + commande + attachement), sans GELPI, REBILLARD 50FIVES (CST 02048140) ni JAUNIN
 - [x] Attachements : noms des clients sur les brouillons, état d'envoi clair (pas envoyé / envoyé / validé / facturé)
+- [x] Suivi chantiers en 7 étapes (terminé → attachement à envoyer → envoyé non consulté → consulté/commande → à facturer → à réceptionner → à déposer), par client (21/11/2026)

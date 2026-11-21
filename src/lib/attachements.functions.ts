@@ -586,6 +586,28 @@ export const appliquerCommandeAttachement = createServerFn({ method: "POST" })
     return convertirEnFacture(context, { id: att.id });
   });
 
+/** Intègre un numéro de commande reçu sur un attachement (et sur sa facture si elle existe), sans créer de facture. */
+export const enregistrerCommandeAttachement = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), bon_commande: z.string().trim().min(3).max(60) }).parse(data))
+  .handler(async ({ data, context }) => {
+    const { data: att, error } = await context.supabase.from("attachements_travaux").select("id, facture_id, client_nom, bon_commande, statut").eq("id", data.id).maybeSingle();
+    if (error) throw new Error(error.message);
+    if (!att || att.statut === "annule") throw new Error("Attachement introuvable.");
+    const autres = await context.supabase.from("attachements_travaux").select("id, numero, bon_commande").eq("client_nom", att.client_nom).neq("id", att.id).neq("statut", "annule");
+    if (autres.error) throw new Error(autres.error.message);
+    const pris = autres.data.find((a) => cleCommande(a.bon_commande) === cleCommande(data.bon_commande));
+    if (pris) throw new Error(`Ce numéro de commande est déjà sur ${pris.numero}.`);
+    if (att.bon_commande && cleCommande(att.bon_commande) !== cleCommande(data.bon_commande) && att.facture_id) throw new Error("Cet attachement est déjà facturé avec un autre numéro de commande.");
+    const up = await context.supabase.from("attachements_travaux").update({ bon_commande: data.bon_commande }).eq("id", att.id);
+    if (up.error) throw new Error(up.error.message);
+    if (att.facture_id) {
+      const uf = await context.supabase.from("factures").update({ bon_commande: data.bon_commande }).eq("id", att.facture_id);
+      if (uf.error) throw new Error(uf.error.message);
+    }
+    return { ok: true };
+  });
+
 export const changerStatutAttachement = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((data: unknown) => z.object({ id: z.string().uuid(), action: z.enum(["annuler", "reactiver"]) }).parse(data))

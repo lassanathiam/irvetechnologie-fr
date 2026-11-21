@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { attachementEnvoye, etapeChantier, nomDonneur, numeroCommandeValide, recuSansCommande, type LigneSuivi } from "./etape-chantier";
+import { attachementConsulte, attachementEnvoye, etapeChantier, nomDonneur, numeroCommandeValide, recuSansCommande, type LigneSuivi } from "./etape-chantier";
 
 const arrondi = (n: number) => Math.round(n * 100) / 100;
 
@@ -10,7 +10,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
   .handler(async ({ context }) => {
     const s = context.supabase;
     const [atts, items, commandes, termines] = await Promise.all([
-      s.from("attachements_travaux").select("id, numero, client_nom, objet, total_ht, sent_at, accepted_at, statut, facture_id, bon_commande, rendezvous_id, depose_at, paye_at, attachement_initial_id, date_emission").neq("statut", "annule"),
+      s.from("attachements_travaux").select("id, numero, client_nom, objet, total_ht, sent_at, accepted_at, statut, facture_id, bon_commande, rendezvous_id, depose_at, paye_at, attachement_initial_id, date_emission, viewed_at, last_viewed_at, view_count").neq("statut", "annule"),
       s.from("attachement_items").select("attachement_id, rendezvous_id, quantite, prix_unitaire"),
       s.from("commandes_importees").select("saisie, created_at").order("created_at", { ascending: true }),
       s.from("rendezvous").select("id").in("statut", ["termine", "realise"]).eq("archive", false),
@@ -49,12 +49,21 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
     if (ef) throw new Error(ef.message);
     const fac = new Map((facs ?? []).map((f: any) => [f.id, f]));
 
+    const factureDe = (a: any) => { const f = a.facture_id ? fac.get(a.facture_id) : null; return f && f.statut !== "annulee" ? f : null; };
+    const commandeDe = (a: any): string | null => { const f = factureDe(a); return commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null) || (f ? String(f.bon_commande ?? "").trim() || null : null); };
+    // Un TS sans commande à lui suit la commande de l'attachement initial du même chantier.
+    const commandeChantier = new Map<string, string>();
+    for (const a of listeAtt) {
+      if (a.attachement_initial_id) continue;
+      const c = commandeDe(a); if (!c) continue;
+      for (const k of [a.rendezvous_id, ...(parts.get(a.id)?.keys() ?? [])]) if (k && !commandeChantier.has(k)) commandeChantier.set(k, c);
+    }
+
     const lignes: LigneSuivi[] = [];
     const avecAttachement = new Set<string>();
     for (const a of listeAtt) {
-      const f = a.facture_id ? fac.get(a.facture_id) : null;
-      const factureActive = f && f.statut !== "annulee" ? f : null;
-      const commande = commandeParAtt.get(a.id) || (String(a.bon_commande ?? "").trim() || null) || (factureActive ? String(factureActive.bon_commande ?? "").trim() || null : null);
+      const factureActive = factureDe(a);
+      const commandePropre = commandeDe(a);
       const m = new Map(parts.get(a.id) ?? []);
       if (a.rendezvous_id && !m.has(a.rendezvous_id)) {
         // Attachement d'un seul chantier : sa part = le total hors lignes déjà réparties.
@@ -69,9 +78,10 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
       for (const k of cibles) {
         const r = k ? rdv.get(k) : null;
         if (k) avecAttachement.add(k);
+        const commande = commandePropre ?? (a.attachement_initial_id && k ? commandeChantier.get(k) ?? null : null);
         const montant = k ? m.get(k) ?? 0 : chantiers.length ? reste : Number(a.total_ht ?? 0);
         const etat = {
-          attachement: true, envoye: attachementEnvoye(a), commande: Boolean(commande), receptionne: Boolean(r?.receptionne_at),
+          attachement: true, envoye: attachementEnvoye(a), consulte: attachementConsulte(a), commande: Boolean(commande), receptionne: Boolean(r?.receptionne_at),
           facture: Boolean(factureActive), sansReception: !k, depose: Boolean(factureActive?.depose_at || a.depose_at), paye: Boolean(factureActive?.paid_at || factureActive?.statut === "payee" || a.paye_at),
         };
         lignes.push({
@@ -81,12 +91,13 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
           montantHt: arrondi(montant), commande, receptionneLe: r?.receptionne_at ?? null,
           factureId: factureActive?.id ?? null, factureNumero: factureActive?.numero ?? null,
           deposeLe: factureActive?.depose_at ?? a.depose_at ?? null, payeLe: factureActive?.paid_at ?? a.paye_at ?? null,
-          envoyeLe: a.sent_at ?? null, statutPlanning: r?.statut ?? null,
+          envoyeLe: a.sent_at ?? null, consulteLe: a.viewed_at ?? null, derniereConsultation: a.last_viewed_at ?? null, vues: Number(a.view_count ?? 0), valideLe: a.accepted_at ?? null,
+          statutPlanning: r?.statut ?? null,
           etape: etapeChantier(etat), recuSansCommande: recuSansCommande(etat),
         });
       }
     }
-    // Chantiers terminés sans aucun attachement : étape 1.
+    // Chantiers terminés sans aucun attachement : étape 1, rangés par client à l'écran.
     for (const id of (termines.data ?? []).map((r: any) => r.id)) {
       if (avecAttachement.has(id)) continue;
       const r = rdv.get(id);
@@ -95,7 +106,7 @@ export const getSuiviChantiers = createServerFn({ method: "GET" })
         cle: `-|${id}`, rdvId: id, attId: null, attNumero: null, ts: false, client: r.client_nom || "Chantier",
         donneur: nomDonneur(r.partenaire), ville: r.cp_ville ?? null, date: r.termine_at ?? r.date_debut, montantHt: arrondi(Number(r.montant_ht ?? 0)),
         commande: null, receptionneLe: r.receptionne_at ?? null, factureId: null, factureNumero: null, deposeLe: null, payeLe: null, envoyeLe: null,
-        statutPlanning: r.statut, etape: 1, recuSansCommande: false,
+        consulteLe: null, derniereConsultation: null, vues: 0, valideLe: null, statutPlanning: r.statut, etape: 1, recuSansCommande: false,
       });
     }
     lignes.sort((x, y) => String(y.date ?? "").localeCompare(String(x.date ?? "")));
