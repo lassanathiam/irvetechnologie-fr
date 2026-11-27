@@ -174,5 +174,6 @@
 - [x] Questionnaire illustré pas à pas sur le site (/ma-borne-maison)
 - [x] 2-3 pistes de dessins (phrase courte en gros) à choisir — 3 pistes rendues le 27/11/2026, en attente du choix
 - [x] Dessin retenu : piste A « Votre maison est-elle prête pour une borne ? » (choix 27/11/2026)
-- [ ] Formats finaux (carré, haut, large) puis textes de la publicité à valider
+- [x] Formats finaux (carré 1:1, haut 4:5, large 16:9) avec logo placé — en attente de validation
+- [ ] Textes de la publicité à écrire et valider
 - [ ] Relier le compte publicitaire Facebook, suivi des demandes, puis lancement à 5 €/jour après accord
