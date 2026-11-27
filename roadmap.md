@@ -172,6 +172,7 @@
 
 ## Campagne Facebook « questionnaire borne maison » (27/11/2026)
 - [x] Questionnaire illustré pas à pas sur le site (/ma-borne-maison)
-- [ ] 2-3 pistes de dessins (phrase courte en gros) à choisir
-- [ ] Images finales puis textes de la publicité à valider
+- [x] 2-3 pistes de dessins (phrase courte en gros) à choisir — 3 pistes rendues le 27/11/2026, en attente du choix
+- [x] Dessin retenu : piste A « Votre maison est-elle prête pour une borne ? » (choix 27/11/2026)
+- [ ] Formats finaux (carré, haut, large) puis textes de la publicité à valider
 - [ ] Relier le compte publicitaire Facebook, suivi des demandes, puis lancement à 5 €/jour après accord
