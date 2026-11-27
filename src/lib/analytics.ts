@@ -20,6 +20,7 @@ const PREFIXES_PUBLICS = [
   "/confidentialite",
   "/demande",
   "/devis-borne-recharge",
+  "/ma-borne-maison",
   "/installation-borne-recharge",
   "/zones-intervention",
 ];

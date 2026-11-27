@@ -169,3 +169,9 @@
 - [x] Télécharger en un seul bloc les dossiers de la capture ENSIO (facture + commande + attachement), sans GELPI, REBILLARD 50FIVES (CST 02048140) ni JAUNIN
 - [x] Attachements : noms des clients sur les brouillons, état d'envoi clair (pas envoyé / envoyé / validé / facturé)
 - [x] Suivi chantiers en 7 étapes (terminé → attachement à envoyer → envoyé non consulté → consulté/commande → à facturer → à réceptionner → à déposer), par client (21/11/2026)
+
+## Campagne Facebook « questionnaire borne maison » (27/11/2026)
+- [x] Questionnaire illustré pas à pas sur le site (/ma-borne-maison)
+- [ ] 2-3 pistes de dessins (phrase courte en gros) à choisir
+- [ ] Images finales puis textes de la publicité à valider
+- [ ] Relier le compte publicitaire Facebook, suivi des demandes, puis lancement à 5 €/jour après accord

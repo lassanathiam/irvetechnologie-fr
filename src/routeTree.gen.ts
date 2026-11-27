@@ -21,6 +21,7 @@ import { Route as DemandeRouteImport } from './routes/demande'
 import { Route as DevisBorneRechargeRouteImport } from './routes/devis-borne-recharge'
 import { Route as InstallationBorneRechargeNantesRouteImport } from './routes/installation-borne-recharge-nantes'
 import { Route as InstallerRouteImport } from './routes/installer'
+import { Route as MaBorneMaisonRouteImport } from './routes/ma-borne-maison'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as ZonesInterventionRouteImport } from './routes/zones-intervention'
 import { Route as AuthenticatedBornesCatalogueRouteImport } from './routes/_authenticated/bornes-catalogue'
@@ -136,6 +137,11 @@ const InstallationBorneRechargeNantesRoute =
 const InstallerRoute = InstallerRouteImport.update({
   id: '/installer',
   path: '/installer',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MaBorneMaisonRoute = MaBorneMaisonRouteImport.update({
+  id: '/ma-borne-maison',
+  path: '/ma-borne-maison',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -454,6 +460,7 @@ export interface FileRoutesByFullPath {
   '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
+  '/ma-borne-maison': typeof MaBorneMaisonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -522,6 +529,7 @@ export interface FileRoutesByTo {
   '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
+  '/ma-borne-maison': typeof MaBorneMaisonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/zones-intervention': typeof ZonesInterventionRoute
   '/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -592,6 +600,7 @@ export interface FileRoutesById {
   '/devis-borne-recharge': typeof DevisBorneRechargeRoute
   '/installation-borne-recharge-nantes': typeof InstallationBorneRechargeNantesRoute
   '/installer': typeof InstallerRoute
+  '/ma-borne-maison': typeof MaBorneMaisonRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/zones-intervention': typeof ZonesInterventionRoute
   '/_authenticated/bornes-catalogue': typeof AuthenticatedBornesCatalogueRoute
@@ -662,6 +671,7 @@ export interface FileRouteTypes {
     | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
+    | '/ma-borne-maison'
     | '/sitemap.xml'
     | '/zones-intervention'
     | '/bornes-catalogue'
@@ -730,6 +740,7 @@ export interface FileRouteTypes {
     | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
+    | '/ma-borne-maison'
     | '/sitemap.xml'
     | '/zones-intervention'
     | '/bornes-catalogue'
@@ -799,6 +810,7 @@ export interface FileRouteTypes {
     | '/devis-borne-recharge'
     | '/installation-borne-recharge-nantes'
     | '/installer'
+    | '/ma-borne-maison'
     | '/sitemap.xml'
     | '/zones-intervention'
     | '/_authenticated/bornes-catalogue'
@@ -869,6 +881,7 @@ export interface RootRouteChildren {
   DevisBorneRechargeRoute: typeof DevisBorneRechargeRoute
   InstallationBorneRechargeNantesRoute: typeof InstallationBorneRechargeNantesRoute
   InstallerRoute: typeof InstallerRoute
+  MaBorneMaisonRoute: typeof MaBorneMaisonRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   ZonesInterventionRoute: typeof ZonesInterventionRoute
   AttachementTokenRoute: typeof AttachementTokenRoute
@@ -977,6 +990,13 @@ declare module '@tanstack/react-router' {
       path: '/installer'
       fullPath: '/installer'
       preLoaderRoute: typeof InstallerRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/ma-borne-maison': {
+      id: '/ma-borne-maison'
+      path: '/ma-borne-maison'
+      fullPath: '/ma-borne-maison'
+      preLoaderRoute: typeof MaBorneMaisonRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -1459,6 +1479,7 @@ const rootRouteChildren: RootRouteChildren = {
   DevisBorneRechargeRoute: DevisBorneRechargeRoute,
   InstallationBorneRechargeNantesRoute: InstallationBorneRechargeNantesRoute,
   InstallerRoute: InstallerRoute,
+  MaBorneMaisonRoute: MaBorneMaisonRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   ZonesInterventionRoute: ZonesInterventionRoute,
   AttachementTokenRoute: AttachementTokenRoute,
