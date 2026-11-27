@@ -1,0 +1,1 @@
+- `/ma-borne-maison` (paid-social quiz, noindex): zone and lead level only from browser-safe `src/lib/questionnaire-borne.ts`, saved as a notes summary via `submitDemande` (why: qualified leads without schema change).
