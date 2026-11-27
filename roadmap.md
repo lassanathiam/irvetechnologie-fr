@@ -179,3 +179,6 @@
 - [x] Relier et sélectionner le compte Facebook, la page et le pixel ; paiement actif vérifié
 - [ ] Préparer le suivi Meta des demandes et vérifier le site publié
 - [ ] Configurer puis lancer l’essai Facebook : attend les déclarations, le choix d’audience et l’accord exact de dépense/durée
+- [x] Comptage Meta des demandes (pixel, accord publicité, bandeau + confidentialité) — 27/11/2026
+- [ ] Publier le site puis vérifier la réception du pixel Meta (attend la publication)
+- [ ] Créer la campagne Facebook en pause (attend l'accord exact du budget)

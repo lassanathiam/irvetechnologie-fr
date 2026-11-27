@@ -1,10 +1,11 @@
 /**
- * Suivi Google (Analytics + Google Ads) limité aux pages publiques commerciales,
+ * Suivi Google (Analytics + Google Ads) et pixel Meta (publicité Facebook/Instagram) limité aux pages publiques commerciales,
  * et seulement après l'accord du visiteur (bandeau de consentement).
  * L'espace pro et les liens privés (devis, factures, PV, partenaires…) ne sont
  * jamais mesurés : aucune donnée client ne part chez Google.
  */
 import { EVENEMENT_CONSENTEMENT, mesureAutorisee, publiciteAutorisee } from "./consentement";
+import { appliquerPixelMeta, pixelMetaDemande, pixelMetaPageVue } from "./meta-pixel";
 
 export const GA_MEASUREMENT_ID = "G-V2S0YLZEHX";
 /** Balise Google Ads du compte 849-204-3839 (identifiant vérifié dans Google Ads). */
@@ -68,6 +69,7 @@ function appliquerConsentement() {
   if (typeof window === "undefined") return;
   const mesure = mesureAutorisee();
   const pub = publiciteAutorisee();
+  appliquerPixelMeta(pub);
   if (!mesure && !pub && !scriptCharge) return;
 
   gtag("consent", "update", {
@@ -111,6 +113,7 @@ export function initialiserSuivi() {
 export function suivrePageVue(pathname: string) {
   if (typeof window === "undefined" || !estPagePubliqueMesuree(pathname)) return;
   initialiserSuivi();
+  pixelMetaPageVue();
   if (!mesureAutorisee()) return;
   gtag("event", "page_view", {
     send_to: GA_MEASUREMENT_ID,
@@ -131,6 +134,7 @@ export function suivreDemandeEnvoyee(profil: string | null | undefined, demandeI
     gtag("event", "generate_lead", { send_to: GA_MEASUREMENT_ID, profil_client: profil ?? "inconnu" });
   }
   if (publiciteAutorisee()) {
+    pixelMetaDemande(demandeId);
     gtag("event", "conversion", {
       send_to: GOOGLE_ADS_DEVIS_SEND_TO,
       transaction_id: demandeId,

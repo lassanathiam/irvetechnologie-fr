@@ -57,8 +57,8 @@ export function BandeauConsentement({ pathname }: { pathname: string }) {
       <div className="mx-auto max-w-3xl rounded-xl border border-border bg-card p-4 text-card-foreground shadow-lg sm:p-5">
         <p className="text-sm font-semibold">Vos choix de cookies</p>
         <p className="mt-1 text-sm text-muted-foreground leading-relaxed">
-          Avec votre accord, nous utilisons des outils Google pour mesurer la fréquentation du site et savoir quelles
-          publicités amènent des demandes de devis. Vous pouvez refuser : le site et le formulaire fonctionnent
+          Avec votre accord, nous utilisons des outils Google et Meta (Facebook, Instagram) pour mesurer la
+          fréquentation du site et savoir quelles publicités amènent des demandes de devis. Vous pouvez refuser : le site et le formulaire fonctionnent
           normalement.{" "}
           <Link to="/confidentialite" className="font-medium text-primary underline-offset-2 hover:underline">
             En savoir plus
@@ -78,7 +78,7 @@ export function BandeauConsentement({ pathname }: { pathname: string }) {
               <span className="text-sm">
                 <span className="font-medium">Publicité</span>
                 <span className="block text-muted-foreground">
-                  Google Ads : savoir si une demande vient d&apos;une de nos annonces.
+                  Google Ads et Meta (Facebook, Instagram) : savoir si une demande vient d&apos;une de nos annonces.
                   {gpc && " Votre navigateur demande de ne pas être suivi : ce choix reste désactivé."}
                 </span>
               </span>

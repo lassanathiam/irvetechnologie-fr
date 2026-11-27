@@ -5,7 +5,7 @@
  */
 
 /** Version de la notice affichée : la changer redemande l'accord à tout le monde. */
-export const VERSION_NOTICE_CONSENTEMENT = "2026-11-10";
+export const VERSION_NOTICE_CONSENTEMENT = "2026-11-27";
 export const CLE_CONSENTEMENT = "bdo_consentement";
 export const EVENEMENT_CONSENTEMENT = "bdo-consentement-change";
 export const EVENEMENT_OUVRIR_REGLAGES = "bdo-consentement-ouvrir";
@@ -68,7 +68,7 @@ export function navigateurRefusePublicite(): boolean {
   return gpcActif();
 }
 
-/** Efface les cookies Google déjà posés quand l'accord correspondant est retiré. */
+/** Efface les cookies Google et Meta déjà posés quand l'accord correspondant est retiré. */
 function effacerCookies(prefixes: string[]) {
   const domaines = ["", window.location.hostname, `.${window.location.hostname.replace(/^www\./, "")}`];
   for (const morceau of document.cookie.split(";")) {
@@ -93,7 +93,7 @@ export function enregistrerChoixConsentement(mesure: boolean, publicite: boolean
     /* stockage indisponible : le choix vaut pour cette page seulement */
   }
   if (!choix.mesure) effacerCookies(["_ga"]);
-  if (!choix.publicite) effacerCookies(["_gcl", "_gac"]);
+  if (!choix.publicite) effacerCookies(["_gcl", "_gac", "_fbp", "_fbc"]);
   window.dispatchEvent(new CustomEvent(EVENEMENT_CONSENTEMENT, { detail: choix }));
   return choix;
 }

@@ -8,7 +8,7 @@ import { ouvrirReglagesConsentement, VERSION_NOTICE_CONSENTEMENT } from "@/lib/c
 const URL = "https://irvetechnologie.fr/confidentialite";
 const TITRE = "Confidentialité et cookies | Borne de l'Ouest";
 const DESC =
-  "Comment Borne de l'Ouest (IRVE Technologie) utilise vos données : demandes de devis, mesure d'audience Google Analytics et mesure des publicités Google Ads, avec votre accord.";
+  "Comment Borne de l'Ouest (IRVE Technologie) utilise vos données : demandes de devis, mesure d'audience Google Analytics et mesure des publicités Google Ads et Meta (Facebook, Instagram), avec votre accord.";
 
 export const Route = createFileRoute("/confidentialite")({
   head: () => ({
@@ -76,10 +76,17 @@ function Confidentialite() {
                 Destinataire : Google Ireland Limited. Aucune coordonnée (nom, email, téléphone) n&apos;est transmise à
                 Google.
               </li>
+              <li>
+                <span className="font-medium text-foreground">Publicité (Meta : Facebook et Instagram)</span> : savoir
+                si votre visite et votre demande de devis viennent d&apos;une de nos publicités Facebook ou Instagram,
+                pour mesurer leurs résultats et permettre à Meta d&apos;optimiser leur diffusion. Données envoyées :
+                pages vues et envoi d&apos;une demande, avec un identifiant technique. Destinataire : Meta Platforms
+                Ireland Limited. Aucune coordonnée (nom, email, téléphone) n&apos;est transmise à Meta.
+              </li>
             </ul>
             <p>
               Sans accord, aucun de ces outils n&apos;est chargé. Le signal « Global Privacy Control » de votre
-              navigateur est respecté : il désactive la partie publicité. Les cookies Google ont une durée maximale de
+              navigateur est respecté : il désactive la partie publicité. Les cookies Google et Meta ont une durée maximale de
               13 mois ; votre choix est conservé sur votre appareil et redemandé si cette notice change (version du{" "}
               {VERSION_NOTICE_CONSENTEMENT.split("-").reverse().join("/")}).
             </p>
@@ -91,6 +98,10 @@ function Confidentialite() {
               Fonctionnement des services Google :{" "}
               <a className="text-primary" href="https://business.safety.google/privacy/" target="_blank" rel="noreferrer">
                 business.safety.google/privacy
+              </a>
+              {" "}; données traitées par Meta :{" "}
+              <a className="text-primary" href="https://www.facebook.com/privacy/policy/" target="_blank" rel="noreferrer">
+                facebook.com/privacy/policy
               </a>
               .
             </p>
