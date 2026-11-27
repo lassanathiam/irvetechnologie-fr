@@ -175,5 +175,7 @@
 - [x] 2-3 pistes de dessins (phrase courte en gros) à choisir — 3 pistes rendues le 27/11/2026, en attente du choix
 - [x] Dessin retenu : piste A « Votre maison est-elle prête pour une borne ? » (choix 27/11/2026)
 - [x] Formats finaux (carré 1:1, haut 4:5, large 16:9) avec logo placé — en attente de validation
-- [ ] Textes de la publicité à écrire et valider
-- [ ] Relier le compte publicitaire Facebook, suivi des demandes, puis lancement à 5 €/jour après accord
+- [x] Textes révisés pour le questionnaire en 4 étapes validés (« on essaye »)
+- [x] Relier et sélectionner le compte Facebook, la page et le pixel ; paiement actif vérifié
+- [ ] Préparer le suivi Meta des demandes et vérifier le site publié
+- [ ] Configurer puis lancer l’essai Facebook : attend les déclarations, le choix d’audience et l’accord exact de dépense/durée
