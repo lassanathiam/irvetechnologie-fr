@@ -3,9 +3,6 @@ import { estDansZone, niveauDemande, type ReponsesQuestionnaire } from "./questi
 
 const base: ReponsesQuestionnaire = {
   occupation: "proprietaire",
-  vehicule: "citadine",
-  stationnement: "garage",
-  distance_m: 10,
   delai: "vite",
   code_postal: "44522",
 };
@@ -24,8 +21,7 @@ describe("questionnaire borne maison", () => {
     expect(niveauDemande({ ...base, code_postal: "33000" })).toBe("froid");
     expect(niveauDemande({ ...base, delai: "renseigne" })).toBe("froid");
   });
-  it("locataire ou sans voiture électrique = à qualifier", () => {
+  it("locataire dans la zone avec projet proche = à qualifier", () => {
     expect(niveauDemande({ ...base, occupation: "locataire" })).toBe("tiede");
-    expect(niveauDemande({ ...base, vehicule: "pas_encore" })).toBe("tiede");
   });
 });

@@ -13,13 +13,11 @@ import {
   LIBELLES,
   type Delai,
   type Occupation,
-  type Stationnement,
-  type Vehicule,
 } from "@/lib/questionnaire-borne";
 
 const TITRE = "Votre maison est-elle prête pour une borne ? | Borne de l'Ouest";
 const DESC =
-  "Répondez à 6 questions illustrées et recevez votre devis gratuit pour une borne de recharge posée en 1 journée en Bretagne et Pays de la Loire.";
+  "Répondez à 3 questions simples et recevez votre devis gratuit pour une borne de recharge posée en 1 journée en Bretagne et Pays de la Loire.";
 
 export const Route = createFileRoute("/ma-borne-maison")({
   head: () => ({
@@ -41,51 +39,13 @@ export const Route = createFileRoute("/ma-borne-maison")({
 /* ---------- Dessins (traits simples, couleur du thème) ---------- */
 const S = { fill: "none", stroke: "currentColor", strokeWidth: 3, strokeLinecap: "round", strokeLinejoin: "round" } as const;
 
-function Voiture({ type }: { type: Vehicule }) {
-  if (type === "pas_encore")
-    return (
-      <svg viewBox="0 0 120 70" className="h-16 w-full" aria-hidden="true">
-        <circle cx="60" cy="35" r="24" {...S} />
-        <path d="M52 28a8 8 0 1 1 11 7c-3 1-3 3-3 6M60 49v1" {...S} />
-      </svg>
-    );
-  const corps: Record<Exclude<Vehicule, "pas_encore">, string> = {
-    citadine: "M14 50V40l12-14h40l16 14h12a6 6 0 0 1 6 6v4Z",
-    suv: "M8 50V34l10-12h52l18 12h14a6 6 0 0 1 6 6v10Z",
-    utilitaire: "M8 50V18h64l16 16h16a6 6 0 0 1 6 6v10Z",
-    hybride: "M10 50V40l16-14h44l14 14h16a6 6 0 0 1 6 6v4Z",
-  };
-  return (
-    <svg viewBox="0 0 120 70" className="h-16 w-full" aria-hidden="true">
-      <path d={corps[type]} {...S} className="text-primary" fill="currentColor" fillOpacity={0.12} />
-      <circle cx="32" cy="52" r="8" {...S} fill="var(--background)" />
-      <circle cx="86" cy="52" r="8" {...S} fill="var(--background)" />
-      {type === "hybride" ? <path d="M54 30l-4 8h6l-4 8" {...S} /> : <path d="M58 30l-5 9h7l-5 9" {...S} className="text-primary" />}
-    </svg>
-  );
-}
-
-function Maison({ cle }: { cle: Occupation | Stationnement }) {
+function Maison({ cle }: { cle: Occupation }) {
   return (
     <svg viewBox="0 0 120 70" className="h-16 w-full" aria-hidden="true">
       <path d="M20 62V32L48 10l28 22v30Z" {...S} className="text-primary" fill="currentColor" fillOpacity={0.12} />
       <path d="M42 62V46h12v16" {...S} />
-      {cle === "garage" && <path d="M76 62V38h30v24M80 46h22M80 54h22" {...S} />}
-      {cle === "allee" && <path d="M78 62l10-22h10l8 22" {...S} strokeDasharray="4 5" />}
-      {cle === "parking_exterieur" && <path d="M84 62V40M84 40h16v10H84M96 62v-6" {...S} />}
       {cle === "proprietaire" && <path d="M88 30a8 8 0 1 1 0 .1M94 36l12 12M102 44l4-4" {...S} />}
       {cle === "locataire" && <path d="M84 24h22v28H84zM88 32h14M88 40h10" {...S} />}
-    </svg>
-  );
-}
-
-function Borne({ metres }: { metres: string }) {
-  return (
-    <svg viewBox="0 0 120 70" className="h-16 w-full" aria-hidden="true">
-      <rect x="10" y="14" width="18" height="26" rx="3" {...S} />
-      <path d="M28 27H90" {...S} strokeDasharray="5 5" className="text-primary" />
-      <rect x="90" y="12" width="20" height="34" rx="5" {...S} className="text-primary" fill="currentColor" fillOpacity={0.12} />
-      <text x="59" y="58" textAnchor="middle" fontSize="13" fill="currentColor">{metres}</text>
     </svg>
   );
 }
@@ -101,24 +61,13 @@ function Horloge({ d }: { d: Delai }) {
 }
 
 /* ---------- Étapes ---------- */
-const DISTANCES = [
-  { v: 5, label: "Moins de 5 m" },
-  { v: 10, label: "5 à 10 m" },
-  { v: 15, label: "10 à 15 m" },
-  { v: 20, label: "15 à 20 m" },
-  { v: null, label: "Plus de 20 m" },
-] as const;
-
 type Etat = {
   occupation?: Occupation;
-  vehicule?: Vehicule;
-  stationnement?: Stationnement;
-  distance?: number | null;
   delai?: Delai;
   cp: string;
 };
 
-const NB_ETAPES = 7;
+const NB_ETAPES = 4;
 
 function Questionnaire() {
   const submitFn = useServerFn(submitDemande);
@@ -136,7 +85,7 @@ function Questionnaire() {
 
   async function onSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    if (envoi || !r.occupation || !r.vehicule || !r.stationnement || r.distance === undefined || !r.delai) return;
+    if (envoi || !r.occupation || !r.delai) return;
     setErreur(null);
     setEnvoi(true);
     try {
@@ -144,9 +93,6 @@ function Questionnaire() {
       const get = (k: string) => (fd.get(k)?.toString() ?? "").trim();
       const reponses = {
         occupation: r.occupation,
-        vehicule: r.vehicule,
-        stationnement: r.stationnement,
-        distance_m: r.distance,
         delai: r.delai,
         code_postal: r.cp,
       };
@@ -157,9 +103,9 @@ function Questionnaire() {
           email: get("email"),
           telephone: get("tel"),
           code_postal: r.cp,
-          distance_m: r.distance,
+          distance_m: null,
           type_bien: "Maison",
-          type_installation: LIBELLES.stationnement[r.stationnement],
+          type_installation: null,
           notes: resumeDemande(reponses),
           type_demande: "raccordement",
           profil_client: "particulier",
@@ -207,7 +153,7 @@ function Questionnaire() {
             <>
               <p className="font-medium text-primary">Bretagne · Pays de la Loire</p>
               <h1 className="mt-2 text-3xl font-medium tracking-tight sm:text-4xl">Votre maison est-elle prête pour une borne ?</h1>
-              <p className="mt-3 text-muted-foreground">6 questions, moins d'une minute. Devis gratuit, borne posée en 1 journée.</p>
+              <p className="mt-3 text-muted-foreground">3 questions, 20 secondes. Devis gratuit, borne posée en 1 journée.</p>
 
               <div className="mt-6 flex items-center gap-3" aria-label={`Étape ${etape} sur ${NB_ETAPES}`}>
                 <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
@@ -227,33 +173,6 @@ function Questionnaire() {
                   </Question>
                 )}
                 {etape === 2 && (
-                  <Question titre="Quelle voiture allez-vous recharger ?">
-                    {(["citadine", "suv", "utilitaire", "hybride", "pas_encore"] as const).map((k) => (
-                      <Choix key={k} actif={r.vehicule === k} onClick={() => choisir({ vehicule: k })} label={LIBELLES.vehicule[k]}>
-                        <Voiture type={k} />
-                      </Choix>
-                    ))}
-                  </Question>
-                )}
-                {etape === 3 && (
-                  <Question titre="Où se gare votre voiture ?">
-                    {(["garage", "allee", "parking_exterieur"] as const).map((k) => (
-                      <Choix key={k} actif={r.stationnement === k} onClick={() => choisir({ stationnement: k })} label={LIBELLES.stationnement[k]}>
-                        <Maison cle={k} />
-                      </Choix>
-                    ))}
-                  </Question>
-                )}
-                {etape === 4 && (
-                  <Question titre="Distance entre votre tableau électrique et la place ?" aide="Une estimation suffit, nous vérifions ensemble.">
-                    {DISTANCES.map((d) => (
-                      <Choix key={d.label} actif={r.distance === d.v} onClick={() => choisir({ distance: d.v })} label={d.label}>
-                        <Borne metres={d.label.replace("Moins de ", "< ").replace("Plus de ", "> ")} />
-                      </Choix>
-                    ))}
-                  </Question>
-                )}
-                {etape === 5 && (
                   <Question titre="Quand voulez-vous votre borne ?">
                     {(["vite", "1_3_mois", "renseigne"] as const).map((k) => (
                       <Choix key={k} actif={r.delai === k} onClick={() => choisir({ delai: k })} label={LIBELLES.delai[k]}>
@@ -262,7 +181,7 @@ function Questionnaire() {
                     ))}
                   </Question>
                 )}
-                {etape === 6 && (
+                {etape === 3 && (
                   <div>
                     <h2 className="text-xl font-medium">Votre code postal</h2>
                     <p className="mt-1 text-sm text-muted-foreground">Pour vérifier que nous intervenons chez vous.</p>
@@ -283,14 +202,14 @@ function Questionnaire() {
                     <button
                       type="button"
                       disabled={!/^\d{5}$/.test(r.cp)}
-                      onClick={() => setEtape(7)}
+                      onClick={() => setEtape(4)}
                       className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary px-5 py-3.5 font-medium text-primary-foreground disabled:opacity-50"
                     >
                       Continuer <ArrowRight className="h-4 w-4" />
                     </button>
                   </div>
                 )}
-                {etape === 7 && (
+                {etape === 4 && (
                   <form onSubmit={onSubmit} aria-label="Vos coordonnées">
                     <h2 className="text-xl font-medium">Dernière étape : où vous envoyer votre devis ?</h2>
                     <p className="mt-1 text-sm text-muted-foreground">Un électricien vous rappelle, sans engagement.</p>
